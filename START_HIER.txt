@@ -1,0 +1,16 @@
+CAY STUDIO 0.13.0 - NUR DIESE SCHRITTE
+
+1. Alle Dateien aus diesem ZIP gemeinsam entpacken.
+2. Laufende Produktion pausieren und aktuellen Abschnitt beenden lassen.
+3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
+4. Den PC einmal NEU STARTEN (laedt die Sampler-Reparatur).
+5. Cay_Studio_Starten.cmd doppelklicken.
+6. Im Browser Strg+F5: unten muss 0.13.0 stehen.
+7. Meine Projekte > Projekt oeffnen > Produktion fortsetzen.
+
+Zu wenig Dialog? Im Projekt: Dialoge & Ton bearbeiten > Dialoge ergaenzen.
+Neue Tonvorschau danach anhoeren und erneut freigeben.
+
+Update meldet beschaeftigt? Aktuellen Schritt abwarten und erneut starten.
+Keine Neuinstallation und nichts loeschen.
+Anleitung: Cay_Studio_Start_und_Update.md
