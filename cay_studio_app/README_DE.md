@@ -1,3 +1,16 @@
+# Cay Studio 0.13.1 – Sprachprüfung pro Dialogbeitrag (09.10.2026)
+
+Kein PC-Neustart nötig. Update installieren, **Cay_Studio_Starten.cmd** öffnen, im Browser **Strg+F5**. Unten muss **0.13.1** stehen.
+
+- Jede Tonvorschau prüft jetzt **jeden einzelnen Dialogbeitrag**. Ist einer stumm oder von Musik verdeckt, hält das Studio an und nennt **Folge, Szene, Figur und Text**.
+- **Produktion fortsetzen** spricht dann **nur diese Beiträge** neu ein. Alle anderen Stimmen bleiben unverändert.
+- Der fertige Film wird mit der freigegebenen Tonvorschau verglichen. Fehlt dort Sprache, wird er nicht als fertig gespeichert.
+- Kurze Ausrufe wie „Nein!“ werden nicht mehr akzeptiert, wenn die Aufnahme nur ein Klick oder Atmer ist.
+
+Geprüft mit echter FFmpeg-Mischung und künstlichen Testsignalen, nicht mit echten KI-Stimmen auf deiner RTX 4090.
+
+---
+
 # Cay Studio 0.13.0 – Reparaturupdate vom 29.09.2026
 
 Nach erfolgreichem Update den PC einmal neu starten, dann **Cay_Studio_Starten.cmd** öffnen und im Browser **Strg+F5** drücken. Der Neustart lädt den neuen ComfyUI-Samplerknoten; keine neuen Modellgewichte erforderlich. Laufende Produktionen vorher nach ihrem aktuellen Schritt pausieren.

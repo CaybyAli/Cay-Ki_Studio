@@ -3,6 +3,7 @@ from array import array
 from pathlib import Path
 import hashlib,json,math,os,random,subprocess,wave
 from factory_timing import audio_layout
+import speech_check
 RATE=24000
 def turns(s):
     return s.get('dialogues') or ([{'speaker':s['speaker'],'text':s['dialogue'],'emotion':s.get('emotion','Natürlich'),'pause_after':.18}] if s.get('dialogue') else [])
@@ -125,4 +126,13 @@ def mix(folder,scenes,mood,music=None,settings=None):
     ff([*args,'-filter_complex',graph,'-map','[sound]','-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
     with wave.open(str(temp)) as w:
         if abs(w.getnframes()/w.getframerate()-duration)>.03:raise RuntimeError('Tonmischung unvollständig; keine Freigabe.')
-    os.replace(temp,target);(folder/'Tonbericht.json').write_text(json.dumps({'seconds':duration,'lines':len(intervals),'music_mode':settings['music_mode'],'effects':sum(len(s.get('sound_cues',[])) for s in scenes),'dialogue_peak':dialogue_peak,'dialogue_rms':round(dialogue_rms,2)}));return str(target)
+    # Every planned line must be audible on its own, not only the track as a
+    # whole. The report is written before blocking so the retake knows which
+    # lines to speak again; unaffected lines keep their cached takes.
+    report=speech_check.summary(speech_check.check_lines(samples,RATE,speech_check.placed(scenes),
+        tuple(speech_check.read_wav(p)[0] for p in (ducked,ambience,effects))),'mix')
+    speech_check.write_report(folder/'Sprachpruefung.json',report)
+    if report['blocking']:
+        temp.unlink(missing_ok=True)
+        raise speech_check.SpeechCheckError(speech_check.message(report,'„Produktion fortsetzen“ spricht nur diese Beiträge neu ein. Bleibt eine Zeile stumm, ihren Text oder die Stimme der Figur ändern.'),report)
+    os.replace(temp,target);(folder/'Tonbericht.json').write_text(json.dumps({'seconds':duration,'lines':len(intervals),'music_mode':settings['music_mode'],'effects':sum(len(s.get('sound_cues',[])) for s in scenes),'dialogue_peak':dialogue_peak,'dialogue_rms':round(dialogue_rms,2),'speech_check':{k:report[k] for k in ('policy','checked','blocking','warnings')},'speech_warnings':[e['label']+' – '+e['note'] for e in report['lines'] if e['status']!='ok']},ensure_ascii=False));return str(target)

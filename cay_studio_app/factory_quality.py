@@ -40,9 +40,16 @@ class Quality:
             if asset:
                 ref=self.asset(asset,'voice');row.update(voice_file=ref['path'],voice_hash=ref['sha256'],voice_text=provided[person['name']].get('voice_text',''))
             cast.append(row)
+        takes=d.get('speech_takes',{})
         for ei,ep in enumerate(d['episodes']):
             for si,scene in enumerate(ep['scenes']):
-                for ti,line in enumerate(turns(scene)):lines.append({'key':f'E{ei+1:02}_S{si+1:02}_T{ti+1:02}_{digest(line)[:10]}','episode':ei,'scene':si,'turn':ti,'speaker':line['speaker'],'text':line['text'],'text_de':line['text'],'emotion':line['emotion'],'pause_after':line.get('pause_after',.18),'seed':int(digest(d['id']+str(ei)+':'+str(si)+':'+str(ti))[:8],16)})
+                for ti,line in enumerate(turns(scene)):
+                    key=f'E{ei+1:02}_S{si+1:02}_T{ti+1:02}_{digest(line)[:10]}';take=int(takes.get(key,0))
+                    entry={'key':key,'episode':ei,'scene':si,'turn':ti,'speaker':line['speaker'],'text':line['text'],'text_de':line['text'],'emotion':line['emotion'],'pause_after':line.get('pause_after',.18),'seed':int(digest(d['id']+str(ei)+':'+str(si)+':'+str(ti))[:8],16)+104729*take}
+                    # Only lines that failed the speech check get a take number;
+                    # all other lines keep their cache signature and audio.
+                    if take:entry['take']=take
+                    lines.append(entry)
         audio_only=d.pop('audio_only',False) and bool(d.get('lines') or not lines)
         if self.paused(d['id']):return
         if lines and not audio_only:
@@ -74,6 +81,27 @@ class Quality:
                 'music':{'file':music['path'],'sha256':music['sha256']} if music else None,
                 'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds']})
         d['state']='audio_mixing';d['phase']='CPU: Dialog, Musik und Geräusche mischen · GPU wieder frei';self.save(d)
+    def speech_retake(self,d):
+        """After a failed speech check, speak only the inaudible lines again."""
+        from speech_check import MARK
+        keys=set()
+        if d.get('resume_state')=='voicing':
+            failed=self.path(self.folder(d)/'03_Stimmen/Dialoge/Fehlgeschlagen.json')
+            try:keys.add(json.loads(failed.read_text())['key']);failed.unlink()
+            except (OSError,ValueError,KeyError,TypeError):return False
+        elif d.get('resume_state')!='audio_mixing':return False
+        for row in self.post_rows(d,'mix'):
+            if row['status']!='failed' or MARK not in (row['error'] or ''):continue
+            try:
+                report=json.loads(self.path(Path(json.loads(row['spec'])['folder'])/'Sprachpruefung.json').read_text(encoding='utf-8'))
+                keys|={x['key'] for x in report['lines'] if x['blocking'] and x.get('key')}
+            except (OSError,ValueError,KeyError,TypeError):continue
+        if not keys:return False
+        takes=d.setdefault('speech_takes',{})
+        for key in keys:takes[key]=int(takes.get(key,0))+1
+        for key in ('resume_state','error','uncertain','voice_approval','audio_only'):d.pop(key,None)
+        d.update(state='voicing',previews=[],phase=f'{len(keys)} stumme oder unhörbare Dialogbeiträge werden neu eingesprochen.')
+        return True
     def quality_routes(self,app):
         @app.get('/api/factory/voice-studio/status')
         async def status():

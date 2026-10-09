@@ -1,25 +1,34 @@
-# Cay Studio 0.13.0 – so geht es weiter
+# Cay Studio 0.13.1 – so geht es weiter
 
-## Einmal das Update installieren
+## Was neu ist
 
-1. **Cay_Studio_Updatepaket_0.13.0.zip** herunterladen. Rechtsklick → **Alle extrahieren**.
-2. Wenn noch eine Produktion läuft: **Pausieren** anklicken und den aktuellen Abschnitt beenden lassen. Eine laufende Einrichtung fertig werden lassen. Bereits angehaltene Fehlerprojekte können so bleiben.
-3. Im entpackten Ordner **Cay_Studio_Update.cmd** doppelklicken. Alle enthaltenen Dateien müssen zusammenbleiben.
-4. Warten, bis **CAY STUDIO 0.13.0 INSTALLIERT** erscheint. Dann **den PC einmal neu starten**. Dadurch lädt ComfyUI die Sampler-Reparatur.
-5. Im gleichen Ordner **Cay_Studio_Starten.cmd** doppelklicken. Im Browser **Strg + F5** drücken. Unten muss **0.13.0** stehen.
-6. **Meine Projekte → dein Projekt → Produktion fortsetzen**.
+Bisher hat das Studio nur geprüft, ob die **ganze** Dialogspur stumm ist. Fehlte nur **ein** Beitrag oder **eine** Figur, ging das unbemerkt durch. Kurze Ausrufe wie „Nein!“ wurden sogar akzeptiert, wenn die Aufnahme nur ein Klick war.
 
-Meldet das Update „beschäftigt“: den laufenden Schritt abwarten und dieselbe Update-Datei erneut starten. Nichts löschen und keine Grundinstallation starten. Der Installer sichert die Datenbank. Projekte, Bilder, Stimmen und fertige Abschnitte bleiben erhalten.
+Jetzt gilt:
 
-## Wenn die Dialoge zu kurz sind
+- Jede Tonvorschau prüft **jeden Dialogbeitrag einzeln**. Fehlt Sprache, hält das Studio an und zeigt **Folge, Szene, Figur und Text**.
+- **Produktion fortsetzen** spricht dann **nur diese Beiträge** neu ein. Alle anderen Stimmen bleiben gleich.
+- Der fertige Film wird mit der freigegebenen Tonvorschau verglichen. Fehlt darin Sprache, wird er nicht als fertig gespeichert.
+- Gewollt stumme Szenen ohne Dialog bleiben erlaubt.
 
-1. Im angehaltenen Renderprojekt auf **Dialoge & Ton bearbeiten** klicken. Bist du bereits bei der Tonvorschau, dort bleiben.
-2. Gewünschte **Folge** auswählen und **Dialoge ergänzen** anklicken.
-3. Der Änderungswunsch ist schon eingetragen. Auf **Änderung anfordern** klicken. Ist das Projekt pausiert, Fenster schließen und **Fortsetzen** wählen.
-4. Warten, bis die neue Tonvorschau bereit ist. Anhören und die Anzeige **Sprache / Sprechpausen / längste Pause** prüfen.
-5. Erst danach erneut **produzieren** und die kurze **Produktionsprobe freigeben**.
+Geprüft habe ich das mit echter FFmpeg-Mischung und künstlichen Testsignalen. **Nicht geprüft:** echte KI-Stimmen auf deiner RTX 4090. Klangqualität und Lippensynchronität ändert dieses Update nicht.
 
-Vorhandene Texte und Szenenbilder bleiben erhalten. Die KI ergänzt passende Reaktionen, Widerspruch oder Entscheidungen. Nur die ausgewählte Folge erhält zusätzliche Dialoge; bei mehreren Folgen nach Bedarf wiederholen. Neue Sprache kann eine Neuberechnung betroffener Animationen nötig machen. Wenn die KI keine gültige Ergänzung liefert, erscheint ein Hinweis und die vorhandene Vorschau bleibt erhalten. Ein bewusst stummer Film wird bei der neuen Planung berücksichtigt.
+## Update installieren
+
+1. ZIP herunterladen. Rechtsklick → **Alle extrahieren**.
+2. Läuft eine Produktion: **Pausieren** und den aktuellen Abschnitt beenden lassen.
+3. **Cay_Studio_Update.cmd** doppelklicken. Auf **CAY STUDIO 0.13.1 INSTALLIERT** warten.
+4. Kein PC-Neustart nötig. Im Browser **Strg + F5** drücken. Unten muss **0.13.1** stehen.
+5. **Meine Projekte → dein Projekt → Produktion fortsetzen**.
+
+Meldet das Update „beschäftigt“: den laufenden Schritt abwarten und dieselbe Datei erneut starten. Der Installer sichert die Datenbank. Bei einem Startfehler kehrt er selbst zu 0.13.0 zurück.
+
+## Wenn „SPRACHPRÜFUNG“ erscheint
+
+1. Lesen, welche **Folge, Szene und Figur** betroffen ist.
+2. **Produktion fortsetzen** anklicken. Nur diese Beiträge werden neu eingesprochen.
+3. Neue Tonvorschau anhören und freigeben.
+4. Bleibt dieselbe Zeile stumm: **Fehlerbericht speichern** und mir schicken. Dazu die Datei **Sprachpruefung.json** aus dem Projektordner unter `03_Stimmen/Mischung_…/Folge_…`.
 
 ## Cay Studio nach einem Neustart öffnen
 
@@ -29,7 +38,7 @@ Immer **Cay_Studio_Starten.cmd** doppelklicken. Die Update-Datei brauchst du nur
 
 Der Starter enthält die Pfadkorrektur für den früheren Fehler `wslpath: D:Cay_Studio...`. Nicht direkt aus dem ZIP starten.
 
-## Was repariert wurde
+## Was in 0.13.0 repariert wurde
 
 - **Projekt öffnen:** Der konkrete Oberflächenfehler `root.insertAdjacentHTML is not a function` ist behoben. Auch angehaltene und fertige Projekte können angezeigt werden.
 - **Papierkorb:** Gelöschte Projekte verschwinden aus der Übersicht. Verspätete Antworten können sie nicht wieder einblenden. Wiederhergestellte Projekte erscheinen sofort und bleiben zunächst pausiert. Die Projektdateien bleiben im Papierkorb absichtlich erhalten und belegen Speicher.
@@ -61,7 +70,7 @@ Nur falls die Startdatei nicht funktioniert: **Windows PowerShell** öffnen und 
 wsl.exe -d Ubuntu -u alihu --exec /home/alihu/ki-video/studio/venv/bin/python /home/alihu/ki-video/studio/current/launcher.py --open-browser
 ```
 
-## Prüfstand
+## Prüfstand 0.13.0
 
 Browserprüfung mit Projektfehler, Papierkorb, 40 Bildern, Tonkorrektur und schmalem Bildschirm; echte FastAPI-/SQLite-Prüfung der Projektzustände; gezielte Sampler-, Dialog- und Medientests; Update von 0.12 auf 0.13 mit Sicherung und Rückkehr zur vorherigen Version bei einem absichtlich fehlerhaften Start.
 

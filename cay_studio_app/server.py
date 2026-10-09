@@ -24,7 +24,7 @@ from factory import Factory
 from studio_resources import Resources
 from production import ProductionRequest, Storyboard, issues_for, prompt_for, technical_profile, fit_scene_durations
 
-VERSION = '0.13.0'
+VERSION = '0.13.1'
 RUNTIME = Path(os.environ.get('CAY_STUDIO_RUNTIME', '/home/alihu/ki-video/studio')).resolve()
 CONFIG = json.loads((RUNTIME / 'config/ablage.json').read_text(encoding='utf-8'))
 ROOT = Path(CONFIG['wsl_root']).resolve()

@@ -59,8 +59,11 @@ def main():
         if not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature):
             for attempt in range(2):
                 try:data,quality=generate(line['text'],voices[line['speaker']],line['emotion'],line['seed']+attempt);break
-                except RuntimeError:
-                    if attempt:raise
+                except RuntimeError as error:
+                    if attempt:
+                        # Lets "Produktion fortsetzen" retake exactly this line with a new seed.
+                        (out/'Fehlgeschlagen.json').write_text(json.dumps({'key':line['key']}))
+                        raise RuntimeError(f"Folge {line['episode']+1}, Szene {line['scene']+1}, Figur {line['speaker']}: {error}") from error
             temp=target.with_suffix('.partial.wav');sf.write(temp,data,model.sr,subtype='PCM_16');os.replace(temp,target)
             meta.write_text(json.dumps({'signature':signature,'quality':quality}))
         info=sf.info(target)

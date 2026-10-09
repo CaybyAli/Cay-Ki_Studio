@@ -4,6 +4,7 @@ from pathlib import Path
 from studio_quality_policy import PROFILES, cadence
 from studio_resources_options import cpu_options
 from wan_text_encoder import choose as choose_text
+import speech_check
 
 VIDEO_MODELS={
  'high':('UNETLoader','unet_name','wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors'),
@@ -177,6 +178,17 @@ def finish(spec):
     if video['width']!=1080 or video['height']!=1920 or abs(float(info['format']['duration'])-cursor)>.12 or int(video.get('nb_frames',0))!=round(cursor*fps):raise RuntimeError('Exportprüfung fehlgeschlagen: Bildlänge oder Bildgröße stimmt nicht.')
     if not any(x['codec_type']=='audio' for x in info['streams']):raise RuntimeError('Export hat keine Tonspur.')
     if float(video.get('duration',info['format']['duration']))+1e-6<spec.get('minimum_seconds',0):raise RuntimeError('Export ist kürzer als die gewählte Mindestdauer. Tonvorschau neu erzeugen.')
+    # The exported film must contain every line of the approved mix; a muxed
+    # audio stream alone does not prove that speech survived encoding.
+    placed=speech_check.placed(spec['scenes'])
+    if placed:
+        try:
+            exported=speech_check.decode(tmp);approved=speech_check.decode(audio)
+            report=speech_check.summary(speech_check.compare_export(exported,approved,24000,placed),'export')
+            speech_check.write_report(folder/'Exportpruefung.json',report)
+            if report['blocking']:raise speech_check.SpeechCheckError(speech_check.message(report,'„Fehlerbericht speichern“ und mitschicken. Die freigegebene Tonvorschau und alle Animationen bleiben erhalten.'),report)
+        except BaseException:
+            tmp.unlink(missing_ok=True);raise
     timings['mux_seconds']=time.monotonic()-mux_start
     # The Linux workspace and Windows project drive may be different filesystems.
     transfer=out.with_name(out.name+'.'+uuid.uuid4().hex+'.partial')

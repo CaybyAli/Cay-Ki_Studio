@@ -50,8 +50,11 @@ def generate(base,path):
                 seed=(line['seed']+attempt)%2**32;random.seed(seed);np.random.seed(seed);torch.manual_seed(seed)
                 waves,sr=model.generate_voice_clone(text=clean_text(line['text']),language='German',voice_clone_prompt=prompts[prompt_key],non_streaming_mode=True,temperature=.7,top_p=.9,max_new_tokens=min(650,max(128,len(line['text'].split())*15+80)))
                 try:data,quality=finish_voice(waves[0],sr,line['text']);break
-                except RuntimeError:
-                    if attempt:raise
+                except RuntimeError as error:
+                    if attempt:
+                        # Lets "Produktion fortsetzen" retake exactly this line with a new seed.
+                        (out/'Fehlgeschlagen.json').write_text(json.dumps({'key':line['key']}))
+                        raise RuntimeError(f"Folge {line['episode']+1}, Szene {line['scene']+1}, Figur {line['speaker']}: {error}") from error
             temp=target.with_suffix('.partial.wav');sf.write(temp,data,sr,subtype='PCM_16');os.replace(temp,target)
             meta.write_text(json.dumps({'signature':signature,'quality':quality,'engine':'qwen'}))
         info=sf.info(target)

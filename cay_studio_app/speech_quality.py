@@ -25,14 +25,20 @@ def finish_voice(data,sr,text):
     blocks=np.pad(data,(0,pad)).reshape(-1,hop)
     rms=np.sqrt(np.mean(blocks*blocks,axis=1));active=np.flatnonzero(rms>max(.00025,float(rms.max())*.008))
     if not len(active):raise RuntimeError('Keine verwertbare Stimme erkannt.')
+    # A click or breath must not count as a spoken line. Short exclamations
+    # previously passed because only peak and trimmed length were checked.
+    words=max(1,len(text.split()))
+    voiced=float(np.sum(rms>=max(.004,float(rms.max())*.08)))*.01
+    if peak<.015 or voiced<.12+.07*words:
+        raise RuntimeError(f'Kaum hörbare Sprache ({voiced:.2f} s Stimme für {words} Wörter). Die Zeile wird erneut eingesprochen.')
     first=max(0,int(active[0]*hop)-round(sr*.07));last=min(len(data),int((active[-1]+1)*hop)+round(sr*.16))
-    data=data[first:last].copy();duration=len(data)/sr;words=max(1,len(text.split()))
+    data=data[first:last].copy();duration=len(data)/sr
     if not max(.15,words/6-.35)<duration<min(40,max(8,words/.7+2)):
         raise RuntimeError('Unplausible Sprechdauer. Die Zeile wird erneut eingesprochen.')
     if peak>.95:data*=.95/peak
     fade=min(round(sr*.006),len(data)//2)
     if fade:data[:fade]*=np.linspace(0,1,fade);data[-fade:]*=np.linspace(1,0,fade)
-    return data,{'duration':duration,'words_per_second':round(words/duration,2),'peak':round(float(np.max(np.abs(data))),4),'processing':SPEECH_POLICY}
+    return data,{'duration':duration,'voiced_seconds':round(voiced,2),'words_per_second':round(words/duration,2),'peak':round(float(np.max(np.abs(data))),4),'processing':SPEECH_POLICY}
 
 def performance_key(emotion):
     text=emotion.lower()

@@ -858,10 +858,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         async def resume(rid:str):
             d=self.get(rid)
             if d['state']=='blocked':
+                # A failed speech check needs new takes, not the identical mix again.
+                retake=self.speech_retake(d)
                 # Definitively failed submissions may be retried only by this explicit action.
                 self.sql("DELETE FROM factory_steps WHERE run_id=? AND status='failed'",(rid,))
                 self.sql("UPDATE factory_post SET status='queued',error=NULL WHERE run_id=? AND status='failed'",(rid,))
-                d['state']=d.pop('resume_state');d.pop('error',None);d.pop('uncertain',None)
+                if not retake:d['state']=d.pop('resume_state');d.pop('error',None);d.pop('uncertain',None)
             self.sql('INSERT INTO factory_control VALUES(?,0) ON CONFLICT(id) DO UPDATE SET paused=0',(rid,));d['paused']=False;self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/choose')
         async def choose(rid:str,body:Choice):

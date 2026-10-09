@@ -11,15 +11,15 @@ productionMarkup=function(p,d){return thirteenProduction(p,d)+memorySummary(p.re
 runView=function(){
  const d=state.run;let html=thirteenRun();
  if(!d||d.deleted)return html;
- if(d.state==='blocked'&&['rendering','finishing'].includes(d.resume_state)){
-  const sampler=/WanVideoSampler|NoneType|CayWanVideoSampler/.test(d.error||'');
+ if(d.state==='blocked'&&['rendering','finishing','audio_mixing'].includes(d.resume_state)){
+  const sampler=/WanVideoSampler|NoneType|CayWanVideoSampler/.test(d.error||''),speech=/SPRACHPRÜFUNG/.test(d.error||'');
   html=transformMarkup(html,root=>{
    const oldError=root.querySelector('.error');
    root.querySelector('[data-action=upgrade-voices]')?.closest('.note')?.remove();
    root.querySelector('[data-action=setup-voices]')?.closest('.note')?.remove();
    root.querySelectorAll('[data-action=diagnosis]').forEach(el=>el.remove());
    const panel=document.createElement('section');panel.className='repair-card render-repair';
-   panel.innerHTML=`<p class="section-kicker">DEIN NÄCHSTER SCHRITT</p><h2>Die Produktion wurde angehalten.</h2><p>${sampler?'Nach dem Update den PC einmal neu starten und Cay Studio öffnen. Danach hier auf „Produktion fortsetzen“ klicken.':'Der Fehler steht hier direkt unter dem Hinweis. Behebe die genannte Ursache und setze die Produktion fort.'}</p><pre class="visible-error">${esc(d.error||d.phase||'Noch keine Fehlerdetails verfügbar.')}</pre><div class="repair-actions"><button class="primary" data-action="resume">Produktion fortsetzen</button>${d.previews?.length?'<button class="ghost" data-action="reopen-voices">Dialoge & Ton bearbeiten</button>':''}<a href="/api/factory/${d.id}/diagnostics/download" download>Fehlerbericht speichern ↓</a></div><p class="muted">Fertige Abschnitte bleiben gespeichert. Falls derselbe Fehler wiederkommt, den Fehlerbericht mitgeben.</p>`;
+   panel.innerHTML=`<p class="section-kicker">DEIN NÄCHSTER SCHRITT</p><h2>Die Produktion wurde angehalten.</h2><p>${speech?'Einige Dialogbeiträge sind stumm oder nicht hörbar. Darunter steht, welche Folge, Szene und Figur betroffen ist. „Produktion fortsetzen“ spricht nur diese Beiträge neu ein; danach die neue Tonvorschau anhören.':sampler?'Nach dem Update den PC einmal neu starten und Cay Studio öffnen. Danach hier auf „Produktion fortsetzen“ klicken.':'Der Fehler steht hier direkt unter dem Hinweis. Behebe die genannte Ursache und setze die Produktion fort.'}</p><pre class="visible-error">${esc(d.error||d.phase||'Noch keine Fehlerdetails verfügbar.')}</pre><div class="repair-actions"><button class="primary" data-action="resume">Produktion fortsetzen</button>${d.previews?.length?'<button class="ghost" data-action="reopen-voices">Dialoge & Ton bearbeiten</button>':''}<a href="/api/factory/${d.id}/diagnostics/download" download>Fehlerbericht speichern ↓</a></div><p class="muted">Fertige Abschnitte bleiben gespeichert. Falls derselbe Fehler wiederkommt, den Fehlerbericht mitgeben.</p>`;
    const before=root.querySelector('.production-center');if(oldError)oldError.replaceWith(panel);else if(before)before.before(panel);else root.prepend(panel);
   });
  }
