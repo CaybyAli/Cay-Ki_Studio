@@ -1,0 +1,19 @@
+:root{--accent:#087ef5;--brand:#087ef5;--radius:20px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.012em}
+.top{backdrop-filter:blur(22px);border-bottom:1px solid var(--line);box-shadow:none}
+h1{letter-spacing:-.055em;font-weight:650}h2{letter-spacing:-.035em;font-weight:630}
+.gradient{background:none!important;color:var(--text)!important;-webkit-text-fill-color:currentColor!important}
+.card,.form-card,.scene,.mix-preview{box-shadow:0 3px 18px #00000005;border-radius:20px}
+.primary{background:#087ef5!important;color:white!important;box-shadow:none!important;border-radius:12px}
+button,.button{border-radius:11px}.note{border-radius:14px}
+.story-check{margin:20px 0}.story-list{gap:24px}.scene img{aspect-ratio:9/16;object-fit:cover}
+.scene{contain:layout style}.scene-dialogues{font-size:15px;line-height:1.6}
+.audio-card{border-radius:16px}.live-work{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:15;background:var(--panel,#fff);color:var(--text,#17191d);padding:14px 22px;border:1px solid var(--line,#ddd);box-shadow:0 8px 28px #0002;border-radius:16px;max-width:min(90vw,700px);font-size:14px}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#087ef5;margin-right:9px}
+.site-footer{opacity:.7}.intro h1{font-size:clamp(38px,6vw,66px)}
+[data-theme=dark] .live-work{background:#1c1d21;color:#f5f5f7}
+@media(min-width:1000px){.story-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+.target-card{padding:18px;border:1px solid var(--line,#ccc);border-radius:16px;margin:16px 0}.target-card.active{border-color:#087ef5}.target-image{max-height:160px;width:auto;border-radius:12px;margin:10px 0}.target-marker{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#fff;color:#064c96;font-size:16px;font-weight:700;border:3px solid #087ef5;pointer-events:none}.target-marker.active{background:#087ef5;color:white}.target-review{margin:24px 0}.target-review img{width:100%;object-fit:contain;max-height:520px;border-radius:12px}
+
+.sample-check video{display:block;max-height:62vh;width:min(100%,440px);border-radius:18px;margin:24px auto}.sample-check .row{justify-content:center}
