@@ -11,6 +11,7 @@ from factory_editor import regenerate
 from factory_speech import ready as speech_ready
 from factory_timing import POLICY
 from studio_quality_policy import settings
+from lipsync_shots import silent_by_accident,MISSING_MARK
 class Quality:
     def init_quality(self):self.setup_task=None;self.setup_process=None;self.setup_status={'state':'missing','message':'Stimmenstudio noch nicht eingerichtet.'}
     def voice_ready(self):return all(p.is_file() for p in [self.base/'envs/studio-voices/bereit.json',self.base/'envs/studio-voices/bin/python',self.base/'models/studio-voices/VoiceDesign/config.json'])
@@ -50,6 +51,10 @@ class Quality:
                     # all other lines keep their cache signature and audio.
                     if take:entry['take']=take
                     lines.append(entry)
+        if not lines and silent_by_accident(d['idea'],d['plan']['cast'],d['episodes']):
+            # Older plans could reach this point without any line; never mix a silent film by accident.
+            raise RuntimeError(MISSING_MARK+': Dieses Drehbuch enthält kein einziges gesprochenes Wort, obwohl Figuren sprechen sollen. '
+                'Der Film wäre stumm. „Neue Fassung planen“ übernimmt Idee und Einstellungen; dieses Projekt bleibt erhalten.')
         audio_only=d.pop('audio_only',False) and bool(d.get('lines') or not lines)
         if self.paused(d['id']):return
         if lines and not audio_only:

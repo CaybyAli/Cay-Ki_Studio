@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 09.10.2026 · Branch `claude/new-session-s0p05c`
+Stand: 11.10.2026 · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -43,5 +43,23 @@ Messwert: Sprachprüfung 0,7 s bei 90-s-Mischung mit 30 Beiträgen (Container-CP
 - „Ton neu erzeugen“ in der Hörvorschau erzeugt weiterhin identische Aufnahmen (gleicher Seed).
 - Danach: Renderzeit-Messlauf, Stimmen-Casting/-Vergleich, Lippensync, Figurentausch, Story.
 
+## 0.13.2 (11.10.2026) – Cay meldet: 15-s-Test wieder ohne Stimmen
+Bestätigte Ursache im Code (Cays Projektdaten noch nicht gesehen):
+1. **[Sicher, reproduziert]** `dialogue_density.apply_additions()` verwarf die ganze Dialogergänzung, sobald eine Szene zwei sichtbare Figuren hatte (Lippensync-Regel). 0.13.1: 0 Wörter, nur Warnung.
+2. **[Sicher, Code]** `factory.llm()` lehnte solche Szenen ab. Das drängt die Planung dazu, Dialoge wegzulassen. Ein Plan ohne Dialog wurde mit einer Warnung angenommen.
+3. **[Sicher, Code]** Ohne Zeilen: `quality_voices` mischt stumm, die Sprachprüfung aus 0.13.1 hat nichts zu prüfen.
+4. **[Wahrscheinlich]** 15 s = 3 Szenen mit beiden Figuren im Bild → genau dieser Weg.
+
+Änderungen: `lipsync_shots.py` (Schuss/Gegenschuss vor den Bildern, höchstens 30 Einstellungen), Planungsstopp „DIALOG FEHLT“ vor den Bildern, Stopp vor der Tonmischung für alte Projekte (Neue Fassung), UI-Reparaturkarte, `Cay_Studio_Diagnose.cmd/.py` (nur lesend).
+Tests: 14 bestanden (`tests/test_dialogue_plan.py`, `tests/test_speech_check.py`).
+
+Weitere Befunde (noch nicht geändert):
+- Standardqualität `high` = 720×1280, 40 Schritte für jede Animation (`studio_quality_policy.py`, `render_studio.audio_graph`). `fast` = 4 Schritte. Wahrscheinlich Hauptgrund für 10–13 h pro 90 s.
+- Oberfläche: Projektseite lädt 14 Skripte und 10 Stylesheets, 13 globale Klick-Handler, 47 Funktionsüberschreibungen in Folgeschichten.
+- Seedance 2.5 / Nano Banana 2: nur kostenpflichtige Cloud (Recherche 11.10.2026). Mit der Kostenregel nicht nutzbar.
+
 ## Nächster konkreter Schritt
-Cay installiert 0.13.1 und erzeugt bei einem bestehenden Projekt eine neue Tonvorschau; Ergebnis (Meldung oder `Sprachpruefung.json`) zurückschicken.
+Cay startet `Cay_Studio_Diagnose.cmd` (altes 15-s-Projekt), installiert 0.13.2, legt ein neues 15-s-Projekt mit zwei sprechenden Figuren an und schickt beide `Cay_Studio_Diagnose.txt`.
+
+## Reihenfolge danach
+1. Stimmen auf Cays PC belegt. 2. Messlauf `fast` gegen `high` (gleiche 15-s-Szene: Zeit + Sichtprüfung). 3. Neue Oberfläche aus einem Guss (ein Ablauf, ein Skript). 4. Modellvergleich lokal (Wan 2.2, LTX-2.x, HunyuanVideo 1.5; Lizenz prüfen).

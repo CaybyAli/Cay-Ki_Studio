@@ -22,6 +22,7 @@ def packed(v):return json.dumps(v,ensure_ascii=False,sort_keys=True)
 def digest(v):return hashlib.sha256(packed(v).encode()).hexdigest()
 def uid():return uuid.uuid4().hex
 
+from lipsync_shots import split_episode,silent_by_accident,MISSING_MARK
 from factory_cast import (name_key as _name_key, canonical_scene as _canonical_scene_cast,
     scene_errors, constrain_scene_schema, validate_header, SourceCast, evidenced_names, resolve_name)
 
@@ -248,9 +249,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         if data.get('story_policy',0)>=11:
                             # Ambiguous speaking faces are a real rendering constraint.
                             # Editorial labels and causal notes are repairable metadata.
-                            if data.get('lip_sync','audio')=='audio':
-                                issues=dialogue_errors(result)
-                                if issues:raise ValueError('; '.join(issues))
+                            # Two visible people talking used to be rejected here, which
+                            # pushed the planner to drop dialogue. Split happens on return.
                             issues=structure_errors(result,data['duration'],strict_dialogue=False)
                             if issues:
                                 try:
@@ -272,6 +272,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         if overview_sources:
                             result['overview_sources']=overview_sources
                             result.setdefault('warnings',[]).append('Die KI hat die Handlungsübersicht nicht vollständig geliefert. Die gekennzeichneten Karten zeigen Auszüge aus den vorhandenen Szenen. Bitte prüfe den Ablauf vor der Bildfreigabe.')
+                        if data.get('lip_sync','audio')=='audio':result=split_episode(result)
                         if names and words<data['duration']*1.45:
                             note=f'Wenig Dialog: {words} Wörter. Die Mindestdauer wird mit animierter Handlung und Atmosphäre erreicht. Dialoge in der Szenenübersicht bei Bedarf ergänzen.'
                             best_pacing={**result,'warnings':[*result.get('warnings',[]),note]}
@@ -407,6 +408,11 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 d['phase']=f'Folge {i+1}: Dialogumfang und Sprechpausen verbessern';self.save(d)
                 ep=await enrich(self,d,ep,i)
                 ep['dialogue_mode']='rich'
+            if silent_by_accident(idea,d['plan']['cast'],[ep]):
+                # Not stored: "erneut versuchen" plans this episode again. No GPU time used yet.
+                raise RuntimeError(f'{MISSING_MARK}: Folge {i+1} hat kein einziges gesprochenes Wort, obwohl Figuren sprechen sollen. '
+                    'Es wurden noch keine Bilder oder Stimmen erzeugt. „Folge neu planen“ startet die Planung dieser Folge erneut. '
+                    'Für einen bewusst stummen Film in der Idee „ohne Dialoge“ schreiben.')
             plan_seconds(ep,idea['duration'],settings(idea)['fps'])
             for scene in ep['scenes']:
                 scene['variants']=[];scene['selected']=None;scene['round']=0

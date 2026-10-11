@@ -1,3 +1,12 @@
+# Cay Studio 0.13.2 – kein stummer Film mehr durch leeres Drehbuch (11.10.2026)
+
+- Sprechen zwei sichtbare Figuren in einer Szene, teilt das Studio sie jetzt in **Schuss und Gegenschuss** auf. Bisher wurden solche Dialoge verworfen, und der Film blieb stumm.
+- Hat ein Drehbuch **kein einziges gesprochenes Wort**, obwohl Figuren sprechen sollen, hält das Studio **vor den Bildern** an. „Folge neu planen“ startet die Planung neu.
+- Ältere Projekte ohne Dialog halten vor der Tonmischung an. Dort „Neue Fassung planen“ wählen.
+- Neu im Update-Ordner: **Cay_Studio_Diagnose.cmd**. Liest nur und schreibt **Cay_Studio_Diagnose.txt**.
+
+---
+
 # Cay Studio 0.13.1 – Sprachprüfung pro Dialogbeitrag (09.10.2026)
 
 Kein PC-Neustart nötig. Update installieren, **Cay_Studio_Starten.cmd** öffnen, im Browser **Strg+F5**. Unten muss **0.13.1** stehen.

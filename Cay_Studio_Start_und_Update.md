@@ -1,27 +1,30 @@
-# Cay Studio 0.13.1 – so geht es weiter
+# Cay Studio 0.13.2 – so geht es weiter
 
 ## Was neu ist
 
-Bisher hat das Studio nur geprüft, ob die **ganze** Dialogspur stumm ist. Fehlte nur **ein** Beitrag oder **eine** Figur, ging das unbemerkt durch. Kurze Ausrufe wie „Nein!“ wurden sogar akzeptiert, wenn die Aufnahme nur ein Klick war.
+**Neu in 0.13.2:** Sprechen in einer Szene zwei sichtbare Figuren miteinander, hat das Studio diese Dialoge bisher verworfen. Ergebnis: ein Film ganz ohne Stimmen. Jetzt wird so eine Szene in **Schuss und Gegenschuss** aufgeteilt: Jede Figur bekommt beim Sprechen ihre eigene Einstellung. Hat ein Drehbuch trotzdem kein einziges Wort, hält das Studio **vor den Bildern** an.
 
-Jetzt gilt:
+**Seit 0.13.1:** Jede Tonvorschau prüft jeden Dialogbeitrag einzeln. Fehlt einer, nennt das Studio Folge, Szene und Figur. „Produktion fortsetzen“ spricht nur diese Beiträge neu ein.
 
-- Jede Tonvorschau prüft **jeden Dialogbeitrag einzeln**. Fehlt Sprache, hält das Studio an und zeigt **Folge, Szene, Figur und Text**.
-- **Produktion fortsetzen** spricht dann **nur diese Beiträge** neu ein. Alle anderen Stimmen bleiben gleich.
-- Der fertige Film wird mit der freigegebenen Tonvorschau verglichen. Fehlt darin Sprache, wird er nicht als fertig gespeichert.
-- Gewollt stumme Szenen ohne Dialog bleiben erlaubt.
+**Neu: Cay_Studio_Diagnose.cmd.** Liest dein neuestes Projekt aus und schreibt **Cay_Studio_Diagnose.txt**. Es ändert nichts.
 
-Geprüft habe ich das mit echter FFmpeg-Mischung und künstlichen Testsignalen. **Nicht geprüft:** echte KI-Stimmen auf deiner RTX 4090. Klangqualität und Lippensynchronität ändert dieses Update nicht.
+Geprüft mit echtem FFmpeg und festen Testantworten statt der echten KI. **Nicht geprüft:** echte Planung, Stimmen und Animation auf deiner RTX 4090.
 
 ## Update installieren
 
 1. ZIP herunterladen. Rechtsklick → **Alle extrahieren**.
 2. Läuft eine Produktion: **Pausieren** und den aktuellen Abschnitt beenden lassen.
-3. **Cay_Studio_Update.cmd** doppelklicken. Auf **CAY STUDIO 0.13.1 INSTALLIERT** warten.
-4. Kein PC-Neustart nötig. Im Browser **Strg + F5** drücken. Unten muss **0.13.1** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken. Auf **CAY STUDIO 0.13.2 INSTALLIERT** warten.
+4. Kein PC-Neustart nötig. Im Browser **Strg + F5** drücken. Unten muss **0.13.2** stehen.
 5. **Meine Projekte → dein Projekt → Produktion fortsetzen**.
 
-Meldet das Update „beschäftigt“: den laufenden Schritt abwarten und dieselbe Datei erneut starten. Der Installer sichert die Datenbank. Bei einem Startfehler kehrt er selbst zu 0.13.0 zurück.
+Meldet das Update „beschäftigt“: den laufenden Schritt abwarten und dieselbe Datei erneut starten. Der Installer sichert die Datenbank. Bei einem Startfehler kehrt er selbst zur vorherigen Version zurück.
+
+## Wenn „DIALOG FEHLT“ erscheint
+
+1. Neues Projekt: **Folge neu planen** anklicken. Es wurden noch keine Bilder erzeugt.
+2. Älteres Projekt: **Neue Fassung planen** anklicken. Das alte Projekt bleibt erhalten.
+3. Soll der Film wirklich stumm sein: in der Idee „ohne Dialoge“ schreiben.
 
 ## Wenn „SPRACHPRÜFUNG“ erscheint
 
