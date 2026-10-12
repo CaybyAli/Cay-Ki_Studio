@@ -5,7 +5,7 @@ from pathlib import Path
 import httpx
 from fastapi import HTTPException,Request
 from fastapi.responses import FileResponse
-from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,repair_episode_overview
+from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,repair_episode_overview
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality
@@ -490,10 +490,18 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             self.sql("UPDATE factory_steps SET status='submitted',prompt_id=? WHERE id=?",(pid,s['id']))
             start=time.monotonic();missing=0
             while not self.g['STOPPING']:
+                current=self.rows('SELECT status FROM factory_steps WHERE id=?',(s['id'],))
+                if not current or current[0]['status']=='aborted':
+                    self.sql("DELETE FROM factory_steps WHERE id=? AND status='aborted'",(s['id'],))
+                    raise Wait('Abschnitt abgebrochen. Beim Fortsetzen wird er neu berechnet.')
                 h=await self.g['get_json'](c,self.g['COMFY']+'/history/'+pid);item=(h or {}).get(pid)
                 if item:
                     status=item.get('status',{})
                     if status.get('status_str')=='error':
+                        # The user's own abort interrupts ComfyUI; that is no render failure.
+                        if self.rows("SELECT 1 FROM factory_steps WHERE id=? AND status='aborted'",(s['id'],)):
+                            self.sql("DELETE FROM factory_steps WHERE id=?",(s['id'],))
+                            raise Wait('Abschnitt abgebrochen. Beim Fortsetzen wird er neu berechnet.')
                         from comfy_diagnostics import report,summary
                         detail=report(status,json.loads(s['graph']),pid)
                         self.atomic(self.folder(d)/'Diagnose'/('ComfyUI_'+s['id']+'.json'),packed(detail).encode())
@@ -860,6 +868,39 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         @app.post('/api/factory/{rid}/pause')
         async def pause(rid:str):
             self.get(rid);self.sql('INSERT INTO factory_control VALUES(?,1) ON CONFLICT(id) DO UPDATE SET paused=1',(rid,));return self.get(rid)
+        @app.post('/api/factory/{rid}/abort-step')
+        async def abort_step(rid:str,body:AbortStep):
+            """Stop the current animation section; optionally continue with the fast profile.
+
+            Only prompts proven to belong to this step are deleted or interrupted.
+            A step that ComfyUI no longer knows (e.g. after a PC restart) can never
+            produce output, so dropping it cannot create a double render."""
+            d=self.get(rid)
+            if not (d['state']=='rendering' or (d['state']=='blocked' and d.get('resume_state')=='rendering')):
+                raise HTTPException(409,'Abbrechen ist nur während der Animation möglich.')
+            steps=self.rows("SELECT * FROM factory_steps WHERE run_id=? AND step_key LIKE 'video%' AND status IN ('new','submitting','submitted')",(rid,))
+            async with httpx.AsyncClient(trust_env=False,timeout=15) as c:
+                q=await self.g['get_json'](c,self.g['COMFY']+'/queue')
+                h=await self.g['get_json'](c,self.g['COMFY']+'/history?max_items=500')
+                if q is None or h is None:raise HTTPException(503,'ComfyUI antwortet gerade nicht. In einer Minute erneut versuchen; nach einem PC-Neustart zuerst Cay_Studio_Starten.cmd öffnen.')
+                def owner(row):return row[3].get('cay_factory_step') if len(row)>3 and isinstance(row[3],dict) else None
+                for s in steps:
+                    pids={s['prompt_id']} if s['prompt_id'] else set()
+                    pids|={row[1] for row in q.get('queue_running',[])+q.get('queue_pending',[]) if owner(row)==s['id']}
+                    pids|={pid for pid,item in h.items() if owner(item.get('prompt',[]))==s['id']}
+                    if any((h.get(pid) or {}).get('status',{}).get('completed') for pid in pids):continue  # finished: resume collects it
+                    pending=[row[1] for row in q.get('queue_pending',[]) if row[1] in pids]
+                    if pending:(await c.post(self.g['COMFY']+'/queue',json={'delete':pending})).raise_for_status()
+                    if any(row[1] in pids for row in q.get('queue_running',[])):
+                        (await c.post(self.g['COMFY']+'/interrupt',json={'prompt_id':next(row[1] for row in q['queue_running'] if row[1] in pids)})).raise_for_status()
+                    self.sql("UPDATE factory_steps SET status='aborted' WHERE id=? AND status IN ('new','submitting','submitted')",(s['id'],))
+            if self.busy!=rid:self.sql("DELETE FROM factory_steps WHERE run_id=? AND status='aborted'",(rid,))
+            d=self.get(rid)
+            if d['state']=='blocked':d['state']=d.pop('resume_state','rendering');d.pop('error',None);d.pop('uncertain',None)
+            if body.fast:d['idea']['quality']='fast'
+            d['phase']='Abschnitt abgebrochen.'+(' Weiter mit „Schnell“: zuerst kommt eine kurze Produktionsprobe.' if body.fast else ' Mit „Fortsetzen“ wird er neu berechnet.')
+            self.sql('INSERT INTO factory_control VALUES(?,?) ON CONFLICT(id) DO UPDATE SET paused=excluded.paused',(rid,0 if body.fast else 1))
+            self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/resume')
         async def resume(rid:str):
             d=self.get(rid)

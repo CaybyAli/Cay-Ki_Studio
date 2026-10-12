@@ -1,3 +1,12 @@
+# Cay Studio 0.13.3 – hängende Abschnitte lösen, „Schnell“ als Standard (12.10.2026)
+
+- Hängt ein Abschnitt länger als 10 Minuten ohne neuen Rechenschritt, erscheint eine Karte mit **„Abbrechen · mit „Schnell“ weiter“**.
+- Nach einem PC-Neustart bleibt ein Projekt nicht mehr dauerhaft bei „Status erneut prüfen“ hängen: **„Abschnitt neu starten“**.
+- Neue Projekte starten mit **„Schnell“** (4 statt 40 Rechenschritte). „Hohe Qualität“ bleibt wählbar.
+- Diagnose zeigt zusätzlich Schnell-Gewichte, Grafikspeicher und die letzten ComfyUI-Meldungen.
+
+---
+
 # Cay Studio 0.13.2 – kein stummer Film mehr durch leeres Drehbuch (11.10.2026)
 
 - Sprechen zwei sichtbare Figuren in einer Szene, teilt das Studio sie jetzt in **Schuss und Gegenschuss** auf. Bisher wurden solche Dialoge verworfen, und der Film blieb stumm.

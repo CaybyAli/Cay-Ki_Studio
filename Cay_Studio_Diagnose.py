@@ -6,6 +6,7 @@ Output goes to the console; Cay_Studio_Diagnose.cmd also saves it as text.
 """
 import json
 import os
+import shutil
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -95,13 +96,24 @@ def main():
     for label, path in [('Stimmenstudio', BASE / 'envs/studio-voices/bereit.json'), ('Qwen-Dialogmodell', BASE / 'models/studio-voices/Base/bereit.json'),
                         ('Chatterbox', BASE / 'envs/chatterbox/bin/python'), ('Sampler-Adapter', BASE / 'apps/ComfyUI/custom_nodes/cay_studio_sampler/__init__.py')]:
         print(f'{label}: {"vorhanden" if path.exists() else "FEHLT"}')
+    loras = BASE / 'apps/ComfyUI/models/loras'
+    fast = sorted(str(x.relative_to(loras)) for x in loras.rglob('*.safetensors')
+                  if any(k in x.name.lower() or k in str(x.parent).lower() for k in ('lightx2v', 'lightning', '4steps'))) if loras.is_dir() else []
+    print('Schnell-Gewichte (LoRA):', fast or 'KEINE gefunden – „Schnell“ braucht zuerst „Animation einrichten“')
+    try:
+        smi = subprocess.run([shutil.which('nvidia-smi') or '/usr/lib/wsl/lib/nvidia-smi', '--query-gpu=name,memory.used,memory.total,utilization.gpu',
+                              '--format=csv,noheader'], capture_output=True, text=True, timeout=20)
+        print('GPU jetzt:', smi.stdout.strip() or smi.stderr.strip())
+    except (OSError, subprocess.SubprocessError) as error: print('GPU jetzt: nicht lesbar', error)
     db = sqlite3.connect(f'file:{RUNTIME / "data/cay_studio.sqlite3"}?mode=ro', uri=True); db.row_factory = sqlite3.Row
     rows = db.execute('SELECT * FROM factory_runs ORDER BY updated DESC LIMIT 3').fetchall()
     for row in rows: project(row, root)
-    log = RUNTIME / 'logs/dashboard.log'
-    if log.is_file():
-        print('\nLetzte Dashboard-Meldungen:')
-        print('\n'.join(log.read_text(errors='replace').splitlines()[-25:]))
+    for name, count in (('dashboard.log', 25), ('comfyui.log', 40)):
+        log = RUNTIME / 'logs' / name
+        if log.is_file():
+            with log.open('rb') as stream:
+                stream.seek(max(0, log.stat().st_size - 60000)); text = stream.read().decode(errors='replace')
+            print(f'\nLetzte Meldungen {name}:'); print('\n'.join(text.splitlines()[-count:]))
 
 
 if __name__ == '__main__':

@@ -1,21 +1,22 @@
-# Cay Studio 0.13.2 – so geht es weiter
+# Cay Studio 0.13.3 – so geht es weiter
 
 ## Was neu ist
 
-**Neu in 0.13.2:** Sprechen in einer Szene zwei sichtbare Figuren miteinander, hat das Studio diese Dialoge bisher verworfen. Ergebnis: ein Film ganz ohne Stimmen. Jetzt wird so eine Szene in **Schuss und Gegenschuss** aufgeteilt: Jede Figur bekommt beim Sprechen ihre eigene Einstellung. Hat ein Drehbuch trotzdem kein einziges Wort, hält das Studio **vor den Bildern** an.
+**Neu in 0.13.3:**
+- Hängt ein Abschnitt (über 10 Minuten kein neuer Rechenschritt), zeigt das Studio eine Karte mit **„Abbrechen · mit „Schnell“ weiter“**. Fertige Bilder und Stimmen bleiben erhalten.
+- Nach einem PC-Neustart bleibt ein Projekt nicht mehr bei „Status erneut prüfen“ hängen. Knopf: **„Abschnitt neu starten“**.
+- Neue Projekte starten mit **„Schnell“**: 4 statt 40 Rechenschritte pro Durchgang. „Hohe Qualität“ bleibt wählbar, ist aber sehr langsam.
 
-**Seit 0.13.1:** Jede Tonvorschau prüft jeden Dialogbeitrag einzeln. Fehlt einer, nennt das Studio Folge, Szene und Figur. „Produktion fortsetzen“ spricht nur diese Beiträge neu ein.
+**Seit 0.13.2:** Kein stummer Film mehr durch ein Drehbuch ohne Dialog. **Seit 0.13.1:** Jeder Dialogbeitrag wird einzeln geprüft.
 
-**Neu: Cay_Studio_Diagnose.cmd.** Liest dein neuestes Projekt aus und schreibt **Cay_Studio_Diagnose.txt**. Es ändert nichts.
-
-Geprüft mit echtem FFmpeg und festen Testantworten statt der echten KI. **Nicht geprüft:** echte Planung, Stimmen und Animation auf deiner RTX 4090.
+Geprüft mit echtem Dashboard, nachgebautem ComfyUI und Chromium. **Nicht geprüft:** Tempo und Bildqualität auf deiner RTX 4090.
 
 ## Update installieren
 
 1. ZIP herunterladen. Rechtsklick → **Alle extrahieren**.
 2. Läuft eine Produktion: **Pausieren** und den aktuellen Abschnitt beenden lassen.
-3. **Cay_Studio_Update.cmd** doppelklicken. Auf **CAY STUDIO 0.13.2 INSTALLIERT** warten.
-4. Kein PC-Neustart nötig. Im Browser **Strg + F5** drücken. Unten muss **0.13.2** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken. Auf **CAY STUDIO 0.13.3 INSTALLIERT** warten.
+4. Kein PC-Neustart nötig. Im Browser **Strg + F5** drücken. Unten muss **0.13.3** stehen.
 5. **Meine Projekte → dein Projekt → Produktion fortsetzen**.
 
 Meldet das Update „beschäftigt“: den laufenden Schritt abwarten und dieselbe Datei erneut starten. Der Installer sichert die Datenbank. Bei einem Startfehler kehrt er selbst zur vorherigen Version zurück.

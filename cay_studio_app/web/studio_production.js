@@ -1,6 +1,6 @@
 'use strict';
 // A shared output choice for new films, existing reviews and character edits.
-function productionValues(d,legacy=false){return {fps:legacy?25:30,quality:legacy?'balanced':'high',smooth:!legacy,speech_engine:'auto',...d}}
+function productionValues(d,legacy=false){return {fps:legacy?25:30,quality:legacy?'balanced':'fast',smooth:!legacy,speech_engine:'auto',...d}}
 function qualityFields(d,scope,remix=false){
  const p=productionValues(d,scope==='project');
  const select=(key,label,options)=>`<div><label for="${scope}-${key}">${label}</label><select id="${scope}-${key}" data-production="${key}" data-scope="${scope}">${options.map(([v,l])=>`<option value="${v}"${selected(p[key],v)}>${l}</option>`).join('')}</select></div>`;

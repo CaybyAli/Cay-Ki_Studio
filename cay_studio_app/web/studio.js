@@ -1,7 +1,7 @@
 'use strict';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uuid=()=>crypto.randomUUID().replaceAll('-','');
-const defaults=()=>({request_key:uuid(),idea:'',title:'',episodes:1,duration:30,look:'auto',characters:'invent',participants:[],examples:[],music:null,fps:30,quality:'high',smooth:true,speech_engine:'auto'});
+const defaults=()=>({request_key:uuid(),idea:'',title:'',episodes:1,duration:30,look:'auto',characters:'invent',participants:[],examples:[],music:null,fps:30,quality:'fast',smooth:true,speech_engine:'auto'});
 let draft;try{draft=JSON.parse(localStorage.getItem('cay.studio.idea'))}catch{}draft={...defaults(),...(draft||{})};
 const state={page:'new',rid:null,run:null,episode:0,boot:null,runs:[],draft,signature:'',busy:false,uploads:0,polling:false,navigationEpoch:0,listEpoch:0};
 let tt;function toast(s){$('#toast').textContent=s;$('#toast').classList.add('visible');clearTimeout(tt);tt=setTimeout(()=>$('#toast').classList.remove('visible'),6500)}

@@ -24,7 +24,7 @@ class Idea(Strict):
     examples:list[str]=Field(default_factory=list,max_length=4)
     music:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     fps:Literal[25,30]=30
-    quality:Literal['fast','balanced','high']='high'
+    quality:Literal['fast','balanced','high']='fast'
     smooth:bool=True
     speech_engine:Literal['auto','qwen','chatterbox']='auto'
     lip_sync:Literal['audio','off']='audio'
@@ -103,6 +103,9 @@ class Shot(Strict):
     sound_cues:list[SoundCue]=Field(default_factory=list,max_length=4)
     motion:list[str]=Field(default_factory=list,max_length=4)
     animation_prompt:str=Field(default='',max_length=1400)
+
+class AbortStep(Strict):
+    fast:bool=False
 
 class ProductionSettings(Strict):
     revision:str=Field(pattern=r'^[a-f0-9]{64}$')

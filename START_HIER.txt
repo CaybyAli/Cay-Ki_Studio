@@ -1,14 +1,12 @@
-CAY STUDIO 0.13.2 - NUR DIESE SCHRITTE
+CAY STUDIO 0.13.3 - NUR DIESE SCHRITTE
 
-1. Alle Dateien aus diesem ZIP gemeinsam entpacken.
-2. Cay_Studio_Diagnose.cmd doppelklicken (liest nur).
-   Die Datei Cay_Studio_Diagnose.txt an Claude schicken.
-3. Laufende Produktion pausieren.
+1. Im haengenden Projekt "Nach Abschnitt pausieren" klicken.
+2. PC neu starten (beendet den haengenden Abschnitt).
+3. Cay_Studio_Starten.cmd doppelklicken.
 4. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
-5. Im Browser Strg+F5: unten muss 0.13.2 stehen.
-6. NEUES Projekt anlegen: 15 Sekunden, zwei Figuren, die sich streiten.
-7. Bei "DIALOG FEHLT": Folge neu planen anklicken.
-8. Danach Cay_Studio_Diagnose.cmd noch einmal starten und die Datei schicken.
+5. Im Browser Strg+F5: unten muss 0.13.3 stehen.
+6. Projekt oeffnen. Blauen Knopf mit "Schnell" klicken.
+7. Kurze Produktionsprobe ansehen und freigeben.
+8. Cay_Studio_Diagnose.cmd doppelklicken, Datei an Claude schicken.
 
-Nach einem PC-Neustart: Cay_Studio_Starten.cmd doppelklicken.
-Nichts loeschen.
+Fertige Bilder und Stimmen bleiben erhalten. Nichts loeschen.

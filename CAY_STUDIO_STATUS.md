@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 11.10.2026 · Branch `claude/new-session-s0p05c`
+Stand: 12.10.2026 · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -58,8 +58,20 @@ Weitere Befunde (noch nicht geändert):
 - Oberfläche: Projektseite lädt 14 Skripte und 10 Stylesheets, 13 globale Klick-Handler, 47 Funktionsüberschreibungen in Folgeschichten.
 - Seedance 2.5 / Nano Banana 2: nur kostenpflichtige Cloud (Recherche 11.10.2026). Mit der Kostenregel nicht nutzbar.
 
+## 0.13.3 (12.10.2026) – Cay: Ton da, klingt billig; 15-s-Film lädt > 30 min
+Belegt aus Cays Bildschirmfoto + Code:
+- **[Sicher]** „13/80“: Profil `high` → InfiniteTalk 40 Schritte × 2 Fenster (129 Frames, Fenster 81) in 720×1280 mit einem **480P**-Modell, `blocks_to_swap=20`.
+- **[Sicher, Foto]** 21 min ohne neuen Rechenschritt bei 12 % GPU, Windows-RAM frei 5,9 GB → Stillstand, kein langsames Rechnen.
+- **[Vermutung]** Ursache: Speicher (Auslagerung zwischen GPU und RAM). Beweis fehlt: `nvidia-smi` während des Hängens.
+- **[Sicher, Code]** Kein Abbruch eines ComfyUI-Auftrags möglich; „unklare“ Aufträge nach Neustart blockieren das Projekt für immer.
+- **[Hochrechnung]** Ohne Hänger ~37 s/Schritt → 80 Schritte ≈ 50 min pro 5-s-Abschnitt → 15 s ≈ 3 h, 60 s ≈ 13 h.
+
+Änderungen: `POST /api/factory/{rid}/abort-step` (nur eigene Aufträge; unbekannte nach Neustart verworfen; fertige nie), Render-Schleife verlässt abgebrochene Abschnitte sauber, Hänger-Karte (>10 min), Knopf für unklare Aufträge, Standard `fast`, Diagnose mit LoRAs/GPU/ComfyUI-Log, Überschrift „Dein Film entsteht“.
+Prüfung: `tests/manual/abort_step_check.py` 11/11, Chromium-Bild der Karte, pytest 14/14.
+Stimmen „billig“: offen. Hörbar billig wirken sicher auch die synthetische Sinus-Musik und das Rausch-Ambiente aus `factory_audio.py` **[Sicher, Code; Wirkung Vermutung]**.
+
 ## Nächster konkreter Schritt
-Cay startet `Cay_Studio_Diagnose.cmd` (altes 15-s-Projekt), installiert 0.13.2, legt ein neues 15-s-Projekt mit zwei sprechenden Figuren an und schickt beide `Cay_Studio_Diagnose.txt`.
+Cay: pausieren, PC neu starten, 0.13.3 installieren, mit „Schnell“ weiter, Zeit bis zur fertigen 15-s-Datei notieren, Diagnose schicken.
 
 ## Reihenfolge danach
-1. Stimmen auf Cays PC belegt. 2. Messlauf `fast` gegen `high` (gleiche 15-s-Szene: Zeit + Sichtprüfung). 3. Neue Oberfläche aus einem Guss (ein Ablauf, ein Skript). 4. Modellvergleich lokal (Wan 2.2, LTX-2.x, HunyuanVideo 1.5; Lizenz prüfen).
+1. Tempo messen mit „Schnell“ (echte Minuten pro 5-s-Abschnitt). 2. Stimmenvergleich: Qwen VoiceDesign direkt vs. Klon, Chatterbox; Hörprobenblatt. 3. Neue Oberfläche aus einem Guss. 4. Modellvergleich lokal.
