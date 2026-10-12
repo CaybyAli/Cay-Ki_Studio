@@ -206,7 +206,7 @@ def activate(runtime, root, release, url):
             if sock.connect_ex((address.hostname, address.port)) == 0:
                 raise RuntimeError('Dashboard-Port ist belegt, aber die Anwendung meldet keinen gültigen Status. Nichts beendet.')
     if jobs_exist(runtime):
-        raise RuntimeError('Ein KI-Auftrag läuft oder wartet. Nach seinem Abschluss denselben Updatebefehl erneut starten.')
+        raise RuntimeError('Ein KI-Auftrag läuft oder wartet. Nach seinem Abschluss denselben Updatebefehl erneut starten.'+' Hängt ein Abschnitt: PC neu starten, Cay_Studio_Starten.cmd öffnen, dann dieses Update erneut starten.')
     stopped, new_info = False, None
     try:
         if previous:
@@ -215,7 +215,7 @@ def activate(runtime, root, release, url):
             try:
                 http_json(url + '/api/system/maintenance', 'POST', {'enabled': True}, token)
             except urllib.error.HTTPError as error:
-                if error.code != 404: raise RuntimeError('Dashboard ist noch beschäftigt. Update später erneut starten.')
+                if error.code != 404: raise RuntimeError('Dashboard ist noch beschäftigt: ein Abschnitt läuft oder hängt.'+' Hängt ein Abschnitt: PC neu starten, Cay_Studio_Starten.cmd öffnen, dann dieses Update erneut starten.')
                 # Version 0.1 has no maintenance endpoint; inspect its queue again.
                 if jobs_exist(runtime): raise RuntimeError('Ein KI-Auftrag wurde gestartet. Update später erneut starten.')
             print('Aktualisiere nur das Dashboard. ComfyUI und Ollama laufen weiter.', flush=True)

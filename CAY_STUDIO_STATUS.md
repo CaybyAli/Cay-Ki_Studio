@@ -70,6 +70,12 @@ Belegt aus Cays Bildschirmfoto + Code:
 Prüfung: `tests/manual/abort_step_check.py` 11/11, Chromium-Bild der Karte, pytest 14/14.
 Stimmen „billig“: offen. Hörbar billig wirken sicher auch die synthetische Sinus-Musik und das Rausch-Ambiente aus `factory_audio.py` **[Sicher, Code; Wirkung Vermutung]**.
 
+## 12.10.2026 – Rückmeldung nach 0.13.3
+- **[Sicher, nvidia-smi von Cay]** 22 703 / 24 564 MiB Grafikspeicher belegt, 3 % GPU, 64 W, P2 → Speicher voll, keine Rechnung. Stützt die Speicher-Ursache des Hängens.
+- **[Sicher, Code]** Update unmöglich, solange ein Abschnitt hängt: `/api/system/maintenance` lehnt bei `factory.busy` ab (409); Pause hilft nicht. Lösung: PC-Neustart, dann Update.
+- Updater-Meldung nennt das jetzt; `Cay_Studio_Update.cmd` schreibt `Cay_Studio_Updateprotokoll.txt`. Payload unverändert 0.13.3.
+- **[Vermutung]** Wallpaper Engine belegt zusätzlich GPU; unter WDDM nicht messbar (N/A).
+
 ## Nächster konkreter Schritt
 Cay: pausieren, PC neu starten, 0.13.3 installieren, mit „Schnell“ weiter, Zeit bis zur fertigen 15-s-Datei notieren, Diagnose schicken.
 
