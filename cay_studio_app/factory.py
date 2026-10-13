@@ -5,11 +5,12 @@ from pathlib import Path
 import httpx
 from fastapi import HTTPException,Request
 from fastapi.responses import FileResponse
-from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,repair_episode_overview
+from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,repair_episode_overview
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality
 from factory_post import PostProduction
+from autopilot import Autopilot
 from factory_audio import turns
 from factory_timing import plan_seconds, POLICY
 from factory_editor import Editor, image_rounds, active_variants, regenerate
@@ -35,7 +36,7 @@ def scene_limits(duration):
 class Wait(Exception):pass
 class Uncertain(Exception):pass
 
-class Factory(Quality,Editor,PostProduction):
+class Factory(Quality,Editor,PostProduction,Autopilot):
     def __init__(self,g):
         self.g=g;self.base=g['RUNTIME'].parent;self.busy=None;self.proc=None
         self.comfy=self.base/'apps/ComfyUI';self.init_quality()
@@ -617,6 +618,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         from wan_text_encoder import validate_selected
         validate_selected(self.comfy,models['clip'])
         sample_key=digest([options,d.get('audio_revision'),[[sc.get('selected') for sc in ep['scenes']] for ep in d['episodes']]])
+        if self.autopilot_on(d):d['sample_approval']=sample_key
         episode_order=list(enumerate(d['episodes']))
         if d.get('sample_approval')!=sample_key:
             episode_order.sort(key=lambda item:not any(l['episode']==item[0] for l in d['lines']))
@@ -697,6 +699,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 for post_run in self.rows("SELECT id FROM factory_runs WHERE state IN ('audio_mixing','finishing')"):
                     current=self.get(post_run['id'])
                     if not current.get('paused'):self.collect_posts(current)
+                self.autopilot_tick()
                 runs=self.rows("SELECT id FROM factory_runs WHERE state IN ('planning','pictures','voicing','rendering','correcting') ORDER BY created")
                 for row in runs:
                     d=self.get(row['id'])
@@ -902,9 +905,16 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d['phase']='Abschnitt abgebrochen.'+(' Weiter mit „Schnell“: zuerst kommt eine kurze Produktionsprobe.' if body.fast else ' Mit „Fortsetzen“ wird er neu berechnet.')
             self.sql('INSERT INTO factory_control VALUES(?,?) ON CONFLICT(id) DO UPDATE SET paused=excluded.paused',(rid,0 if body.fast else 1))
             self.save(d);return self.get(rid)
+        @app.post('/api/factory/{rid}/autopilot')
+        async def autopilot(rid:str,body:AutopilotSwitch):
+            """Switch unattended production on or off; the worker advances waiting stops."""
+            d=self.get(rid);d['idea']['autopilot']=body.enabled;d.pop('autopilot_stopped',None)
+            d['phase']='Autopilot an: der Rest läuft ohne Zwischenfreigaben.' if body.enabled else 'Autopilot aus: du gibst jeden Schritt frei.'
+            self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/resume')
         async def resume(rid:str):
             d=self.get(rid)
+            d.pop('autopilot_stopped',None)
             if d['state']=='blocked':
                 # A failed speech check needs new takes, not the identical mix again.
                 retake=self.speech_retake(d)
