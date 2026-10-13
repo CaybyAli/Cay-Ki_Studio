@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 13.10.2026 (0.14.0) · Branch `claude/new-session-s0p05c`
+Stand: 14.10.2026 (0.15.0) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -89,8 +89,14 @@ Geändert: Profile Entwurf 480×832 / Standard 576×1024; eine Sprechszene = ein
 Prüfung: pytest 25; `tests/manual/ui_check.py` 16/16, `autopilot_check.py` 5/5, `abort_step_check.py` 11/11.
 Plan und Grenzen: `CAY_STUDIO_PLAN.md`.
 
+## 0.15.0 (14.10.2026) – Cay: Knöpfe überlappen, Beispielbilder fehlen, Filme-Reiter weg, 1 min darf keine 10 h dauern
+- Überlappung nachgestellt (0 px Abstand) und behoben; Look-Vorlagen (bis 4, JPG/WebP → PNG im Browser); Look „Knete“; Filme-Reiter entfernt; Warteschlangenplatz; Schätzung aus Messwerten.
+- Turbo (`turbo.py`): SageAttention 1.0.6 per pip --no-deps, CUDA-Probe, aktiv erst nach ComfyUI-Neustart, Abschalten bei fehlgeschlagenem Abschnitt.
+- Diagnose „PC als Team“: RAM/Swap/WSL-Einstellung/PCIe/Modell-Dateisystem/ComfyUI-Zeiten.
+- Prüfung: pytest 28, ui_check 20/20, queue_check 3/3, autopilot 5/5, abort 11/11.
+
 ## Nächster konkreter Schritt
-Cay: 0.14.0 installieren; 30-s-Film „Entwurf“ und „Standard“ mit Autopilot; Diagnose schicken (Zeiten, Arme).
+Cay: 0.15.0 installieren, Turbo einrichten, PC neu starten, 60-s-Film Entwurf mit Autopilot, Diagnose schicken.
 
 ## Reihenfolge danach
-Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 5.
+Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.

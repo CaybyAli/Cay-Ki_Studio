@@ -1,11 +1,11 @@
-# Cay Studio 0.14.0 – so geht es weiter
+# Cay Studio 0.15.0 – so geht es weiter
 
 ## Update installieren
 
 1. ZIP laden, Rechtsklick → **Alle extrahieren** → in einen **neuen** Ordner.
 2. Läuft eine Produktion: **Pausieren** oder fertig werden lassen. Hängt ein Abschnitt: **erst den PC neu starten**.
-3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.14.0 INSTALLIERT** warten.
-4. Im Browser **Strg + F5**. Unten muss **0.14.0** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.15.0 INSTALLIERT** warten.
+4. Im Browser **Strg + F5**. Unten muss **0.15.0** stehen.
 
 Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er selbst zur vorherigen zurück. Projekte, Bilder, Stimmen und fertige Filme bleiben erhalten.
 
@@ -13,8 +13,13 @@ Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er se
 
 - **Neu:** Idee eintippen, Länge, Folgen, Look und Qualität wählen. **Autopilot** an = ohne Zwischenstopps fertig.
 - **Projekte:** Alles, was auf dich wartet, steht vorn. Jedes Projekt zeigt genau einen nächsten Schritt.
-- **Filme:** Alle fertigen Filme und Folgen zum Ansehen, Herunterladen und mit Beschreibung zum Kopieren.
-- **Zahnrad oben rechts:** Einrichtung prüfen, Stimmen und Animation einrichten, Figurentausch und bisherige Oberfläche.
+- **Fertige Filme** liegen im jeweiligen Projekt: ansehen, herunterladen, Beschreibung kopieren.
+- **Look-Vorlagen:** Unter „Figuren, Look-Vorlagen und Musik“ bis zu vier Bilder hochladen (JPG, PNG, WebP). Sie bestimmen den Stil, nicht die Figuren. Für eine bestimmte Figur bei der Figur ein Bild hochladen.
+- **Zahnrad oben rechts:** Einrichtung prüfen, **Turbo einrichten**, Stimmen und Animation einrichten, Figurentausch und bisherige Oberfläche.
+
+## Turbo
+
+Einmal im Zahnrad **Turbo einrichten**. Das Studio installiert eine schnellere Rechenart und prüft sie auf deiner Grafikkarte. Danach **PC neu starten**. Schlägt ein Abschnitt mit Turbo fehl, schaltet sich Turbo selbst ab und „Fortsetzen“ rechnet ohne Turbo weiter.
 
 ## Qualität
 

@@ -1,3 +1,14 @@
+# Cay Studio 0.15.0 – Turbo, Look-Vorlagen, Warteschlange (14.10.2026)
+
+- Turbo für Sprechszenen (Zahnrad oben rechts), nur nach bestandener Probe, schaltet sich bei Fehlern selbst ab.
+- Look-Vorlagen: bis zu vier Bilder (JPG, PNG, WebP). Neuer Look „Knete“.
+- Oberfläche nur noch „Neu“ und „Projekte“; Projekte zeigen ihren Platz in der Warteschlange.
+- Diagnose zeigt, wie Grafikkarte, Prozessor, Arbeitsspeicher und SSD zusammenarbeiten.
+
+Plan und Grenzen: CAY_STUDIO_PLAN.md im Update-Ordner.
+
+---
+
 # Cay Studio 0.14.0 – neues Studio, Autopilot, Serien (13.10.2026)
 
 - Neue Oberfläche unter http://127.0.0.1:8787 (bisherige unter /classic, dort auch der Figurentausch).

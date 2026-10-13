@@ -6,6 +6,7 @@ Output goes to the console; Cay_Studio_Diagnose.cmd also saves it as text.
 """
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 import sqlite3
@@ -110,6 +111,71 @@ def project(row, root, db=None):
     for export in d.get('exports', []): print('Fertiges Video', export.get('file'), loudness(export.get('file', '')))
 
 
+def meminfo():
+    values = {}
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        key, rest = line.split(':', 1); values[key] = int(rest.split()[0]) * 1024
+    return values
+
+
+def gb(n): return f'{n / 1024 ** 3:.1f} GB'
+
+
+def pc_team():
+    """How CPU, RAM, disk and GPU share the work. Read-only facts plus plain advice."""
+    print('\nPC ALS TEAM')
+    m = meminfo(); total, avail = m.get('MemTotal', 0), m.get('MemAvailable', 0)
+    swap_used = m.get('SwapTotal', 0) - m.get('SwapFree', 0)
+    print(f'Arbeitsspeicher in WSL: {gb(total)} gesamt, {gb(avail)} frei, Auslagerung belegt {gb(swap_used)} von {gb(m.get("SwapTotal", 0))}')
+    try:
+        vm = dict(l.split() for l in Path('/proc/vmstat').read_text().splitlines() if l.startswith(('pswpin', 'pswpout')))
+        print(f'Seit Start ausgelagert: {int(vm.get("pswpout", 0)) * 4096 / 1024 ** 3:.1f} GB raus, {int(vm.get("pswpin", 0)) * 4096 / 1024 ** 3:.1f} GB wieder rein')
+    except (OSError, ValueError): pass
+    print('CPU-Threads für WSL:', os.cpu_count())
+    configs = sorted(Path('/mnt/c/Users').glob('*/.wslconfig')) if Path('/mnt/c/Users').is_dir() else []
+    for c in configs:
+        try: print(f'WSL-Einstellung {c}:', ' | '.join(l.strip() for l in c.read_text(errors='replace').splitlines() if l.strip() and not l.strip().startswith('#')) or '(leer)')
+        except OSError as error: print('WSL-Einstellung nicht lesbar:', error)
+    if not configs: print('WSL-Einstellung: keine .wslconfig gefunden (Windows-Standard)')
+    try:
+        smi = subprocess.run([shutil.which('nvidia-smi') or '/usr/lib/wsl/lib/nvidia-smi', '--query-gpu=pcie.link.gen.current,pcie.link.gen.max,pcie.link.width.current,pcie.link.width.max,power.limit',
+                              '--format=csv,noheader'], capture_output=True, text=True, timeout=20)
+        print('Grafikkarte PCIe (Gen jetzt, Gen max, Breite jetzt, Breite max, Leistungsgrenze):', smi.stdout.strip() or smi.stderr.strip())
+    except (OSError, subprocess.SubprocessError): pass
+    models = BASE / 'apps/ComfyUI/models'
+    try:
+        fs = subprocess.run(['df', '-T', '-h', str(models.resolve())], capture_output=True, text=True, timeout=20).stdout.splitlines()[-1].split()
+        print(f'Modelle liegen auf: {fs[1]} ({fs[6]}), frei {fs[4]}' + ('  ACHTUNG: Windows-Laufwerk, Laden ist langsam' if fs[1] in ('9p', 'drvfs', 'v9fs') else ''))
+    except (OSError, IndexError, subprocess.SubprocessError): pass
+    try:
+        top = subprocess.run(['ps', '-eo', 'rss,comm', '--sort=-rss'], capture_output=True, text=True, timeout=20).stdout.splitlines()[1:7]
+        print('Größte Programme in WSL:', ', '.join(f'{l.split()[1]} {int(l.split()[0]) / 1024 ** 2:.1f} GB' for l in top))
+    except (OSError, ValueError, IndexError, subprocess.SubprocessError): pass
+    try:
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open('http://127.0.0.1:11434/api/ps', timeout=4) as r: loaded = json.load(r).get('models', [])
+        print('Planungsmodell im Speicher:', ', '.join(f'{x["name"]} {x.get("size", 0) / 1024 ** 3:.1f} GB' for x in loaded) or 'keins (gut während der Animation)')
+    except (OSError, ValueError): print('Planungsmodell im Speicher: Ollama nicht erreichbar')
+    try:
+        print('ComfyUI gestartet mit:', ' '.join(json.loads((RUNTIME / 'logs/comfyui_prozess.json').read_text())['args'][1:]))
+    except (OSError, ValueError, KeyError): pass
+    print('Turbo:', (RUNTIME / 'config/turbo.json').read_text() if (RUNTIME / 'config/turbo.json').is_file() else 'nicht eingerichtet')
+    log = RUNTIME / 'logs/comfyui.log'
+    if log.is_file():
+        with log.open('rb') as stream:
+            stream.seek(max(0, log.stat().st_size - 3_000_000)); text = stream.read().decode(errors='replace')
+        runs = [float(x) for x in re.findall(r'Prompt executed in ([0-9.]+) seconds', text)][-20:]
+        speeds = re.findall(r'([0-9.]+)s/it\]', text)[-12:]
+        loads = len(re.findall(r'(?i)(loading model|requested to load|loaded completely|load_model)', text))
+        if runs: print('ComfyUI-Aufträge zuletzt (Sekunden):', ', '.join(f'{x:.0f}' for x in runs), f'| schnellster {min(runs):.0f}, langsamster {max(runs):.0f}')
+        if speeds: print('Sekunden pro Rechenschritt zuletzt:', ', '.join(speeds))
+        print('Modell-Ladevorgänge im Protokollausschnitt:', loads, '| RAM-Druck gemeldet:', 'ja' if 'RAM pressure' in text else 'nein')
+    advice = []
+    if swap_used > 2 * 1024 ** 3: advice.append('WSL lagert aus. Mehr Arbeitsspeicher für WSL freigeben und andere Programme schließen.')
+    if total and total < 40 * 1024 ** 3: advice.append(f'WSL hat nur {gb(total)}. Für 14B-Videomodelle sind etwa 48 GB sinnvoll.')
+    print('Empfehlung:', ' '.join(advice) or 'Keine Auffälligkeit in den gelesenen Werten.')
+
+
 def main():
     print('CAY STUDIO DIAGNOSE (liest nur, ändert nichts)')
     print('Dashboard:', health())
@@ -128,6 +194,7 @@ def main():
         print('GPU jetzt:', smi.stdout.strip() or smi.stderr.strip())
     except (OSError, subprocess.SubprocessError) as error: print('GPU jetzt: nicht lesbar', error)
     db = sqlite3.connect(f'file:{RUNTIME / "data/cay_studio.sqlite3"}?mode=ro', uri=True); db.row_factory = sqlite3.Row
+    pc_team()
     rows = db.execute('SELECT * FROM factory_runs ORDER BY updated DESC LIMIT 3').fetchall()
     for row in rows: project(row, root, db)
     for name, count in (('dashboard.log', 25), ('comfyui.log', 40)):
