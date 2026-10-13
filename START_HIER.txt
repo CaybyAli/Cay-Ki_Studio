@@ -1,10 +1,14 @@
-CAY STUDIO 0.13.4 - NUR DIESE SCHRITTE
+CAY STUDIO 0.14.0 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
-2. Cay_Studio_Diagnose.cmd doppelklicken.
-   Die Datei Cay_Studio_Diagnose.txt an Claude schicken.
+2. Laufende Produktion pausieren (oder fertig werden lassen).
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
-4. Im Browser Strg+F5: unten muss 0.13.4 stehen.
+4. Im Browser Strg+F5. Unten muss 0.14.0 stehen.
+5. "Neu": Idee eintippen, 30 s, Qualitaet "Entwurf", Autopilot an.
+   Film starten. Danach dasselbe mit "Standard".
+6. Wenn beide fertig sind: Cay_Studio_Diagnose.cmd doppelklicken
+   und die Datei Cay_Studio_Diagnose.txt schicken.
 
 Haengt ein Abschnitt: erst PC neu starten, dann Update.
+Die bisherige Oberflaeche: http://127.0.0.1:8787/classic
 Nichts loeschen.

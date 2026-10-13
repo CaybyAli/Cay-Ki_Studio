@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 13.10.2026 · Branch `claude/new-session-s0p05c`
+Stand: 13.10.2026 (0.14.0) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -83,8 +83,14 @@ Stimmen „billig“: offen. Hörbar billig wirken sicher auch die synthetische 
 - **[Sicher, Code]** Mundbewegung läuft mit `cfg=1` in allen Profilen → Negativ-Prompt („missing arm“) wirkt dort nicht.
 - 0.13.4: Messung `Stimmgestaltung` und `Sprache · <engine>`; Diagnose-Zeittabelle.
 
+## 0.14.0 (13.10.2026) – großer Umbau auf Cays Wunsch
+Grundlage: Diagnose des Keks-Films (Animation 82,7 von 87,5 min; ComfyUI 55 s/Schritt; schnellster Abschnitt 528 s, Mittel 20,7 min).
+Geändert: Profile Entwurf 480×832 / Standard 576×1024; eine Sprechszene = ein Auftrag; 25 FPS ohne Umrechnung von Sprechszenen; Autopilot; Serien-Cliffhanger + „Teil X/Y“ + Beschreibung; −14 LUFS; neue Oberfläche `web/app2` (alt unter /classic).
+Prüfung: pytest 25; `tests/manual/ui_check.py` 16/16, `autopilot_check.py` 5/5, `abort_step_check.py` 11/11.
+Plan und Grenzen: `CAY_STUDIO_PLAN.md`.
+
 ## Nächster konkreter Schritt
-Cay: Diagnose (Zeittabelle + Wörter des Keks-Films) schicken; sagen, ob der fehlende Arm schon im gewählten Bild fehlt. Danach gezielt die größte Zeitposition verkürzen.
+Cay: 0.14.0 installieren; 30-s-Film „Entwurf“ und „Standard“ mit Autopilot; Diagnose schicken (Zeiten, Arme).
 
 ## Reihenfolge danach
-1. Größten Zeitblock verkürzen (nach Messung). 2. 60-s-Test. 3. Stimmenvergleich. 4. Neue Oberfläche. 5. Modellvergleich.
+Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 5.

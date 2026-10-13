@@ -1,134 +1,132 @@
 {
-  "release": "0.13.4",
+  "release": "0.14.0",
   "date": "2026-10-13",
-  "environment": "Linux-Cloud-Container ohne GPU/WSL/Nutzer-PC.",
+  "environment": "Linux-Cloud-Container ohne GPU/WSL/Nutzer-PC. Echtes Dashboard, nachgebautes ComfyUI, Chromium, FFmpeg 6.1. Ollama/TTS/GPU-Modelle nicht ausgeführt.",
   "passed": {
-    "tests_total": 15,
-    "voice_timing": "Stimmgestaltung und Sprache werden wie andere Arbeitsschritte in performance_stages gespeichert (Test mit Ersatz-Messung).",
-    "diagnose": "Zeittabelle je Projekt aus performance_stages, getestet mit Beispieldaten."
+    "pytest": "25 Tests (Sprache, Dialogplanung, Profile, Autopilot, Serie, Lautheit)",
+    "ui_check": "tests/manual/ui_check.py 16/16: alle Projektzustände, hell/dunkel, Handybreite, Film anlegen, keine Konsolenfehler",
+    "autopilot_check": "5/5 mit echtem Dashboard-Worker",
+    "abort_step_check": "11/11",
+    "loudness": "Testsignal -15,2 LUFS (Ziel -14), Spitze -4,5 dBFS",
+    "part_label": "im gerenderten Bild geprüft"
+  },
+  "measured_on_cay_pc": {
+    "animation_share": "82,7 von 87,5 min (15-s-Film, Standard)",
+    "fastest_piece": "528 s (ComfyUI-Protokoll)",
+    "average_piece": "20,7 min",
+    "export_mean_volume_before": "-23,9 dB"
   },
   "limits": [
-    "Reale Zeiten nur auf Cays PC messbar."
+    "Tempo der neuen Profile auf der RTX 4090 nicht gemessen (Hochrechnung).",
+    "Wirkung auf fehlende Arme nicht belegt.",
+    "Serien-Cliffhanger hängen von der Planungsqualität des lokalen Sprachmodells ab.",
+    "Figurentausch nur in der bisherigen Oberfläche (/classic)."
   ],
   "previous_release_report": {
-    "release": "0.13.3",
-    "date": "2026-10-12",
-    "environment": "Linux-Cloud-Container ohne GPU/WSL/Nutzer-PC. Echtes Dashboard + nachgebautes ComfyUI (HTTP), Chromium.",
+    "release": "0.13.4",
+    "date": "2026-10-13",
+    "environment": "Linux-Cloud-Container ohne GPU/WSL/Nutzer-PC.",
     "passed": {
-      "tests_total": 14,
-      "abort_step_end_to_end": "11/11 (tests/manual/abort_step_check.py): nur eigener Auftrag unterbrochen, fremder bleibt; Neustart-Fall (unklar) gelöst; fertiger Abschnitt bleibt; falscher Zustand 409.",
-      "stall_card": "Chromium: Karte nach 25 min ohne Rechenschritt sichtbar, keine JS-Fehler.",
-      "cause_from_user_screenshot": "13/80 Schritte = 2 InfiniteTalk-Fenster × 40 Schritte (Profil high, 720×1280). 21 min ohne Schritt bei 12 % GPU."
+      "tests_total": 15,
+      "voice_timing": "Stimmgestaltung und Sprache werden wie andere Arbeitsschritte in performance_stages gespeichert (Test mit Ersatz-Messung).",
+      "diagnose": "Zeittabelle je Projekt aus performance_stages, getestet mit Beispieldaten."
     },
     "limits": [
-      "Ursache des Hängens auf Cays PC nicht bewiesen (Vermutung: Speicher/Auslagerung, blocks_to_swap=20, wenig freier Windows-RAM).",
-      "Abbruch während laufender Render-Schleife nur per Code-Prüfung abgesichert, nicht Ende-zu-Ende.",
-      "„Schnell“ braucht installierte Lightx2v/Lightning-Gewichte; Qualität und Zeit auf der RTX 4090 ungemessen."
+      "Reale Zeiten nur auf Cays PC messbar."
     ],
     "previous_release_report": {
-      "release": "0.13.2",
-      "date": "2026-10-11",
-      "environment": "Linux-Cloud-Container ohne GPU/WSL/Nutzer-PC. Ollama-Antworten durch feste Testantworten ersetzt; FFmpeg 6.1 echt.",
+      "release": "0.13.3",
+      "date": "2026-10-12",
+      "environment": "Linux-Cloud-Container ohne GPU/WSL/Nutzer-PC. Echtes Dashboard + nachgebautes ComfyUI (HTTP), Chromium.",
       "passed": {
         "tests_total": 14,
-        "dialogue_plan_tests": 5,
-        "speech_check_tests": 9,
-        "reproduced_before_fix": "0.13.1-enrich(): Dialogergänzung für eine Szene mit zwei sichtbaren Figuren komplett verworfen (0 Wörter, nur Warnung). Mit 0.13.2: 7 Wörter übernommen, Schuss/Gegenschuss.",
-        "silent_guard": "Figuren + Sprache gewünscht + 0 Wörter: Planung hält vor Bildern an; ältere Projekte halten vor der Tonmischung an (Neue Fassung).",
-        "diagnose": "Cay_Studio_Diagnose.py gegen nachgebaute Installation: liest DB nur, ffprobe/volumedetect des Exports."
+        "abort_step_end_to_end": "11/11 (tests/manual/abort_step_check.py): nur eigener Auftrag unterbrochen, fremder bleibt; Neustart-Fall (unklar) gelöst; fertiger Abschnitt bleibt; falscher Zustand 409.",
+        "stall_card": "Chromium: Karte nach 25 min ohne Rechenschritt sichtbar, keine JS-Fehler.",
+        "cause_from_user_screenshot": "13/80 Schritte = 2 InfiniteTalk-Fenster × 40 Schritte (Profil high, 720×1280). 21 min ohne Schritt bei 12 % GPU."
       },
       "limits": [
-        "Ob Cays 15-s-Test genau diesen Weg genommen hat, ist ohne seine Diagnose nicht bewiesen.",
-        "Aufgeteilte Einstellungen brauchen je ein eigenes Bild: mehr Bildrechenzeit. Wirkung auf Schnitt und Story nur auf dem Ziel-PC sichtbar.",
-        "Echte Ollama-Planung, Stimmen und GPU-Animation nicht ausgeführt."
+        "Ursache des Hängens auf Cays PC nicht bewiesen (Vermutung: Speicher/Auslagerung, blocks_to_swap=20, wenig freier Windows-RAM).",
+        "Abbruch während laufender Render-Schleife nur per Code-Prüfung abgesichert, nicht Ende-zu-Ende.",
+        "„Schnell“ braucht installierte Lightx2v/Lightning-Gewichte; Qualität und Zeit auf der RTX 4090 ungemessen."
       ],
       "previous_release_report": {
-        "release": "0.13.1",
-        "date": "2026-10-09",
-        "environment": "Linux-Cloud-Container ohne GPU, ohne WSL, ohne Zugriff auf Nutzer-PC. Echte FFmpeg 6.1-Mischung und -Export; Stimmen synthetische Signale, keine KI-Sprache.",
+        "release": "0.13.2",
+        "date": "2026-10-11",
+        "environment": "Linux-Cloud-Container ohne GPU/WSL/Nutzer-PC. Ollama-Antworten durch feste Testantworten ersetzt; FFmpeg 6.1 echt.",
         "passed": {
+          "tests_total": 14,
+          "dialogue_plan_tests": 5,
           "speech_check_tests": 9,
-          "reproduced_before_fix": "0.13.0-mix() akzeptierte eine Mischung mit einer fast stummen Zeile (Tonbericht nur Gesamtpegel). finish_voice akzeptierte für \"Nein!\" und \"Lass mich los!\" eine 0,2-s-Klickaufnahme.",
-          "mix": "Stumme Zeile blockiert mit Folge/Szene/Figur; Sprachpruefung.json; gewollt stumme Szene erlaubt; laute Musik als Warnung gemeldet; Überdeckung blockiert (Direkttest).",
-          "export": "Ende-zu-Ende finish() mit echten Clips: Exportpruefung.json, 2/2 Beiträge im MP4; verlorene Szene im Vergleich erkannt.",
-          "retake": "Fortsetzen nach Sprachprüfungsfehler erhöht nur für betroffene Zeilen die Aufnahme-Nummer; unveränderte Zeilen behalten Cache-Signatur.",
-          "cost": "Sprachprüfung 0,7 s bei 90 s/30 Beiträgen (Container-CPU)."
+          "reproduced_before_fix": "0.13.1-enrich(): Dialogergänzung für eine Szene mit zwei sichtbaren Figuren komplett verworfen (0 Wörter, nur Warnung). Mit 0.13.2: 7 Wörter übernommen, Schuss/Gegenschuss.",
+          "silent_guard": "Figuren + Sprache gewünscht + 0 Wörter: Planung hält vor Bildern an; ältere Projekte halten vor der Tonmischung an (Neue Fassung).",
+          "diagnose": "Cay_Studio_Diagnose.py gegen nachgebaute Installation: liest DB nur, ffprobe/volumedetect des Exports."
         },
         "limits": [
-          "Keine echte Qwen-/Chatterbox-Ausgabe geprüft; Schwellen für echte Stimmen (Flüstern) auf dem Ziel-PC beobachten.",
-          "Die Prüfung erkennt fehlende oder unhörbare Beiträge, nicht falsche Wörter. Lokale Transkription mit Textabgleich fehlt noch.",
-          "Die erste Verluststelle in Cays echtem Projekt ist ohne dessen Diagnose/Projektdaten nicht nachgewiesen.",
-          "Bestehende Tonvorschauen werden nicht automatisch neu geprüft; erst neue Mischung oder Export prüfen."
+          "Ob Cays 15-s-Test genau diesen Weg genommen hat, ist ohne seine Diagnose nicht bewiesen.",
+          "Aufgeteilte Einstellungen brauchen je ein eigenes Bild: mehr Bildrechenzeit. Wirkung auf Schnitt und Story nur auf dem Ziel-PC sichtbar.",
+          "Echte Ollama-Planung, Stimmen und GPU-Animation nicht ausgeführt."
         ],
         "previous_release_report": {
-          "release": "0.13.0",
-          "date": "2026-09-29",
-          "environment": "Linux-Testumgebung. Keine Ausführung auf Nutzer-PC, Windows-Desktop oder RTX 4090.",
+          "release": "0.13.1",
+          "date": "2026-10-09",
+          "environment": "Linux-Cloud-Container ohne GPU, ohne WSL, ohne Zugriff auf Nutzer-PC. Echte FFmpeg 6.1-Mischung und -Export; Stimmen synthetische Signale, keine KI-Sprache.",
           "passed": {
-            "regression_tests": 9,
-            "preserved_planning_temporal_tests": 7,
-            "media_mapping_tests": 8,
-            "api": "FastAPI/SQLite: Projekt zweimal öffnen, löschen, ausgeblendete Liste, gesperrte Mutationen im Papierkorb, Wiederherstellen mit Pause, Persistenz nach neuer Factory-Instanz, RAM im Fortschritt, aktive Arbeit blockiert Ton-Rückkehr, Exporte archiviert, idempotente Dialogkorrektur erhält Bilder/alte Dialoge und verlangt neue Tonfreigabe.",
-            "browser": "Chromium: konkreter Fragmentfehler reproduziert und behoben; blockiertes Renderprojekt zweimal öffnen; sichtbare Ursache und Tonbearbeitung; Lösch- und Wiederherstellklicks; alte Listen-/Projektrückmeldungen ignoriert; 40 Bilder/Audio/Scroll/Eingaben erhalten; Dialogkorrektur absenden; Hell/Dunkel/390px, Mehrfiguren, Vorschau-/Ergebnisfreigabe.",
-            "upgrade": "0.12.0 -> 0.13.0: Sicherung, eigener Dashboardprozess, Chat und Stimmeninstallation erhalten, Adapter installiert, Wartungs- und Beschäftigungsschutz, idempotent, fehlerhafter Start kehrt zu vorheriger Version zurück. Prozessadapter nur für eigene Testkinder wegen PID-Namensraum; produktiver Prozessschutz per AST unverändert.",
-            "package": "68 Programmdateien, Python/JavaScript-Syntax, SHA256-Payload, bytegleiche Entpackung und wiederholte Installation."
+            "speech_check_tests": 9,
+            "reproduced_before_fix": "0.13.0-mix() akzeptierte eine Mischung mit einer fast stummen Zeile (Tonbericht nur Gesamtpegel). finish_voice akzeptierte für \"Nein!\" und \"Lass mich los!\" eine 0,2-s-Klickaufnahme.",
+            "mix": "Stumme Zeile blockiert mit Folge/Szene/Figur; Sprachpruefung.json; gewollt stumme Szene erlaubt; laute Musik als Warnung gemeldet; Überdeckung blockiert (Direkttest).",
+            "export": "Ende-zu-Ende finish() mit echten Clips: Exportpruefung.json, 2/2 Beiträge im MP4; verlorene Szene im Vergleich erkannt.",
+            "retake": "Fortsetzen nach Sprachprüfungsfehler erhöht nur für betroffene Zeilen die Aufnahme-Nummer; unveränderte Zeilen behalten Cache-Signatur.",
+            "cost": "Sprachprüfung 0,7 s bei 90 s/30 Beiträgen (Container-CPU)."
           },
           "limits": [
-            "Kein vollständiger Nutzer-Stacktrace: bekannte deaktivierte LongCat/RoPE-Zähler und fehlende Schema-Standardwerte abgesichert, andere Ursachen der gleichen Kurzmeldung können verbleiben.",
-            "Samplerablauf in Tests mit kontrolliertem Modell simuliert; keine CUDA-Inferenz. Adapter greift pro Aufruf ein und entfernt den Hook auch im Fehlerfall.",
-            "Windows-RAM-Abfrage ist lesend und wurde hier nicht auf Windows ausgeführt. Keine .wslconfig-Änderung.",
-            "ComfyUI-/free fordert eine asynchrone Cachefreigabe an; gemessene RAM-Reduktion und Renderzeit auf Zielsystem offen.",
-            "Generierte Zusatzdialoge sind schema- und besetzungsgeprüft, aber Storyqualität, neue Stimmen und Lippensynchronität benötigen die sicht-/hörbare Probe.",
-            "Neue Dialoge können betroffene Animationen ungültig machen und Renderzeit benötigen. Vorhandene Dateien bleiben erhalten.",
-            "Datenbank-Rollback des Dashboards entfernt den separaten ComfyUI-Adapter nicht; frühere Dashboards verwenden ihn nicht.",
-            "Keine automatische Änderung fertiger Filme; frühere Figurentausch-Heuristik und ihre Grenzen bleiben bestehen."
+            "Keine echte Qwen-/Chatterbox-Ausgabe geprüft; Schwellen für echte Stimmen (Flüstern) auf dem Ziel-PC beobachten.",
+            "Die Prüfung erkennt fehlende oder unhörbare Beiträge, nicht falsche Wörter. Lokale Transkription mit Textabgleich fehlt noch.",
+            "Die erste Verluststelle in Cays echtem Projekt ist ohne dessen Diagnose/Projektdaten nicht nachgewiesen.",
+            "Bestehende Tonvorschauen werden nicht automatisch neu geprüft; erst neue Mischung oder Export prüfen."
           ],
           "previous_release_report": {
-            "release": "0.12.0",
+            "release": "0.13.0",
             "date": "2026-09-29",
-            "environment": "Linux; echte CPU-SigLIP2-Prüfung. Kein Zugriff auf Nutzer-PC oder GPU-Inferenz.",
+            "environment": "Linux-Testumgebung. Keine Ausführung auf Nutzer-PC, Windows-Desktop oder RTX 4090.",
             "passed": {
-              "cast_and_progress_unit_tests": 10,
-              "media_and_mapping_tests": 8,
-              "planning_and_temporal_regressions": 7,
-              "user_video_check": "Echte CPU-Inferenz, 21 Stichproben; erster Rückwechsel-Verdacht 1,75 s, wiederholt bis 4,938 s. Referenz aus erstem Frame; ohne ursprüngliche Trackingmasken.",
-              "integration": "FastAPI/SQLite/FFmpeg: zwei Folgen bis MP4, Freigaben, Neustart, keine Doppelproduktion; separater kompletter Remix-Test mit zwei Zielen, Ankern, Qualitätsstopp nach zwei Versuchen, gezielter Wiederaufnahme und finaler Freigabe.",
-              "ui": "Chromium: 40 Bilder, unveränderte Medien/Scroll/Formzustände, 2 Ziele, Hell/Dunkel/390px; Planungsreparatur, Auto-Setupstatus mit offenem Log, 6 Anker, Qualitätsstopp und Ergebnisfreigabe; keine JS-Fehler.",
-              "upgrade": "0.11.0 -> 0.12.0: echtes Live-Update, Datenbankbackup, Chat/Stimmenstatus erhalten, beschäftigter Auftrag blockiert Wechsel, neue Assets erreichbar, Wiederholung idempotent, defekter Start rollt zurück. Test-Prozessadapter ausschließlich für eigene gestartete Kinder; produktiver Prozessschutz per AST unverändert.",
-              "package": "64 Programmdateien: Syntax, Payload-SHA256, bytegleiches Entpacken und wiederholte Installation geprüft."
+              "regression_tests": 9,
+              "preserved_planning_temporal_tests": 7,
+              "media_mapping_tests": 8,
+              "api": "FastAPI/SQLite: Projekt zweimal öffnen, löschen, ausgeblendete Liste, gesperrte Mutationen im Papierkorb, Wiederherstellen mit Pause, Persistenz nach neuer Factory-Instanz, RAM im Fortschritt, aktive Arbeit blockiert Ton-Rückkehr, Exporte archiviert, idempotente Dialogkorrektur erhält Bilder/alte Dialoge und verlangt neue Tonfreigabe.",
+              "browser": "Chromium: konkreter Fragmentfehler reproduziert und behoben; blockiertes Renderprojekt zweimal öffnen; sichtbare Ursache und Tonbearbeitung; Lösch- und Wiederherstellklicks; alte Listen-/Projektrückmeldungen ignoriert; 40 Bilder/Audio/Scroll/Eingaben erhalten; Dialogkorrektur absenden; Hell/Dunkel/390px, Mehrfiguren, Vorschau-/Ergebnisfreigabe.",
+              "upgrade": "0.12.0 -> 0.13.0: Sicherung, eigener Dashboardprozess, Chat und Stimmeninstallation erhalten, Adapter installiert, Wartungs- und Beschäftigungsschutz, idempotent, fehlerhafter Start kehrt zu vorheriger Version zurück. Prozessadapter nur für eigene Testkinder wegen PID-Namensraum; produktiver Prozessschutz per AST unverändert.",
+              "package": "68 Programmdateien, Python/JavaScript-Syntax, SHA256-Payload, bytegleiche Entpackung und wiederholte Installation."
             },
             "limits": [
-              "Generierende KI-Modelle in Ablaufprüfungen simuliert. Neue GPU-Animation, Stimme und Laufzeit auf Ziel-PC nicht geprüft.",
-              "Figurenprüfung ist eine Stichproben-Heuristik, kann Fehler übersehen oder Fehlalarme auslösen; Mensch-zu-Mensch-Erkennung nicht praktisch kalibriert.",
-              "Die zusätzlichen Referenzbilder benötigen Rechenzeit. Früher Stopp und begrenzte Wiederholungen vermeiden weitere Blindläufe, garantieren keine kürzere Gesamtzeit.",
-              "Windows-CMD/PowerShell/WSL hier nicht auf Windows ausgeführt. Startercode gegenüber geprüfter Starthilfe 1.1 unverändert.",
-              "Ein vollständiger Integrationstest bestand die Produktionsabschnitte, bevor die konstante Testvideo-Ausgabe eine gecachte Qualitätswarnung behielt. Testgenerator korrigiert; gezielter Remix-Neulauf vollständig bestanden.",
-              "Tongesteuerte Animation ist keine Garantie perfekter Mundbewegungen; Tier-/Fantasiefiguren, Verdeckung und Identität benötigen Sichtprüfung.",
-              "Schnellprofil reduziert Sampling auf vier Schritte mit passenden Gewichten. Keine garantierte Zeitersparnis oder 10x-Gesamtbeschleunigung.",
-              "Neue Sprechplanung nutzt einen sichtbaren Sprecher pro Einstellung. Gleichzeitige Mehrpersonen-Lippensynchronität wird hier nicht unterstützt.",
-              "Bis vier Austauschmasken werden in Reihenfolge überlagert; höhere Punktnummer im Vordergrund. Starke Überdeckung und Schnitte können Trackingfehler erzeugen.",
-              "Der erste Sprechabschnitt ist eine lokale Qualitätsprobe; bestehende fertige Filme und schon geplante Szenenzahlen werden nicht umgeschrieben."
+              "Kein vollständiger Nutzer-Stacktrace: bekannte deaktivierte LongCat/RoPE-Zähler und fehlende Schema-Standardwerte abgesichert, andere Ursachen der gleichen Kurzmeldung können verbleiben.",
+              "Samplerablauf in Tests mit kontrolliertem Modell simuliert; keine CUDA-Inferenz. Adapter greift pro Aufruf ein und entfernt den Hook auch im Fehlerfall.",
+              "Windows-RAM-Abfrage ist lesend und wurde hier nicht auf Windows ausgeführt. Keine .wslconfig-Änderung.",
+              "ComfyUI-/free fordert eine asynchrone Cachefreigabe an; gemessene RAM-Reduktion und Renderzeit auf Zielsystem offen.",
+              "Generierte Zusatzdialoge sind schema- und besetzungsgeprüft, aber Storyqualität, neue Stimmen und Lippensynchronität benötigen die sicht-/hörbare Probe.",
+              "Neue Dialoge können betroffene Animationen ungültig machen und Renderzeit benötigen. Vorhandene Dateien bleiben erhalten.",
+              "Datenbank-Rollback des Dashboards entfernt den separaten ComfyUI-Adapter nicht; frühere Dashboards verwenden ihn nicht.",
+              "Keine automatische Änderung fertiger Filme; frühere Figurentausch-Heuristik und ihre Grenzen bleiben bestehen."
             ],
             "previous_release_report": {
-              "release": "0.11.0",
-              "date": "2026-09-28",
-              "environment": "Linux-Testumgebung. Kein Zugriff auf Nutzer-PC, CUDA-Inferenz oder Windows-Desktop.",
+              "release": "0.12.0",
+              "date": "2026-09-29",
+              "environment": "Linux; echte CPU-SigLIP2-Prüfung. Kein Zugriff auf Nutzer-PC oder GPU-Inferenz.",
               "passed": {
                 "cast_and_progress_unit_tests": 10,
                 "media_and_mapping_tests": 8,
-                "startup_service_tests": 2,
-                "ui": "Chromium: 40 Bilder, Korrekturzustand, unveränderte Medienknoten/Scrollposition/offene Details/ungespeicherter Text; Audio bleibt bei Statusänderung erhalten; zwei nummerierte Zuordnungen und Tastaturpunkt; Hell/Dunkel, 390px, Live-Fortschritt, Pause/Fortsetzen/Download; keine JS-Fehler oder horizontalen Überläufe.",
-                "integration": "Echter FastAPI-Server, SQLite und FFmpeg: zwei Folgen mit Bild-/Ton-/Produktionsproben-Freigaben, Neustart während Probe, MP4 mit Audio/Untertiteln, verlorene ComfyUI-Antwort ohne Doppelrender; zwei Figurenzuordnungen durch getrenntes Tracking/Startbild/Maskenfreigabe/Rendercache bis zusammengesetztes MP4.",
-                "audio_windows": "Stille vor/nach Sprache, identische Samples bei getrennten benachbarten Fenstern gegenüber Gesamtfenster; veränderte Referenzdatei abgewiesen.",
-                "multi_target_media": "Roter und grüner Austauschbereich bleiben getrennt, blauer Originalbereich und Ton erhalten; verankertes Ersatzbild ist erster Kontrollframe, weitere maskierte Frames neutral grau.",
-                "export_cache": "Zwei vorher kodierte Teile unverändert übernommen; 60 Frames bei 30 FPS, Audio; final keine erneute Teilekodierung.",
-                "upgrade": "0.10.0 -> 0.11.0: Datenbankbackup, Chat/Modelleinrichtung erhalten, Wartungssperre, Wiederholung ohne Wechsel und Startfehler-Rollback. Nur Prozessadapter im Test ersetzt, da Testumgebung andere /proc-PIDs zeigt; erlaubt ausschließlich eigene dort gestartete Kindprozesse.",
-                "package": "61 Programmdateien, Python-AST/Syntax, Payload-SHA256, bytegenaues Entpacken und wiederholte Installation geprüft."
+                "planning_and_temporal_regressions": 7,
+                "user_video_check": "Echte CPU-Inferenz, 21 Stichproben; erster Rückwechsel-Verdacht 1,75 s, wiederholt bis 4,938 s. Referenz aus erstem Frame; ohne ursprüngliche Trackingmasken.",
+                "integration": "FastAPI/SQLite/FFmpeg: zwei Folgen bis MP4, Freigaben, Neustart, keine Doppelproduktion; separater kompletter Remix-Test mit zwei Zielen, Ankern, Qualitätsstopp nach zwei Versuchen, gezielter Wiederaufnahme und finaler Freigabe.",
+                "ui": "Chromium: 40 Bilder, unveränderte Medien/Scroll/Formzustände, 2 Ziele, Hell/Dunkel/390px; Planungsreparatur, Auto-Setupstatus mit offenem Log, 6 Anker, Qualitätsstopp und Ergebnisfreigabe; keine JS-Fehler.",
+                "upgrade": "0.11.0 -> 0.12.0: echtes Live-Update, Datenbankbackup, Chat/Stimmenstatus erhalten, beschäftigter Auftrag blockiert Wechsel, neue Assets erreichbar, Wiederholung idempotent, defekter Start rollt zurück. Test-Prozessadapter ausschließlich für eigene gestartete Kinder; produktiver Prozessschutz per AST unverändert.",
+                "package": "64 Programmdateien: Syntax, Payload-SHA256, bytegleiches Entpacken und wiederholte Installation geprüft."
               },
               "limits": [
-                "KI-Inferenz von Ollama, ComfyUI, SAM2 und Stimmen in Integrationstests simuliert. Neue GPU-Qualität und Geschwindigkeit nicht gemessen.",
-                "Audio-Anschluss und Modellauswahl anhand offizieller Node-Schnittstellen implementiert; vollständige echte Modellinstallation/CUDA-Ausführung auf Ziel-PC noch erforderlich.",
-                "Windows-CMD/PowerShell/WSL-Übergabe nur strukturell und Startentscheidungen mit Testdiensten geprüft, nicht auf Windows ausgeführt.",
+                "Generierende KI-Modelle in Ablaufprüfungen simuliert. Neue GPU-Animation, Stimme und Laufzeit auf Ziel-PC nicht geprüft.",
+                "Figurenprüfung ist eine Stichproben-Heuristik, kann Fehler übersehen oder Fehlalarme auslösen; Mensch-zu-Mensch-Erkennung nicht praktisch kalibriert.",
+                "Die zusätzlichen Referenzbilder benötigen Rechenzeit. Früher Stopp und begrenzte Wiederholungen vermeiden weitere Blindläufe, garantieren keine kürzere Gesamtzeit.",
+                "Windows-CMD/PowerShell/WSL hier nicht auf Windows ausgeführt. Startercode gegenüber geprüfter Starthilfe 1.1 unverändert.",
+                "Ein vollständiger Integrationstest bestand die Produktionsabschnitte, bevor die konstante Testvideo-Ausgabe eine gecachte Qualitätswarnung behielt. Testgenerator korrigiert; gezielter Remix-Neulauf vollständig bestanden.",
                 "Tongesteuerte Animation ist keine Garantie perfekter Mundbewegungen; Tier-/Fantasiefiguren, Verdeckung und Identität benötigen Sichtprüfung.",
                 "Schnellprofil reduziert Sampling auf vier Schritte mit passenden Gewichten. Keine garantierte Zeitersparnis oder 10x-Gesamtbeschleunigung.",
                 "Neue Sprechplanung nutzt einen sichtbaren Sprecher pro Einstellung. Gleichzeitige Mehrpersonen-Lippensynchronität wird hier nicht unterstützt.",
@@ -136,152 +134,179 @@
                 "Der erste Sprechabschnitt ist eine lokale Qualitätsprobe; bestehende fertige Filme und schon geplante Szenenzahlen werden nicht umgeschrieben."
               ],
               "previous_release_report": {
-                "release": "0.10.0",
-                "date": "2026-09-22",
-                "environment": "Linux-Testumgebung; kein Zugang zum Windows-/WSL-PC des Nutzers",
+                "release": "0.11.0",
+                "date": "2026-09-28",
+                "environment": "Linux-Testumgebung. Kein Zugriff auf Nutzer-PC, CUDA-Inferenz oder Windows-Desktop.",
                 "passed": {
                   "cast_and_progress_unit_tests": 10,
-                  "startup_mock_tests": 2,
-                  "quality_ffmpeg_and_dsp_tests": 4,
-                  "early_encoding": "Zwei Abschnitte vorab geschnitten; finaler Export verwendet beide unverändert. Datei-Hashes gleich zu direktem Schnitt, 60 Frames bei 30 FPS, Audio vorhanden.",
-                  "upgrade": "0.9.0 -> 0.10.0, Datenbankbackup, Chat-/Stimmenstand erhalten, beschäftigter Dienst blockiert Update, wiederholtes Update idempotent, absichtlich defekter Start löst Rollback aus.",
-                  "production_ui": "Chromium, Desktop hell/dunkel und 390px Mobilbreite, 5 Folgenkarten, sofortiger Download, Pause/Fortsetzen, Live-Rechenschritte und Leistungsdialog; keine JS-Fehler oder horizontale Überläufe.",
-                  "animation_policy": "Graph, Modellwahl, Profilauflösungen, 40/24 Schritte und RENDER_POLICY identisch zum gelieferten Archiv.",
-                  "integration": "Zwei Folgen, Freigaben, Neustart, verlorene Auftragsbestätigung ohne Doppelrender, tatsächlicher MP4-Export mit Ton/Untertiteln, Figurentausch-Mock mit Originalton, 25->30-FPS-Tonfreigabe, Fortschritts- und bereinigter Diagnose-Endpunkt."
+                  "media_and_mapping_tests": 8,
+                  "startup_service_tests": 2,
+                  "ui": "Chromium: 40 Bilder, Korrekturzustand, unveränderte Medienknoten/Scrollposition/offene Details/ungespeicherter Text; Audio bleibt bei Statusänderung erhalten; zwei nummerierte Zuordnungen und Tastaturpunkt; Hell/Dunkel, 390px, Live-Fortschritt, Pause/Fortsetzen/Download; keine JS-Fehler oder horizontalen Überläufe.",
+                  "integration": "Echter FastAPI-Server, SQLite und FFmpeg: zwei Folgen mit Bild-/Ton-/Produktionsproben-Freigaben, Neustart während Probe, MP4 mit Audio/Untertiteln, verlorene ComfyUI-Antwort ohne Doppelrender; zwei Figurenzuordnungen durch getrenntes Tracking/Startbild/Maskenfreigabe/Rendercache bis zusammengesetztes MP4.",
+                  "audio_windows": "Stille vor/nach Sprache, identische Samples bei getrennten benachbarten Fenstern gegenüber Gesamtfenster; veränderte Referenzdatei abgewiesen.",
+                  "multi_target_media": "Roter und grüner Austauschbereich bleiben getrennt, blauer Originalbereich und Ton erhalten; verankertes Ersatzbild ist erster Kontrollframe, weitere maskierte Frames neutral grau.",
+                  "export_cache": "Zwei vorher kodierte Teile unverändert übernommen; 60 Frames bei 30 FPS, Audio; final keine erneute Teilekodierung.",
+                  "upgrade": "0.10.0 -> 0.11.0: Datenbankbackup, Chat/Modelleinrichtung erhalten, Wartungssperre, Wiederholung ohne Wechsel und Startfehler-Rollback. Nur Prozessadapter im Test ersetzt, da Testumgebung andere /proc-PIDs zeigt; erlaubt ausschließlich eigene dort gestartete Kindprozesse.",
+                  "package": "61 Programmdateien, Python-AST/Syntax, Payload-SHA256, bytegenaues Entpacken und wiederholte Installation geprüft."
                 },
                 "limits": [
-                  "LLM- und ComfyUI-Inferenz in Tests simuliert.",
-                  "Kein realer RTX-4090-Benchmark; Ursache der 29,5 Minuten pro Aufruf noch nicht vor Ort gemessen.",
-                  "Bild-/Stimmenqualität und tatsächliche fünfteilige Serie nicht geprüft.",
-                  "Windows-CMD und echte WSL-Weiterleitung nicht auf einem Windows-Rechner ausgeführt.",
-                  "Empirische ETA ist eine Schätzung; Knotenzeiten enthalten ggf. Modellladen und Transfers."
+                  "KI-Inferenz von Ollama, ComfyUI, SAM2 und Stimmen in Integrationstests simuliert. Neue GPU-Qualität und Geschwindigkeit nicht gemessen.",
+                  "Audio-Anschluss und Modellauswahl anhand offizieller Node-Schnittstellen implementiert; vollständige echte Modellinstallation/CUDA-Ausführung auf Ziel-PC noch erforderlich.",
+                  "Windows-CMD/PowerShell/WSL-Übergabe nur strukturell und Startentscheidungen mit Testdiensten geprüft, nicht auf Windows ausgeführt.",
+                  "Tongesteuerte Animation ist keine Garantie perfekter Mundbewegungen; Tier-/Fantasiefiguren, Verdeckung und Identität benötigen Sichtprüfung.",
+                  "Schnellprofil reduziert Sampling auf vier Schritte mit passenden Gewichten. Keine garantierte Zeitersparnis oder 10x-Gesamtbeschleunigung.",
+                  "Neue Sprechplanung nutzt einen sichtbaren Sprecher pro Einstellung. Gleichzeitige Mehrpersonen-Lippensynchronität wird hier nicht unterstützt.",
+                  "Bis vier Austauschmasken werden in Reihenfolge überlagert; höhere Punktnummer im Vordergrund. Starke Überdeckung und Schnitte können Trackingfehler erzeugen.",
+                  "Der erste Sprechabschnitt ist eine lokale Qualitätsprobe; bestehende fertige Filme und schon geplante Szenenzahlen werden nicht umgeschrieben."
                 ],
                 "previous_release_report": {
-                  "version": "0.9.0",
-                  "geprueft_am": "2026-09-21",
-                  "inferenz": "Ollama, ComfyUI, SAM2, Qwen VoiceDesign, Qwen Base und Chatterbox in den Integrationstests simuliert. Echte CUDA-Inferenz und neue visuelle/akustische Modellqualität auf dem Ziel-PC NICHT geprüft.",
-                  "figurentausch_fehler": {
-                    "befund": "Der bisherige Modellselektor konnte ein natives WanVideoWrapper-UMT5-Modell vor dem passenden ComfyUI-Core-Textmodell auswählen. Beide Dateiformate anhand der offiziellen Safetensors-Header geprüft. Gemeinsame Auswahl für Film und Figurentausch korrigiert; Struktur und Vokabulargröße werden ohne Laden der Tensoren validiert.",
-                    "grenze": "Der eingesandte Stacktrace enthält nicht die ursprüngliche Exception. Die Modellauswahl ist ein nachgewiesener Codefehler, aber nicht als alleinige Ursache dieser konkreten GPU-Ausnahme bewiesen.",
-                    "diagnose": "Exception-Typ, Meldung, Node, Modelle und vollständiger Trace gespeichert. Vorhandener ComfyUI-Verlauf wird bei alten Fehlern ohne neuen Renderauftrag gelesen."
+                  "release": "0.10.0",
+                  "date": "2026-09-22",
+                  "environment": "Linux-Testumgebung; kein Zugang zum Windows-/WSL-PC des Nutzers",
+                  "passed": {
+                    "cast_and_progress_unit_tests": 10,
+                    "startup_mock_tests": 2,
+                    "quality_ffmpeg_and_dsp_tests": 4,
+                    "early_encoding": "Zwei Abschnitte vorab geschnitten; finaler Export verwendet beide unverändert. Datei-Hashes gleich zu direktem Schnitt, 60 Frames bei 30 FPS, Audio vorhanden.",
+                    "upgrade": "0.9.0 -> 0.10.0, Datenbankbackup, Chat-/Stimmenstand erhalten, beschäftigter Dienst blockiert Update, wiederholtes Update idempotent, absichtlich defekter Start löst Rollback aus.",
+                    "production_ui": "Chromium, Desktop hell/dunkel und 390px Mobilbreite, 5 Folgenkarten, sofortiger Download, Pause/Fortsetzen, Live-Rechenschritte und Leistungsdialog; keine JS-Fehler oder horizontale Überläufe.",
+                    "animation_policy": "Graph, Modellwahl, Profilauflösungen, 40/24 Schritte und RENDER_POLICY identisch zum gelieferten Archiv.",
+                    "integration": "Zwei Folgen, Freigaben, Neustart, verlorene Auftragsbestätigung ohne Doppelrender, tatsächlicher MP4-Export mit Ton/Untertiteln, Figurentausch-Mock mit Originalton, 25->30-FPS-Tonfreigabe, Fortschritts- und bereinigter Diagnose-Endpunkt."
                   },
-                  "bestanden": [
-                    "0.9.0-Textstrecke: Lange Originaltexte bis 100.000 Zeichen werden verlustfrei gespeichert, Folgen 1–12 erkannt, pro Folge geplant und bei unterbrochenem Chat ab dem Teilstand fortgesetzt.",
-                    "0.9.0-Ressourcenstrecke: CPU-Nachbearbeitung liegt in einer dauerhaften Warteschlange außerhalb der GPU-Sperre; CPU-, Speicher-, Auslagerungs- und Stufenmesswerte werden gespeichert.",
-                    "0.8.1-Fix: VACE-Kontrollvideo wird aus Original-RGB-Frames mit neutral grauer markierter Person erstellt; früher gespeicherte Kantenbilder werden nicht wiederverwendet. Finaler Export nutzt Alpha-Compositing; RGB-Farbregression bestanden.",
-                    "studio_comfy08_qa.py: 4 Regressionen; Wrapper-Datei zuerst in Modellauswahl, falsches/abgeschnittenes Modellformat, vollständige Exception und fehlgeschlagener Render ohne erneute Einreichung.",
-                    "studio_quality08_qa.py: 4 Prüfungen; Mindestdauer und Frameverteilung bei 25/30 FPS; echte FFmpeg-Zwischenbilder ohne Verlangsamen; leise Wortenden bleiben erhalten; NaN, Stille und Übersteuerung abgewiesen; Qwen-Adapter mit simuliertem Modell auf Referenztext, Cache und Wiederholungsversuch geprüft.",
-                    "studio_editor07_qa.py: 17 API-/SQLite-/Worker-Regressionen. Aktionskorrekturen verwerfen alte Animationsprompts; Korrekturen, Pause, Papierkorb und Wiederherstellung geprüft.",
-                    "studio_factory05_qa.py --06 --08: zwei Cartoon-Folgen mit echten 1080x1920/25-FPS-FFmpeg-Exporten, Audio und Untertiteln; Mindestdauer, Freigaben, verlorene ComfyUI-Bestätigung ohne Doppelproduktion und Projektisolation.",
-                    "Figurentausch: echter Upload, Ausschnitt, Maskenfreigabe, VACE-Graphaufbau mit simuliertem Ergebnis; echter 30-FPS-Export mit Originalhintergrund und KI-Kennzeichnung; Originalton-Korrelation gemessen 1.0000; unveränderte Quelldatei; stumme Vorlage bleibt stumm.",
-                    "25 auf 30 FPS über echte API: Sprachdatei-Hashes bleiben erhalten, Schnitt neu berechnet, alte Tonfreigabe ungültig. Veraltete Revision, falsche FPS, CSRF und Änderungen fertiger Projekte abgewiesen. Qwen-Auswahl und Vorabprüfung mit simulierter Modellumgebung.",
-                    "Desktop/Mobil im echten Chromium: Hell/Dunkel, Qualitätsformular, POST-Daten, gespeicherter Entwurf, Projekteinstellungen, Qwen-Status, Figurentausch-Bildrate, 4500 Zeichen lange Exception im Diagnosefenster; keine JavaScript-Fehler und kein horizontaler Überlauf.",
-                    "studio_update08_qa.py: echtes Live-Update 0.7.0 auf 0.8.1; nur eigener Dashboard-Prozess neu gestartet; Datenbankbackup, Chats und Stimmeinrichtung erhalten; aktive/pausierende Produktion verhindert Update; wiederholtes Update; absichtlich defekter Start wird zurückgerollt."
+                  "limits": [
+                    "LLM- und ComfyUI-Inferenz in Tests simuliert.",
+                    "Kein realer RTX-4090-Benchmark; Ursache der 29,5 Minuten pro Aufruf noch nicht vor Ort gemessen.",
+                    "Bild-/Stimmenqualität und tatsächliche fünfteilige Serie nicht geprüft.",
+                    "Windows-CMD und echte WSL-Weiterleitung nicht auf einem Windows-Rechner ausgeführt.",
+                    "Empirische ETA ist eine Schätzung; Knotenzeiten enthalten ggf. Modellladen und Transfers."
                   ],
-                  "grenzen": [
-                    "Neue GPU-generierte Videos und Stimmen hier weder erzeugt noch qualitativ abgenommen. Kein Versprechen, dass alle Modelle, CUDA-Konfigurationen oder Vorlagen fehlerfrei funktionieren.",
-                    "Filmprofil Hoch: native 720x1280/16 FPS mit 40 Schritten; Ausgewogen: 576x1024/16 FPS mit 24 Schritten. Filmexport 1080x1920/25 oder 30 FPS durch Skalierung und optional berechnete Zwischenbilder. Keine native 1080p-/30-FPS-Modellinferenz.",
-                    "VACE bleibt ungefähr 480p/16 FPS; Hoch erhöht Schritte von 28 auf 40. Eine Figur, 2–30 Sekunden, kurze schnittfreie Vorlage empfohlen. Originalton wird als AAC neu kodiert, nicht bitidentisch kopiert.",
-                    "Kein phonembasiertes Lip-Sync. Mundbewegungen, Figurenkontinuität, SAM2-Masken und Tierersatz bleiben vorlagen- und modellabhängig. Zwischenbilder können an Konturen Artefakte erzeugen.",
-                    "Erneutes Verankern kurzer Filmabschnitte am freigegebenen Bild vermindert kumulatives Verformen, kann aber sichtbare Neustarts verursachen.",
-                    "Signalprüfungen der Sprache sind keine Transkriptprüfung. Musik bleibt einfache synthetische Begleitung, Effekte zeitgeplant.",
-                    "Qwen-Dialogmodell benötigt einmalig zusätzliche GB Download. Fehlendes kompatibles Core-UMT5-Modell beim Figurentausch benötigt rund 6,74 GB; kein automatischer Modelldownload im Dashboard-Update.",
-                    "Fertige Filme bleiben unverändert. Pausieren stoppt nach laufendem Rechenschritt. Löschen verwendet einen wiederherstellbaren Papierkorb und gibt keinen Speicher frei."
-                  ],
-                  "protokolle": [
-                    "studio08_pipeline.log",
-                    "studio08_quality.log",
-                    "studio08_comfy.log",
-                    "studio08_remix081.log",
-                    "studio08_editor.log",
-                    "studio08_update.log",
-                    "studio08_browser_final.log"
-                  ],
-                  "historischer_pruefstand_0_7_0": {
-                    "version": "0.7.0",
-                    "geprueft_am": "2026-09-20",
-                    "inferenz": "Ollama, ComfyUI, Qwen VoiceDesign, Chatterbox und SAM2 im Integrationstest simuliert. Echte CUDA-Modellinferenz und visuelle/akustische Modellqualität auf dem Ziel-PC NICHT geprüft.",
+                  "previous_release_report": {
+                    "version": "0.9.0",
+                    "geprueft_am": "2026-09-21",
+                    "inferenz": "Ollama, ComfyUI, SAM2, Qwen VoiceDesign, Qwen Base und Chatterbox in den Integrationstests simuliert. Echte CUDA-Inferenz und neue visuelle/akustische Modellqualität auf dem Ziel-PC NICHT geprüft.",
+                    "figurentausch_fehler": {
+                      "befund": "Der bisherige Modellselektor konnte ein natives WanVideoWrapper-UMT5-Modell vor dem passenden ComfyUI-Core-Textmodell auswählen. Beide Dateiformate anhand der offiziellen Safetensors-Header geprüft. Gemeinsame Auswahl für Film und Figurentausch korrigiert; Struktur und Vokabulargröße werden ohne Laden der Tensoren validiert.",
+                      "grenze": "Der eingesandte Stacktrace enthält nicht die ursprüngliche Exception. Die Modellauswahl ist ein nachgewiesener Codefehler, aber nicht als alleinige Ursache dieser konkreten GPU-Ausnahme bewiesen.",
+                      "diagnose": "Exception-Typ, Meldung, Node, Modelle und vollständiger Trace gespeichert. Vorhandener ComfyUI-Verlauf wird bei alten Fehlern ohne neuen Renderauftrag gelesen."
+                    },
                     "bestanden": [
-                      "0.6.2-Regressionsfall behoben: freigegebene Stimmen bleiben im finalen MP4 hörbar; stumme Mischungen werden vor Freigabe gestoppt",
-                      "0.6.1-Regressionsfall aus gemeldeter Fehlermeldung behoben: gültige Szenenplanung mit fehlender Übersicht bleibt reviewbar; Auszüge und Warnung sichtbar",
-                      "Gemeldete Szene mit 45 Wörtern ohne 32-Wort-Abbruch angenommen; Dialog unverändert; längere Szene erhält mehr Zeit",
-                      "Flexible fünf/sieben Szenen, Reparatur ungültiger Namen/JSON/abgeschnittener Antworten; gültige knappe Geschichten bleiben nach zwei Reparaturen mit Hinweis reviewbar",
-                      "Bestehendes blockiertes Projekt über wirkliche Fortsetzen-Route weitergeplant; vorhandene Folge unverändert",
-                      "13 Planungs-/Timingtests, darunter 300 deterministische Frameverteilungen; 15/30/45/60/90 Sekunden Mindestvorgaben, keine gekürzte Sprache",
-                      "Zwei Folgen mit je 30 Sekunden als tatsächliche 1080x1920/25-FPS-MP4 exportiert; Videostreamdauer UND Frameanzahl geprüft, nicht nur Container-/Tonlänge",
-                      "18 Dialogbeiträge und getrennte Stimmprofile; Stimmenwechsel und Tonregler erzeugen neue Hörfassung ohne erneute Bilder",
-                      "Geänderte Dialogzeilen und vierter Dialogbeitrag im Browser; passende einzelne Untertitelzeiten",
-                      "Musik vor/nach Sprache, Absenkung auf Faktor 0.280 während Sprache, keine Übersteuerung; acht Effektarten mit messbarem Signal",
-                      "Alte Tonfreigabe ohne aktuelle Zeitrichtlinie abgewiesen; Tonvorschau erneut erzeugt und freigabefähig",
-                      "Bild-/Tonfreigaben, veraltete Revisionen, Neustart vor Freigabe, neue Fassung ohne Überschreiben, verlorene ComfyUI-Bestätigung ohne Doppelproduktion",
-                      "Figurentausch: echter Videoimport, Vorschau-/Download-Bereichsanfragen, Clipgrenzen, Nutzungsbestätigung, CSRF und Idempotenz geprüft",
-                      "Figurentausch wartet auf Maskenfreigabe; zwei VACE-API-Graphen mit Anschlussbild, Originalhintergrund-Compositing und sichtbarem KI-Hinweis exportiert",
-                      "5.2-Sekunden-Figurentausch mit 130 Videoframes und Originalton; Audiosignal-Korrelation >0.97 (gemessen 1.0000), Original unverändert",
-                      "Original ohne Tonspur bleibt stumm; unvollständiger erzeugter Bearbeitungsclip wird nicht exportiert",
-                      "Separater Figurentausch-Interpreter findet Pakete der vorhandenen Quellumgebung über eigenen Suchpfad; Quellumgebung unverändert; ohne Modelldownload getestet",
-                      "Desktop und Mobilbrowser: Hell/Dunkel-Persistenz, Systemeinstellung, Mindestdauer, Storyboard, Tonfassung, Upload, Figurenmarkierung, Maskenansicht, Auswahlkorrektur, Videometadaten, Token-Erneuerung; keine JavaScript-Fehler oder horizontaler Überlauf",
-                      "Live-Update 0.5.1 auf 0.6.0: nur eigener Dashboard-Prozess neu gestartet; SQLite gesichert; Projekte, Chats und Stimmenstudio erhalten",
-                      "Aktive Aufträge einschließlich Figurentausch verhindern Update; wiederholtes Update ohne Neustart; absichtlich defekte Version wird zurückgerollt"
+                      "0.9.0-Textstrecke: Lange Originaltexte bis 100.000 Zeichen werden verlustfrei gespeichert, Folgen 1–12 erkannt, pro Folge geplant und bei unterbrochenem Chat ab dem Teilstand fortgesetzt.",
+                      "0.9.0-Ressourcenstrecke: CPU-Nachbearbeitung liegt in einer dauerhaften Warteschlange außerhalb der GPU-Sperre; CPU-, Speicher-, Auslagerungs- und Stufenmesswerte werden gespeichert.",
+                      "0.8.1-Fix: VACE-Kontrollvideo wird aus Original-RGB-Frames mit neutral grauer markierter Person erstellt; früher gespeicherte Kantenbilder werden nicht wiederverwendet. Finaler Export nutzt Alpha-Compositing; RGB-Farbregression bestanden.",
+                      "studio_comfy08_qa.py: 4 Regressionen; Wrapper-Datei zuerst in Modellauswahl, falsches/abgeschnittenes Modellformat, vollständige Exception und fehlgeschlagener Render ohne erneute Einreichung.",
+                      "studio_quality08_qa.py: 4 Prüfungen; Mindestdauer und Frameverteilung bei 25/30 FPS; echte FFmpeg-Zwischenbilder ohne Verlangsamen; leise Wortenden bleiben erhalten; NaN, Stille und Übersteuerung abgewiesen; Qwen-Adapter mit simuliertem Modell auf Referenztext, Cache und Wiederholungsversuch geprüft.",
+                      "studio_editor07_qa.py: 17 API-/SQLite-/Worker-Regressionen. Aktionskorrekturen verwerfen alte Animationsprompts; Korrekturen, Pause, Papierkorb und Wiederherstellung geprüft.",
+                      "studio_factory05_qa.py --06 --08: zwei Cartoon-Folgen mit echten 1080x1920/25-FPS-FFmpeg-Exporten, Audio und Untertiteln; Mindestdauer, Freigaben, verlorene ComfyUI-Bestätigung ohne Doppelproduktion und Projektisolation.",
+                      "Figurentausch: echter Upload, Ausschnitt, Maskenfreigabe, VACE-Graphaufbau mit simuliertem Ergebnis; echter 30-FPS-Export mit Originalhintergrund und KI-Kennzeichnung; Originalton-Korrelation gemessen 1.0000; unveränderte Quelldatei; stumme Vorlage bleibt stumm.",
+                      "25 auf 30 FPS über echte API: Sprachdatei-Hashes bleiben erhalten, Schnitt neu berechnet, alte Tonfreigabe ungültig. Veraltete Revision, falsche FPS, CSRF und Änderungen fertiger Projekte abgewiesen. Qwen-Auswahl und Vorabprüfung mit simulierter Modellumgebung.",
+                      "Desktop/Mobil im echten Chromium: Hell/Dunkel, Qualitätsformular, POST-Daten, gespeicherter Entwurf, Projekteinstellungen, Qwen-Status, Figurentausch-Bildrate, 4500 Zeichen lange Exception im Diagnosefenster; keine JavaScript-Fehler und kein horizontaler Überlauf.",
+                      "studio_update08_qa.py: echtes Live-Update 0.7.0 auf 0.8.1; nur eigener Dashboard-Prozess neu gestartet; Datenbankbackup, Chats und Stimmeinrichtung erhalten; aktive/pausierende Produktion verhindert Update; wiederholtes Update; absichtlich defekter Start wird zurückgerollt."
                     ],
                     "grenzen": [
-                      "Echte Modellinstallation, GPU-Auslastung, CUDA-Kompatibilität und tatsächliche Stimm-/Bild-/Trackingqualität müssen auf dem Ziel-PC mit kurzem Clip geprüft werden",
-                      "Keine zugesicherte Lippensynchronität oder fehlerfreie Figurenkontinuität",
-                      "Figurentausch experimentell: eine Figur, 2–30 Sekunden, kurze schnittfreie Vorlage empfohlen; Bewegung/Mimik nicht garantiert identisch",
-                      "SAM2 kann bei Verdeckung, Schnitten oder mehreren Personen eine falsche Maske liefern; Freigabe zwingend",
-                      "Mensch-zu-Tier kann Anatomie, Silhouette, Hände und Mimik verändern; Maske begrenzt den Bearbeitungsbereich",
-                      "Originalton beim Figurentausch inhaltlich übernommen, als AAC neu kodiert; keine bitidentische Audiokopie",
-                      "Native Normalanimation 576x1024/16 FPS, VACE ungefähr 480p/16 FPS; Export skaliert bzw. Bildrate angepasst, keine native 1080p-Rekonstruktion",
-                      "Einfache synthetische Begleitung und zeitgeplante Effekte, keine aufwendig produzierte Filmmusik oder bildgenau analysierten Geräusche",
-                      "Bereits fertige Videos werden nicht geändert; kein automatischer Plattform-Upload; kein Fehlerfreiheits- oder Tagesfertigstellungsversprechen"
+                      "Neue GPU-generierte Videos und Stimmen hier weder erzeugt noch qualitativ abgenommen. Kein Versprechen, dass alle Modelle, CUDA-Konfigurationen oder Vorlagen fehlerfrei funktionieren.",
+                      "Filmprofil Hoch: native 720x1280/16 FPS mit 40 Schritten; Ausgewogen: 576x1024/16 FPS mit 24 Schritten. Filmexport 1080x1920/25 oder 30 FPS durch Skalierung und optional berechnete Zwischenbilder. Keine native 1080p-/30-FPS-Modellinferenz.",
+                      "VACE bleibt ungefähr 480p/16 FPS; Hoch erhöht Schritte von 28 auf 40. Eine Figur, 2–30 Sekunden, kurze schnittfreie Vorlage empfohlen. Originalton wird als AAC neu kodiert, nicht bitidentisch kopiert.",
+                      "Kein phonembasiertes Lip-Sync. Mundbewegungen, Figurenkontinuität, SAM2-Masken und Tierersatz bleiben vorlagen- und modellabhängig. Zwischenbilder können an Konturen Artefakte erzeugen.",
+                      "Erneutes Verankern kurzer Filmabschnitte am freigegebenen Bild vermindert kumulatives Verformen, kann aber sichtbare Neustarts verursachen.",
+                      "Signalprüfungen der Sprache sind keine Transkriptprüfung. Musik bleibt einfache synthetische Begleitung, Effekte zeitgeplant.",
+                      "Qwen-Dialogmodell benötigt einmalig zusätzliche GB Download. Fehlendes kompatibles Core-UMT5-Modell beim Figurentausch benötigt rund 6,74 GB; kein automatischer Modelldownload im Dashboard-Update.",
+                      "Fertige Filme bleiben unverändert. Pausieren stoppt nach laufendem Rechenschritt. Löschen verwendet einen wiederherstellbaren Papierkorb und gibt keinen Speicher frei."
                     ],
-                    "pruefskripte": [
-                      "studio_timing06_qa.py",
-                      "studio_planning051_qa.py",
-                      "studio_audio05_qa.py",
-                      "studio_factory05_qa.py --06 --browser",
-                      "studio_remix06_qa.py (vom Integrationstest aufgerufen)",
-                      "studio_factory_browser05_qa.js",
-                      "studio_browser06_qa.js",
-                      "studio_theme06_qa.js",
-                      "studio_update06_qa.py",
-                      "studio_build_update.py",
-                      "studio_planning061_qa.py",
-                      "studio_update061_qa.py",
-                      "studio_overview061_browser_qa.js",
-                      "studio_remix062_qa.py"
+                    "protokolle": [
+                      "studio08_pipeline.log",
+                      "studio08_quality.log",
+                      "studio08_comfy.log",
+                      "studio08_remix081.log",
+                      "studio08_editor.log",
+                      "studio08_update.log",
+                      "studio08_browser_final.log"
                     ],
-                    "regression_0_7_0": {
-                      "tests": [
-                        "studio_editor07_qa.py: 16 API-/SQLite-/Worker-Regressionen bestanden",
-                        "studio_factory05_qa.py --06 --07: vollständige Produktions-, Audio-, Figurentausch- und Browserprüfung bestanden",
-                        "studio_editor07_browser_qa.js: echte Warteschlange mit simulierten Modellantworten; Einzel-/Doppelbild, KI-Feedback, persistenter Chat, Stimmenziel, Musik/Effekte ohne neue Dialogdateien, Pause/Papierkorb/Wiederherstellen, Dark/Mobil bestanden",
-                        "studio_audio05_qa.py: Dialogsignal ausdrücklich gemessen, Absenkung 0.280, acht Effekte und keine Übersteuerung",
-                        "studio_update07_qa.py: ausgelieferte 0.6.2 auf 0.7.0 aktualisiert; Datenbankbackup, erhaltene Stimmen-/Chatdaten, Korrektur-/Pause-Wartungssperren, Rollback bestanden"
+                    "historischer_pruefstand_0_7_0": {
+                      "version": "0.7.0",
+                      "geprueft_am": "2026-09-20",
+                      "inferenz": "Ollama, ComfyUI, Qwen VoiceDesign, Chatterbox und SAM2 im Integrationstest simuliert. Echte CUDA-Modellinferenz und visuelle/akustische Modellqualität auf dem Ziel-PC NICHT geprüft.",
+                      "bestanden": [
+                        "0.6.2-Regressionsfall behoben: freigegebene Stimmen bleiben im finalen MP4 hörbar; stumme Mischungen werden vor Freigabe gestoppt",
+                        "0.6.1-Regressionsfall aus gemeldeter Fehlermeldung behoben: gültige Szenenplanung mit fehlender Übersicht bleibt reviewbar; Auszüge und Warnung sichtbar",
+                        "Gemeldete Szene mit 45 Wörtern ohne 32-Wort-Abbruch angenommen; Dialog unverändert; längere Szene erhält mehr Zeit",
+                        "Flexible fünf/sieben Szenen, Reparatur ungültiger Namen/JSON/abgeschnittener Antworten; gültige knappe Geschichten bleiben nach zwei Reparaturen mit Hinweis reviewbar",
+                        "Bestehendes blockiertes Projekt über wirkliche Fortsetzen-Route weitergeplant; vorhandene Folge unverändert",
+                        "13 Planungs-/Timingtests, darunter 300 deterministische Frameverteilungen; 15/30/45/60/90 Sekunden Mindestvorgaben, keine gekürzte Sprache",
+                        "Zwei Folgen mit je 30 Sekunden als tatsächliche 1080x1920/25-FPS-MP4 exportiert; Videostreamdauer UND Frameanzahl geprüft, nicht nur Container-/Tonlänge",
+                        "18 Dialogbeiträge und getrennte Stimmprofile; Stimmenwechsel und Tonregler erzeugen neue Hörfassung ohne erneute Bilder",
+                        "Geänderte Dialogzeilen und vierter Dialogbeitrag im Browser; passende einzelne Untertitelzeiten",
+                        "Musik vor/nach Sprache, Absenkung auf Faktor 0.280 während Sprache, keine Übersteuerung; acht Effektarten mit messbarem Signal",
+                        "Alte Tonfreigabe ohne aktuelle Zeitrichtlinie abgewiesen; Tonvorschau erneut erzeugt und freigabefähig",
+                        "Bild-/Tonfreigaben, veraltete Revisionen, Neustart vor Freigabe, neue Fassung ohne Überschreiben, verlorene ComfyUI-Bestätigung ohne Doppelproduktion",
+                        "Figurentausch: echter Videoimport, Vorschau-/Download-Bereichsanfragen, Clipgrenzen, Nutzungsbestätigung, CSRF und Idempotenz geprüft",
+                        "Figurentausch wartet auf Maskenfreigabe; zwei VACE-API-Graphen mit Anschlussbild, Originalhintergrund-Compositing und sichtbarem KI-Hinweis exportiert",
+                        "5.2-Sekunden-Figurentausch mit 130 Videoframes und Originalton; Audiosignal-Korrelation >0.97 (gemessen 1.0000), Original unverändert",
+                        "Original ohne Tonspur bleibt stumm; unvollständiger erzeugter Bearbeitungsclip wird nicht exportiert",
+                        "Separater Figurentausch-Interpreter findet Pakete der vorhandenen Quellumgebung über eigenen Suchpfad; Quellumgebung unverändert; ohne Modelldownload getestet",
+                        "Desktop und Mobilbrowser: Hell/Dunkel-Persistenz, Systemeinstellung, Mindestdauer, Storyboard, Tonfassung, Upload, Figurenmarkierung, Maskenansicht, Auswahlkorrektur, Videometadaten, Token-Erneuerung; keine JavaScript-Fehler oder horizontaler Überlauf",
+                        "Live-Update 0.5.1 auf 0.6.0: nur eigener Dashboard-Prozess neu gestartet; SQLite gesichert; Projekte, Chats und Stimmenstudio erhalten",
+                        "Aktive Aufträge einschließlich Figurentausch verhindern Update; wiederholtes Update ohne Neustart; absichtlich defekte Version wird zurückgerollt"
                       ],
-                      "figurentausch": "Fehlende Einrichtung ist ein gespeicherter Wartezustand statt einer Fehlerschleife. Echte Fehler bleiben sichtbar. Automatisches Fortsetzen nur für nicht pausierte Aufträge. Ein unbekannter Laufzeitfehler aus nicht aufgeklappten Nutzer-Screenshots ist nicht als behoben nachgewiesen.",
-                      "grenzen": "Keine echten GPU-Modelle in dieser Testumgebung. Pausieren stoppt Folgeschritte, nicht gewaltsam den laufenden Rechenschritt. Papierkorb erhält Dateien und gibt keinen Speicher frei. Musik bleibt synthetisch, Effekte auf vorhandene Typen begrenzt."
-                    },
-                    "grundpruefung_version": "0.6.0",
-                    "regression_0_6_1": {
-                      "ursache": "Widerspruch zwischen optionalen Ziel/Hindernis/Auflösung-Feldern im JSON-Schema und der nachgelagerten Pflichtprüfung.",
-                      "verhalten": "Fehlende Übersicht wird aus vorhandenen Einstieg/Mittelteil/Schluss-Szenen gekennzeichnet abgeleitet; Szenen und Dialoge bleiben unverändert; Warnung vor Bildfreigabe.",
-                      "tests": [
-                        "studio_planning061_qa.py: 16 bestanden",
-                        "studio_update061_qa.py: Live-Update 0.6.0 auf 0.6.1 bestanden",
-                        "studio_overview061_browser_qa.js: Storyboard, Warnung, Szenenanzahl, Freigabesperre, Dark/Mobil bestanden",
-                        "node --check studio_quality.js bestanden"
-                      ]
-                    },
-                    "regression_0_6_2": {
-                      "audio": "FFmpeg-Dialogmischung korrigiert: jede verzögerte Sprachspur wird vor amix auf Episodenlänge aufgefüllt; stumme Dialogbusse werden vor der Freigabe abgewiesen.",
-                      "figurentausch": "Blockierte alte Aufträge werden bei fehlender Einrichtung nicht erneut in eine Fehlerschleife gestartet; nach bereitgestelltem Figurenstudio wird der Auftrag automatisch fortgesetzt.",
-                      "tempo": "Animationsprompt verlangt sichtbare kontinuierliche Bewegungen in normaler Echtzeit und vermeidet gehaltene Posen.",
-                      "tests": [
-                        "studio_audio05_qa.py bestanden; Dialogschnitt auf Signal geprüft",
-                        "stummer Dialogbus wird mit verständlicher Fehlermeldung abgewiesen",
-                        "node --check studio_remix.js bestanden",
-                        "studio_remix062_qa.py bestanden"
-                      ]
+                      "grenzen": [
+                        "Echte Modellinstallation, GPU-Auslastung, CUDA-Kompatibilität und tatsächliche Stimm-/Bild-/Trackingqualität müssen auf dem Ziel-PC mit kurzem Clip geprüft werden",
+                        "Keine zugesicherte Lippensynchronität oder fehlerfreie Figurenkontinuität",
+                        "Figurentausch experimentell: eine Figur, 2–30 Sekunden, kurze schnittfreie Vorlage empfohlen; Bewegung/Mimik nicht garantiert identisch",
+                        "SAM2 kann bei Verdeckung, Schnitten oder mehreren Personen eine falsche Maske liefern; Freigabe zwingend",
+                        "Mensch-zu-Tier kann Anatomie, Silhouette, Hände und Mimik verändern; Maske begrenzt den Bearbeitungsbereich",
+                        "Originalton beim Figurentausch inhaltlich übernommen, als AAC neu kodiert; keine bitidentische Audiokopie",
+                        "Native Normalanimation 576x1024/16 FPS, VACE ungefähr 480p/16 FPS; Export skaliert bzw. Bildrate angepasst, keine native 1080p-Rekonstruktion",
+                        "Einfache synthetische Begleitung und zeitgeplante Effekte, keine aufwendig produzierte Filmmusik oder bildgenau analysierten Geräusche",
+                        "Bereits fertige Videos werden nicht geändert; kein automatischer Plattform-Upload; kein Fehlerfreiheits- oder Tagesfertigstellungsversprechen"
+                      ],
+                      "pruefskripte": [
+                        "studio_timing06_qa.py",
+                        "studio_planning051_qa.py",
+                        "studio_audio05_qa.py",
+                        "studio_factory05_qa.py --06 --browser",
+                        "studio_remix06_qa.py (vom Integrationstest aufgerufen)",
+                        "studio_factory_browser05_qa.js",
+                        "studio_browser06_qa.js",
+                        "studio_theme06_qa.js",
+                        "studio_update06_qa.py",
+                        "studio_build_update.py",
+                        "studio_planning061_qa.py",
+                        "studio_update061_qa.py",
+                        "studio_overview061_browser_qa.js",
+                        "studio_remix062_qa.py"
+                      ],
+                      "regression_0_7_0": {
+                        "tests": [
+                          "studio_editor07_qa.py: 16 API-/SQLite-/Worker-Regressionen bestanden",
+                          "studio_factory05_qa.py --06 --07: vollständige Produktions-, Audio-, Figurentausch- und Browserprüfung bestanden",
+                          "studio_editor07_browser_qa.js: echte Warteschlange mit simulierten Modellantworten; Einzel-/Doppelbild, KI-Feedback, persistenter Chat, Stimmenziel, Musik/Effekte ohne neue Dialogdateien, Pause/Papierkorb/Wiederherstellen, Dark/Mobil bestanden",
+                          "studio_audio05_qa.py: Dialogsignal ausdrücklich gemessen, Absenkung 0.280, acht Effekte und keine Übersteuerung",
+                          "studio_update07_qa.py: ausgelieferte 0.6.2 auf 0.7.0 aktualisiert; Datenbankbackup, erhaltene Stimmen-/Chatdaten, Korrektur-/Pause-Wartungssperren, Rollback bestanden"
+                        ],
+                        "figurentausch": "Fehlende Einrichtung ist ein gespeicherter Wartezustand statt einer Fehlerschleife. Echte Fehler bleiben sichtbar. Automatisches Fortsetzen nur für nicht pausierte Aufträge. Ein unbekannter Laufzeitfehler aus nicht aufgeklappten Nutzer-Screenshots ist nicht als behoben nachgewiesen.",
+                        "grenzen": "Keine echten GPU-Modelle in dieser Testumgebung. Pausieren stoppt Folgeschritte, nicht gewaltsam den laufenden Rechenschritt. Papierkorb erhält Dateien und gibt keinen Speicher frei. Musik bleibt synthetisch, Effekte auf vorhandene Typen begrenzt."
+                      },
+                      "grundpruefung_version": "0.6.0",
+                      "regression_0_6_1": {
+                        "ursache": "Widerspruch zwischen optionalen Ziel/Hindernis/Auflösung-Feldern im JSON-Schema und der nachgelagerten Pflichtprüfung.",
+                        "verhalten": "Fehlende Übersicht wird aus vorhandenen Einstieg/Mittelteil/Schluss-Szenen gekennzeichnet abgeleitet; Szenen und Dialoge bleiben unverändert; Warnung vor Bildfreigabe.",
+                        "tests": [
+                          "studio_planning061_qa.py: 16 bestanden",
+                          "studio_update061_qa.py: Live-Update 0.6.0 auf 0.6.1 bestanden",
+                          "studio_overview061_browser_qa.js: Storyboard, Warnung, Szenenanzahl, Freigabesperre, Dark/Mobil bestanden",
+                          "node --check studio_quality.js bestanden"
+                        ]
+                      },
+                      "regression_0_6_2": {
+                        "audio": "FFmpeg-Dialogmischung korrigiert: jede verzögerte Sprachspur wird vor amix auf Episodenlänge aufgefüllt; stumme Dialogbusse werden vor der Freigabe abgewiesen.",
+                        "figurentausch": "Blockierte alte Aufträge werden bei fehlender Einrichtung nicht erneut in eine Fehlerschleife gestartet; nach bereitgestelltem Figurenstudio wird der Auftrag automatisch fortgesetzt.",
+                        "tempo": "Animationsprompt verlangt sichtbare kontinuierliche Bewegungen in normaler Echtzeit und vermeidet gehaltene Posen.",
+                        "tests": [
+                          "studio_audio05_qa.py bestanden; Dialogschnitt auf Signal geprüft",
+                          "stummer Dialogbus wird mit verständlicher Fehlermeldung abgewiesen",
+                          "node --check studio_remix.js bestanden",
+                          "studio_remix062_qa.py bestanden"
+                        ]
+                      }
                     }
                   }
                 }

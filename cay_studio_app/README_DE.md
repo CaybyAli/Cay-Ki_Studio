@@ -1,3 +1,15 @@
+# Cay Studio 0.14.0 – neues Studio, Autopilot, Serien (13.10.2026)
+
+- Neue Oberfläche unter http://127.0.0.1:8787 (bisherige unter /classic, dort auch der Figurentausch).
+- Autopilot: Filme ohne Zwischenstopps fertigstellen.
+- Serien bis 12 Folgen mit offenem Ende und „Teil X/Y“ im Bild, Beschreibung mit Hashtags pro Folge.
+- Qualität „Entwurf“ (schneller) und „Standard“. 25 Bilder pro Sekunde, Sprechszenen ohne Umrechnung.
+- Ton auf −14 LUFS für Handy und TikTok.
+
+Plan, Messwerte und Grenzen: CAY_STUDIO_PLAN.md im Update-Ordner.
+
+---
+
 # Cay Studio 0.13.4 – Zeitmessung inklusive Stimmen (13.10.2026)
 
 - Die Spracherzeugung wird jetzt wie Planung, Bilder und Animation gemessen.
