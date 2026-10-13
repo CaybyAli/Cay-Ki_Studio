@@ -23,8 +23,8 @@ class Idea(Strict):
     participants:list[Participant]=Field(default_factory=list,max_length=8)
     examples:list[str]=Field(default_factory=list,max_length=4)
     music:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
-    fps:Literal[25,30]=30
-    quality:Literal['fast','balanced','high']='fast'
+    fps:Literal[25,30]=25
+    quality:Literal['draft','fast','balanced','high']='fast'
     smooth:bool=True
     speech_engine:Literal['auto','qwen','chatterbox']='auto'
     lip_sync:Literal['audio','off']='audio'
@@ -110,7 +110,7 @@ class AbortStep(Strict):
 class ProductionSettings(Strict):
     revision:str=Field(pattern=r'^[a-f0-9]{64}$')
     fps:Literal[25,30]
-    quality:Literal['fast','balanced','high']
+    quality:Literal['draft','fast','balanced','high']
     smooth:bool=True
     speech_engine:Literal['auto','qwen','chatterbox']='auto'
     lip_sync:Literal['audio','off']='audio'

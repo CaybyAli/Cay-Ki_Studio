@@ -13,7 +13,7 @@ from factory_post import PostProduction
 from factory_audio import turns
 from factory_timing import plan_seconds, POLICY
 from factory_editor import Editor, image_rounds, active_variants, regenerate
-from studio_quality_policy import settings,segments,motion_direction,RENDER_POLICY
+from studio_quality_policy import settings,segments,scene_segments,motion_direction,RENDER_POLICY
 from story_source import manifest,validate_count,prepare_notes,episode_source,SeriesHeader
 
 ACTIVE={'planning','pictures','voicing','rendering','correcting'}
@@ -607,7 +607,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d['phase']='Tonfassung für die Mindestdauer aktualisieren; danach bitte erneut anhören.';self.save(d);return
         info=await self.object_info();models=video_models(info,self.comfy)
         from render_studio import audio_graph,dialogue_window
-        if options['quality']=='fast' and not models.get('fast_loras'):raise RuntimeError('Schnellmodus unter Animation einrichten ergänzen.')
+        if options['quality'] in ('fast','draft') and not models.get('fast_loras'):raise RuntimeError('Schnellmodus unter Animation einrichten ergänzen.')
         if options['lip_sync']=='audio' and d.get('lines'):
             audio_graph(info,'probe.png','probe.wav','check',1,1,options['quality'])
             for ei,ep in enumerate(d['episodes']):
@@ -639,8 +639,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 if not selected:raise RuntimeError('Ein freigegebenes Bild fehlt.')
                 s=selected[0]
                 if file_hash(self.path(s['output']))!=s['sha256']:raise RuntimeError('Ein freigegebenes Bild wurde verändert.')
-                image=self.stage(s['output']);seconds=scene['render_seconds'];durations=segments(seconds,fps);count=len(durations);clips=[];start=0
+                image=self.stage(s['output']);seconds=scene['render_seconds'];clips=[];start=0
                 lines=[l for l in d['lines'] if l['episode']==ei and l['scene']==si]
+                durations=scene_segments(seconds,fps,bool(lines) and options['lip_sync']=='audio');count=len(durations)
                 for seg,duration in enumerate(durations):
                     if self.paused(d['id']):return
                     # Cache includes model/profile, timing and direction. Old degraded
@@ -897,7 +898,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if self.busy!=rid:self.sql("DELETE FROM factory_steps WHERE run_id=? AND status='aborted'",(rid,))
             d=self.get(rid)
             if d['state']=='blocked':d['state']=d.pop('resume_state','rendering');d.pop('error',None);d.pop('uncertain',None)
-            if body.fast:d['idea']['quality']='fast'
+            if body.fast and d['idea'].get('quality') not in ('fast','draft'):d['idea']['quality']='fast'
             d['phase']='Abschnitt abgebrochen.'+(' Weiter mit „Schnell“: zuerst kommt eine kurze Produktionsprobe.' if body.fast else ' Mit „Fortsetzen“ wird er neu berechnet.')
             self.sql('INSERT INTO factory_control VALUES(?,?) ON CONFLICT(id) DO UPDATE SET paused=excluded.paused',(rid,0 if body.fast else 1))
             self.save(d);return self.get(rid)

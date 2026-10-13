@@ -3,7 +3,8 @@ import math
 
 RENDER_POLICY = 11
 PROFILES = {
-    'fast': {'width':720, 'height':1280, 'steps':4, 'cfg':1.0},
+    'draft': {'width':480, 'height':832, 'steps':4, 'cfg':1.0},
+    'fast': {'width':576, 'height':1024, 'steps':4, 'cfg':1.0},
     'balanced': {'width':576, 'height':1024, 'steps':24, 'cfg':3.5},
     'high': {'width':720, 'height':1280, 'steps':40, 'cfg':3.5},
 }
@@ -18,9 +19,19 @@ def segments(seconds, fps, maximum=5):
     frames=round(seconds*fps);count=max(1,math.ceil(frames/(fps*maximum)))
     return [(frames//count+(i<frames%count))/fps for i in range(count)]
 
+TALK_SEGMENT = 15  # seconds of lip-sync per ComfyUI prompt
+
+def scene_segments(seconds, fps, talking):
+    """One rule for production and progress: InfiniteTalk computes full 81-frame
+    windows, so a talking scene is one prompt (up to TALK_SEGMENT); silent motion
+    clips stay at the 5 s limit of the image-to-video model."""
+    return segments(seconds, fps, TALK_SEGMENT if talking else 5)
+
 def cadence(fps, smooth=False, source_fps=16):
     if fps not in (25,30):raise ValueError('25 oder 30 FPS wählen.')
-    if not smooth:return f'fps={fps}'
+    # Talking shots are rendered natively at 25 FPS: never interpolate them,
+    # motion-compensated interpolation warps limbs. Only 16 FPS motion clips.
+    if not smooth or abs(float(source_fps)-fps)<.01:return f'fps={fps}'
     # Short look-ahead only, subsequently trimmed to the requested frame count.
     # Each shot is processed independently so cuts never blend across scenes.
     pad=3/max(1,source_fps)

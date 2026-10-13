@@ -50,7 +50,7 @@ def motion_graph(image,prompt,seed,prefix,models,seconds,quality='balanced'):
       '13':n('VAEDecode',samples=['12',0],vae=['5',0]),
       '14':n('CreateVideo',images=['13',0],fps=16),
       '15':n('SaveVideo',video=['14',0],filename_prefix=prefix,format='mp4',codec='h264')}
-    if quality=='fast':
+    if quality in ('fast','draft'):
         if not models.get('fast_loras'):raise ValueError('Schnellmodus braucht die beiden Wan-2.2-Lightning-Gewichte. Unter Animation einrichten ergänzen oder bewusst ein anderes Profil wählen.')
         for key,loader,sampling in [('high','2','9'),('low','3','10')]:
             ident='16' if key=='high' else '17'

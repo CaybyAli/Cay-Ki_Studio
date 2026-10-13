@@ -55,25 +55,26 @@ def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix=''):
     """25 native FPS, isolated dialogue only, exact onset/pauses; no background music."""
     if 'CayWanVideoSampler' not in info:
         raise ValueError('Die Sampler-Reparatur ist noch nicht in ComfyUI geladen. Nach dem Update laufende Arbeit pausieren, den PC neu starten und Cay Studio öffnen. Keine neuen Modelle nötig.')
-    m=talk_models(info,quality=='fast');n=lambda kind,**kw:node(info,kind,**kw)
-    size=(720,1280) if quality=='high' else (576,1024)
+    lite=quality in ('fast','draft')
+    m=talk_models(info,lite);n=lambda kind,**kw:node(info,kind,**kw)
+    size={'high':(720,1280),'draft':(480,832)}.get(quality,(576,1024))
     frames=4*math.ceil(seconds*25/4)+1
     g={'1':n('LoadImage',image=image),'2':n('LoadAudio',audio=audio),
        '3':n('WanVideoVAELoader',model_name=m['vae'],precision='bf16'),
        '4':n('MultiTalkModelLoader',model=m['talk']),
        '5':n('Wav2VecModelLoader',model=m['wav'],base_precision='fp16',load_device='offload_device'),
-       '6':n('MultiTalkWav2VecEmbeds',wav2vec_model=['5',0],audio_1=['2',0],normalize_loudness=False,num_frames=frames,fps=25.,audio_scale=1.,audio_cfg_scale=2. if quality=='fast' else 4.,multi_audio_type='para',add_noise_floor=False,smooth_transients=False),
+       '6':n('MultiTalkWav2VecEmbeds',wav2vec_model=['5',0],audio_1=['2',0],normalize_loudness=False,num_frames=frames,fps=25.,audio_scale=1.,audio_cfg_scale=2. if lite else 4.,multi_audio_type='para',add_noise_floor=False,smooth_transients=False),
        '7':n('CLIPVisionLoader',clip_name=m['vision']),
        '8':n('WanVideoClipVisionEncode',clip_vision=['7',0],image_1=['1',0],strength_1=1.,crop='center',force_offload=True),
        '9':n('WanVideoTextEncodeCached',model_name=m['text'],precision='bf16',positive_prompt=prompt+' Only the single visible character speaks to the supplied voice. Mouth relaxed and closed during silence. Stable identity.',negative_prompt='talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping',quantization='disabled',use_disk_cache=True,device='gpu'),
        '10':n('WanVideoModelLoader',model=m['model'],base_precision='bf16',quantization='fp8_e4m3fn',load_device='offload_device',attention_mode='sdpa',multitalk_model=['4',0],block_swap_args=['17',0]),
        '11':n('WanVideoImageToVideoMultiTalk',vae=['3',0],width=size[0],height=size[1],frame_window_size=81,motion_frame=9,force_offload=True,colormatch='disabled',start_image=['1',0],tiled_vae=True,clip_embeds=['8',0],mode='infinitetalk',output_path=''),
-       '12':n('CayWanVideoSampler',model=['10',0],image_embeds=['11',0],text_embeds=['9',0],multitalk_embeds=['6',0],steps=4 if quality=='fast' else 40 if quality=='high' else 24,cfg=1.,shift=2. if quality=='fast' else 5.,seed=seed,force_offload=True,scheduler='euler',riflex_freq_index=0,start_step=0,end_step=-1),
+       '12':n('CayWanVideoSampler',model=['10',0],image_embeds=['11',0],text_embeds=['9',0],multitalk_embeds=['6',0],steps=4 if lite else 40 if quality=='high' else 24,cfg=1.,shift=2. if lite else 5.,seed=seed,force_offload=True,scheduler='euler',riflex_freq_index=0,start_step=0,end_step=-1),
        '13':n('WanVideoPassImagesFromSamples',samples=['12',0]),
        '14':n('CreateVideo',images=['13',0],fps=25.),
        '15':n('SaveVideo',video=['14',0],filename_prefix=prefix,format='mp4',codec='h264'),
        '17':n('WanVideoBlockSwap',blocks_to_swap=20,vace_blocks_to_swap=0,offload_img_emb=True,offload_txt_emb=True,use_non_blocking=True,prefetch_blocks=1)}
-    if quality=='fast':
+    if lite:
         g['16']=n('WanVideoLoraSelect',lora=m['lora'],strength=1.,low_mem_load=False,merge_loras=True)
         g['10']['inputs']['lora']=['16',0]
     # Do not silently omit the essential audio path on an incompatible wrapper.
