@@ -5,6 +5,7 @@ import hashlib,json,math,os,random,subprocess,wave
 from factory_timing import audio_layout
 import speech_check
 RATE=24000
+TARGET_LUFS=-14  # TikTok/Shorts: phones play quiet mixes thin; measured film before: -23.9 dB mean
 def turns(s):
     return s.get('dialogues') or ([{'speaker':s['speaker'],'text':s['dialogue'],'emotion':s.get('emotion','Natürlich'),'pause_after':.18}] if s.get('dialogue') else [])
 def layout(episodes,lines,minimum_seconds=None,fps=25):
@@ -101,7 +102,8 @@ def mix(folder,scenes,mood,music=None,settings=None):
         # Normalize the complete performance, retaining differences between
         # whispering and emphatic lines. A separate pass avoids amix buffering.
         normalized_voice=folder/'Dialog_Normalisiert.wav'
-        ff(['-i',dialogue,'-af','loudnorm=I=-18:TP=-2.5:LRA=11,aresample=24000','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized_voice],folder)
+        # Gentle broadcast-style levelling: rumble off, soft compression, then loudness.
+        ff(['-i',dialogue,'-af','highpass=f=70,acompressor=threshold=-22dB:ratio=2.5:attack=8:release=140:makeup=2,loudnorm=I=-18:TP=-2.5:LRA=9,aresample=24000','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized_voice],folder)
         os.replace(normalized_voice,dialogue)
     # A successful FFmpeg exit is not enough here: an invalid filter graph can
     # still produce a full-length silent dialogue file. Catch that before the
@@ -122,7 +124,7 @@ def mix(folder,scenes,mood,music=None,settings=None):
     gain=0 if settings['music_mode']=='off' else settings['music_level'];normalized=folder/'Musik_Normalisiert.wav';ducked=folder/'Musik_Dialogabsenkung.wav'
     ff([*args,'-af',f'loudnorm=I=-24:TP=-5:LRA=7,aresample=24000,volume={gain},afade=t=out:st={max(0,duration-.5)}:d=0.5','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized],folder);duck_music(normalized,ducked,intervals)
     ambience=folder/'Umgebung.wav';effects=folder/'Effekte.wav';synth_environment(ambience,scenes,settings['ambience_level']);synth_effects(effects,scenes,settings['effects_level'])
-    args=['-i',str(dialogue),'-i',str(ducked),'-i',str(ambience),'-i',str(effects)];graph=f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,alimiter=limit=0.94:level=0:latency=1,atrim=duration={duration},aresample=48000[sound]';target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav'
+    args=['-i',str(dialogue),'-i',str(ducked),'-i',str(ambience),'-i',str(effects)];graph=f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,alimiter=limit=0.94:level=0:latency=1,atrim=duration={duration},loudnorm=I={TARGET_LUFS}:TP=-1.5:LRA=11,aresample=48000[sound]';target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav'
     ff([*args,'-filter_complex',graph,'-map','[sound]','-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
     with wave.open(str(temp)) as w:
         if abs(w.getnframes()/w.getframerate()-duration)>.03:raise RuntimeError('Tonmischung unvollständig; keine Freigabe.')
