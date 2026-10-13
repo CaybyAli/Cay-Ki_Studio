@@ -429,7 +429,7 @@ async def local_guard(request: Request, call_next):
     response.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'"
     if request.url.path.startswith('/api/'):
         response.headers['Cache-Control'] = 'no-store'
-    elif request.url.path=='/' or request.url.path.startswith('/static/'):
+    elif request.url.path in ('/','/classic') or request.url.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'no-cache'
     return response
 
@@ -650,6 +650,12 @@ def diagnose():
 
 @app.get('/')
 def index():
+    return FileResponse(WEB / 'app2' / 'index.html')
+
+
+@app.get('/classic')
+def classic():
+    # Previous studio (Figurentausch lives there until it moves into the new studio).
     return FileResponse(WEB / 'studio.html')
 
 
