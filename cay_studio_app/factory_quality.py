@@ -1,5 +1,5 @@
 """Voice casting, complete audio previews and multi-turn editing."""
-import asyncio,copy,hashlib,json,os,signal,sys,uuid
+import asyncio,contextlib,copy,hashlib,json,os,signal,sys,uuid
 from pathlib import Path
 import httpx
 from fastapi import HTTPException
@@ -63,7 +63,8 @@ class Quality:
             if any(not p.get('voice_file') for p in cast):
                 if not self.voice_ready():raise RuntimeError('Für verschiedene erfundene Stimmen einmalig „Stimmenstudio einrichten“ wählen. Danach dieses Projekt fortsetzen. Die alte Einheitsstimme wird nicht mehr verwendet.')
                 job=self.folder(d)/'Stimmgestaltung.json';out=self.folder(d)/'03_Stimmen/Profile';self.atomic(job,json.dumps({'run_id':d['id'],'cast':cast,'lines':lines,'performances':options['speech_engine']=='qwen' or options['speech_engine']=='auto' and speech_ready(self.base),'output':str(out)}).encode());d['phase']='Eigene Stimmen für die Figuren gestalten';self.save(d)
-                await self.command([self.base/'envs/studio-voices/bin/python',Path(__file__).with_name('factory_voice.py'),'--base',self.base,'--job',job],7200);profiles=json.loads((out/'Profile.json').read_text());d['voice_profiles']=profiles
+                async with self.measured(d,'Stimmgestaltung'):await self.command([self.base/'envs/studio-voices/bin/python',Path(__file__).with_name('factory_voice.py'),'--base',self.base,'--job',job],7200)
+                profiles=json.loads((out/'Profile.json').read_text());d['voice_profiles']=profiles
                 for p in cast:
                     profile=profiles[p['name']];p.update(voice_file=profile['file'],voice_hash=profile['sha256'],voice_text=profile.get('voice_text',''),emotion_profiles=profile.get('emotion_profiles',{}))
             else:d['voice_profiles']={p['name']:{'file':p['voice_file'],'sha256':p['voice_hash'],'source':'upload'} for p in cast}
@@ -74,7 +75,8 @@ class Quality:
             if not python.is_file():raise RuntimeError('Die ausgewählte lokale Sprachumgebung fehlt.')
             d['audio_engine']=engine
             folder=self.folder(d)/'03_Stimmen/Dialoge';job=self.folder(d)/'Sprachauftrag.json';self.atomic(job,json.dumps({'cast':cast,'lines':lines,'output':str(folder)}).encode());d['phase']=f'{len(lines)} Dialogbeiträge werden eingesprochen';self.save(d)
-            await self.command([python,Path(__file__).with_name('factory_speech.py' if engine=='qwen' else 'factory_tts.py'),'--base',self.base,'--job',job],14400);d['lines']=json.loads((folder/'Ergebnis.json').read_text())['lines']
+            async with self.measured(d,'Sprache · '+engine):await self.command([python,Path(__file__).with_name('factory_speech.py' if engine=='qwen' else 'factory_tts.py'),'--base',self.base,'--job',job],14400)
+            d['lines']=json.loads((folder/'Ergebnis.json').read_text())['lines']
             if len(d['lines'])!=len(lines):raise RuntimeError('Sprachvorschau unvollständig.')
         elif not lines:d['lines']=[];d['voice_profiles']={}
         if self.paused(d['id']):return
@@ -86,6 +88,10 @@ class Quality:
                 'music':{'file':music['path'],'sha256':music['sha256']} if music else None,
                 'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds']})
         d['state']='audio_mixing';d['phase']='CPU: Dialog, Musik und Geräusche mischen · GPU wieder frei';self.save(d)
+    def measured(self,d,stage):
+        """Voice generation runs outside ComfyUI; record its time like every other stage."""
+        resources=self.g.get('resources')
+        return resources.measure(d['id'],stage,'GPU') if resources else contextlib.nullcontext()
     def speech_retake(self,d):
         """After a failed speech check, speak only the inaudible lines again."""
         from speech_check import MARK

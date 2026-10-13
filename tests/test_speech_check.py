@@ -148,3 +148,23 @@ def test_resume_after_failed_generation_retakes_that_line(tmp_path):
     assert d['speech_takes'] == {'E01_S03_T02_cccc': 2} and d['state'] == 'voicing' and not marker.exists()
     # Other generation failures (e.g. model missing) keep the normal resume path.
     assert Quality.speech_retake(fake, {'state': 'blocked', 'resume_state': 'voicing'}) is False
+
+
+def test_voice_stages_are_measured():
+    import asyncio
+    from contextlib import asynccontextmanager
+    from factory_quality import Quality
+    noted = []
+
+    class Resources:
+        @asynccontextmanager
+        async def measure(self, project, stage, resource):
+            yield; noted.append((project, stage, resource))
+
+    class WithResources: g = {'resources': Resources()}
+    class Without: g = {}
+
+    async def run(owner):
+        async with Quality.measured(owner, {'id': 'p1'}, 'Sprache · qwen'): pass
+    asyncio.run(run(WithResources())); asyncio.run(run(Without()))
+    assert noted == [('p1', 'Sprache · qwen', 'GPU')]

@@ -1,3 +1,10 @@
+# Cay Studio 0.13.4 – Zeitmessung inklusive Stimmen (13.10.2026)
+
+- Die Spracherzeugung wird jetzt wie Planung, Bilder und Animation gemessen.
+- Cay_Studio_Diagnose.cmd zeigt eine Zeittabelle pro Projekt.
+
+---
+
 # Cay Studio 0.13.3 – hängende Abschnitte lösen, „Schnell“ als Standard (12.10.2026)
 
 - Hängt ein Abschnitt länger als 10 Minuten ohne neuen Rechenschritt, erscheint eine Karte mit **„Abbrechen · mit „Schnell“ weiter“**.

@@ -59,7 +59,28 @@ def newest_mix(folder):
     return result
 
 
-def project(row, root):
+def minutes(seconds):
+    return f'{seconds / 60:5.1f} min'
+
+
+def timing(db, d, row):
+    """Measured GPU/CPU time per stage plus total elapsed time of the project."""
+    try:
+        rows = db.execute('SELECT stage,resource,COUNT(*) AS n,SUM(seconds) AS s,MIN(started) AS first,MAX(started) AS last '
+                          'FROM performance_stages WHERE project=? GROUP BY stage,resource ORDER BY MIN(started)', (d.get('id'),)).fetchall()
+    except sqlite3.Error as error:
+        print('Zeitmessung nicht lesbar:', error); return
+    if not rows: print('Zeitmessung: keine Einträge'); return
+    print('ZEITMESSUNG (gemessene Rechenzeit je Arbeitsschritt):')
+    for r in rows: print(f'   {r["stage"][:34]:34} {r["resource"]:6} {r["n"]:3}x  {minutes(r["s"] or 0)}')
+    total = sum(r['s'] or 0 for r in rows)
+    voices = any(r['stage'].startswith(('Sprache', 'Stimmgestaltung')) for r in rows)
+    print(f'   {"Summe gemessen":34} {"":6} {"":4}  {minutes(total)}  ('
+          + ('' if voices else 'Stimmen in dieser Version noch nicht gemessen; ') + 'Wartezeit auf deine Freigaben nicht enthalten)')
+    print('   Projekt angelegt:', row['created'], '| zuletzt geändert:', row['updated'])
+
+
+def project(row, root, db=None):
     d = json.loads(row['document']); idea = d.get('idea', {})
     print('\n' + '=' * 70)
     print('PROJEKT', d.get('title'), '| id', d.get('id'), '| Zustand', d.get('state'), '| aktualisiert', row['updated'])
@@ -81,6 +102,7 @@ def project(row, root):
               f'Datei {"da" if exists else "FEHLT"}, Text: {str(line.get("text", ""))[:60]}')
     for t in d.get('timing', []): print('Zeitplan:', {k: t.get(k) for k in ('seconds', 'speech_seconds', 'speech_share', 'longest_speech_gap')})
     print('Fehler:', (d.get('error') or '-')[:600], '| Fortsetzen bei:', d.get('resume_state'))
+    if db is not None: timing(db, d, row)
     folder = root / '01_Projekte' / 'Studio' / str(d.get('id'))
     if folder.is_dir():
         for mix in newest_mix(folder): print('Tonmischung:', json.dumps(mix, ensure_ascii=False)[:900])
@@ -107,7 +129,7 @@ def main():
     except (OSError, subprocess.SubprocessError) as error: print('GPU jetzt: nicht lesbar', error)
     db = sqlite3.connect(f'file:{RUNTIME / "data/cay_studio.sqlite3"}?mode=ro', uri=True); db.row_factory = sqlite3.Row
     rows = db.execute('SELECT * FROM factory_runs ORDER BY updated DESC LIMIT 3').fetchall()
-    for row in rows: project(row, root)
+    for row in rows: project(row, root, db)
     for name, count in (('dashboard.log', 25), ('comfyui.log', 40)):
         log = RUNTIME / 'logs' / name
         if log.is_file():

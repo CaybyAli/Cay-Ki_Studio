@@ -1,8 +1,10 @@
-# Cay Studio 0.13.3 – so geht es weiter
+# Cay Studio 0.13.4 – so geht es weiter
 
 ## Was neu ist
 
-**Neu in 0.13.3:**
+**Neu in 0.13.4:** Die Spracherzeugung wird mitgemessen; die Diagnose zeigt eine Zeittabelle pro Projekt.
+
+**Seit 0.13.3:**
 - Hängt ein Abschnitt (über 10 Minuten kein neuer Rechenschritt), zeigt das Studio eine Karte mit **„Abbrechen · mit „Schnell“ weiter“**. Fertige Bilder und Stimmen bleiben erhalten.
 - Nach einem PC-Neustart bleibt ein Projekt nicht mehr bei „Status erneut prüfen“ hängen. Knopf: **„Abschnitt neu starten“**.
 - Neue Projekte starten mit **„Schnell“**: 4 statt 40 Rechenschritte pro Durchgang. „Hohe Qualität“ bleibt wählbar, ist aber sehr langsam.
@@ -15,8 +17,8 @@ Geprüft mit echtem Dashboard, nachgebautem ComfyUI und Chromium. **Nicht geprü
 
 1. ZIP herunterladen. Rechtsklick → **Alle extrahieren**.
 2. Läuft eine Produktion: **Pausieren** und den aktuellen Abschnitt beenden lassen.
-3. **Cay_Studio_Update.cmd** doppelklicken. Auf **CAY STUDIO 0.13.3 INSTALLIERT** warten.
-4. Kein PC-Neustart nötig. Im Browser **Strg + F5** drücken. Unten muss **0.13.3** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken. Auf **CAY STUDIO 0.13.4 INSTALLIERT** warten.
+4. Kein PC-Neustart nötig. Im Browser **Strg + F5** drücken. Unten muss **0.13.4** stehen.
 5. **Meine Projekte → dein Projekt → Produktion fortsetzen**.
 
 Meldet das Update „beschäftigt“: den laufenden Schritt abwarten und dieselbe Datei erneut starten. Der Installer sichert die Datenbank. Bei einem Startfehler kehrt er selbst zur vorherigen Version zurück.

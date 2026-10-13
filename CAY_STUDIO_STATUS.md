@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 12.10.2026 · Branch `claude/new-session-s0p05c`
+Stand: 13.10.2026 · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -76,8 +76,15 @@ Stimmen „billig“: offen. Hörbar billig wirken sicher auch die synthetische 
 - Updater-Meldung nennt das jetzt; `Cay_Studio_Update.cmd` schreibt `Cay_Studio_Updateprotokoll.txt`. Payload unverändert 0.13.3.
 - **[Vermutung]** Wallpaper Engine belegt zusätzlich GPU; unter WDDM nicht messbar (N/A).
 
+## 13.10.2026 – Cay: 15-s-Film mit „Schnell“ fertig
+- **[Sicher, Foto]** Mit `fast`: GPU 99 %, letzter Fortschritt 0 s → kein Hänger mehr. Dialog vorhanden, Bildqualität laut Cay sehr gut; manchmal fehlt ein Arm.
+- **[Sicher, Foto Task-Manager]** VmmemWSL 44,6 GB RAM; Windows-RAM 86 % belegt.
+- **Offen:** Gesamtzeit und Anteil je Schritt unbekannt → Diagnose mit Zeittabelle. Inhalt laut Cay: „eine Person ein Satz, Schnitt, andere Person ein Satz“ → Wörter/Sprechanteil aus Diagnose prüfen.
+- **[Sicher, Code]** Mundbewegung läuft mit `cfg=1` in allen Profilen → Negativ-Prompt („missing arm“) wirkt dort nicht.
+- 0.13.4: Messung `Stimmgestaltung` und `Sprache · <engine>`; Diagnose-Zeittabelle.
+
 ## Nächster konkreter Schritt
-Cay: pausieren, PC neu starten, 0.13.3 installieren, mit „Schnell“ weiter, Zeit bis zur fertigen 15-s-Datei notieren, Diagnose schicken.
+Cay: Diagnose (Zeittabelle + Wörter des Keks-Films) schicken; sagen, ob der fehlende Arm schon im gewählten Bild fehlt. Danach gezielt die größte Zeitposition verkürzen.
 
 ## Reihenfolge danach
-1. Tempo messen mit „Schnell“ (echte Minuten pro 5-s-Abschnitt). 2. Stimmenvergleich: Qwen VoiceDesign direkt vs. Klon, Chatterbox; Hörprobenblatt. 3. Neue Oberfläche aus einem Guss. 4. Modellvergleich lokal.
+1. Größten Zeitblock verkürzen (nach Messung). 2. 60-s-Test. 3. Stimmenvergleich. 4. Neue Oberfläche. 5. Modellvergleich.
