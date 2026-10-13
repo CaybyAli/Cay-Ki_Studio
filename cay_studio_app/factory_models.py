@@ -18,7 +18,7 @@ class Idea(Strict):
     title:str=Field(default='',max_length=100)
     episodes:int=Field(default=1,ge=1,le=12)
     duration:int=Field(default=60,ge=15,le=90)
-    look:Literal['auto','film','cartoon','paper']='auto'
+    look:Literal['auto','film','cartoon','clay','paper']='auto'
     characters:Literal['invent','provided','none']='invent'
     participants:list[Participant]=Field(default_factory=list,max_length=8)
     examples:list[str]=Field(default_factory=list,max_length=4)
@@ -53,7 +53,7 @@ class SeriesPlan(Strict):
     title:str=Field(min_length=2,max_length=100)
     synopsis:str=Field(min_length=10,max_length=1800)
     style:str=Field(min_length=10,max_length=1800)
-    visual:Literal['film','cartoon','paper']
+    visual:Literal['film','cartoon','clay','paper']
     mood:Literal['suspense','playful','gentle','energetic']
     cast:list[CastPlan]=Field(max_length=8)
     episodes:list[Outline]=Field(min_length=1,max_length=12)

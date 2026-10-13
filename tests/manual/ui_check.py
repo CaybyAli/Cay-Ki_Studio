@@ -33,7 +33,7 @@ def media(path, kind, seconds=3):
     if kind == 'wav':
         subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', f'sine=frequency=220:duration={seconds}', '-ar', '24000', str(path)], check=True)
     else:
-        subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', f'gradients=s=540x960:c0=0x1e3c72:c1=0xfd1d1d:d={seconds}', '-f', 'lavfi', '-i', f'sine=frequency=330:duration={seconds}',
+        subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', f'gradients=s=1080x1920:c0=0x1e3c72:c1=0xfd1d1d:d={seconds}', '-f', 'lavfi', '-i', f'sine=frequency=330:duration={seconds}',
                         '-shortest', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', str(path)], check=True)
     return {'file': str(path), 'sha256': sha(path)}
 
@@ -103,6 +103,20 @@ try:
         def shot(name, url, full=True, wait=2200):
             page.goto('http://127.0.0.1:8787/' + url); page.wait_for_timeout(wait); page.screenshot(path=str(shots / f'{name}.png'), full_page=full)
         shot('01_neu', '#new', full=False)
+        jpg = work / 'vorlage.jpg'
+        subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'gradients=s=1200x800:c0=0xe0a060:c1=0x603020:d=1', '-frames:v', '1', str(jpg)], check=True)
+        page.click('details.more summary'); page.click('[data-action="add-person"]'); page.wait_for_timeout(300)
+        page.set_input_files('input[data-upload="example"]', str(jpg)); page.wait_for_selector('.thumb img', timeout=15000); page.wait_for_timeout(800)
+        r.check('JPG als Look-Vorlage übernommen und angezeigt', page.evaluate("[...document.querySelectorAll('.thumbs .thumb img')].filter(i => i.naturalWidth > 0).length") == 1)
+        overlaps = page.evaluate('''(() => { const els = [...document.querySelectorAll('details.more .button, details.more .file-pill, details.more .thumb, details.more .input, details.more .icon-remove, details.more .segmented')];
+          const r = els.map(e => e.getBoundingClientRect()); let n = 0;
+          for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) { if (els[i].contains(els[j]) || els[j].contains(els[i])) continue;
+            const w = Math.min(r[i].right, r[j].right) - Math.max(r[i].left, r[j].left), h = Math.min(r[i].bottom, r[j].bottom) - Math.max(r[i].top, r[j].top); if (w > 1 && h > 1) n++; }
+          return n; })()''')
+        r.check(f'Figuren und Vorlagen: keine Überlappung ({overlaps} Überschneidungen)', overlaps == 0)
+        page.locator('details.more').screenshot(path=str(shots / '01b_vorlagen.png'))
+        page.click('[data-set="look"][data-value="clay"]'); page.wait_for_timeout(200)
+        r.check('Look „Knete“ wählbar', page.locator('#preview').get_attribute('data-look') == 'clay')
         r.check('Startseite: Eingabe und Startknopf sichtbar', page.locator('#idea').is_visible() and page.locator('#create').inner_text() == 'Film starten')
         page.click('[data-set="episodes"][data-value="12"]'); page.click('[data-set="quality"][data-value="draft"]'); page.wait_for_timeout(300)
         r.check('Serie gewählt: Knopftext und Teil-Etikett', page.locator('#create').inner_text() == 'Serie mit 12 Folgen starten' and page.locator('#preview-part').inner_text() == 'Teil 1/12')
@@ -125,8 +139,13 @@ try:
         r.check('Fertig: 2 Folgen mit Beschreibung', page.locator('.film video').count() == 2 and page.locator('.caption-box').count() >= 2)
         shot('08_angehalten', '#p=' + 'e' * 32)
         r.check('Angehalten: klare Überschrift und Fortsetzen', 'nicht hörbar' in page.locator('.next h2').inner_text() and page.locator('.next [data-action="resume"]').count() == 1)
-        shot('09_filme', '#films', wait=3000)
-        r.check('Filme: 2 fertige Folgen', page.locator('.film').count() == 2)
+        r.check('Kein Reiter „Filme“ mehr', page.locator('[data-nav="films"]').count() == 0)
+        page.goto('http://127.0.0.1:8787/#p=' + 'd' * 32); page.wait_for_selector('.film video', timeout=15000)
+        for _ in range(60):
+            if page.evaluate("[...document.querySelectorAll('.film video')].every(v => v.readyState >= 1)"): break
+            page.wait_for_timeout(250)
+        widths = page.evaluate("[...document.querySelectorAll('.film video')].map(v => v.getBoundingClientRect().width)")
+        r.check(f'Videos 1080×1920 bleiben in ihrer Kachel ({[round(w) for w in widths]} px)', widths and max(widths) < 320)
         page.emulate_media(color_scheme='dark'); shot('10_neu_dunkel', '#new', full=False); shot('11_projekt_dunkel', '#p=' + 'a' * 32)
         page.set_viewport_size({'width': 390, 'height': 844}); page.emulate_media(color_scheme='light')
         shot('12_handy_neu', '#new'); shot('13_handy_projekte', '#projects', full=False)
@@ -134,6 +153,7 @@ try:
         page.set_viewport_size({'width': 1280, 'height': 900}); shot('14_neu_anlegen', '#new', full=False)
         page.click('[data-action="settings"]'); page.wait_for_timeout(4000); page.screenshot(path=str(shots / '16_einrichtung.png'))
         r.check('Einrichtung: Prüfliste und Figurentausch-Link', page.locator('#sheet .check-row').count() >= 3 and page.locator('#sheet a[href="/classic#remix"]').count() == 1)
+        r.check('Einrichtung: Turbo-Bereich mit Einrichten-Knopf', page.locator('#sheet [data-action="turbo-setup"]').count() == 1)
         page.click('#sheet [data-action="close"]'); page.wait_for_timeout(300)
         page.fill('#idea', 'Ein Hamster plant den perfekten Raubzug in der Küche, doch die Katze ist schneller.'); page.click('[data-set="duration"][data-value="15"]')
         page.click('#create'); page.wait_for_timeout(2500)

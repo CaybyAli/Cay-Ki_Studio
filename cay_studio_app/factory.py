@@ -11,6 +11,7 @@ from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality
 from factory_post import PostProduction
 from autopilot import Autopilot
+import turbo
 from factory_audio import turns
 from factory_timing import plan_seconds, POLICY
 from factory_editor import Editor, image_rounds, active_variants, regenerate
@@ -372,7 +373,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             required={x['name'] for x in planning_idea['participants']}
             if not required.issubset(names) or (idea['characters']=='provided' and set(names)!=required):raise RuntimeError('Figurenplanung entspricht nicht deinen Vorgaben.')
             if idea['look']!='auto':
-                plan['visual']=idea['look'];plan['style']={'film':'Cinematic realistic live-action. ', 'cartoon':'Premium stylized 3D animation, expressive original characters. ', 'paper':'Handcrafted paper-cut illustration, layered textured paper. '}[idea['look']]+plan['style']
+                plan['visual']=idea['look'];plan['style']={'film':'Cinematic realistic live-action. ', 'cartoon':'Premium stylized 3D animation, expressive original characters. ', 'paper':'Handcrafted paper-cut illustration, layered textured paper. ', 'clay':'Handmade claymation stop-motion look: plasticine characters with soft rounded shapes and subtle fingerprints, miniature practical sets, warm soft studio light, shallow depth of field. '}[idea['look']]+plan['style']
             d['plan']=plan;d['title']=idea['title'] or plan['title'];self.save(d)
         for i,outline in enumerate(d['plan']['episodes']):
             if self.paused(d['id']):return
@@ -527,7 +528,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         from comfy_diagnostics import report,summary
                         detail=report(status,json.loads(s['graph']),pid)
                         self.atomic(self.folder(d)/'Diagnose'/('ComfyUI_'+s['id']+'.json'),packed(detail).encode())
-                        error=summary(detail);self.sql("UPDATE factory_steps SET status='failed',error=? WHERE id=?",(error,s['id']));raise RuntimeError(error)
+                        error=summary(detail)
+                        if any(n.get('inputs',{}).get('attention_mode')=='sageattn' for n in graph.values()):
+                            # Turbo is optional: never let it block production twice.
+                            turbo.disable(self.g['RUNTIME'],error)
+                            error+=' Turbo wurde ausgeschaltet. „Fortsetzen“ rechnet diesen Abschnitt ohne Turbo neu.'
+                        self.sql("UPDATE factory_steps SET status='failed',error=? WHERE id=?",(error,s['id']));raise RuntimeError(error)
                     output=item.get('outputs',{}).get('15' if video else '77',{})
                     candidates=[o for values in output.values() if isinstance(values,list) for o in values if isinstance(o,dict) and 'filename' in o]
                     files=[o for o in candidates if Path(o['filename']).suffix.lower() in (('.mp4',) if video else ('.png',))]
@@ -677,7 +683,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if lines and options['lip_sync']=='audio':
                         # Include actual pauses; never drive lips with the music mix.
                         audio=await asyncio.to_thread(dialogue_window,lines,start,duration,self.folder(d)/'04_Animation'/f'Dialog_{ei}_{si}_{seg}_{d.get("audio_revision",0)}.wav')
-                        graph=audio_graph(info,image,self.stage(audio),prompt,seed,duration,options['quality'])
+                        graph=audio_graph(info,image,self.stage(audio),prompt,seed,duration,options['quality'],attention=turbo.attention(self.g['RUNTIME'],info))
                     else:
                         graph=motion_graph(image,prompt,seed,'',models,duration,options['quality'])
                     key=f'video09:{ei}:{si}:{seg}:'+digest(graph)[:24]
@@ -753,11 +759,29 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         @app.get('/api/factory')
         def listing():
             result=[]
+            # Same order as the worker: active, not paused, oldest first. Position 0 = on the GPU now.
+            queue=[r['id'] for r in self.rows("SELECT r.id FROM factory_runs r LEFT JOIN factory_control c ON c.id=r.id WHERE r.state IN ('planning','pictures','voicing','rendering','correcting') AND COALESCE(c.paused,0)=0 ORDER BY r.created")]
+            if self.busy in queue:queue.remove(self.busy);queue.insert(0,self.busy)
             for r in self.rows('SELECT id FROM factory_runs ORDER BY created DESC'):
                 d=self.get(r['id'])
                 if d.get('deleted'):continue
-                result.append({k:d.get(k) for k in ('id','title','state','phase','paused','created','updated','error') }|{'episodes':d['idea']['episodes'],'finished':len(d.get('exports',[]))})
+                result.append({k:d.get(k) for k in ('id','title','state','phase','paused','created','updated','error') }|{'episodes':d['idea']['episodes'],'finished':len(d.get('exports',[])),
+                    'busy':self.busy==d['id'],'queue':queue.index(d['id']) if d['id'] in queue else None})
             return {'runs':result}
+        @app.get('/api/factory/turbo')
+        def turbo_status():
+            running=bool(getattr(self,'turbo_task',None) and not self.turbo_task.done())
+            return {'state':'installing','message':'Turbo wird eingerichtet und geprüft. Das dauert wenige Minuten.'} if running else {**turbo.state(self.g['RUNTIME']),**({'error':self.turbo_error} if getattr(self,'turbo_error',None) else {})}
+        @app.get('/api/factory/speed')
+        def speed():
+            """Measured animation time per second of finished film, by quality (this PC only)."""
+            rates={}
+            for r in self.rows("SELECT id FROM factory_runs WHERE state='done'"):
+                d=self.get(r['id']);film=sum(float(t.get('seconds',0)) for t in d.get('timing',[]))
+                gpu=self.rows("SELECT SUM(seconds) AS s FROM performance_stages WHERE project=? AND stage='Animation' AND resource='GPU' AND status='done'",(d['id'],))
+                seconds=(gpu[0]['s'] if gpu else 0) or 0
+                if film>0 and seconds>0:rates.setdefault(d['idea'].get('quality','balanced'),[]).append(round(seconds/film,1))
+            return {q:{'low':min(v),'high':max(v),'films':len(v)} for q,v in rates.items()}
         @app.get('/api/factory/check')
         async def check():return await self.preflight()
         @app.get('/api/factory/{rid}/diagnostics')
@@ -926,6 +950,17 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d['phase']='Abschnitt abgebrochen.'+(' Weiter mit „Schnell“: zuerst kommt eine kurze Produktionsprobe.' if body.fast else ' Mit „Fortsetzen“ wird er neu berechnet.')
             self.sql('INSERT INTO factory_control VALUES(?,?) ON CONFLICT(id) DO UPDATE SET paused=excluded.paused',(rid,0 if body.fast else 1))
             self.save(d);return self.get(rid)
+        @app.post('/api/factory/turbo/setup')
+        async def turbo_setup():
+            if getattr(self,'turbo_task',None) and not self.turbo_task.done():return {'state':'installing'}
+            async def run():
+                self.turbo_error=None
+                try:await turbo.setup(self.g['RUNTIME'],self.base/'envs/comfyui/bin/python',self.g['RUNTIME']/'logs/turbo_einrichtung.log')
+                except Exception as error:self.turbo_error='Turbo nicht eingerichtet: '+str(error)[-500:]
+            self.turbo_task=asyncio.create_task(run());return {'state':'installing'}
+        @app.post('/api/factory/turbo/off')
+        def turbo_off():
+            turbo.disable(self.g['RUNTIME'],'von Cay ausgeschaltet');return turbo.state(self.g['RUNTIME'])
         @app.post('/api/factory/{rid}/autopilot')
         async def autopilot(rid:str,body:AutopilotSwitch):
             """Switch unattended production on or off; the worker advances waiting stops."""

@@ -51,7 +51,7 @@ def talk_models(info,fast=False):
     if fast:names['lora']=option(info,'WanVideoLoraSelect','lora',lambda x:'lightx2v' in x and 'i2v' in x and '480p' in x and 'cfg_step' in x)
     return names
 
-def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix=''):
+def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',attention='sdpa'):
     """25 native FPS, isolated dialogue only, exact onset/pauses; no background music."""
     if 'CayWanVideoSampler' not in info:
         raise ValueError('Die Sampler-Reparatur ist noch nicht in ComfyUI geladen. Nach dem Update laufende Arbeit pausieren, den PC neu starten und Cay Studio öffnen. Keine neuen Modelle nötig.')
@@ -67,7 +67,7 @@ def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix=''):
        '7':n('CLIPVisionLoader',clip_name=m['vision']),
        '8':n('WanVideoClipVisionEncode',clip_vision=['7',0],image_1=['1',0],strength_1=1.,crop='center',force_offload=True),
        '9':n('WanVideoTextEncodeCached',model_name=m['text'],precision='bf16',positive_prompt=prompt+' Only the single visible character speaks to the supplied voice. Mouth relaxed and closed during silence. Stable identity.',negative_prompt='talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping',quantization='disabled',use_disk_cache=True,device='gpu'),
-       '10':n('WanVideoModelLoader',model=m['model'],base_precision='bf16',quantization='fp8_e4m3fn',load_device='offload_device',attention_mode='sdpa',multitalk_model=['4',0],block_swap_args=['17',0]),
+       '10':n('WanVideoModelLoader',model=m['model'],base_precision='bf16',quantization='fp8_e4m3fn',load_device='offload_device',attention_mode=attention,multitalk_model=['4',0],block_swap_args=['17',0]),
        '11':n('WanVideoImageToVideoMultiTalk',vae=['3',0],width=size[0],height=size[1],frame_window_size=81,motion_frame=9,force_offload=True,colormatch='disabled',start_image=['1',0],tiled_vae=True,clip_embeds=['8',0],mode='infinitetalk',output_path=''),
        '12':n('CayWanVideoSampler',model=['10',0],image_embeds=['11',0],text_embeds=['9',0],multitalk_embeds=['6',0],steps=4 if lite else 40 if quality=='high' else 24,cfg=1.,shift=2. if lite else 5.,seed=seed,force_offload=True,scheduler='euler',riflex_freq_index=0,start_step=0,end_step=-1),
        '13':n('WanVideoPassImagesFromSamples',samples=['12',0]),

@@ -3,7 +3,7 @@
    Rules: one next step per screen, no inline styles or scripts (strict CSP),
    polling never re-renders while Cay types or plays audio/video. */
 
-const S = { token: '', version: '', page: 'new', rid: null, run: null, progress: null, runs: null, docs: {}, films: null,
+const S = { token: '', version: '', page: 'new', rid: null, run: null, progress: null, runs: null, docs: {}, speed: null,
   draft: null, busy: false, episode: 0, sig: '', health: null, deferred: false };
 const $ = (q, root = document) => root.querySelector(q);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -51,7 +51,7 @@ const STEPS = ['Drehbuch', 'Bilder', 'Ton', 'Animation', 'Fertig'];
 const STAGE = { planning: 0, correcting: 1, pictures: 1, image_review: 1, voicing: 2, audio_mixing: 2, voice_review: 2, rendering: 3, sample_review: 3, finishing: 3, done: 4 };
 const WORKING = new Set(['planning', 'correcting', 'pictures', 'voicing', 'audio_mixing', 'rendering', 'finishing']);
 const REVIEW = new Set(['image_review', 'voice_review', 'sample_review']);
-const LOOKS = [['auto', 'Automatisch'], ['film', 'Film'], ['cartoon', 'Cartoon'], ['paper', 'Papier']];
+const LOOKS = [['auto', 'Automatisch'], ['film', 'Film'], ['cartoon', 'Cartoon'], ['clay', 'Knete'], ['paper', 'Papier']];
 const QUALITY = { draft: 'Entwurf', fast: 'Standard', balanced: 'Ausgewogen (alt)', high: 'Hoch (alt)' };
 const PRESETS = [['young_woman', 'Junge Frau'], ['woman', 'Frau'], ['young_man', 'Junger Mann'], ['man', 'Mann'], ['child_girl', 'Mädchen'], ['child_boy', 'Junge'], ['grandma', 'Oma'], ['grandpa', 'Opa'], ['creature', 'Fantasiefigur']];
 // Measured on Cay's RTX 4090 (12.10.2026): 9 min fastest, 20.7 min average per 5 s piece at Standard.
@@ -63,6 +63,7 @@ function status(d) {
   if (d.state === 'blocked') return ['stop', 'Angehalten'];
   if (d.paused) return ['', 'Pausiert'];
   if (REVIEW.has(d.state) && !d.autopilot) return ['you', 'Wartet auf dich'];
+  if (d.queue > 0 && !d.busy) return ['', d.queue === 1 ? 'Als Nächstes dran' : `In der Warteschlange, Platz ${d.queue + 1}`];
   return ['run', 'Läuft'];
 }
 function duration(seconds) {
@@ -74,20 +75,23 @@ function duration(seconds) {
   return rest ? `${h} h ${rest} min` : `${h} h`;
 }
 function estimate(draft) {
-  const total = draft.duration * draft.episodes, [low, high] = SECONDS_PER_FILM_SECOND[draft.quality] || SECONDS_PER_FILM_SECOND.fast;
-  return `${duration(total * low)} bis ${duration(total * high)}`;
+  // Prefer what this PC measured for finished films; else the 12.10. measurement.
+  const total = draft.duration * draft.episodes, measured = S.speed && S.speed[draft.quality];
+  const [low, high] = measured ? [measured.low, measured.high] : SECONDS_PER_FILM_SECOND[draft.quality] || SECONDS_PER_FILM_SECOND.fast;
+  const basis = measured ? `gemessen an ${measured.films} fertigen ${measured.films === 1 ? 'Film' : 'Filmen'} in dieser Qualität` : 'Hochrechnung aus deiner Messung vom 12.10.';
+  return `Rechenzeit ungefähr ${low === high ? duration(total * low) : `${duration(total * low)} bis ${duration(total * high)}`}, ${basis}`;
 }
 
 /* ---------- shell ---------- */
 function route() {
   const hash = decodeURIComponent(location.hash.slice(1));
   if (hash.startsWith('p=')) { S.page = 'project'; if (S.rid !== hash.slice(2)) { S.rid = hash.slice(2); S.run = null; S.progress = null; S.sig = ''; S.episode = 0; } }
-  else S.page = ['projects', 'films'].includes(hash) ? hash : 'new';
+  else S.page = hash === 'projects' ? hash : 'new';
 }
 function render() {
   document.querySelectorAll('[data-nav]').forEach(b => b.setAttribute('aria-current', (b.dataset.nav === S.page || (S.page === 'project' && b.dataset.nav === 'projects')) ? 'page' : 'false'));
   const main = $('#main');
-  main.innerHTML = S.page === 'project' ? projectView() : S.page === 'projects' ? projectsView() : S.page === 'films' ? filmsView() : composeView();
+  main.innerHTML = S.page === 'project' ? projectView() : S.page === 'projects' ? projectsView() : composeView();
   S.deferred = false;
   if (S.page === 'new') updateCompose();
   if (S.page === 'project') paintProgress();
@@ -97,7 +101,6 @@ async function load() {
   try {
     if (S.page === 'project') await refreshRun(true);
     else if (S.page === 'projects') await refreshRuns();
-    else if (S.page === 'films') await loadFilms();
   } catch (e) { toast(e.message); }
 }
 function busyUI() {
@@ -129,7 +132,7 @@ function composeView() {
           <p class="hint" id="quality-hint"></p></div>
         <div class="choice"><span>Autopilot</span><label class="switch"><input type="checkbox" data-field="autopilot" ${d.autopilot ? 'checked' : ''}><span id="autopilot-text"></span></label></div>
       </div>
-      <details class="more"><summary>Figuren, Titel und Musik</summary>${extrasView()}</details>
+      <details class="more"><summary>Figuren, Look-Vorlagen und Musik</summary>${extrasView()}</details>
       <div class="compose-foot"><p class="muted small" id="estimate"></p><button class="button" data-action="create" id="create">Film starten</button></div>
     </div>
     <aside class="frame preview-frame" id="preview" aria-hidden="true">
@@ -141,20 +144,45 @@ function composeView() {
 }
 function extrasView() {
   const d = S.draft;
+  const thumbs = d.examples.map((id, i) => `<div class="thumb"><img src="/api/factory/assets/${esc(id)}" alt="Vorlage ${i + 1}"><button class="thumb-remove" data-action="remove-example" data-index="${i}" aria-label="Vorlage ${i + 1} entfernen">×</button></div>`).join('');
+  const add = d.examples.length < 4 ? `<label class="thumb add"><span>Bild hinzufügen</span><input type="file" accept="image/*" multiple data-upload="example"></label>` : '';
   const people = d.participants.map((p, i) => `<div class="person">
-      <input class="input" aria-label="Name" placeholder="Name" data-person="${i}" data-key="name" value="${esc(p.name)}" maxlength="60">
-      <input class="input" aria-label="Eigenschaften" placeholder="Aussehen, Alter, Art" data-person="${i}" data-key="traits" value="${esc(p.traits)}" maxlength="1500">
-      <button class="button danger small" data-action="remove-person" data-index="${i}">Entfernen</button>
-      <div class="files">
-        <label class="file-pill ${p.image ? 'set' : ''}">${p.image ? 'Bild gewählt' : 'Bild (PNG)'}<input type="file" accept="image/png" data-upload="image" data-index="${i}"></label>
-        <label class="file-pill ${p.voice ? 'set' : ''}">${p.voice ? 'Stimmprobe gewählt' : 'Stimmprobe'}<input type="file" accept="audio/*" data-upload="voice" data-index="${i}"></label>
-      </div></div>`).join('');
-  return `<div class="field"><span>Titel (optional)</span><input class="input" data-field="title" value="${esc(d.title)}" maxlength="100" placeholder="Wird sonst aus der Idee gebildet"></div>
-    <div class="field"><span>Wer spielt mit?</span>${seg('characters', [['invent', 'Studio erfindet'], ['provided', 'Nur meine Figuren'], ['none', 'Ohne Figuren']], d.characters)}</div>
-    ${people}
-    <div class="actions"><button class="button quiet small" data-action="add-person">Figur hinzufügen</button>
-      <label class="file-pill ${d.music ? 'set' : ''}">${d.music ? 'Eigene Musik gewählt' : 'Eigene Musik (optional)'}<input type="file" accept="audio/*" data-upload="music"></label></div>
-    <p class="hint">Ohne eigene Musik bleibt die Musik aus. Die eingebaute Begleitmusik klingt einfach und ist nur in der Tonvorschau zuschaltbar.</p>`;
+      <label class="thumb small ${p.image ? '' : 'add'}" title="Bild genau dieser Figur">${p.image ? `<img src="/api/factory/assets/${esc(p.image)}" alt="">` : '<span>Bild</span>'}<input type="file" accept="image/*" data-upload="image" data-index="${i}"></label>
+      <div class="person-fields">
+        <input class="input" aria-label="Name" placeholder="Name" data-person="${i}" data-key="name" value="${esc(p.name)}" maxlength="60">
+        <input class="input" aria-label="Aussehen und Art" placeholder="Aussehen, Alter, Art" data-person="${i}" data-key="traits" value="${esc(p.traits)}" maxlength="1500">
+        <label class="file-pill ${p.voice ? 'set' : ''}">${p.voice ? 'Eigene Stimme gewählt' : 'Eigene Stimme (optional)'}<input type="file" accept="audio/*" data-upload="voice" data-index="${i}"></label>
+      </div>
+      <button class="icon-remove" data-action="remove-person" data-index="${i}" aria-label="Figur entfernen">×</button></div>`).join('');
+  return `<section class="group"><h3 class="group-title">Look-Vorlagen</h3>
+      <p class="hint">Bis zu vier Bilder, die zeigen, wie dein Film aussehen soll, zum Beispiel Knete-Optik, Farben oder Licht. Das Studio übernimmt den Stil, nicht die Figuren daraus.</p>
+      <div class="thumbs">${thumbs}${add}</div></section>
+    <section class="group"><h3 class="group-title">Figuren</h3>
+      ${seg('characters', [['invent', 'Studio erfindet'], ['provided', 'Nur meine Figuren'], ['none', 'Ohne Figuren']], d.characters)}
+      <p class="hint">Eigene Figuren mit Bild sehen in jeder Szene und Folge gleich aus.</p>
+      <div class="people">${people}</div>
+      <button class="button quiet small" data-action="add-person">Figur hinzufügen</button></section>
+    <section class="group"><h3 class="group-title">Titel und Musik</h3>
+      <label class="field"><span>Titel (optional)</span><input class="input" data-field="title" value="${esc(d.title)}" maxlength="100" placeholder="Wird sonst aus der Idee gebildet"></label>
+      <label class="file-pill ${d.music ? 'set' : ''}">${d.music ? 'Eigene Musik gewählt' : 'Eigene Musik hochladen'}<input type="file" accept="audio/*" data-upload="music"></label>
+      <p class="hint">Ohne eigene Musik bleibt die Musik aus.</p></section>`;
+}
+function refreshExtras() {
+  const box = $('details.more'); if (!box) return;
+  box.innerHTML = '<summary>Figuren, Look-Vorlagen und Musik</summary>' + extrasView(); box.open = true;
+}
+async function asPng(file) {
+  // The studio stores PNG; convert JPG/WebP/AVIF in the browser and keep it within 2048 px.
+  if (!file.type.startsWith('image/')) throw new Error('Bitte ein Bild wählen: JPG, PNG oder WebP.');
+  let bitmap;
+  try { bitmap = await createImageBitmap(file); } catch (e) { throw new Error(`${file.name}: Dieses Bildformat kann der Browser nicht lesen. Bitte JPG, PNG oder WebP wählen.`); }
+  const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
+  if (file.type === 'image/png' && scale === 1 && file.size < 18e6) return file;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.png', { type: 'image/png' });
 }
 function updateCompose() {
   const d = S.draft;
@@ -168,7 +196,7 @@ function updateCompose() {
   $('#series-hint').textContent = d.episodes > 1 ? 'Jede Folge endet mit einem offenen Ende, die nächste knüpft daran an.' : '';
   $('#quality-hint').textContent = d.quality === 'draft' ? 'Etwa doppelt so schnell, etwas weniger scharf. Gut zum Ausprobieren.' : 'Die Qualität deines letzten Films.';
   $('#autopilot-text').textContent = d.autopilot ? 'Ohne Zwischenstopps fertigstellen' : 'Bilder, Ton und Probe selbst freigeben';
-  $('#estimate').textContent = `Rechenzeit geschätzt: ${estimate(d)}. Grundlage: deine Messung vom 12.10.`;
+  $('#estimate').textContent = estimate(d) + '.';
   $('#create').textContent = d.episodes > 1 ? `Serie mit ${d.episodes} Folgen starten` : 'Film starten';
 }
 async function createFilm() {
@@ -184,6 +212,7 @@ async function createFilm() {
 }
 async function upload(kind, file) {
   if (!file) return null;
+  if (kind === 'image') file = await asPng(file);
   const result = await api(`/api/factory/assets?kind=${kind}&name=${encodeURIComponent(file.name)}`, { method: 'POST', raw: file });
   return result.id;
 }
@@ -392,36 +421,13 @@ function paintProgress() {
       <div class="actions"><button class="button small" data-action="abort-fast">Abschnitt neu starten</button></div></div>` : ''}`;
 }
 
-/* ---------- films ---------- */
-function filmsView() {
-  if (!S.films) return '<p class="muted">Filme werden geladen …</p>';
-  const head = '<div class="page-head"><h1 class="title">Filme</h1></div>';
-  if (!S.films.length) return head + '<div class="empty"><h2 class="headline">Noch kein fertiger Film.</h2><p class="muted">Fertige Filme und Folgen erscheinen hier, sobald der Export abgeschlossen ist.</p><a class="button" href="#new">Film starten</a></div>';
-  return head + `<div class="grid">${S.films.map(f => `<div class="film"><video class="frame" controls playsinline preload="metadata" src="${esc(f.src)}#t=0.1"></video>
-      <a class="tile-title" href="#p=${esc(f.rid)}">${esc(f.title)}</a>
-      ${f.caption ? `<button class="link small" data-action="copy" data-text="${esc(f.caption)}">Beschreibung kopieren</button>` : ''}
-      <a class="button quiet small" href="${esc(f.src)}?download=true" download>Herunterladen</a></div>`).join('')}</div>`;
-}
-async function loadFilms() {
-  const list = await api('/api/factory'), films = [];
-  for (const r of list.runs.filter(r => r.finished > 0)) {
-    const d = await api('/api/factory/' + r.id);
-    (d.exports || []).forEach((x, i) => {
-      const ep = d.episodes[x.episode] || {}, s = ep.social, total = d.idea.episodes;
-      films.push({ rid: d.id, src: `/api/factory/${d.id}/export/${i}`, title: (total > 1 ? `${d.title}, Folge ${x.episode + 1}` : d.title),
-        caption: s ? `${total > 1 ? `Teil ${x.episode + 1}/${total}: ` : ''}${s.caption}\n\n${(s.hashtags || []).map(h => '#' + h).join(' ')}` : '' });
-    });
-  }
-  S.films = films; if (S.page === 'films') render();
-}
-
 /* ---------- sheets ---------- */
 function openSheet(html) { const sheet = $('#sheet'); sheet.innerHTML = `<div class="sheet-body">${html}</div>`; if (!sheet.open) sheet.showModal(); }
 function closeSheet() { const sheet = $('#sheet'); if (sheet.open) sheet.close(); }
 async function settingsSheet() {
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div><p class="muted">Bereitschaft wird geprüft …</p>`);
-  const [check, voices, animation] = await Promise.all([api('/api/factory/check').catch(e => ({ error: e.message })),
-    api('/api/factory/voice-studio/status').catch(() => null), api('/api/factory/render-studio/status').catch(() => null)]);
+  const [check, voices, animation, boost] = await Promise.all([api('/api/factory/check').catch(e => ({ error: e.message })),
+    api('/api/factory/voice-studio/status').catch(() => null), api('/api/factory/render-studio/status').catch(() => null), api('/api/factory/turbo').catch(() => null)]);
   const rows = (check.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   const anim = (animation && animation.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div>
@@ -429,6 +435,10 @@ async function settingsSheet() {
     <h3 class="headline">Stimmen</h3><p class="small muted">${esc(voices ? voices.message : 'Status nicht lesbar.')}${voices && voices.dialogue_ready ? ' Qwen-Dialogmodell bereit.' : ''}</p>
     ${voices && voices.state !== 'ready' ? '<div class="actions"><button class="button quiet small" data-action="setup-voices">Stimmen einrichten</button></div>' : ''}
     ${voices && voices.state === 'ready' && !voices.dialogue_ready ? '<div class="actions"><button class="button quiet small" data-action="upgrade-voices">Dialogmodell ergänzen</button></div>' : ''}
+    <h3 class="headline">Turbo</h3>
+    <p class="small muted">Schnellere Rechenart der Grafikkarte für Sprechszenen, kostenlos. Erwartet etwa 1,5- bis 2-fach schneller, auf deinem PC noch nicht gemessen. Schlägt ein Abschnitt fehl, schaltet sich Turbo selbst ab.</p>
+    <p class="small">${esc(boost ? boost.message : 'Status nicht lesbar.')}${boost && boost.error ? ' ' + esc(boost.error) : ''}</p>
+    <div class="actions">${boost && ['missing', 'off'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-setup">Turbo einrichten</button>' : ''}${boost && ['active', 'restart'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-off">Turbo ausschalten</button>' : ''}</div>
     <h3 class="headline">Animation</h3><div>${anim}</div>
     ${animation && animation.message ? `<p class="small muted">${esc(animation.message)}</p>` : ''}
     ${animation && animation.checks && animation.checks.some(c => !c.ready) ? '<div class="actions"><button class="button quiet small" data-action="setup-animation">Fehlende Animationsteile einrichten</button></div>' : ''}
@@ -456,8 +466,9 @@ function readLines(form) {
 const audioPlayer = new Audio();
 const actions = {
   async create() { await createFilm(); },
-  'add-person'() { S.draft.participants.push({ name: '', traits: '', image: null, voice: null }); saveDraft(); $('details.more').innerHTML = '<summary>Figuren, Titel und Musik</summary>' + extrasView(); $('details.more').open = true; },
-  'remove-person'(b) { S.draft.participants.splice(+b.dataset.index, 1); saveDraft(); $('details.more').innerHTML = '<summary>Figuren, Titel und Musik</summary>' + extrasView(); $('details.more').open = true; },
+  'add-person'() { S.draft.participants.push({ name: '', traits: '', image: null, voice: null }); saveDraft(); refreshExtras(); },
+  'remove-person'(b) { S.draft.participants.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
+  'remove-example'(b) { S.draft.examples.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
   theme() {
     const root = document.documentElement, dark = (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
     root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cay-theme', root.dataset.theme); } catch (e) { /* ignore */ }
@@ -466,6 +477,8 @@ const actions = {
   close() { closeSheet(); },
   async 'setup-voices'() { await post('/api/factory/voice-studio/setup'); toast('Stimmen werden eingerichtet. Das dauert einige Minuten.'); closeSheet(); },
   async 'upgrade-voices'() { await post('/api/factory/voice-studio/upgrade'); toast('Dialogmodell wird ergänzt.'); closeSheet(); },
+  async 'turbo-setup'() { await post('/api/factory/turbo/setup'); toast('Turbo wird eingerichtet und geprüft. Danach einmal den PC neu starten.'); closeSheet(); },
+  async 'turbo-off'() { await post('/api/factory/turbo/off'); toast('Turbo ist aus.'); closeSheet(); },
   async 'setup-animation'() { await post('/api/factory/render-studio/setup'); toast('Animationsteile werden eingerichtet.'); closeSheet(); },
   async pause() { await post(`/api/factory/${S.rid}/pause`); toast('Pausiert, sobald der aktuelle Schritt fertig ist.'); },
   async resume() { await post(`/api/factory/${S.rid}/resume`); toast('Geht weiter.'); },
@@ -543,12 +556,17 @@ document.addEventListener('change', async event => {
   if (el.matches('input[data-action="autopilot"]')) { await guarded(el, async () => { await actions.autopilot(el); await refreshRun(true); }); return; }
   if (el.matches('[data-field="autopilot"]')) { S.draft.autopilot = el.checked; saveDraft(); updateCompose(); return; }
   if (el.matches('[data-upload]')) {
-    const kind = el.dataset.upload, file = el.files[0];
+    const kind = el.dataset.upload, files = [...el.files];
     await guarded(el, async () => {
-      const id = await upload(kind, file);
-      if (kind === 'music') S.draft.music = id; else S.draft.participants[+el.dataset.index][kind] = id;
-      saveDraft(); toast('Datei übernommen.');
-      $('details.more').innerHTML = '<summary>Figuren, Titel und Musik</summary>' + extrasView(); $('details.more').open = true;
+      if (kind === 'example') {
+        for (const file of files.slice(0, 4 - S.draft.examples.length)) S.draft.examples.push(await upload('image', file));
+        toast(files.length > 1 ? 'Vorlagen übernommen.' : 'Vorlage übernommen.');
+      } else {
+        const id = await upload(kind, files[0]);
+        if (kind === 'music') S.draft.music = id; else S.draft.participants[+el.dataset.index][kind] = id;
+        toast('Datei übernommen.');
+      }
+      saveDraft(); refreshExtras();
     });
   }
 });
@@ -600,6 +618,7 @@ async function start() {
   S.draft = loadDraft();
   const boot = await api('/api/bootstrap');
   S.token = boot.csrf; S.version = boot.version; $('#version').textContent = 'Cay Studio ' + boot.version;
+  S.speed = await api('/api/factory/speed').catch(() => null);
   route(); await load(); health();
   window.addEventListener('hashchange', () => { route(); load(); });
   setInterval(tick, 2500); setInterval(health, 15000);
