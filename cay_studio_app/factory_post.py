@@ -41,8 +41,16 @@ class PostProduction:
         raw=canonical(spec);key=hashlib.sha256((d['id']+kind+str(generation)+str(episode)+raw).encode()).hexdigest()
         self.sql('INSERT OR IGNORE INTO factory_post(id,run_id,kind,episode,generation,spec,status) VALUES(?,?,?,?,?,?,?)',
                  (key,d['id'],kind,episode,generation,raw,'queued'))
-        existing=self.rows('SELECT id FROM factory_post WHERE run_id=? AND kind=? AND episode=? AND generation=?',
+        existing=self.rows('SELECT id,status FROM factory_post WHERE run_id=? AND kind=? AND episode=? AND generation=?',
                            (d['id'],kind,episode,generation))[0]
+        if existing['id']!=key and kind.startswith('prepare:'):
+            # The export encodes every part again from its own spec; an outdated
+            # pre-encoding (e.g. after an update changed the segments) is harmless.
+            if existing['status']!='running':
+                self.sql('DELETE FROM factory_post WHERE id=?',(existing['id'],))
+                self.sql('INSERT OR IGNORE INTO factory_post(id,run_id,kind,episode,generation,spec,status) VALUES(?,?,?,?,?,?,?)',
+                         (key,d['id'],kind,episode,generation,raw,'queued'))
+            return
         if existing['id']!=key:raise RuntimeError('Die Nachbearbeitung gehört zu einer anderen Freigabe. Bitte die aktuelle Fassung erneut prüfen.')
 
     async def post_execute(self,row):

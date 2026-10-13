@@ -5,7 +5,7 @@ from pathlib import Path
 import httpx
 from fastapi import HTTPException,Request
 from fastapi.responses import FileResponse
-from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,repair_episode_overview
+from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,SocialPost,repair_episode_overview
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality
@@ -19,6 +19,9 @@ from story_source import manifest,validate_count,prepare_notes,episode_source,Se
 
 ACTIVE={'planning','pictures','voicing','rendering','correcting'}
 
+def part_label(index,total):
+    # Only series get the label; single films keep their exact previous spec.
+    return {'part_label':f'Teil {index+1}/{total}'} if total>1 else {}
 def packed(v):return json.dumps(v,ensure_ascii=False,sort_keys=True)
 def digest(v):return hashlib.sha256(packed(v).encode()).hexdigest()
 def uid():return uuid.uuid4().hex
@@ -252,7 +255,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                             # Editorial labels and causal notes are repairable metadata.
                             # Two visible people talking used to be rejected here, which
                             # pushed the planner to drop dialogue. Split happens on return.
-                            issues=structure_errors(result,data['duration'],strict_dialogue=False)
+                            cliffhanger_ok=bool(data.get('continuity',{}).get('end_with'))
+                            issues=structure_errors(result,data['duration'],strict_dialogue=False,cliffhanger_ok=cliffhanger_ok)
                             if issues:
                                 try:
                                     notes=await self.llm(StoryNotes,
@@ -266,7 +270,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                                     apply_notes(result,notes);checkpoint_episode(result)
                                 except (RuntimeError,ValueError,KeyError):
                                     result.setdefault('warnings',[]).append('Die Handlungszuordnung konnte nicht automatisch ergänzt werden. Bitte die Szenenfolge prüfen.')
-                                remaining=structure_errors(result,data['duration'],strict_dialogue=False)
+                                remaining=structure_errors(result,data['duration'],strict_dialogue=False,cliffhanger_ok=cliffhanger_ok)
                                 if remaining:result.setdefault('warnings',[]).append('Handlung noch prüfen: '+'; '.join(remaining))
                         words=sum(len(x['text'].split()) for sc in result['scenes'] for x in turns(sc))
                         if not names and words:raise ValueError('Ohne Figuren keine Dialoge.')
@@ -353,7 +357,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 outlines.append(await self.llm(Outline,
                     'Plane genau die angeforderte Folge der Staffel. Verbindliche Vorgaben und Ereignisse im Original dieser Folge erhalten. '
                     'Ein zusammenhängendes Ereignis mit Ziel, Hindernis und Auflösung. Keine anderen Folgen zusammenfassen. '
-                    'Die bisherigen Folgen und das Staffelziel berücksichtigen; keine Wiederholungen. Kurze Inhaltsangabe, noch keine Szenenliste.',
+                    'Die bisherigen Folgen und das Staffelziel berücksichtigen; keine Wiederholungen. Kurze Inhaltsangabe, noch keine Szenenliste. '
+                    'Serie mit mehreren Folgen: pickup beschreibt, wie die ersten Sekunden unmittelbar an den cliffhanger der vorherigen Folge anknüpfen (bei Folge 1 leer). '
+                    'Jede Folge außer der letzten beantwortet zuerst ihre eigene Frage und endet dann mit cliffhanger: eine neue, konkrete, sichtbare offene Frage oder Gefahr, '
+                    'die neugierig auf die nächste Folge macht (kein bloßes „Fortsetzung folgt“). Die letzte Folge löst die Staffel auf; cliffhanger leer.',
                     {'series':partial['header'],'episode':number,'total':idea['episodes'],
                      'source':original,'previous':outlines,'duration':idea['duration']}))
                 self.save(d)
@@ -373,6 +380,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             n=shot_count(idea['duration'])
             d['phase']=f'Drehbuch für Folge {i+1} von {idea["episodes"]}';self.save(d)
             original=await episode_source(self.llm,idea['idea'],source,i+1,cache,checkpoint)
+            # Serial hooks: pick up the previous cliffhanger, end on this one (not after the last episode).
+            continuity={'pick_up':d['plan']['episodes'][i-1].get('cliffhanger','') if i else '',
+                        'end_with':outline.get('cliffhanger','') if i+1<idea['episodes'] else ''}
             ep=await self.llm(EpisodePlan,
                 'Die Originalvorgaben dieser Folge sind verbindlich. Namen, Ereignisse und vorgegebene Dialoge erhalten; keine Folgen auslassen oder vermischen. Exakt shots zusammenhängende Szenen für EIN Ereignis; dieselbe Dauer hat immer dasselbe Szenenbudget. goal, obstacle und resolution als drei eigene nichtleere Textfelder auf oberster Ebene ausfüllen, passend zur Handlung der Szenen. Einstieg mit einem sichtbaren Problem, dann Versuch, Wendung und Auflösung. Keine lose Montage und kein Ortswechsel ohne Übergang. '
                 'Plane kurze Einstellungen von ungefähr vier bis sieben Sekunden, meist ein bis zwei Äußerungen. Nutze dialogues als geordnete Liste. Pro Einstellung möglichst nur eine sprechende Figur, bei Dialogwechseln passende Gegenansichten. Maximal zwei sichtbare Figuren, außer die Handlung braucht mehr. Alte Felder dialogue und speaker leer lassen. '
@@ -380,8 +390,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 'beat beschreibt die Handlungsfunktion, because den Anschluss zur vorigen Szene. motion enthält zwei bis drei aufeinander folgende Bewegungsabschnitte ohne Wiederholung. '
                 'animation_prompt ist eine knappe ENGLISCHE Beschreibung genau einer filmbaren Bewegung, Bildausschnitt und Endzustand. Keine Zitate oder Untertitel darin. Natürliches modernes Deutsch im Dialog, kurze konkrete Sätze. Keine wörtlichen Übersetzungen, leeren Ausrufe oder austauschbaren Erklärungen. Jede Antwort muss auf die vorherige Äußerung reagieren. Nicht jeden Satz mit dem Namen der anderen Figur beginnen. '
                 'ambience passend zur Umgebung; sound_cues nur für sichtbare Auslöser, position relativ zur Szene von 0 bis 1. Keine neuen Figuren, keine Mensch-Lebensmittel-Verwandlungen, keine Schrift. Kleidung, Requisiten und Geografie bewahren. Bei leerem cast keine Dialoge. '
+                'Serie: Ist continuity.pick_up gesetzt, greift Szene 1 diesen offenen Punkt in den ersten zwei Sekunden sichtbar und hörbar auf. '
+                'Ist continuity.end_with gesetzt, wird die Hauptfrage dieser Folge vorher aufgelöst (beat=payoff) und die letzte Szene zeigt genau diesen Cliffhanger (beat=cliffhanger) mit einer kurzen, spannenden Schlusszeile. '
                 'WICHTIG: Die einzige erlaubte Besetzung dieser Folge steht in series.cast. Übernimm die Namen in jeder scenes.cast- und dialogues.speaker-Angabe exakt aus dieser Liste. Keine Rollenbezeichnungen, Spitznamen, Klammerzusätze oder neu erfundene Namen in diesen Feldern.',
-                {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],'seconds_per_scene':idea['duration']/n,'previous':[{'title':x['title'],'resolution':x.get('resolution','')} for x in d['episodes']]})
+                {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,'series_total':idea['episodes'],'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],'seconds_per_scene':idea['duration']/n,'previous':[{'title':x['title'],'resolution':x.get('resolution','')} for x in d['episodes']],'continuity':continuity})
             ep['story_policy']=12
             ep['scene_budget']=n
             # A critic is advisory. Keep the valid draft if criticism or the
@@ -395,7 +407,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         'Überarbeite dieses vollständige Drehbuch anhand der konkreten Kritik. Exakt shots Szenen. Namen, Nutzerereignisse und verbindliche Dialoge erhalten. '+DIRECTION,
                         {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,
                          'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],
-                         'draft':ep,'criticism':review['problems']})
+                         'series_total':idea['episodes'],'continuity':continuity,'draft':ep,'criticism':review['problems']})
                     improved.update(story_policy=12,scene_budget=n)
                     ep=improved
                     review=await self.llm(StoryReview,'Prüfe die überarbeitete Handlung. Nenne nur verbleibende konkrete Schwächen. '+DIRECTION,{'episode':ep})
@@ -414,6 +426,15 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 raise RuntimeError(f'{MISSING_MARK}: Folge {i+1} hat kein einziges gesprochenes Wort, obwohl Figuren sprechen sollen. '
                     'Es wurden noch keine Bilder oder Stimmen erzeugt. „Folge neu planen“ startet die Planung dieser Folge erneut. '
                     'Für einen bewusst stummen Film in der Idee „ohne Dialoge“ schreiben.')
+            try:
+                d['phase']=f'Folge {i+1}: Beschreibung für TikTok und Shorts';self.save(d)
+                ep['social']=await self.llm(SocialPost,
+                    'Schreibe eine kurze deutsche Beschreibung für TikTok und YouTube Shorts zu genau dieser Folge. caption: ein neugieriger Satz ohne Spoiler der Auflösung, '
+                    'höchstens 150 Zeichen, keine Hashtags im Text, keine erfundenen Fakten. hashtags: 3 bis 6 passende deutsche oder gebräuchliche Hashtags ohne #-Zeichen, ohne Leerzeichen.',
+                    {'series_title':d['plan']['title'],'episode':i+1,'total':idea['episodes'],'title':ep['title'],'goal':ep.get('goal'),'cliffhanger':continuity['end_with']})
+                ep['social']['hashtags']=[re.sub(r'[^\wÄÖÜäöüß]','',h)[:40] for h in ep['social']['hashtags'] if re.sub(r'[^\wÄÖÜäöüß]','',h)]
+            except (RuntimeError,ValueError):
+                ep['social']=None
             plan_seconds(ep,idea['duration'],settings(idea)['fps'])
             for scene in ep['scenes']:
                 scene['variants']=[];scene['selected']=None;scene['round']=0
@@ -671,7 +692,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     clips.append({'file':clip['output'],'sha256':clip['sha256'],'seconds':duration})
                     spec[si]['clips']=list(clips)
                     self.queue_post(d,f'prepare:{si}:{seg}',ei,{'fps':fps,'smooth':options['smooth'],
-                        'title':ep['title'],'scenes':spec,'_only_part':[si,seg]})
+                        'title':ep['title'],'scenes':spec,'_only_part':[si,seg],**part_label(ei,len(d['episodes']))})
                     start+=duration
                     if seg<count-1:
                         next_image=self.folder(d)/'04_Animation'/('Anschluss_'+clip['sha256'][:20]+'.png')
@@ -685,7 +706,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             suffix=f'_v{generation+1:03}' if generation else ''
             out=self.g['ROOT']/'03_Fertige_Videos'/'Studio'/d['id']/f'Folge_{ei+1:02}{suffix}.mp4'
             music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
-            spec={'fps':fps,'smooth':options['smooth'],'minimum_seconds':d['idea']['duration'],
+            spec={**part_label(ei,len(d['episodes'])),'fps':fps,'smooth':options['smooth'],'minimum_seconds':d['idea']['duration'],
                   'scenes':spec,'output':str(out),'title':ep['title'],
                   'audio_mix':next((p for p in d.get('previews',[]) if p['episode']==ei),None),
                   'mix':d.get('mix'),'mood':d['plan']['mood'],

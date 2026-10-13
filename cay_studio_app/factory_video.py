@@ -113,10 +113,14 @@ PlayResY: 1920
 WrapStyle: 0
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+Style: Part,DejaVu Sans,46,&H00FFFFFF,&H00FFFFFF,&H00101010,&H64000000,-1,0,0,0,100,100,2,0,3,12,0,8,80,80,140,1
 Style: Default,DejaVu Sans,52,&H00FFFFFF,&H00FFFFFF,&H00101010,&H50000000,-1,0,0,0,100,100,0,0,1,3,1,2,80,80,180,1
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 '''
+    if spec.get('part_label'):
+        # Series: a small top label in the first seconds (e.g. "Teil 3/12").
+        events.insert(0,f'Dialogue: 1,{stamp(0)},{stamp(min(2.5,cursor))},Part,,0,0,0,,{spec["part_label"]}')
     (folder/'Untertitel.ass').write_text(ass+'\n'.join(events)+'\n',encoding='utf-8')
     subtitle_hash=file_hash(folder/'Untertitel.ass');scene_offset=0.
     for i,scene in enumerate(spec['scenes']):

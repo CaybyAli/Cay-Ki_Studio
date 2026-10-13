@@ -20,7 +20,7 @@ class StoryReview(Strict):
 
 class StoryNote(Strict):
     scene:int=Field(ge=1,le=30)
-    beat:Literal['setup','problem','attempt','turn','payoff']
+    beat:Literal['setup','problem','attempt','turn','payoff','cliffhanger']
     because:str=Field(min_length=3,max_length=400)
 
 class StoryNotes(Strict):
@@ -45,13 +45,16 @@ def dialogue_errors(episode):
             errors.append(f'Szene {i+1}: Für eindeutige Lippensynchronität nur einen sichtbaren Sprecher zeigen; Antwort als Gegenansicht planen.')
     return errors
 
-def structure_errors(episode,duration,strict_dialogue=True):
+def structure_errors(episode,duration,strict_dialogue=True,cliffhanger_ok=False):
     scenes=episode['scenes'];errors=[]
     if len(scenes)!=shot_count(duration):errors.append(f'Exakt {shot_count(duration)} Szenen erforderlich; geliefert: {len(scenes)}.')
     if not scenes:return errors
     beats=[s.get('beat') for s in scenes]
     if not any(b in ('problem','turn') for b in beats[:2]):errors.append('In den ersten zwei Szenen fehlt ein sichtbares Problem oder eine Wendung.')
-    if beats[-1]!='payoff':errors.append('Die letzte Szene muss eine konkrete Auflösung/Pointe zeigen (beat=payoff).')
+    if cliffhanger_ok:
+        # Series episode before the last: the main question is answered, then a new one opens.
+        if beats[-1]!='cliffhanger' or 'payoff' not in beats[:-1]:errors.append('Serienfolge: zuerst die Hauptfrage auflösen (beat=payoff), die letzte Szene endet mit einem Cliffhanger (beat=cliffhanger).')
+    elif beats[-1]!='payoff':errors.append('Die letzte Szene muss eine konkrete Auflösung/Pointe zeigen (beat=payoff).')
     if len(scenes)>=5 and 'turn' not in beats[1:-1]:errors.append('Vor dem Schluss fehlt eine vorbereitete Wendung (beat=turn).')
     if strict_dialogue:errors.extend(dialogue_errors(episode))
     for i,s in enumerate(scenes):

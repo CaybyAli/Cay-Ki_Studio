@@ -42,6 +42,12 @@ class Outline(Strict):
     title:str=Field(min_length=2,max_length=100)
     plot:str=Field(min_length=10,max_length=1200)
     ending:str=Field(min_length=3,max_length=400)
+    pickup:str=Field(default='',max_length=400)
+    cliffhanger:str=Field(default='',max_length=400)
+
+class SocialPost(Strict):
+    caption:str=Field(min_length=10,max_length=180)
+    hashtags:list[str]=Field(min_length=3,max_length=6)
 
 class SeriesPlan(Strict):
     title:str=Field(min_length=2,max_length=100)
@@ -97,7 +103,7 @@ class Shot(Strict):
     speaker:str=Field(default='',max_length=60)
     emotion:str=Field(default='Natürlich',max_length=150)
     continuity:str=Field(min_length=3,max_length=400)
-    beat:Literal['setup','problem','attempt','turn','payoff']='attempt'
+    beat:Literal['setup','problem','attempt','turn','payoff','cliffhanger']='attempt'
     because:str=Field(default='',max_length=400)
     dialogues:list[DialogLine]=Field(default_factory=list,max_length=6)
     ambience:Literal['room','wind','forest','rain','train','none']='room'
