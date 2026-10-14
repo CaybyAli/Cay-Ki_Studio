@@ -1,3 +1,14 @@
+# Cay Studio 0.16.0 – feste Figuren, mehr Tempo, Ziel des Films (14.10.2026)
+
+- Look-Vorlagen bestimmen nur noch den Stil. Personen aus der Vorlage kommen nicht mehr in den Film.
+- Jede Figur wird einmal gestaltet und in allen Szenen genau so verwendet. Bekannte Figuren (z. B. SpongeBob) werden als Original angelegt.
+- Bei der Bildauswahl: „Deine Figuren“ mit „Neu gestalten“. Alle Szenen mit dieser Figur werden dann neu gezeichnet.
+- Vor dem Drehbuch legt die KI das Ziel des Films fest: Haken, Steigerungen, Wendung, Pointe.
+- Mehr Bewegung: lebendige Gesten, kurze Sätze, Sprache beginnt direkt am Schnitt.
+- Sprechszenen werden vor Bewegungsszenen gerechnet: weniger Neuladen der großen Modelle.
+
+---
+
 # Cay Studio 0.15.0 – Turbo, Look-Vorlagen, Warteschlange (14.10.2026)
 
 - Turbo für Sprechszenen (Zahnrad oben rechts), nur nach bestandener Probe, schaltet sich bei Fehlern selbst ab.

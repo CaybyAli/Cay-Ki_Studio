@@ -4,7 +4,7 @@
 Database opened read-only, no downloads, no restarts, no deletions.
 Output goes to the console; Cay_Studio_Diagnose.cmd also saves it as text.
 """
-import json
+import json, math
 import os
 import re
 import shutil
@@ -95,6 +95,8 @@ def project(row, root, db=None):
         for si, s in enumerate(ep.get('scenes', [])):
             print(f'   Szene {si + 1}: sichtbar {s.get("cast")}, Zeilen {words(s)[0]}, Sekunden {s.get("render_seconds", s.get("seconds"))}')
         for warning in ep.get('warnings', [])[:4]: print('   Warnung:', warning[:220])
+    figures(d)
+    windows(d, db)
     lines = d.get('lines', [])
     print('Erzeugte Sprachdateien:', len(lines), '| Sprachmodell:', d.get('audio_engine'), '| Neuaufnahmen:', d.get('speech_takes'))
     for line in lines[:12]:
@@ -109,6 +111,42 @@ def project(row, root, db=None):
         for mix in newest_mix(folder): print('Tonmischung:', json.dumps(mix, ensure_ascii=False)[:900])
     for preview in d.get('previews', []): print('Tonvorschau', preview.get('episode'), loudness(preview.get('file', '')))
     for export in d.get('exports', []): print('Fertiges Video', export.get('file'), loudness(export.get('file', '')))
+
+
+def figures(d):
+    """Where each figure's look comes from: own picture, known original, template style."""
+    idea = d.get('idea', {}); own = {p.get('name') for p in idea.get('participants', []) if p.get('image')}
+    print('Look-Vorlagen:', len(idea.get('examples', [])), '| Figuren-Gestaltung:', d.get('cast_refs') and 'vorhanden' or 'noch keine')
+    for p in d.get('plan', {}).get('cast', []):
+        print(f'   {p.get("name")}: ' + ('eigenes Bild' if p.get('name') in own else 'Original: ' + p['original'] if p.get('original') else 'erfunden')
+              + f', neu gestaltet {p.get("design_round", 0)}x, Aussehen: {str(p.get("appearance", ""))[:90]}')
+
+
+def windows(d, db):
+    """Lip-sync windows (81 frames, then 72) versus silent motion clips and measured time."""
+    def count(seconds):
+        frames = 4 * math.ceil(seconds * 25 / 4 - 1e-9) + 1
+        return 1 + max(0, math.ceil((frames - 81) / 72))
+    talk = silent = film = 0; switches = 0; last = None
+    for ei, ep in enumerate(d.get('episodes', [])):
+        for si, s in enumerate(ep.get('scenes', [])):
+            seconds = float(s.get('render_seconds') or s.get('seconds') or 0); film += seconds
+            speaking = any(l.get('episode') == ei and l.get('scene') == si for l in d.get('lines', []))
+            if speaking: talk += count(seconds)
+            else: silent += max(1, math.ceil(seconds / 5))
+            family = 'talk' if speaking else 'motion'
+            switches += bool(last and last != family); last = family
+    if not film: return
+    gpu = None
+    if db is not None:
+        try:
+            row = db.execute("SELECT SUM(seconds) FROM performance_stages WHERE project=? AND stage='Animation' AND resource='GPU'", (d.get('id'),)).fetchone()
+            gpu = row[0] if row else None
+        except sqlite3.Error: pass
+    print(f'Animation: {film:.1f} s Film, {talk} Sprech-Rechenfenster, {silent} Bewegungs-Abschnitte, '
+          f'Modellwechsel in Szenenreihenfolge {switches} (ab 0.16 gebündelt)')
+    if gpu and talk and not silent: print(f'   gemessen: {gpu / talk / 60:.1f} min pro Sprech-Rechenfenster, {gpu / film / 60:.1f} min pro Filmsekunde')
+    elif gpu: print(f'   gemessen: {gpu / film / 60:.1f} min Animation pro Filmsekunde')
 
 
 def meminfo():

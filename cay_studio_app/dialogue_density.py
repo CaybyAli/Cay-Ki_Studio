@@ -63,6 +63,8 @@ async def enrich(factory, document, episode, index, measured=None, force=False, 
     try:
         answer=await factory.llm(DialogueAdditions,
             'Ergänze ein vorhandenes deutsches Kurzfilm-Drehbuch um inhaltlich notwendige Dialoge. '
+            'spine ist das Ziel des Films: jede neue Zeile treibt Haken, Steigerung, Wendung oder Pointe voran. '
+            'Kurze Sätze, höchstens etwa acht Wörter je Beitrag. '
             'Antworte nur mit scenes: scene ist die vorhandene Szenennummer (ab 1), lines enthält ausschließlich NEUE Beiträge. '
             'Bestehende Dialoge, Bildhandlung, Figuren, Ort, Reihenfolge und Auflösung bleiben erhalten. '
             'Keine Wiederholungen, Füllwörter oder Beschreibungen des ohnehin sichtbaren Bilds. Ergänze Motive, Widerspruch, '
@@ -74,6 +76,7 @@ async def enrich(factory, document, episode, index, measured=None, force=False, 
             'Mindestens additional_words neue Wörter ergänzen, soweit die Handlung das sinnvoll trägt. '
             'Höchstens sechs alte und neue Beiträge zusammen pro Szene; pause_after meist 0.12 bis 0.25.',
             {'episode':episode,'episode_number':index+1,'series_cast':document['plan']['cast'],
+             'spine':(document.get('spines') or {}).get(str(index)) or episode.get('spine'),
              'target_seconds':duration,'target_total_words':desired,
              'additional_words':max(0,desired-before),'lip_sync':document['idea'].get('lip_sync','audio'),
              'measured_timing':measured,'request':request})

@@ -5,12 +5,13 @@ from pathlib import Path
 import httpx
 from fastapi import HTTPException,Request
 from fastapi.responses import FileResponse
-from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,SocialPost,repair_episode_overview
+from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,SocialPost,CastRedo,repair_episode_overview
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality
 from factory_post import PostProduction
 from autopilot import Autopilot
+import cast_design
 import turbo
 from factory_audio import turns
 from factory_timing import plan_seconds, POLICY
@@ -31,7 +32,11 @@ from lipsync_shots import split_episode,silent_by_accident,MISSING_MARK
 from factory_cast import (name_key as _name_key, canonical_scene as _canonical_scene_cast,
     scene_errors, constrain_scene_schema, validate_header, SourceCast, evidenced_names, resolve_name)
 
-from story_policy import shot_count, DIRECTION, structure_errors, dialogue_errors, StoryReview, StoryNotes, apply_notes
+from story_policy import shot_count, DIRECTION, structure_errors, dialogue_errors, StoryReview, StoryNotes, apply_notes, StorySpine, SPINE_INSTRUCTION
+
+def render_order(scenes,episode,lines,lip_sync='audio'):
+    talking={l['scene'] for l in lines if l['episode']==episode} if lip_sync=='audio' else set()
+    return sorted(enumerate(scenes),key=lambda item:item[0] not in talking)
 
 def scene_limits(duration):
     n=shot_count(duration)
@@ -347,7 +352,11 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 'characters=none bedeutet keine Figuren und keine Sprache. characters=provided erlaubt nur die angegebenen Figuren. '
                 'Die Staffel hat die gewünschte Anzahl Folgen. Je Folge nur EIN zusammenhängendes Ereignis mit Ziel, Hindernis und Auflösung, höchstens zwei Orte und vorzugsweise zwei bis drei aktive Figuren. Keine gesamte Filmhandlung in eine Minute pressen. Jede Figur bekommt voice_preset passend zu Alter und Rolle und eine eigene voice_description zu Klang und Sprechweise. Kinder, Frauen, Männer und Senioren passend besetzen. Bei Lebensmittel-Figuren im appearance feste Kopfmaterialien, Silhouette und Kleidung definieren, keine Verwandlung in Menschen. '
                 'Deutsch. appearance und style dürfen Englisch für das Bildmodell sein. Keine Vorgaben anderer Projekte. '
-                'Bei Parodien eigene Dialoge und Gags. Beispiele sind Bildreferenzen für die spätere Bilderzeugung, ihre Inhalte sind dir hier nicht visuell bekannt.',
+                'Bei Parodien eigene Dialoge und Gags. '
+                'Nennt der Nutzer bekannte Figuren aus Serien, Filmen oder Spielen (zum Beispiel SpongeBob oder Mr. Krabs), spielen genau diese Figuren mit, keine ähnliche Ersatzfigur: '
+                'name wie vom Nutzer geschrieben, original nennt die Originalfigur mit ihrer Serie auf Englisch (zum Beispiel "SpongeBob SquarePants from the animated series SpongeBob SquarePants"), '
+                'appearance beschreibt ihr bekanntes Originaldesign genau auf Englisch: Form, Farben, Gesicht, Kleidung. Der gewählte Look ändert nur Material und Licht, nie die Figur. Bei erfundenen Figuren bleibt original leer. '
+                'Beispiele (Look-Vorlagen) zeigen nur den gewünschten Bildstil. Personen und Inhalte daraus gehören nicht in Geschichte oder Besetzung.',
                     {**planning_idea,'idea':summary})
                 self.save(d)
             outlines=partial.setdefault('outlines',[])
@@ -384,23 +393,39 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             # Serial hooks: pick up the previous cliffhanger, end on this one (not after the last episode).
             continuity={'pick_up':d['plan']['episodes'][i-1].get('cliffhanger','') if i else '',
                         'end_with':outline.get('cliffhanger','') if i+1<idea['episodes'] else ''}
+            # The film's goal first, then scenes. Stored so a restart does not re-plan it.
+            spines=d.setdefault('spines',{})
+            if str(i) not in spines:
+                d['phase']=f'Folge {i+1}: Ziel des Films festlegen';self.save(d)
+                try:
+                    spines[str(i)]=await self.llm(StorySpine,SPINE_INSTRUCTION,
+                        {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,'series_total':idea['episodes'],
+                         'outline':outline,'duration':idea['duration'],'continuity':continuity,
+                         'previous':[{'title':x['title'],'resolution':x.get('resolution','')} for x in d['episodes']]})
+                except RuntimeError as error:
+                    # Advisory: the outline still carries the plot. Never block planning on it.
+                    spines[str(i)]=None
+                    self.atomic(self.folder(d)/'Diagnose'/f'Ziel_Folge_{i+1}.txt',str(error).encode())
+                self.save(d)
+            spine=spines[str(i)]
             ep=await self.llm(EpisodePlan,
                 'Die Originalvorgaben dieser Folge sind verbindlich. Namen, Ereignisse und vorgegebene Dialoge erhalten; keine Folgen auslassen oder vermischen. Exakt shots zusammenhängende Szenen für EIN Ereignis; dieselbe Dauer hat immer dasselbe Szenenbudget. goal, obstacle und resolution als drei eigene nichtleere Textfelder auf oberster Ebene ausfüllen, passend zur Handlung der Szenen. Einstieg mit einem sichtbaren Problem, dann Versuch, Wendung und Auflösung. Keine lose Montage und kein Ortswechsel ohne Übergang. '
-                'Plane kurze Einstellungen von ungefähr vier bis sieben Sekunden, meist ein bis zwei Äußerungen. Nutze dialogues als geordnete Liste. Pro Einstellung möglichst nur eine sprechende Figur, bei Dialogwechseln passende Gegenansichten. Maximal zwei sichtbare Figuren, außer die Handlung braucht mehr. Alte Felder dialogue und speaker leer lassen. '
+                'spine ist das verbindliche Ziel dieses Films: Szene 1 zeigt spine.hook, danach folgen spine.escalations, spine.twist, spine.payoff und zuletzt spine.final_moment. Jede Szene bringt die Geschichte diesem Ziel näher. '
+                'Jede Szene ist ein Handlungsschritt von etwa fünf bis sieben Sekunden mit meist zwei bis drei kurzen Äußerungen (höchstens acht Wörter je Äußerung); Sprecherwechsel werden automatisch als Schuss und Gegenschuss geschnitten. Nutze dialogues als geordnete Liste. Maximal zwei sichtbare Figuren, außer die Handlung braucht mehr. Alte Felder dialogue und speaker leer lassen. '
                 'Insgesamt etwa 1.8 bis 2.2 deutsche Wörter je Zielsekunde. Die Szenen dürfen unterschiedlich lang sein: Mehr Dialog bekommt mehr Zeit. Keine starre Wortgrenze je Szene. Kurze natürliche Pausen, keine fünf Sekunden Leerlauf nach jedem Satz. Sprecher in cast, emotion als Sprechhaltung, pause_after meist 0.12 bis 0.3. '
                 'beat beschreibt die Handlungsfunktion, because den Anschluss zur vorigen Szene. motion enthält zwei bis drei aufeinander folgende Bewegungsabschnitte ohne Wiederholung. '
-                'animation_prompt ist eine knappe ENGLISCHE Beschreibung genau einer filmbaren Bewegung, Bildausschnitt und Endzustand. Keine Zitate oder Untertitel darin. Natürliches modernes Deutsch im Dialog, kurze konkrete Sätze. Keine wörtlichen Übersetzungen, leeren Ausrufe oder austauschbaren Erklärungen. Jede Antwort muss auf die vorherige Äußerung reagieren. Nicht jeden Satz mit dem Namen der anderen Figur beginnen. '
+                'animation_prompt ist eine knappe ENGLISCHE Beschreibung einer schnellen, deutlich sichtbaren Körperbewegung in normaler Geschwindigkeit (zum Beispiel "jumps back and waves both arms"), Bildausschnitt und Endzustand. Keine Zitate oder Untertitel darin. Natürliches modernes Deutsch im Dialog, kurze konkrete Sätze. Keine wörtlichen Übersetzungen, leeren Ausrufe oder austauschbaren Erklärungen. Jede Antwort muss auf die vorherige Äußerung reagieren. Nicht jeden Satz mit dem Namen der anderen Figur beginnen. '
                 'ambience passend zur Umgebung; sound_cues nur für sichtbare Auslöser, position relativ zur Szene von 0 bis 1. Keine neuen Figuren, keine Mensch-Lebensmittel-Verwandlungen, keine Schrift. Kleidung, Requisiten und Geografie bewahren. Bei leerem cast keine Dialoge. '
                 'Serie: Ist continuity.pick_up gesetzt, greift Szene 1 diesen offenen Punkt in den ersten zwei Sekunden sichtbar und hörbar auf. '
                 'Ist continuity.end_with gesetzt, wird die Hauptfrage dieser Folge vorher aufgelöst (beat=payoff) und die letzte Szene zeigt genau diesen Cliffhanger (beat=cliffhanger) mit einer kurzen, spannenden Schlusszeile. '
                 'WICHTIG: Die einzige erlaubte Besetzung dieser Folge steht in series.cast. Übernimm die Namen in jeder scenes.cast- und dialogues.speaker-Angabe exakt aus dieser Liste. Keine Rollenbezeichnungen, Spitznamen, Klammerzusätze oder neu erfundene Namen in diesen Feldern.',
-                {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,'series_total':idea['episodes'],'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],'seconds_per_scene':idea['duration']/n,'previous':[{'title':x['title'],'resolution':x.get('resolution','')} for x in d['episodes']],'continuity':continuity})
+                {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,'series_total':idea['episodes'],'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],'seconds_per_scene':idea['duration']/n,'previous':[{'title':x['title'],'resolution':x.get('resolution','')} for x in d['episodes']],'continuity':continuity,'spine':spine})
             ep['story_policy']=12
             ep['scene_budget']=n
             # A critic is advisory. Keep the valid draft if criticism or the
             # optional rewrite is malformed; never discard a usable episode.
             try:
-                review=await self.llm(StoryReview,'Prüfe das vorliegende Drehbuch kritisch. Beschreibe kurz Einstieg, Einsatz, Eskalation und Schluss. problems nennt nur konkrete Schwächen mit Szenennummer. '+DIRECTION,{'episode':ep})
+                review=await self.llm(StoryReview,'Prüfe das vorliegende Drehbuch kritisch gegen das Ziel des Films in spine. Beschreibe kurz Einstieg, Einsatz, Eskalation und Schluss. problems nennt nur konkrete Schwächen mit Szenennummer, auch Szenen ohne sichtbare Bewegung, Leerlauf und Szenen, die nichts zum Ziel beitragen. '+DIRECTION,{'episode':ep,'spine':spine})
                 ep['story_review']=review
                 if review['problems']:
                     d['phase']=f'Folge {i+1}: Handlung gezielt verbessern';self.save(d)
@@ -408,10 +433,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         'Überarbeite dieses vollständige Drehbuch anhand der konkreten Kritik. Exakt shots Szenen. Namen, Nutzerereignisse und verbindliche Dialoge erhalten. '+DIRECTION,
                         {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,
                          'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],
-                         'series_total':idea['episodes'],'continuity':continuity,'draft':ep,'criticism':review['problems']})
+                         'series_total':idea['episodes'],'continuity':continuity,'spine':spine,'draft':ep,'criticism':review['problems']})
                     improved.update(story_policy=12,scene_budget=n)
                     ep=improved
-                    review=await self.llm(StoryReview,'Prüfe die überarbeitete Handlung. Nenne nur verbleibende konkrete Schwächen. '+DIRECTION,{'episode':ep})
+                    review=await self.llm(StoryReview,'Prüfe die überarbeitete Handlung gegen das Ziel des Films in spine. Nenne nur verbleibende konkrete Schwächen. '+DIRECTION,{'episode':ep,'spine':spine})
                     ep['story_review']=review
                     if review['problems']:ep.setdefault('warnings',[]).append('Drehbuchprüfung: '+'; '.join(review['problems']))
             except RuntimeError as error:
@@ -436,6 +461,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 ep['social']['hashtags']=[re.sub(r'[^\wÄÖÜäöüß]','',h)[:40] for h in ep['social']['hashtags'] if re.sub(r'[^\wÄÖÜäöüß]','',h)]
             except (RuntimeError,ValueError):
                 ep['social']=None
+            ep['spine']=spine
             plan_seconds(ep,idea['duration'],settings(idea)['fps'])
             for scene in ep['scenes']:
                 scene['variants']=[];scene['selected']=None;scene['round']=0
@@ -605,8 +631,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if provided.get(name,{}).get('image'):refs[name]=self.asset(provided[name]['image'],'image')['path']
             else:
                 d['phase']='Figur gestalten: '+name;self.save(d)
-                prompt='One original character design, full body, simple background, no letters. '+person['appearance']+'. Personality: '+person['personality']+'. Style: '+d['plan']['style']+'. Reference images are style examples only.'
-                s=await self.render(d,'cast:'+name+':'+digest(person['appearance'])[:12],build_graph(prompt,examples,abs(int(digest(name)[:12],16)),'',models));refs[name]=s['output']
+                refs[name]=await cast_design.design(self,d,person,examples,models)
             self.save(d)
         for ei,ep in enumerate(d['episodes']):
             for si,scene in enumerate(ep['scenes']):
@@ -615,13 +640,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     key=f'image:{ei}:{si}:{image_rounds(scene)[variant]}:{variant}'
                     if any(x.get('key')==key for x in scene['variants']):continue
                     d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild {variant+1}/2';self.save(d)
-                    names=scene['cast'];references=[self.stage(refs[name]) for name in names]+examples[:max(0,4-len(names))]
-                    prompt='One coherent vertical 9:16 film frame, no text or panels. '+d['plan']['style']+'. '
-                    for ri,name in enumerate(names):
-                        appearance=next(p['appearance'] for p in d['plan']['cast'] if p['name']==name)
-                        prompt+=f'Reference {ri+1} identifies ONLY {name}: {appearance}. Preserve head material, shape and clothing. '
-                    prompt+=(' Exactly one visible character and one face, all listeners outside the frame. ' if len(names)==1 else '')
-                    prompt+='Other reference images are style examples. Remove screenshot interfaces, captions, logos, watermarks and phone controls. Do not add their characters. Never swap or blend identities. '+packed({k:scene[k] for k in ('title','location','action','camera','continuity')})
+                    names=scene['cast'];references=[self.stage(path) for path in cast_design.scene_references(refs,names)]
+                    prompt=cast_design.scene_prompt(scene,d['plan']['cast'],names,d['plan']['style'])+packed({k:scene[k] for k in ('title','location','action','camera','continuity')})
                     prompt+=' Specific correction: '+scene.get('image_note','')
                     s=await self.render(d,key,build_graph(prompt,references,int(digest(d['id']+key)[:12],16),'',models))
                     scene['variants'].append({'id':s['id'],'key':key});self.save(d)
@@ -659,9 +679,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                    'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],
                    'ambience':sc.get('ambience','room'),'sound_cues':sc.get('sound_cues',[])}
                   for si,sc in enumerate(ep['scenes'])]
-            scene_order=list(enumerate(ep['scenes']))
-            if d.get('sample_approval')!=sample_key:
-                scene_order.sort(key=lambda item:not any(l['episode']==ei and l['scene']==item[0] for l in d['lines']))
+            # All lip-sync shots first, then all silent motion shots. render() unloads
+            # every model when the family changes; alternating cost a full reload
+            # of the 14B models per scene. Scenes are independent (own start image).
+            scene_order=render_order(ep['scenes'],ei,d['lines'],options['lip_sync'])
             for si,scene in scene_order:
                 if self.paused(d['id']):return
                 selected=self.rows("SELECT * FROM factory_steps WHERE id=? AND run_id=? AND status='done'",(scene['selected'],d['id']))
@@ -995,6 +1016,25 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             except IndexError:raise HTTPException(404,'Szene fehlt.')
             if body.note:s['action']=(s['action']+' Änderungswunsch: '+body.note)[-1600:];s['animation_prompt']='';s['motion']=[s['action']]
             regenerate(s,[0,1]);d['state']='pictures';d['phase']='Zwei neue Varianten angefordert';self.save(d);return self.get(rid)
+        @app.post('/api/factory/{rid}/cast/redo')
+        async def cast_redo(rid:str,body:CastRedo):
+            d=self.get(rid)
+            if d['state']!='image_review':raise HTTPException(409,'Figuren während der Bildauswahl neu gestalten.')
+            if self.busy==rid:raise HTTPException(409,'Der laufende Schritt wird gerade abgeschlossen. Kurz warten.')
+            person=next((p for p in d.get('plan',{}).get('cast',[]) if p['name']==body.name),None)
+            if person is None:raise HTTPException(404,'Figur gehört nicht zu diesem Projekt.')
+            if any(p['name']==body.name and p.get('image') for p in d['idea']['participants']):
+                raise HTTPException(400,'Diese Figur nutzt dein eigenes Bild. Für ein anderes Aussehen dort ein neues Bild wählen.')
+            person['design_round']=person.get('design_round',0)+1
+            count=cast_design.invalidate(d,body.name)
+            d['state']='pictures';d['phase']=f'{body.name} wird neu gestaltet · {count} Szenen folgen';self.save(d);return self.get(rid)
+        @app.get('/api/factory/{rid}/cast-image/{index}')
+        def cast_image(rid:str,index:int):
+            d=self.get(rid);cast=d.get('plan',{}).get('cast',[])
+            if not 0<=index<len(cast) or cast[index]['name'] not in d.get('cast_refs',{}):raise HTTPException(404,'Figurenbild noch nicht verfügbar.')
+            p=self.path(d['cast_refs'][cast[index]['name']])
+            if p.suffix.lower() not in ('.png','.jpg','.jpeg','.webp'):raise HTTPException(400,'Kein Figurenbild.')
+            return FileResponse(p,media_type='image/png' if p.suffix.lower()=='.png' else 'image/jpeg' if p.suffix.lower() in ('.jpg','.jpeg') else 'image/webp')
         @app.put('/api/factory/{rid}/text')
         async def edit_text(rid:str,body:SceneText):
             d=self.get(rid)

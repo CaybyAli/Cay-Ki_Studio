@@ -1,4 +1,4 @@
-# Cay Studio – Plan (Stand 0.15.0, 14.10.2026)
+# Cay Studio – Plan (Stand 0.16.0, 14.10.2026)
 
 Ziel: mehrere 1-Minuten-Videos pro Tag, Einzelfilme und Serien bis 12 Folgen, lokal und ohne laufende Kosten.
 
@@ -35,6 +35,22 @@ Teamwork heißt hier also: **Die Grafikkarte rechnet ohne Pause, alles andere ar
 4. **Look-Vorlagen** (bis 4 Bilder, auch JPG/WebP) und **Look „Knete“** für Clay-Serien.
 5. Oberfläche: nur noch **Neu** und **Projekte**, keine überlappenden Knöpfe.
 
+## 3b. Was 0.16.0 nach deinem SpongeBob-Test ändert
+
+| Dein Problem | Ursache im Code | Änderung |
+| --- | --- | --- |
+| Personen aus der Vorlage im Film | **[Sicher]** Vorlagen gingen als Bildvorgabe in die Figurengestaltung und füllten in jeder Szene die freien Plätze auf | Figur zuerst nur aus Text, danach nur Stil aus der Vorlage. Szenen bekommen nur noch die Figurenbilder. |
+| SpongeBob ändert 3–4 Mal das Gesicht | **[Wahrscheinlich]** Vorlagen-Personen vermischten sich pro Szene anders mit der Figur. **[Sicher]** Eine Bildkorrektur an einer Figur zeichnete nur eine Szene neu, die anderen behielten das alte Gesicht. | Ein festes Figurenbild für alle Szenen; jede Änderung an einer Figur zeichnet alle ihre Szenen neu; „Neu gestalten“ bei der Bildauswahl. |
+| Ähnliche Figur statt SpongeBob | **[Sicher]** Der Auftrag lautete „One original character design“, also ausdrücklich eine neue Figur | Bekannte Figuren werden als Original angelegt („not a look-alike“). |
+| Keiner bewegt sich, Zeitlupe | **[Sicher]** Vorgabe „zurückhaltende Gesten“, Zuhörer still; Sprache startete erst nach einer Pause mitten in der Einstellung. **[Wahrscheinlich]** Die schnellen 4-Schritt-Modelle bewegen ohnehin wenig. | Lebendige Gesten, Bewegung „nie Zeitlupe“, leichte Kamerafahrt, Sprache direkt am Schnitt, Restzeit wird Handlung statt Pause, kurze Sätze. |
+| Planung ohne Gesamtziel | **[Sicher]** Szenen, Prüfung und Dialogergänzung wurden ohne gemeinsames Ziel geplant | Zuerst „Ziel des Films“ (Haken, 2–3 Steigerungen, Wendung, Pointe). Jeder weitere Planungsschritt bekommt es. |
+| 5 Stunden | **[Sicher]** Beim Wechsel Sprechszene ↔ Bewegungsszene wurden alle Modelle entladen | Erst alle Sprechszenen, dann alle Bewegungsszenen. Wie viel das spart, hängt von deinem Film ab **[Vermutung]**. |
+
+**Grenzen, ehrlich:**
+1. Ob das Bildmodell SpongeBob ohne Bild exakt trifft, ist nicht geprüft **[Vermutung]**. Sicher ist nur: Mit deinem eigenen Bild der Figur gibt es die feste Vorlage.
+2. Mehr Bewegung kann mehr Fehler an Armen und Händen bringen. Bitte darauf achten.
+3. 0.16 löst die 5 Stunden nicht. Dafür brauche ich deine neue Diagnose: Sie zeigt jetzt Rechenfenster, Minuten pro Fenster und Modellwechsel.
+
 ## 4. Was eine Minute Film dann kostet [Hochrechnung]
 
 | Qualität | heute (gemessen) | mit 0.15 + Turbo, wenn der RAM stabil ist |
@@ -50,7 +66,7 @@ Figuren wie Phineas und Ferb gehören Disney. Fan-Videos damit können auf TikTo
 
 ## 6. Nächste Schritte
 
-1. 0.15.0 installieren, **Turbo einrichten** (Zahnrad), PC einmal neu starten.
-2. Einen 60-s-Film in **Entwurf** mit Autopilot rechnen lassen.
-3. Diagnose schicken. Daraus entscheide ich: WSL-Speicher anpassen (nur wenn die Werte es zeigen), Turbo behalten, Zeitziel festlegen.
+1. 0.16.0 installieren. Turbo prüfen (Zahnrad).
+2. SpongeBob-Idee neu, 60 s, **Entwurf**, Autopilot aus. Bei der Bildauswahl „Deine Figuren“ prüfen.
+3. Diagnose schicken. Daraus entscheide ich die nächste Zeitmaßnahme: Turbo, Entwurf als Standard, WSL-Speicher oder weniger Rechenfenster pro Film.
 4. Danach: Stimmenvergleich, Figurentausch in der neuen Oberfläche.

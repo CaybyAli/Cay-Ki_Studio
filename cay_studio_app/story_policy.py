@@ -9,7 +9,29 @@ POLICY = 12
 def shot_count(duration):
     return max(3,min(15,math.ceil(float(duration)/6)))
 
-DIRECTION = '''Beginne mitten im Konflikt: Die erste Einstellung zeigt eine konkrete Störung, ein Geheimnis oder eine riskante Entscheidung, keine Begrüßung oder Ortsbeschreibung. Ein klares Ziel und ein persönlicher Einsatz. Jede folgende Szene verändert die Lage durch eine Entscheidung und deren Konsequenz. Früh eine offene Frage setzen, Hinweise dosiert geben, mindestens zwei echte Eskalationen, dann eine vorbereitete überraschende Wendung. Der Schluss beantwortet die zentrale Frage; ein Cliffhanger darf eine neue Frage öffnen, nicht die Auflösung ersetzen. Spannung oder Humor entstehen aus sichtbaren Handlungen und Reaktionen statt Erklärdialog. Höchstens zwei Orte; jeder Orts- oder Zeitsprung braucht einen sichtbaren Anlass. Keine zufälligen neuen Menschen bei Lebensmittel-Figuren. Unterschiedliche Motive und Sprechhaltungen. Keine Beispiele wörtlich kopieren. Dialog nur, wenn er eine Absicht verfolgt oder eine Entscheidung erzwingt. Pro Sprechszene genau eine sichtbare sprechende Figur, Gegenansichten für Antworten; Zuhörer außerhalb des Bilds. So wird die Stimme eindeutig dem sichtbaren Mund zugeordnet. Stumme Szenen zeigen eine konkrete Handlung, Münder bleiben geschlossen.'''
+DIRECTION = '''Beginne mitten im Konflikt: Die erste Einstellung zeigt in den ersten zwei Sekunden eine konkrete Störung, ein Geheimnis oder eine riskante Entscheidung, keine Begrüßung oder Ortsbeschreibung. Ein klares Ziel und ein persönlicher Einsatz. Jede folgende Szene verändert die Lage durch eine Entscheidung und deren Konsequenz. Früh eine offene Frage setzen, Hinweise dosiert geben, mindestens zwei echte Eskalationen, dann eine vorbereitete überraschende Wendung. Der Schluss beantwortet die zentrale Frage; ein Cliffhanger darf eine neue Frage öffnen, nicht die Auflösung ersetzen. Tempo wie ein erfolgreicher TikTok-Kurzfilm: alle zwei bis drei Sekunden passiert sichtbar etwas Neues, etwa eine Bewegung, eine Reaktion, ein Gag oder ein neuer Bildausschnitt. Niemand steht nur da und redet: Jede Äußerung ist mit einer körperlichen Handlung verbunden (zeigen, greifen, wegrennen, schubsen, sich verstecken, etwas fallen lassen). Kurze Sätze, höchstens etwa acht Wörter je Äußerung. Spannung oder Humor entstehen aus sichtbaren Handlungen und Reaktionen statt Erklärdialog. Höchstens zwei Orte; jeder Orts- oder Zeitsprung braucht einen sichtbaren Anlass. Keine zufälligen neuen Menschen bei Lebensmittel-Figuren. Unterschiedliche Motive und Sprechhaltungen. Keine Beispiele wörtlich kopieren. Dialog nur, wenn er eine Absicht verfolgt oder eine Entscheidung erzwingt. Pro Sprechszene genau eine sichtbare sprechende Figur, Gegenansichten für Antworten; Zuhörer außerhalb des Bilds. So wird die Stimme eindeutig dem sichtbaren Mund zugeordnet. Stumme Szenen zeigen eine schnelle, konkrete Handlung, Münder bleiben geschlossen. Alles dient dem Ziel des Films in spine: Haken, Steigerungen, Wendung und Pointe kommen in dieser Reihenfolge vor.'''
+
+class StorySpine(Strict):
+    """The whole film in one view, written before any scene. Every later
+    planning call gets it, so no step plans a scene without knowing the goal."""
+    logline:str=Field(min_length=10,max_length=300)
+    viewer_question:str=Field(min_length=5,max_length=200)
+    hook:str=Field(min_length=5,max_length=300)
+    goal:str=Field(min_length=3,max_length=300)
+    stakes:str=Field(min_length=3,max_length=300)
+    escalations:list[str]=Field(min_length=2,max_length=3)
+    twist:str=Field(min_length=3,max_length=300)
+    payoff:str=Field(min_length=3,max_length=300)
+    final_moment:str=Field(min_length=3,max_length=300)
+    running_gag:str=Field(default='',max_length=200)
+
+SPINE_INSTRUCTION=('Du bist Showrunner für virale Kurzfilme auf TikTok und YouTube Shorts. Lege zuerst das Ziel dieser Folge fest, '
+    'noch keine Szenen. logline: wer will was, was steht im Weg, was steht auf dem Spiel, in einem Satz. '
+    'viewer_question: die Frage, wegen der man bis zum Ende schaut. hook: was in den ersten zwei Sekunden sichtbar passiert. '
+    'goal und stakes konkret. escalations: zwei bis drei Steigerungen, jede schlimmer oder lustiger als die vorige. '
+    'twist: eine vorbereitete Überraschung. payoff: die Auflösung der Hauptfrage. final_moment: der letzte Gag oder bei einer Serienfolge '
+    'genau der vorgegebene Cliffhanger. running_gag optional. Alles sichtbar und filmbar, keine Erklärungen. '
+    'Bekannte Figuren verhalten sich wie im Original. Originalvorgaben und Figuren aus series.cast sind verbindlich. Deutsch.')
 
 class StoryReview(Strict):
     hook:str=Field(min_length=3,max_length=500)

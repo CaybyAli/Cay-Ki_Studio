@@ -33,6 +33,8 @@ class Idea(Strict):
 class CastPlan(Strict):
     name:str=Field(min_length=1,max_length=60)
     appearance:str=Field(min_length=5,max_length=1000)
+    # Well-known figure the user asked for (e.g. SpongeBob). Empty for invented ones.
+    original:str=Field(default='',max_length=200)
     personality:str=Field(min_length=3,max_length=400)
     voice:Literal['warm','deep','bright','energetic']='warm'
     voice_preset:Literal['child_boy','child_girl','young_man','young_woman','man','woman','grandpa','grandma','creature']='man'
@@ -110,6 +112,9 @@ class Shot(Strict):
     sound_cues:list[SoundCue]=Field(default_factory=list,max_length=4)
     motion:list[str]=Field(default_factory=list,max_length=4)
     animation_prompt:str=Field(default='',max_length=1400)
+
+class CastRedo(Strict):
+    name:str=Field(min_length=1,max_length=60)
 
 class AutopilotSwitch(Strict):
     enabled:bool

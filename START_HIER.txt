@@ -1,13 +1,18 @@
-CAY STUDIO 0.15.0 - NUR DIESE SCHRITTE
+CAY STUDIO 0.16.0 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
-2. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
-3. Im Browser Strg+F5. Unten muss 0.15.0 stehen.
-4. Zahnrad oben rechts: "Turbo einrichten". Warten (wenige Minuten).
-5. PC einmal neu starten, dann Cay_Studio_Starten.cmd.
-6. "Neu": Idee, 60 s, Qualitaet "Entwurf", Autopilot an, Film starten.
-   Optional: Look-Vorlagen unter "Figuren, Look-Vorlagen und Musik".
-7. Wenn der Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
+2. Laeuft ein Film: fertig werden lassen oder Pausieren.
+3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
+4. Im Browser Strg+F5. Unten muss 0.16.0 stehen.
+5. Zahnrad oben rechts: steht bei Turbo nicht "aktiv",
+   dann "Turbo einrichten" und danach PC neu starten.
+6. "Neu": dieselbe SpongeBob-Idee, 60 s, Qualitaet "Entwurf".
+   Autopilot AUS (du willst die Figuren einmal sehen).
+   Fuer 100 % Original-Aussehen: unter "Figuren" bei SpongeBob
+   und Mr. Krabs je ein Bild hochladen.
+7. Bei "Waehle pro Szene ein Bild": oben "Deine Figuren" pruefen.
+   Passt eine nicht: "Neu gestalten". Dann Bilder uebernehmen.
+8. Wenn der Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
    und Cay_Studio_Diagnose.txt schicken.
 
 Haengt ein Abschnitt: erst PC neu starten, dann Update.

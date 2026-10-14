@@ -62,7 +62,19 @@ try:
         v = [picture(rid, next(ids), si * 2), picture(rid, next(ids), si * 2 + 1)]
         eps.append(scene(['Der Fund', 'Der Anspruch', 'Die Wendung'][si], ['Lena'] if si != 1 else ['Markus'],
                          [('Lena', 'Das ist mein Keks. Ich habe ihn um elf bestellt.')] if si != 1 else [('Markus', 'Seniorität schlägt Bestellzeit.')], v, v[0] if si == 0 else None))
-    project(rid, 'image_review', 'Der letzte Keks', episodes=[{'title': 'Der letzte Keks', 'scenes': eps, 'social': SOCIAL}], paused=0)
+    spine = {'logline': 'Lena will den letzten Keks retten, bevor Markus ihn sich mit einer Regel schnappt.', 'viewer_question': 'Wer isst ihn?',
+             'hook': 'Der Keks liegt allein auf dem Teller.', 'goal': 'Keks', 'stakes': 'Ehre', 'escalations': ['Regel', 'Gegenregel'],
+             'twist': 'Der Chef isst ihn.', 'payoff': 'Beide teilen sich einen neuen.', 'final_moment': 'Krümel', 'running_gag': ''}
+    figure = studio.root / '01_Projekte/Studio' / rid / '02_Bilder/figur.png'
+    subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'gradients=s=864x1536:c0=0xffd23f:c1=0xee4266:d=1', '-frames:v', '1', str(figure)], check=True)
+    project(rid, 'image_review', 'Der letzte Keks', {'cast_refs': {'Lena': str(figure), 'Markus': str(figure)}},
+            episodes=[{'title': 'Der letzte Keks', 'scenes': eps, 'social': SOCIAL, 'spine': spine}], paused=0)
+    # image review for the figure redesign (paused: the worker must not start rendering)
+    rid = 'f' * 32; eps = []
+    for si, who in enumerate((['Lena'], ['Markus'], ['Lena'])):
+        v = [picture(rid, next(ids), si * 2), picture(rid, next(ids), si * 2 + 1)]
+        eps.append(scene(f'Szene {si + 1}', who, [(who[0], 'Hallo.')], v, v[0]))
+    project(rid, 'image_review', 'Neue Gesichter', {'cast_refs': {'Lena': str(figure), 'Markus': str(figure)}}, episodes=[{'title': 'Neue Gesichter', 'scenes': eps}])
     # voice review
     rid = 'b' * 32; folder = studio.root / '01_Projekte/Studio' / rid
     pics = [picture(rid, next(ids), n) for n in range(3)]
@@ -122,14 +134,25 @@ try:
         r.check('Serie gewählt: Knopftext und Teil-Etikett', page.locator('#create').inner_text() == 'Serie mit 12 Folgen starten' and page.locator('#preview-part').inner_text() == 'Teil 1/12')
         page.screenshot(path=str(shots / '02_neu_serie.png'))
         shot('03_projekte', '#projects')
-        r.check('Projektliste: 5 Projekte als Hochkantkacheln', page.locator('.tile').count() == 5)
+        r.check('Projektliste: 6 Projekte als Hochkantkacheln', page.locator('.tile').count() == 6)
         r.check('Wartende Projekte stehen vorn', 'Wartet auf dich' in page.locator('.tile').first.inner_text())
         shot('04_bilder_waehlen', '#p=' + 'a' * 32)
+        r.check('Bildwahl: Figurenleiste mit 2 geladenen Figurenbildern', page.evaluate("[...document.querySelectorAll('.cast .figure-pic img')].filter(i => i.naturalWidth > 0).length") == 2)
+        r.check('Bildwahl: Ziel des Films sichtbar', 'Lena will den letzten Keks retten' in page.locator('.spine').inner_text())
+        page.locator('.cast').screenshot(path=str(shots / '04b_figuren.png'))
         page.click('.scene:nth-child(2) .variant >> nth=1'); page.wait_for_timeout(1200)
         page.click('.scene:nth-child(3) .variant >> nth=0'); page.wait_for_timeout(1200)
         r.check('Bildwahl: alle Szenen gewählt, Übernehmen aktiv', page.locator('.dock button').is_enabled())
         page.click('.dock button'); page.wait_for_timeout(1500)
         r.check('Bilder übernommen: Zustand Stimmen', json.loads(page.evaluate("fetch('/api/factory/" + 'a' * 32 + "').then(r=>r.text())"))['state'] in ('voicing', 'blocked'))
+        shot('04c_figur_neu', '#p=' + 'f' * 32)
+        page.once('dialog', lambda dlg: dlg.accept())
+        page.click('.cast [data-action="cast-redo"][data-name="Lena"]'); page.wait_for_timeout(1500)
+        f = json.loads(page.evaluate("fetch('/api/factory/" + 'f' * 32 + "').then(r=>r.text())"))
+        scenes = f['episodes'][0]['scenes']
+        r.check('Figur neu gestalten: alle Lena-Szenen neu, Markus-Szene bleibt',
+                f['state'] == 'pictures' and f['plan']['cast'][0].get('design_round') == 1 and 'Lena' not in f.get('cast_refs', {})
+                and scenes[0]['selected'] is None and scenes[2]['selected'] is None and scenes[1]['selected'] is not None)
         shot('05_ton', '#p=' + 'b' * 32)
         page.click('.line-row .play >> nth=0'); page.wait_for_timeout(600)
         r.check('Ton: Satz abspielbar (Knopf zeigt Pause)', 'path' in page.locator('.line-row .play >> nth=0').inner_html())

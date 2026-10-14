@@ -197,6 +197,19 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .stall { border-radius: 14px; padding: 16px 18px; background: color-mix(in srgb, var(--wait) 12%, var(--surface)); }
 .stall p { margin: 0 0 12px; }
 
+/* Film goal and cast (identity check before the scenes) */
+.spine, .cast { background: var(--surface); border-radius: var(--radius); padding: 20px 24px; margin: 0 0 28px; }
+.spine h3, .cast h3 { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.spine p { margin: 0 0 10px; font-size: 17px; }
+.spine dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 15px; }
+.spine dt { color: var(--muted); }
+.spine dd { margin: 0; }
+.cast-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.figure { margin: 0; width: 132px; display: grid; gap: 8px; }
+.figure-pic { aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #1d1d1f; position: relative; }
+.figure-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.figure-pic .frame-empty { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.72); font-size: 13px; }
+.figure figcaption { display: grid; gap: 4px; justify-items: start; font-size: 15px; }
 /* Scenes (image choice) */
 .scenes { display: grid; gap: 40px; }
 .scene { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }

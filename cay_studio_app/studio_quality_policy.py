@@ -40,14 +40,21 @@ def cadence(fps, smooth=False, source_fps=16):
             'vsbmc=1:scd=fdiff:scd_threshold=6')
 
 def motion_direction(scene, lines, start, duration):
-    """Timed visible behaviour; no claim of phoneme-level lip synchronization."""
+    """Timed visible behaviour; no claim of phoneme-level lip synchronization.
+
+    Up to 0.15 this asked for "restrained conversational gestures" and listeners
+    with closed mouths. Together with the 4-step fast models that produced
+    standing figures that only moved their lips, which felt like slow motion.
+    """
     cues=[]
     for line in lines:
         a=max(start,line.get('offset',0));b=min(start+duration,line.get('offset',0)+line['duration'])
         if b>a:
-            cues.append(f'From {a-start:.2f} to {b-start:.2f} seconds only {line["speaker"]} is the active speaker, with restrained conversational gestures. Other characters listen with closed mouths.')
+            cues.append(f'From {a-start:.2f} to {b-start:.2f} seconds only {line["speaker"]} speaks, with lively expressive acting: '
+                        'animated face, hands and arms gesturing, body leaning and turning. Other characters react with body language and closed mouths.')
     return ('One continuous full-frame shot. No cut, no montage, no split screen, no border. '
             'No written language, letters, subtitles, captions, menus or watermark in any frame. '
-            'Natural real-time movement, one deliberate action, stable facial proportions and materials. '
-            'Preserve the approved starting image, costume, head shape, props and lighting. Keep all mouths closed in silent action; no talking, no lip flapping. '
+            'Energetic real-time movement at normal speed, never slow motion: the characters keep moving the whole time with clear physical action. '
+            'Camera: subtle handheld motion or a slow push-in. Stable facial proportions and materials. '
+            'Preserve the approved starting image, costume, head shape, props and lighting. Keep all mouths closed when nobody speaks and show visible action or reaction instead. '
             + ' '.join(cues))

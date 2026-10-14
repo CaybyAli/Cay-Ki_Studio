@@ -11,6 +11,7 @@ import copy
 from factory_timing import scene_lines
 
 MAX_SHOTS = 30
+CAMERAS = ('Medium shot', 'Dynamic medium close-up', 'Low-angle medium shot', 'Medium shot with a slow push-in')
 
 
 def needs_split(scene):
@@ -35,6 +36,9 @@ def runs(lines):
 def split_scene(scene):
     if not needs_split(scene): return [scene]
     groups = runs(copy.deepcopy(scene_lines(scene))); cast = list(scene.get('cast', [])); shots = []
+    # The planned movement of the whole scene continues in every shot, so a
+    # dialogue never turns into two figures standing still in turn.
+    action = (scene.get('animation_prompt') or 'reacting with a clear movement').strip().rstrip('.')
     for k, group in enumerate(groups):
         speaker = group[0]['speaker']; others = [n for n in cast if n != speaker]
         offscreen = ', '.join(others) or 'die andere Figur'
@@ -42,8 +46,9 @@ def split_scene(scene):
         shot.update(cast=[speaker], dialogues=group, dialogue='', speaker='',
             title=(scene['title'] + ' · ' + speaker)[:100],
             camera=(f'Einzeleinstellung auf {speaker}, Schuss/Gegenschuss. Nur {speaker} im Bild, {offscreen} außerhalb.')[:250],
-            animation_prompt=(f'Medium close-up of {speaker} talking to {offscreen} off-screen, natural conversational '
-                              f'gestures and expression, only {speaker} in frame, same location and lighting.')[:1400],
+            animation_prompt=(f'{CAMERAS[k % len(CAMERAS)]} of {speaker} talking to {offscreen} off-screen while acting physically: '
+                              f'{action}. Expressive face, big hand and arm gestures, body in motion, '
+                              f'only {speaker} in frame, same location and lighting.')[:1400],
             shot_part=[k + 1, len(groups)])
         shot['motion'] = [shot['animation_prompt']]
         if k:

@@ -339,10 +339,29 @@ function sectionsView(d) {
   if (d.state === 'voice_review') return soundSection(d) + scenesSection(d, false);
   return scenesSection(d, false);
 }
+function castStrip(d) {
+  const cast = (d.plan && d.plan.cast) || [], refs = d.cast_refs || {};
+  if (!cast.length) return '';
+  const own = new Set((d.idea.participants || []).filter(p => p.image).map(p => p.name));
+  const items = cast.map((p, i) => {
+    const pic = refs[p.name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${p.design_round || 0}" alt="" loading="lazy">` : '<div class="frame-empty">entsteht</div>';
+    const note = own.has(p.name) ? 'Dein Bild' : p.original ? 'Original' : 'Erfunden';
+    const redo = d.state === 'image_review' && !own.has(p.name) ? `<button class="button quiet small" data-action="cast-redo" data-name="${esc(p.name)}">Neu gestalten</button>` : '';
+    return `<figure class="figure"><div class="figure-pic">${pic}</div><figcaption><b>${esc(p.name)}</b><span class="muted small">${note}</span>${redo}</figcaption></figure>`;
+  }).join('');
+  return `<div class="cast"><h3 class="label">Deine Figuren</h3><p class="muted small">So sieht jede Figur in allen Szenen aus. Passt eine nicht, gestalte sie neu: Alle Szenen mit ihr werden dann neu gezeichnet.</p><div class="cast-row">${items}</div></div>`;
+}
+function spineCard(ep) {
+  const sp = ep.spine;
+  if (!sp) return '';
+  return `<div class="spine"><h3 class="label">Ziel des Films</h3><p>${esc(sp.logline)}</p>
+    <dl><dt>Haken</dt><dd>${esc(sp.hook)}</dd><dt>Wendung</dt><dd>${esc(sp.twist)}</dd><dt>Pointe</dt><dd>${esc(sp.payoff)}</dd></dl></div>`;
+}
 function scenesSection(d, choose) {
   const ep = d.episodes[S.episode] || d.episodes[0], ei = d.episodes.indexOf(ep);
   const editable = ['image_review', 'voice_review'].includes(d.state);
   return `<section class="section"><h2 class="title">${d.episodes.length > 1 ? esc(ep.title) : 'Drehbuch'}</h2>${episodeTabs(d)}
+    ${spineCard(ep)}${choose ? castStrip(d) : ''}
     <div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
       const variants = sc.active_variants || [];
       const pickable = d.state === 'image_review';
@@ -492,6 +511,11 @@ const actions = {
       <form id="revise-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
       <div class="actions"><button class="button" type="submit">Zwei neue Bilder erzeugen</button></div></form>`);
   },
+  async 'cast-redo'(b) {
+    if (!confirm(`${b.dataset.name} neu gestalten? Alle Szenen mit ${b.dataset.name} bekommen neue Bilder.`)) return;
+    await post(`/api/factory/${S.rid}/cast/redo`, { name: b.dataset.name });
+    toast(`${b.dataset.name} wird neu gestaltet.`);
+  },
   'edit-lines'(b) { linesSheet(+b.dataset.episode, +b.dataset.scene); },
   'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form); lines.push({ speaker: sc.cast[0], text: '' }); linesSheetFrom(form, lines); },
   'drop-line'(b) { const form = $('#lines-form'), lines = readLines(form); lines.splice(+b.dataset.index, 1); linesSheetFrom(form, lines); },
@@ -528,7 +552,7 @@ function linesSheetFrom(form, lines) {
   const ei = +form.dataset.episode, si = +form.dataset.scene, sc = S.run.episodes[ei].scenes[si];
   const original = sc.dialogues; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); linesSheet(ei, si); sc.dialogues = original;
 }
-const NEEDS_REFRESH = new Set(['pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
+const NEEDS_REFRESH = new Set(['cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
 
 document.addEventListener('click', async event => {
   const nav = event.target.closest('[data-nav]');

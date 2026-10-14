@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 14.10.2026 (0.15.0) · Branch `claude/new-session-s0p05c`
+Stand: 14.10.2026 (0.16.0) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -95,8 +95,18 @@ Plan und Grenzen: `CAY_STUDIO_PLAN.md`.
 - Diagnose „PC als Team“: RAM/Swap/WSL-Einstellung/PCIe/Modell-Dateisystem/ComfyUI-Zeiten.
 - Prüfung: pytest 28, ui_check 20/20, queue_check 3/3, autopilot 5/5, abort 11/11.
 
+## 0.16.0 (14.10.2026) – Cay: Qualität top, aber 5 h; Vorlagen-Personen im Film; SpongeBob wechselt Gesicht; statisch, Zeitlupe; Planung ohne Ziel
+- `cast_design.py` (neu): Figur aus Text (ohne Vorlage), dann Stilübertragung mit Vorlagen; Szenen nur mit Figurenbildern; `invalidate()` zeichnet alle Szenen einer geänderten Figur neu (vorher nur eine).
+- `CastPlan.original` + Planungsregel für bekannte Figuren; Endpunkte `POST /cast/redo`, `GET /cast-image/{i}`; UI „Deine Figuren“.
+- `StorySpine` (Ziel des Films) vor jedem Drehbuch, an Drehbuch, Prüfung, Überarbeitung und Dialogergänzung übergeben; UI-Karte „Ziel des Films“.
+- Tempo: `DIRECTION` mit Handlung pro Äußerung und kurzen Sätzen; `motion_direction`, InfiniteTalk-Prompt und Schuss/Gegenschuss-Prompts lebendig; `audio_layout` Sprache ab 0,08 s, Restzeit zuerst in ohnehin gerechnete Lippensync-Bilder (max. 1 s), dann in stumme Handlungsszenen.
+- `render_order`: Sprechszenen vor Bewegungsszenen (render() entlädt bei Familienwechsel alle Modelle).
+- Diagnose: Figurenherkunft, Lippensync-Rechenfenster, Minuten pro Fenster, Modellwechsel.
+- Prüfung: pytest 42 (neu 14 in `test_identity_pacing.py`), ui_check 23/23, autopilot 5/5, abort 11/11, queue 3/3, Installation trocken bytegleich.
+- Nicht geprüft: echtes Bild/Video auf Cays GPU, Wirkung der neuen Prompts, Zeitgewinn.
+
 ## Nächster konkreter Schritt
-Cay: 0.15.0 installieren, Turbo einrichten, PC neu starten, 60-s-Film Entwurf mit Autopilot, Diagnose schicken.
+Cay: 0.16.0 installieren, SpongeBob-Film 60 s Entwurf ohne Autopilot, Figuren prüfen, Diagnose schicken.
 
 ## Reihenfolge danach
 Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.

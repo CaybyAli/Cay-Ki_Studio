@@ -193,12 +193,14 @@ class Editor:
         if kind == 'image':
             changes = {p['name']: p['appearance'] for p in answer['characters']}
             if not set(changes).issubset(scene['cast']): raise RuntimeError('Die KI hat eine fremde Figur verändert. Bitte erneut versuchen.')
+            from cast_design import invalidate
             for person in d['plan']['cast']:
                 if person['name'] in changes:
                     person['appearance'] = changes[person['name']]
-                    d.setdefault('cast_refs', {}).pop(person['name'], None)
+                    # Every scene with this figure, not only this one: no face drift.
+                    invalidate(d, person['name'])
             scene['image_note'] = answer['image_note']
-            regenerate(scene, [0, 1] if req['variant'] == 'both' else [int(req['variant'])])
+            if not changes: regenerate(scene, [0, 1] if req['variant'] == 'both' else [int(req['variant'])])
             d['state'] = 'pictures'
         elif kind == 'voice':
             if answer['name'] != req['name']: raise RuntimeError('Die KI hat die falsche Stimme gewählt. Bitte erneut versuchen.')
