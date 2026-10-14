@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 14.10.2026 (0.16.0) · Branch `claude/new-session-s0p05c`
+Stand: 14.10.2026 (0.16.1) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -105,8 +105,14 @@ Plan und Grenzen: `CAY_STUDIO_PLAN.md`.
 - Prüfung: pytest 42 (neu 14 in `test_identity_pacing.py`), ui_check 23/23, autopilot 5/5, abort 11/11, queue 3/3, Installation trocken bytegleich.
 - Nicht geprüft: echtes Bild/Video auf Cays GPU, Wirkung der neuen Prompts, Zeitgewinn.
 
+## 0.16.1 (14.10.2026) – Cay: „Nachbearbeitung: Tonmischung unvollständig; keine Freigabe“ (Projekt „Der Einbruch im Krusty-Versteck“, 60 s, Standard)
+- Ursache [Sicher, nachgestellt mit FFmpeg 6.1]: `loudnorm` verschiebt die Ausgabe-Zeitstempel; `-t`/`atrim` schneiden danach zu früh. 10,04 s → 9,98 s, 60,12 s → 60,04 s. Bis 0.15 war die Länge meist genau das Ziel (60,0 s, ganze Zehntel), daher unbemerkt. 0.16 rundet jede Szene auf ganze Videobilder → 60,12/60,16 s → Prüfung > 30 ms schlägt an.
+- Fix `factory_audio.exact()`: vor `loudnorm` 0,5 s Stille, danach `asetpts=N/SR/TB` und `atrim` auf exakte Länge (Dialog, Musik, Endmischung).
+- Test `tests/test_mix_length.py` (echtes FFmpeg): vorher 2 von 3 rot, jetzt 3/3; 60-s-Zufallsmischungen 60,16 s OK. pytest gesamt 45.
+- Fehlerbericht: Planung ~3 min, 28 Bilder 130 s, Stimmgestaltung 105 s, Sprache 49 s. Noch keine Animationszeit gemessen. WSL 50,5 GB, Auslagerung 0.
+
 ## Nächster konkreter Schritt
-Cay: 0.16.0 installieren, SpongeBob-Film 60 s Entwurf ohne Autopilot, Figuren prüfen, Diagnose schicken.
+Cay: 0.16.1 installieren, im Krusty-Projekt „Fortsetzen“, nach dem fertigen Film Cay_Studio_Diagnose.cmd schicken.
 
 ## Reihenfolge danach
 Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.

@@ -1,11 +1,11 @@
-# Cay Studio 0.16.0 – so geht es weiter
+# Cay Studio 0.16.1 – so geht es weiter
 
 ## Update installieren
 
 1. ZIP laden, Rechtsklick → **Alle extrahieren** → in einen **neuen** Ordner.
 2. Läuft eine Produktion: **Pausieren** oder fertig werden lassen. Hängt ein Abschnitt: **erst den PC neu starten**.
-3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.16.0 INSTALLIERT** warten.
-4. Im Browser **Strg + F5**. Unten muss **0.16.0** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.16.1 INSTALLIERT** warten.
+4. Im Browser **Strg + F5**. Unten muss **0.16.1** stehen.
 
 Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er selbst zur vorherigen zurück. Projekte, Bilder, Stimmen und fertige Filme bleiben erhalten.
 

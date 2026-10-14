@@ -1,9 +1,12 @@
-CAY STUDIO 0.16.0 - NUR DIESE SCHRITTE
+CAY STUDIO 0.16.1 - NUR DIESE SCHRITTE
+
+Hast du ein Projekt mit "Tonmischung unvollstaendig":
+nach Schritt 4 das Projekt oeffnen und "Fortsetzen" klicken.
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
 2. Laeuft ein Film: fertig werden lassen oder Pausieren.
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
-4. Im Browser Strg+F5. Unten muss 0.16.0 stehen.
+4. Im Browser Strg+F5. Unten muss 0.16.1 stehen.
 5. Zahnrad oben rechts: steht bei Turbo nicht "aktiv",
    dann "Turbo einrichten" und danach PC neu starten.
 6. "Neu": dieselbe SpongeBob-Idee, 60 s, Qualitaet "Entwurf".

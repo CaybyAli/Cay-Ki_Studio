@@ -1,3 +1,10 @@
+# Cay Studio 0.16.1 – Tonmischung repariert (14.10.2026)
+
+- Behebt „Tonmischung unvollständig; keine Freigabe“. Ursache: Der Lautheitsfilter von FFmpeg verschiebt die Zeitstempel; bei Filmlängen wie 60,12 s fehlte danach das Ende.
+- Im angehaltenen Projekt einfach „Fortsetzen“. Bilder und Stimmen bleiben erhalten.
+
+---
+
 # Cay Studio 0.16.0 – feste Figuren, mehr Tempo, Ziel des Films (14.10.2026)
 
 - Look-Vorlagen bestimmen nur noch den Stil. Personen aus der Vorlage kommen nicht mehr in den Film.
