@@ -198,6 +198,8 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .stall p { margin: 0 0 12px; }
 
 /* Film goal and cast (identity check before the scenes) */
+.check-line { margin: -6px 0 14px; }
+.warn-line { margin: -8px 0 14px; color: var(--muted); border-left: 3px solid #ff9f0a; padding-left: 10px; }
 .spine, .cast { background: var(--surface); border-radius: var(--radius); padding: 20px 24px; margin: 0 0 28px; }
 .spine h3, .cast h3 { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
 .spine p { margin: 0 0 10px; font-size: 17px; }

@@ -17,6 +17,9 @@ def node(info,kind,**values):
     required,optional=fields(info,kind);out={}
     for key,schema in {**required,**optional}.items():
         if key in values:out[key]=values[key];continue
+        # Cay's own optional inputs only when asked for: an added default would
+        # change the graph digest and re-render windows of projects in progress.
+        if key.startswith('cay_') and key not in required:continue
         opt=schema[1] if len(schema)>1 and isinstance(schema[1],dict) else {}
         # API workflows do not receive optional widget values from a browser.
         # Explicit schema defaults avoid None entering version-dependent code.
@@ -51,7 +54,11 @@ def talk_models(info,fast=False):
     if fast:names['lora']=option(info,'WanVideoLoraSelect','lora',lambda x:'lightx2v' in x and 'i2v' in x and '480p' in x and 'cfg_step' in x)
     return names
 
-def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',attention='sdpa'):
+V16_SUFFIX=' Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.'
+AUDIO_CFG_STEPS=1  # fast/draft: audio guidance in step 1 of 4 only (8 -> 5 transformer passes per window)
+SUFFIX=' Only the single visible character speaks, exactly when the supplied voice speaks. Mouth closed and body calm whenever the voice is silent. Stable identity, the same face in every frame.'
+
+def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',attention='sdpa',legacy_text=False):
     """25 native FPS, isolated dialogue only, exact onset/pauses; no background music."""
     if 'CayWanVideoSampler' not in info:
         raise ValueError('Die Sampler-Reparatur ist noch nicht in ComfyUI geladen. Nach dem Update laufende Arbeit pausieren, den PC neu starten und Cay Studio öffnen. Keine neuen Modelle nötig.')
@@ -66,10 +73,11 @@ def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',at
        '6':n('MultiTalkWav2VecEmbeds',wav2vec_model=['5',0],audio_1=['2',0],normalize_loudness=False,num_frames=frames,fps=25.,audio_scale=1.,audio_cfg_scale=2. if lite else 4.,multi_audio_type='para',add_noise_floor=False,smooth_transients=False),
        '7':n('CLIPVisionLoader',clip_name=m['vision']),
        '8':n('WanVideoClipVisionEncode',clip_vision=['7',0],image_1=['1',0],strength_1=1.,crop='center',force_offload=True),
-       '9':n('WanVideoTextEncodeCached',model_name=m['text'],precision='bf16',positive_prompt=prompt+' Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.',negative_prompt='talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping',quantization='disabled',use_disk_cache=True,device='gpu'),
+       '9':n('WanVideoTextEncodeCached',model_name=m['text'],precision='bf16',positive_prompt=prompt+(V16_SUFFIX if legacy_text else SUFFIX),negative_prompt='talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping',quantization='disabled',use_disk_cache=True,device='gpu'),
        '10':n('WanVideoModelLoader',model=m['model'],base_precision='bf16',quantization='fp8_e4m3fn',load_device='offload_device',attention_mode=attention,multitalk_model=['4',0],block_swap_args=['17',0]),
        '11':n('WanVideoImageToVideoMultiTalk',vae=['3',0],width=size[0],height=size[1],frame_window_size=81,motion_frame=9,force_offload=True,colormatch='disabled',start_image=['1',0],tiled_vae=True,clip_embeds=['8',0],mode='infinitetalk',output_path=''),
-       '12':n('CayWanVideoSampler',model=['10',0],image_embeds=['11',0],text_embeds=['9',0],multitalk_embeds=['6',0],steps=4 if lite else 40 if quality=='high' else 24,cfg=1.,shift=2. if lite else 5.,seed=seed,force_offload=True,scheduler='euler',riflex_freq_index=0,start_step=0,end_step=-1),
+       '12':n('CayWanVideoSampler',model=['10',0],image_embeds=['11',0],text_embeds=['9',0],multitalk_embeds=['6',0],steps=4 if lite else 40 if quality=='high' else 24,cfg=1.,shift=2. if lite else 5.,seed=seed,force_offload=True,scheduler='euler',riflex_freq_index=0,start_step=0,end_step=-1,
+                **({} if legacy_text or not lite else {'cay_audio_cfg_steps':AUDIO_CFG_STEPS})),
        '13':n('WanVideoPassImagesFromSamples',samples=['12',0]),
        '14':n('CreateVideo',images=['13',0],fps=25.),
        '15':n('SaveVideo',video=['14',0],filename_prefix=prefix,format='mp4',codec='h264'),

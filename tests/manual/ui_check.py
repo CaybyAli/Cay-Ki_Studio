@@ -75,6 +75,11 @@ try:
         v = [picture(rid, next(ids), si * 2), picture(rid, next(ids), si * 2 + 1)]
         eps.append(scene(f'Szene {si + 1}', who, [(who[0], 'Hallo.')], v, v[0]))
     project(rid, 'image_review', 'Neue Gesichter', {'cast_refs': {'Lena': str(figure), 'Markus': str(figure)}}, episodes=[{'title': 'Neue Gesichter', 'scenes': eps}])
+    # figure check stop (0.17): designs ready, no scene images yet
+    rid = '1' * 32
+    project(rid, 'cast_review', 'Figurencheck', {'cast_refs': {'Lena': str(figure), 'Markus': str(figure)}}, {'cast_check': True, 'autopilot': True},
+            episodes=[{'title': 'Figurencheck', 'scenes': [scene('Szene 1', ['Lena'], [('Lena', 'Hallo, Markus!')])],
+                       'screenplay_stats': {'words': 118, 'lines': 19, 'actions': 2, 'shots': 19, 'budget': {'words': 120}}}], paused=0)
     # voice review
     rid = 'b' * 32; folder = studio.root / '01_Projekte/Studio' / rid
     pics = [picture(rid, next(ids), n) for n in range(3)]
@@ -134,7 +139,8 @@ try:
         r.check('Serie gewählt: Knopftext und Teil-Etikett', page.locator('#create').inner_text() == 'Serie mit 12 Folgen starten' and page.locator('#preview-part').inner_text() == 'Teil 1/12')
         page.screenshot(path=str(shots / '02_neu_serie.png'))
         shot('03_projekte', '#projects')
-        r.check('Projektliste: 6 Projekte als Hochkantkacheln', page.locator('.tile').count() == 6)
+        r.check('Projektliste: 7 Projekte als Hochkantkacheln', page.locator('.tile').count() == 7)
+        r.check('Figurencheck wartet auf Cay (auch mit Autopilot)', 'Wartet auf dich' in page.locator('.tile', has_text='Figurencheck').inner_text())
         r.check('Wartende Projekte stehen vorn', 'Wartet auf dich' in page.locator('.tile').first.inner_text())
         shot('04_bilder_waehlen', '#p=' + 'a' * 32)
         r.check('Bildwahl: Figurenleiste mit 2 geladenen Figurenbildern', page.evaluate("[...document.querySelectorAll('.cast .figure-pic img')].filter(i => i.naturalWidth > 0).length") == 2)
@@ -153,6 +159,21 @@ try:
         r.check('Figur neu gestalten: alle Lena-Szenen neu, Markus-Szene bleibt',
                 f['state'] == 'pictures' and f['plan']['cast'][0].get('design_round') == 1 and 'Lena' not in f.get('cast_refs', {})
                 and scenes[0]['selected'] is None and scenes[2]['selected'] is None and scenes[1]['selected'] is not None)
+        shot('04d_figurencheck', '#p=' + '1' * 32)
+        r.check('Figurencheck: Überschrift, 2 Figuren, Prüfzeile', 'Prüf deine Figuren' in page.locator('.next h2').inner_text()
+                and page.locator('.cast .figure').count() == 2 and '118 Wörter' in page.locator('.check-line').inner_text())
+        own = work / 'eigenes_bild.jpg'
+        subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=0xff6b6b:s=600x900:d=1', '-frames:v', '1', str(own)], check=True)
+        page.set_input_files('.cast input[data-upload="cast"][data-name="Markus"]', str(own)); page.wait_for_timeout(2500)
+        g = json.loads(page.evaluate("fetch('/api/factory/" + '1' * 32 + "').then(r=>r.text())"))
+        markus = next((p for p in g['idea']['participants'] if p['name'] == 'Markus'), {})
+        r.check('Eigenes Figurenbild: übernommen, Figur wird neu aufgebaut', bool(markus.get('image')) and 'Markus' not in g.get('cast_refs', {})
+                and (g['state'] == 'pictures' or g.get('resume_state') == 'pictures'))
+        db.execute("UPDATE factory_runs SET state='cast_review', document=json_set(document,'$.state','cast_review','$.cast_refs',json(?)) WHERE id=?", (json.dumps({'Lena': str(figure), 'Markus': str(figure)}), '1' * 32)); db.commit()
+        page.goto('http://127.0.0.1:8787/#p=' + '1' * 32); page.wait_for_timeout(2000)
+        page.click('[data-action="cast-approve"]'); page.wait_for_timeout(1500)
+        g = json.loads(page.evaluate("fetch('/api/factory/" + '1' * 32 + "').then(r=>r.text())"))
+        r.check('Figuren freigegeben: Szenenbilder sind dran', g['state'] in ('pictures', 'blocked') and bool(g.get('cast_approval')))
         shot('05_ton', '#p=' + 'b' * 32)
         page.click('.line-row .play >> nth=0'); page.wait_for_timeout(600)
         r.check('Ton: Satz abspielbar (Knopf zeigt Pause)', 'path' in page.locator('.line-row .play >> nth=0').inner_html())

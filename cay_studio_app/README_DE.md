@@ -1,3 +1,14 @@
+# Cay Studio 0.17.0 – Drehbuch als Gespräch, feste Figuren, kürzere Rechenzeit (14.10.2026)
+
+- Drehbuch: Die KI schreibt den ganzen Film zuerst als durchgehendes Gespräch (mit Denkmodus), prüft Wortzahl, Sprecherwechsel und Telegrammstil, überarbeitet ihn einmal als „Script Doctor“ und schneidet erst dann in Einstellungen.
+- Keine langen Pausen mehr in Sprechszenen: nach dem letzten Wort höchstens etwa eine halbe Sekunde. Fehlende Zeit wird zu stummen Aktionsszenen.
+- Bildtexte nennen nur Figuren, die im Bild sind. Bekannte Figuren (z. B. SpongeBob) bekommen keine Stilübertragung von Vorlagen.
+- „Figuren vorher zeigen“: ein kurzer Stopp vor den Szenenbildern, auch mit Autopilot. Dort: neu gestalten oder eigenes Bild.
+- Stimmen: Gefühls-Sprechproben mit passendem Text, 16 Sprechhaltungen, bei Knete/Cartoon eine Cartoon-Sprechweise, bei Gefühlszeilen zwei Aufnahmen und die lebendigere gewinnt.
+- Schneller: Die Lippen-Animation rechnet nur noch im ersten von vier Schritten doppelt (vorher in allen vier).
+
+---
+
 # Cay Studio 0.16.1 – Tonmischung repariert (14.10.2026)
 
 - Behebt „Tonmischung unvollständig; keine Freigabe“. Ursache: Der Lautheitsfilter von FFmpeg verschiebt die Zeitstempel; bei Filmlängen wie 60,12 s fehlte danach das Ende.

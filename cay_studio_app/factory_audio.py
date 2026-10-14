@@ -4,6 +4,7 @@ from pathlib import Path
 import hashlib,json,math,os,random,subprocess,wave
 from factory_timing import audio_layout
 import speech_check
+from speech_quality import level_db
 RATE=24000
 TARGET_LUFS=-14  # TikTok/Shorts: phones play quiet mixes thin; measured film before: -23.9 dB mean
 def turns(s):
@@ -88,7 +89,9 @@ def mix(folder,scenes,mood,music=None,settings=None):
             if hashlib.sha256(p.read_bytes()).hexdigest()!=l['sha256']:raise RuntimeError('Sprachspur wurde verändert.')
             start=cursor+l.get('offset',.15)
             if start+l['duration']>cursor+s['seconds']+.03:raise RuntimeError('Dialog passt nicht zur Szenendauer.')
-            args+=['-i',str(p)];filters.append(f'[{index}:a]highpass=f=55,aresample=24000,adelay={round(start*1000)}:all=1[d{index}]');labels.append(f'[d{index}]');index+=1;intervals.append((start,start+l['duration']))
+            # Shouts stand out, whispers sit lower (speech_quality.LEVEL_DB).
+            gain=level_db(l.get('emotion',''))
+            args+=['-i',str(p)];filters.append(f'[{index}:a]highpass=f=55,aresample=24000,volume={gain:+.1f}dB,adelay={round(start*1000)}:all=1[d{index}]');labels.append(f'[d{index}]');index+=1;intervals.append((start,start+l['duration']))
         cursor+=s['seconds']
     dialogue=folder/'Dialogschnitt.wav'
     if labels:
@@ -109,7 +112,7 @@ def mix(folder,scenes,mood,music=None,settings=None):
         # whispering and emphatic lines. A separate pass avoids amix buffering.
         normalized_voice=folder/'Dialog_Normalisiert.wav'
         # Gentle broadcast-style levelling: rumble off, soft compression, then loudness.
-        ff(['-i',dialogue,'-af','highpass=f=70,acompressor=threshold=-22dB:ratio=2.5:attack=8:release=140:makeup=2,'+exact('loudnorm=I=-18:TP=-2.5:LRA=9,aresample=24000',duration),'-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized_voice],folder)
+        ff(['-i',dialogue,'-af','highpass=f=70,acompressor=threshold=-20dB:ratio=2:attack=8:release=160:makeup=1.5,'+exact('loudnorm=I=-18:TP=-2.5:LRA=9,aresample=24000',duration),'-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized_voice],folder)
         os.replace(normalized_voice,dialogue)
     # A successful FFmpeg exit is not enough here: an invalid filter graph can
     # still produce a full-length silent dialogue file. Catch that before the

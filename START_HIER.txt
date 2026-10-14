@@ -1,22 +1,21 @@
-CAY STUDIO 0.16.1 - NUR DIESE SCHRITTE
-
-Hast du ein Projekt mit "Tonmischung unvollstaendig":
-nach Schritt 4 das Projekt oeffnen und "Fortsetzen" klicken.
+CAY STUDIO 0.17.0 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
 2. Laeuft ein Film: fertig werden lassen oder Pausieren.
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
-4. Im Browser Strg+F5. Unten muss 0.16.1 stehen.
-5. Zahnrad oben rechts: steht bei Turbo nicht "aktiv",
-   dann "Turbo einrichten" und danach PC neu starten.
-6. "Neu": dieselbe SpongeBob-Idee, 60 s, Qualitaet "Entwurf".
-   Autopilot AUS (du willst die Figuren einmal sehen).
-   Fuer 100 % Original-Aussehen: unter "Figuren" bei SpongeBob
-   und Mr. Krabs je ein Bild hochladen.
-7. Bei "Waehle pro Szene ein Bild": oben "Deine Figuren" pruefen.
-   Passt eine nicht: "Neu gestalten". Dann Bilder uebernehmen.
+4. PC einmal neu starten (die schnellere Lippen-Animation
+   wird erst nach dem Neustart von ComfyUI aktiv).
+5. Cay_Studio_Starten.cmd. Im Browser Strg+F5.
+   Unten muss 0.17.0 stehen.
+6. "Neu": dieselbe SpongeBob-Idee, 60 s, Qualitaet "Standard",
+   Autopilot AN, "Figuren vorher zeigen" AN.
+   Fuer exaktes Aussehen: unter "Figuren" bei Mr. Krabs und
+   Plankton je ein Bild hochladen.
+7. Wenn "Pruef deine Figuren" kommt: Figuren ansehen.
+   Passt eine nicht: "Neu gestalten" oder "Eigenes Bild".
+   Dann "Figuren passen, weiter". Der Rest laeuft allein.
 8. Wenn der Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
-   und Cay_Studio_Diagnose.txt schicken.
+   und Cay_Studio_Diagnose.txt plus das Video schicken.
 
 Haengt ein Abschnitt: erst PC neu starten, dann Update.
 Nichts loeschen.

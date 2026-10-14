@@ -62,7 +62,7 @@ class Quality:
             speaking={l['speaker'] for l in lines};cast=[p for p in cast if p['name'] in speaking]
             if any(not p.get('voice_file') for p in cast):
                 if not self.voice_ready():raise RuntimeError('Für verschiedene erfundene Stimmen einmalig „Stimmenstudio einrichten“ wählen. Danach dieses Projekt fortsetzen. Die alte Einheitsstimme wird nicht mehr verwendet.')
-                job=self.folder(d)/'Stimmgestaltung.json';out=self.folder(d)/'03_Stimmen/Profile';self.atomic(job,json.dumps({'run_id':d['id'],'cast':cast,'lines':lines,'performances':options['speech_engine']=='qwen' or options['speech_engine']=='auto' and speech_ready(self.base),'output':str(out)}).encode());d['phase']='Eigene Stimmen für die Figuren gestalten';self.save(d)
+                job=self.folder(d)/'Stimmgestaltung.json';out=self.folder(d)/'03_Stimmen/Profile';self.atomic(job,json.dumps({'run_id':d['id'],'cast':cast,'lines':lines,'performances':options['speech_engine']=='qwen' or options['speech_engine']=='auto' and speech_ready(self.base),'look':d['plan'].get('visual',''),'output':str(out)}).encode());d['phase']='Eigene Stimmen für die Figuren gestalten';self.save(d)
                 async with self.measured(d,'Stimmgestaltung'):await self.command([self.base/'envs/studio-voices/bin/python',Path(__file__).with_name('factory_voice.py'),'--base',self.base,'--job',job],7200)
                 profiles=json.loads((out/'Profile.json').read_text());d['voice_profiles']=profiles
                 for p in cast:

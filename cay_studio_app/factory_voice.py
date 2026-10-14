@@ -4,8 +4,34 @@ from pathlib import Path
 from speech_quality import finish_voice,performance_key
 PRESETS={'child_boy':'A fictional boy around ten, naturally youthful light voice, curious and energetic, not an adult falsetto.','child_girl':'A fictional girl around ten, naturally youthful bright voice, expressive and confident, not an adult falsetto.','young_man':'A young adult man, light tenor, relaxed and lively.','young_woman':'A young adult woman, clear bright voice, lively.','man':'An adult man, resonant mid-low baritone, confident.','woman':'An adult woman, rich warm midrange voice, expressive.','grandpa':'An elderly man, warm weathered baritone, slight gravel and breath texture, animated rather than excessively slow.','grandma':'An elderly woman, warm mature alto, subtle grain and expressive melody, animated rather than excessively slow.','creature':'A whimsical cartoon creature, distinctive texture and expressive articulation.'}
 REPO='Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign'
-REFERENCE_TEXT='Heute beginnt unsere Geschichte. Ich weiß noch nicht, was uns erwartet. Aber eines ist sicher: Wir halten zusammen. Hör genau zu, dann finden wir den richtigen Weg.'
-def description(person,index):return PRESETS.get(person.get('voice_preset'),PRESETS['man'])+' Native German actor, natural conversational delivery, relaxed breath, varied intonation, never a synthetic announcer or exaggerated imitation. '+person.get('voice_description','')+' Character: '+person.get('personality','')+'. Clean dry studio speech, no music, reverb or background noise. '+['Precise consonants, dry smile.','Soft consonants, rounded resonance.','Light textured timbre, clear articulation.','Melodic, crisp diction.'][index%4]
+# The clone continues the melody of its reference. 0.16 used one calm narrator
+# text for every reference, also for "angry" or "afraid" takes, so every line
+# sounded like the next sentence of a quiet story. Each delivery now has a
+# reference text that is itself angry, afraid, joyful … (Qwen adapts tone to
+# the meaning of the text; the reference transcript goes into the clone prompt).
+REFERENCE_TEXT='Na endlich! Weißt du eigentlich, wie lange ich hier schon warte? Egal, komm rein, schnell, ich muss dir unbedingt was zeigen. Du wirst es nicht glauben!'
+EMOTION_TEXTS={
+ 'angry':('furious, loud and sharp, clipped consonants','Jetzt reicht es mir aber! Ich hab dir hundertmal gesagt, du sollst das lassen! Gib das sofort her!'),
+ 'shout':('shouting at full volume, strained and urgent','Hey! Stehen bleiben! Hörst du mich nicht? Sofort stehen bleiben, hab ich gesagt!'),
+ 'panic':('panicked, breathless, fast and high-pitched','Nein, nein, nein! Was machen wir jetzt? Die kommen hierher, schnell, versteck dich!'),
+ 'afraid':('afraid and tense, trembling, hesitant','Hast du das gehört? Da … da ist irgendwas. Bitte, lass uns einfach hier verschwinden.'),
+ 'joy':('happy and warm, bright smile in the voice, light laughter','Ja! Wir haben es wirklich geschafft! Das ist der beste Tag überhaupt, ich freu mich so!'),
+ 'excited':('bursting with excitement, fast, high energy, enthusiastic','Oh, oh, oh! Schau dir das an! Das ist ja unglaublich, das müssen wir sofort ausprobieren!'),
+ 'triumph':('triumphant and gloating, savouring every word, a short evil laugh','Ha! Endlich gehört alles mir! Ihr hättet besser aufpassen sollen. Hahaha!'),
+ 'surprised':('genuinely surprised, rising pitch, disbelief','Was?! Das ist doch nicht dein Ernst! Wie bist du denn hier reingekommen?'),
+ 'sad':('sad and quiet, heavy, slow and vulnerable','Es ist vorbei. Alles, wofür ich gearbeitet habe, ist einfach weg.'),
+ 'whisper':('whispering, very soft and breathy, secretive','Psst, ganz leise. Da drüben ist jemand. Keinen Mucks jetzt, versprochen?'),
+ 'threat':('quietly threatening, low and slow, menacing','Hör mir jetzt ganz genau zu. Du zahlst. Heute noch. Sonst wird es sehr ungemütlich.'),
+ 'mocking':('mocking and sarcastic, drawn-out vowels, condescending','Ach wirklich? Der Wind hat es weggeweht? Na klar, und ich bin der Kaiser von China.'),
+ 'annoyed':('annoyed and impatient, sighing, clipped','Ernsthaft? Schon wieder? Ich hab wirklich keine Zeit für so was, mach einfach.'),
+ 'pleading':('pleading and desperate, voice cracking','Bitte, bitte, ich mach alles, was du willst! Nur nicht das, ich flehe dich an!'),
+ 'confused':('confused and puzzled, slow, questioning','Moment mal … Wie jetzt? Ich versteh gar nichts mehr. Wer war das denn dann?'),
+ 'firm':('firm and determined, steady and strong','Nein. Wir machen das jetzt so, wie ich es sage. Keine Diskussion mehr.'),
+}
+CARTOON='German cartoon dubbing voice actor, highly animated and theatrical, wide pitch range, comedic timing, characterful and instantly recognisable. '
+NATURAL='Native German actor, natural conversational delivery, varied intonation, never a synthetic announcer. '
+def cartoonish(person,look):return look in ('cartoon','clay','paper') or bool(person.get('original')) or person.get('voice_preset')=='creature'
+def description(person,index,look=''):return PRESETS.get(person.get('voice_preset'),PRESETS['man'])+' '+(CARTOON if cartoonish(person,look) else NATURAL)+person.get('voice_description','')+' Character: '+person.get('personality','')+'. Clean dry studio speech, no music, reverb or background noise. '+['Precise consonants, dry smile.','Soft consonants, rounded resonance.','Light textured timbre, clear articulation.','Melodic, crisp diction.'][index%4]
 def setup(base):
     env=base/'envs/studio-voices';model=base/'models/studio-voices/VoiceDesign';marker=env/'bereit.json';env.parent.mkdir(parents=True,exist_ok=True)
     def run(args):subprocess.run(list(map(str,args)),check=True)
@@ -34,7 +60,7 @@ def generate(base,job_path,probe=False):
             f=Path(p['voice_file'])
             if hashlib.sha256(f.read_bytes()).hexdigest()!=p['voice_hash']:raise RuntimeError('Stimmprobe verändert.')
             profiles[p['name']]={'file':str(f),'sha256':p['voice_hash'],'source':'upload'};continue
-        instruction=description(p,i);sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],REFERENCE_TEXT,'design08'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
+        instruction=description(p,i,job.get('look',''));sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],REFERENCE_TEXT,'design17'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
         if not f.is_file():
             if model is None:model=Qwen3TTSModel.from_pretrained(str(model_path),device_map='cuda:0',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True)
             seed=int(hashlib.sha256((job['run_id']+p['name']+str(p.get('voice_variant',0))).encode()).hexdigest()[:8],16)
@@ -54,19 +80,20 @@ def generate(base,job_path,probe=False):
         profiles[p['name']]['emotion_profiles']={}
         for emotion in moods:
             if emotion=='natural':continue
-            instruction=description(p,i)+' Acting direction for this take: '+{'angry':'angry, controlled intensity','afraid':'afraid, tense breath','joy':'joyful and animated','sad':'sad, vulnerable','quiet':'intimate low whisper','firm':'firm and determined'}[emotion]+'. Keep the same age, vocal identity and timbre. Do not speak the direction aloud.'
-            sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],REFERENCE_TEXT,'performance11'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
+            acting,text=EMOTION_TEXTS.get(emotion,EMOTION_TEXTS['firm'])
+            instruction=description(p,i,job.get('look',''))+' Acting for this take, strongly performed: '+acting+'. Same person, same age and timbre. Do not speak the direction aloud.'
+            sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],text,'performance17'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
             if not f.is_file():
                 if model is None:model=Qwen3TTSModel.from_pretrained(str(model_path),device_map='cuda:0',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True)
                 seed=int(hashlib.sha256((job['run_id']+p['name']+str(p.get('voice_variant',0))).encode()).hexdigest()[:8],16)
                 for attempt in range(2):
                     random.seed(seed+attempt);np.random.seed((seed+attempt)%2**32);torch.manual_seed(seed+attempt)
-                    waves,sr=model.generate_voice_design(text=REFERENCE_TEXT,language='German',instruct=instruction,temperature=.7,top_p=.9,max_new_tokens=650)
-                    try:data,quality=finish_voice(waves[0],sr,REFERENCE_TEXT);break
+                    waves,sr=model.generate_voice_design(text=text,language='German',instruct=instruction,temperature=.9,top_p=1.,max_new_tokens=650)
+                    try:data,quality=finish_voice(waves[0],sr,text);break
                     except RuntimeError:
                         if attempt:raise
                 temp=f.with_suffix('.partial.wav');sf.write(temp,data,sr,subtype='PCM_16');os.replace(temp,f)
-            profiles[p['name']]['emotion_profiles'][emotion]={'file':str(f),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'voice_text':REFERENCE_TEXT}
+            profiles[p['name']]['emotion_profiles'][emotion]={'file':str(f),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'voice_text':text}
     temp=out/'Profile.partial.json';temp.write_text(json.dumps(profiles));os.replace(temp,out/'Profile.json')
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--base',required=True);parser.add_argument('--setup',action='store_true');parser.add_argument('--probe',action='store_true');parser.add_argument('--job');args=parser.parse_args()

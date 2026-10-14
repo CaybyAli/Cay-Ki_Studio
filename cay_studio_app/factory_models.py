@@ -29,6 +29,8 @@ class Idea(Strict):
     speech_engine:Literal['auto','qwen','chatterbox']='auto'
     lip_sync:Literal['audio','off']='audio'
     autopilot:bool=False
+    # Show the designed figures once before scene images (0.17). Old projects: field missing = off.
+    cast_check:bool=True
 
 class CastPlan(Strict):
     name:str=Field(min_length=1,max_length=60)
@@ -112,9 +114,16 @@ class Shot(Strict):
     sound_cues:list[SoundCue]=Field(default_factory=list,max_length=4)
     motion:list[str]=Field(default_factory=list,max_length=4)
     animation_prompt:str=Field(default='',max_length=1400)
+    # 0.17 screenplay shots: English picture text naming only visible figures; 'line' or 'action'.
+    still:str=Field(default='',max_length=600)
+    kind:Literal['line','action','scene']='scene'
 
 class CastRedo(Strict):
     name:str=Field(min_length=1,max_length=60)
+
+class CastImage(Strict):
+    name:str=Field(min_length=1,max_length=60)
+    asset_id:str=Field(pattern=r'^[a-f0-9]{32}$')
 
 class AutopilotSwitch(Strict):
     enabled:bool

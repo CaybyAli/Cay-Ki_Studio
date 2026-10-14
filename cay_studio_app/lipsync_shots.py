@@ -38,19 +38,25 @@ def split_scene(scene):
     groups = runs(copy.deepcopy(scene_lines(scene))); cast = list(scene.get('cast', [])); shots = []
     # The planned movement of the whole scene continues in every shot, so a
     # dialogue never turns into two figures standing still in turn.
-    action = (scene.get('animation_prompt') or 'reacting with a clear movement').strip().rstrip('.')
+    # Only the speaker's own movement: other names in image or video text make the
+    # models draw those figures without a reference (Krusty film, 0.16.1).
+    from screenplay import sanitize
+    others_all = list(scene.get('cast', []))
+    action_raw = (scene.get('animation_prompt') or 'reacting with a clear movement').strip().rstrip('.')
     for k, group in enumerate(groups):
         speaker = group[0]['speaker']; others = [n for n in cast if n != speaker]
+        action = sanitize(action_raw, [speaker], others_all) or 'reacting with a clear movement'
         offscreen = ', '.join(others) or 'die andere Figur'
         shot = copy.deepcopy(scene)
         shot.update(cast=[speaker], dialogues=group, dialogue='', speaker='',
             title=(scene['title'] + ' · ' + speaker)[:100],
-            camera=(f'Einzeleinstellung auf {speaker}, Schuss/Gegenschuss. Nur {speaker} im Bild, {offscreen} außerhalb.')[:250],
-            animation_prompt=(f'{CAMERAS[k % len(CAMERAS)]} of {speaker} talking to {offscreen} off-screen while acting physically: '
-                              f'{action}. Expressive face, big hand and arm gestures, body in motion, '
+            camera=(f'Einzeleinstellung auf {speaker}, Schuss/Gegenschuss. Nur {speaker} im Bild.')[:250],
+            animation_prompt=(f'{CAMERAS[k % len(CAMERAS)]} of {speaker} alone, talking to someone outside the frame: '
+                              f'{action}. Expressive face and natural gestures while speaking, '
                               f'only {speaker} in frame, same location and lighting.')[:1400],
             shot_part=[k + 1, len(groups)])
         shot['motion'] = [shot['animation_prompt']]
+        shot['still'] = sanitize(f'{speaker} alone, {group[0].get("emotion", "")} expression, in {scene.get("location", "")}', [speaker], others_all)
         if k:
             shot['action'] = (f'{speaker} reagiert und spricht zu {offscreen} außerhalb des Bildes. Gleiche Situation: '
                               + scene['action'])[:800]

@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 14.10.2026 (0.16.1) · Branch `claude/new-session-s0p05c`
+Stand: 14.10.2026 (0.17.0) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -111,8 +111,18 @@ Plan und Grenzen: `CAY_STUDIO_PLAN.md`.
 - Test `tests/test_mix_length.py` (echtes FFmpeg): vorher 2 von 3 rot, jetzt 3/3; 60-s-Zufallsmischungen 60,16 s OK. pytest gesamt 45.
 - Fehlerbericht: Planung ~3 min, 28 Bilder 130 s, Stimmgestaltung 105 s, Sprache 49 s. Noch keine Animationszeit gemessen. WSL 50,5 GB, Auslagerung 0.
 
+## 0.17.0 (14.10.2026) – Cay: Mund bewegt sich ohne Text, Text langweilig/sinnlos, fremde Figuren, keine Spannung, monotone Stimmen, ~2 h
+Analyse: Video (Einzelbilder, silencedetect: 2,2–4,5 s Stille nach jeder Zeile, Sprachanteil 0,41), Diagnose 0.16.1, Workflow mit 5 Code-Prüfern + TTS-Recherche + Render-Recherche + Quelltext WanVideoWrapper 088128b.
+- `screenplay.py` (neu): Drehbuch als Klartext-Gespräch (`Factory.write`, think mit Rückfall, Prüfung + Rückgabe der Fehler, Script Doctor, Rückfall auf Entwurf), deterministischer Schnitt pro Sprecherwechsel, AKTION-Zeilen als stumme Szenen, `ShotVisuals`-JSON für Bild/Bewegung, `sanitize` streicht Satzteile über Figuren außerhalb des Bilds. Alter Szenenplaner nur noch für Filme ohne Sprache.
+- `cast_design.py`: eigener Name statt Serie, keine Stilübertragung für bekannte Figuren, Körperbau zuerst, `scene_text`, `strip_names` auch im Stiltext; Zustand `cast_review` (Idea.cast_check), Endpunkte `cast/approve`, `cast/image`, `cast/redo` (auch in cast_review).
+- `factory_timing.py`: `talk_plan` (keine Pause nach letzter Zeile, Einpassen knapp über Fenstergrenze), `fill_target` (Sprechszene max. +0,35 s, Rest stumme Szenen), Bericht mit `silent_shots`.
+- Animation: `motion_direction` neu (nur sichtbare Figur, Mund zu in Pausen), alter Text als `motion_direction_v16`/`V16_SUFFIX` für Projekte, die schon rendern (`prompt_policy`); `cay_audio_cfg_steps=1` über `comfy_sampler_compat.py` 17.0 (Audio-CFG nur Schritt 1: 8→5 Durchläufe/Fenster).
+- Stimmen: `EMOTION_TEXTS`, `performance_key` 16 Kategorien, Cartoon-Beschreibung, Clone temp 0.9/top_p 1/top_k 50, Best-of-2 nach `prosody_score`, Chatterbox-Rezept, `level_db` in der Mischung, sanfterer Kompressor.
+- UI: Figurenprüfung, eigenes Figurenbild, Prüfzeile (Wörter, Sprachanteil, Pause, Rechenblöcke), Status „Wartet auf dich“ bei Autopilot-Stopp. Diagnose: Drehbuch, Aufmerksamkeit/Audio-Führung, Knotenzeiten.
+- Nicht geprüft: alles auf der GPU (Bild, Lippen, Stimmen, Zeitgewinn).
+
 ## Nächster konkreter Schritt
-Cay: 0.16.1 installieren, im Krusty-Projekt „Fortsetzen“, nach dem fertigen Film Cay_Studio_Diagnose.cmd schicken.
+Cay: 0.17.0 installieren, PC neu starten, SpongeBob-Film 60 s Standard mit Autopilot und Figurenprüfung, Video + Diagnose schicken.
 
 ## Reihenfolge danach
 Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.

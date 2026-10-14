@@ -14,7 +14,7 @@ const PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5h2.5
 /* ---------- data ---------- */
 function defaults() {
   return { request_key: hex(), idea: '', title: '', episodes: 1, duration: 60, look: 'auto', characters: 'invent', participants: [],
-    examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true };
+    examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true, cast_check: true };
 }
 function loadDraft() {
   try { const saved = JSON.parse(localStorage.getItem('cay-draft') || 'null'); if (saved && saved.request_key) return { ...defaults(), ...saved }; } catch (e) { /* private mode */ }
@@ -48,21 +48,23 @@ function toast(text) {
 
 /* ---------- vocabulary ---------- */
 const STEPS = ['Drehbuch', 'Bilder', 'Ton', 'Animation', 'Fertig'];
-const STAGE = { planning: 0, correcting: 1, pictures: 1, image_review: 1, voicing: 2, audio_mixing: 2, voice_review: 2, rendering: 3, sample_review: 3, finishing: 3, done: 4 };
+const STAGE = { planning: 0, correcting: 1, pictures: 1, cast_review: 1, image_review: 1, voicing: 2, audio_mixing: 2, voice_review: 2, rendering: 3, sample_review: 3, finishing: 3, done: 4 };
 const WORKING = new Set(['planning', 'correcting', 'pictures', 'voicing', 'audio_mixing', 'rendering', 'finishing']);
-const REVIEW = new Set(['image_review', 'voice_review', 'sample_review']);
+const REVIEW = new Set(['cast_review', 'image_review', 'voice_review', 'sample_review']);
 const LOOKS = [['auto', 'Automatisch'], ['film', 'Film'], ['cartoon', 'Cartoon'], ['clay', 'Knete'], ['paper', 'Papier']];
 const QUALITY = { draft: 'Entwurf', fast: 'Standard', balanced: 'Ausgewogen (alt)', high: 'Hoch (alt)' };
 const PRESETS = [['young_woman', 'Junge Frau'], ['woman', 'Frau'], ['young_man', 'Junger Mann'], ['man', 'Mann'], ['child_girl', 'Mädchen'], ['child_boy', 'Junge'], ['grandma', 'Oma'], ['grandpa', 'Opa'], ['creature', 'Fantasiefigur']];
-// Measured on Cay's RTX 4090 (12.10.2026): 9 min fastest, 20.7 min average per 5 s piece at Standard.
-const SECONDS_PER_FILM_SECOND = { fast: [105, 326], draft: [55, 170] };
+// Measured on Cay's RTX 4090 (14.10.2026, 0.16.1): 88 min animation for 60 s at Standard = 88 s per film second.
+// 0.17 guides only the first of four lip-sync steps (8 -> 5 transformer passes): [Hochrechnung] ~60-70 % of that.
+// Entwurf (480x832) is not measured yet: [Hochrechnung] 1.6-1.8x faster per window.
+const SECONDS_PER_FILM_SECOND = { fast: [55, 95], draft: [32, 60] };
 
 function status(d) {
   if (d.deleted) return ['stop', 'Im Papierkorb'];
   if (d.state === 'done') return ['done', 'Fertig'];
   if (d.state === 'blocked') return ['stop', 'Angehalten'];
   if (d.paused) return ['', 'Pausiert'];
-  if (REVIEW.has(d.state) && !d.autopilot) return ['you', 'Wartet auf dich'];
+  if (d.state === 'cast_review' || d.waiting || (REVIEW.has(d.state) && !d.autopilot)) return ['you', 'Wartet auf dich'];
   if (d.queue > 0 && !d.busy) return ['', d.queue === 1 ? 'Als Nächstes dran' : `In der Warteschlange, Platz ${d.queue + 1}`];
   return ['run', 'Läuft'];
 }
@@ -75,10 +77,10 @@ function duration(seconds) {
   return rest ? `${h} h ${rest} min` : `${h} h`;
 }
 function estimate(draft) {
-  // Prefer what this PC measured for finished films; else the 12.10. measurement.
+  // Prefer what this PC measured for finished films; else the 14.10. measurement.
   const total = draft.duration * draft.episodes, measured = S.speed && S.speed[draft.quality];
   const [low, high] = measured ? [measured.low, measured.high] : SECONDS_PER_FILM_SECOND[draft.quality] || SECONDS_PER_FILM_SECOND.fast;
-  const basis = measured ? `gemessen an ${measured.films} fertigen ${measured.films === 1 ? 'Film' : 'Filmen'} in dieser Qualität` : 'Hochrechnung aus deiner Messung vom 12.10.';
+  const basis = measured ? `gemessen an ${measured.films} fertigen ${measured.films === 1 ? 'Film' : 'Filmen'} in dieser Qualität` : 'Hochrechnung aus deiner Messung vom 14.10. mit der Beschleunigung aus 0.17';
   return `Rechenzeit ungefähr ${low === high ? duration(total * low) : `${duration(total * low)} bis ${duration(total * high)}`}, ${basis}`;
 }
 
@@ -130,7 +132,9 @@ function composeView() {
         <div class="choice"><span>Look</span>${seg('look', LOOKS, d.look)}</div>
         <div class="choice"><span>Qualität</span>${seg('quality', [['draft', 'Entwurf'], ['fast', 'Standard']], d.quality)}
           <p class="hint" id="quality-hint"></p></div>
-        <div class="choice"><span>Autopilot</span><label class="switch"><input type="checkbox" data-field="autopilot" ${d.autopilot ? 'checked' : ''}><span id="autopilot-text"></span></label></div>
+        <div class="choice"><span>Autopilot</span><label class="switch"><input type="checkbox" data-field="autopilot" ${d.autopilot ? 'checked' : ''}><span id="autopilot-text"></span></label>
+          <label class="switch"><input type="checkbox" data-field="cast_check" ${d.cast_check !== false ? 'checked' : ''}><span>Figuren vorher zeigen</span></label>
+          <p class="hint">Ein kurzer Blick auf die Figuren, bevor Szenen und Animation entstehen. Danach läuft alles allein.</p></div>
       </div>
       <details class="more"><summary>Figuren, Look-Vorlagen und Musik</summary>${extrasView()}</details>
       <div class="compose-foot"><p class="muted small" id="estimate"></p><button class="button" data-action="create" id="create">Film starten</button></div>
@@ -251,6 +255,7 @@ async function refreshRuns() {
     }
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     r.autopilot = !!(doc && doc.idea && doc.idea.autopilot);
+    r.waiting = !!(doc && doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state);
     r.deleted = false;
   }));
   const changed = JSON.stringify(list.runs) !== JSON.stringify(S.runs);
@@ -290,6 +295,11 @@ function nextView(d) {
   if (d.state === 'done') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie ist fertig.' : 'Dein Film ist fertig.'}</h2>
       <p>Unten ansehen, herunterladen und mit der fertigen Beschreibung hochladen.</p>
       <div class="actions"><button class="button quiet" data-action="reopen-output">Ton noch einmal bearbeiten</button><button class="button quiet" data-action="new-edition">Neue Fassung planen</button></div></section>`;
+  if (d.state === 'cast_review') {
+    return `<section class="next wait"><h2 class="headline">Prüf deine Figuren.</h2>
+      <p>So sieht jede Figur in allen Szenen aus. Passt eine nicht: neu gestalten oder ein eigenes Bild wählen. Danach entstehen die Szenen${d.idea.autopilot ? ' und der Autopilot macht ohne weitere Stopps fertig' : ''}.</p>
+      <div class="actions"><button class="button" data-action="cast-approve">Figuren passen, weiter</button></div></section>`;
+  }
   if (d.state === 'image_review') {
     const scenes = d.episodes.flatMap(e => e.scenes), chosen = scenes.filter(s => s.selected).length;
     return `<section class="next wait"><h2 class="headline">Wähle pro Szene ein Bild.</h2>
@@ -335,7 +345,7 @@ function linesOf(scene) {
 function sectionsView(d) {
   if (!d.episodes || !d.episodes.length) return '';
   if (d.state === 'done') return filmsSection(d);
-  if (['image_review', 'pictures'].includes(d.state)) return scenesSection(d, true);
+  if (['image_review', 'pictures', 'cast_review'].includes(d.state)) return scenesSection(d, d.state !== 'cast_review');
   if (d.state === 'voice_review') return soundSection(d) + scenesSection(d, false);
   return scenesSection(d, false);
 }
@@ -346,10 +356,21 @@ function castStrip(d) {
   const items = cast.map((p, i) => {
     const pic = refs[p.name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${p.design_round || 0}" alt="" loading="lazy">` : '<div class="frame-empty">entsteht</div>';
     const note = own.has(p.name) ? 'Dein Bild' : p.original ? 'Original' : 'Erfunden';
-    const redo = d.state === 'image_review' && !own.has(p.name) ? `<button class="button quiet small" data-action="cast-redo" data-name="${esc(p.name)}">Neu gestalten</button>` : '';
+    const open = ['cast_review', 'image_review'].includes(d.state);
+    const redo = open ? `${own.has(p.name) ? '' : `<button class="button quiet small" data-action="cast-redo" data-name="${esc(p.name)}">Neu gestalten</button>`}
+      <label class="file-pill small">Eigenes Bild<input type="file" accept="image/*" data-upload="cast" data-name="${esc(p.name)}"></label>` : '';
     return `<figure class="figure"><div class="figure-pic">${pic}</div><figcaption><b>${esc(p.name)}</b><span class="muted small">${note}</span>${redo}</figcaption></figure>`;
   }).join('');
   return `<div class="cast"><h3 class="label">Deine Figuren</h3><p class="muted small">So sieht jede Figur in allen Szenen aus. Passt eine nicht, gestalte sie neu: Alle Szenen mit ihr werden dann neu gezeichnet.</p><div class="cast-row">${items}</div></div>`;
+}
+function checkLine(d, ep, ei) {
+  // Automatic checks in one line: script size, speech share, lip-sync windows.
+  const parts = [], st = ep.screenplay_stats, t = (d.timing || [])[ei];
+  if (st) parts.push(`${st.words} Wörter`, `${st.shots} Einstellungen`, `${st.actions} stumme Aktionen`);
+  if (t) parts.push(`Sprachanteil ${Math.round((t.speech_share || 0) * 100)} %`, `längste Pause ${String(t.longest_speech_gap ?? '–').replace('.', ',')} s`, `${t.talk_windows ?? '–'} Rechenblöcke`);
+  const warn = (ep.warnings || []).filter(w => !w.startsWith('Wenig Dialog')).slice(0, 2);
+  if (!parts.length && !warn.length) return '';
+  return `<p class="muted small check-line">${esc(parts.join(' · '))}</p>${warn.map(w => `<p class="small warn-line">${esc(w)}</p>`).join('')}`;
 }
 function spineCard(ep) {
   const sp = ep.spine;
@@ -361,7 +382,7 @@ function scenesSection(d, choose) {
   const ep = d.episodes[S.episode] || d.episodes[0], ei = d.episodes.indexOf(ep);
   const editable = ['image_review', 'voice_review'].includes(d.state);
   return `<section class="section"><h2 class="title">${d.episodes.length > 1 ? esc(ep.title) : 'Drehbuch'}</h2>${episodeTabs(d)}
-    ${spineCard(ep)}${choose ? castStrip(d) : ''}
+    ${checkLine(d, ep, ei)}${spineCard(ep)}${choose || d.state === 'cast_review' ? castStrip(d) : ''}
     <div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
       const variants = sc.active_variants || [];
       const pickable = d.state === 'image_review';
@@ -511,6 +532,7 @@ const actions = {
       <form id="revise-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
       <div class="actions"><button class="button" type="submit">Zwei neue Bilder erzeugen</button></div></form>`);
   },
+  async 'cast-approve'() { await post(`/api/factory/${S.rid}/cast/approve`); toast('Figuren übernommen. Die Szenenbilder entstehen.'); },
   async 'cast-redo'(b) {
     if (!confirm(`${b.dataset.name} neu gestalten? Alle Szenen mit ${b.dataset.name} bekommen neue Bilder.`)) return;
     await post(`/api/factory/${S.rid}/cast/redo`, { name: b.dataset.name });
@@ -552,7 +574,7 @@ function linesSheetFrom(form, lines) {
   const ei = +form.dataset.episode, si = +form.dataset.scene, sc = S.run.episodes[ei].scenes[si];
   const original = sc.dialogues; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); linesSheet(ei, si); sc.dialogues = original;
 }
-const NEEDS_REFRESH = new Set(['cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
+const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
 
 document.addEventListener('click', async event => {
   const nav = event.target.closest('[data-nav]');
@@ -579,9 +601,15 @@ document.addEventListener('change', async event => {
   const el = event.target;
   if (el.matches('input[data-action="autopilot"]')) { await guarded(el, async () => { await actions.autopilot(el); await refreshRun(true); }); return; }
   if (el.matches('[data-field="autopilot"]')) { S.draft.autopilot = el.checked; saveDraft(); updateCompose(); return; }
+  if (el.matches('[data-field="cast_check"]')) { S.draft.cast_check = el.checked; saveDraft(); return; }
   if (el.matches('[data-upload]')) {
     const kind = el.dataset.upload, files = [...el.files];
     await guarded(el, async () => {
+      if (kind === 'cast') {
+        const png = await upload('image', files[0]);
+        await post(`/api/factory/${S.rid}/cast/image`, { name: el.dataset.name, asset_id: png });
+        toast(`Dein Bild für ${el.dataset.name} wird verwendet.`); await refreshRun(true); return;
+      }
       if (kind === 'example') {
         for (const file of files.slice(0, 4 - S.draft.examples.length)) S.draft.examples.push(await upload('image', file));
         toast(files.length > 1 ? 'Vorlagen übernommen.' : 'Vorlage übernommen.');
@@ -596,7 +624,7 @@ document.addEventListener('change', async event => {
 });
 document.addEventListener('input', event => {
   const el = event.target;
-  if (el.dataset.field && el.dataset.field !== 'autopilot') { S.draft[el.dataset.field] = el.value; saveDraft(); }
+  if (el.dataset.field && !['autopilot', 'cast_check'].includes(el.dataset.field)) { S.draft[el.dataset.field] = el.value; saveDraft(); }
   if (el.dataset.person) { S.draft.participants[+el.dataset.person][el.dataset.key] = el.value; saveDraft(); }
 });
 document.addEventListener('submit', async event => {

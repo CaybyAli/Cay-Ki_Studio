@@ -96,7 +96,9 @@ def project(row, root, db=None):
             print(f'   Szene {si + 1}: sichtbar {s.get("cast")}, Zeilen {words(s)[0]}, Sekunden {s.get("render_seconds", s.get("seconds"))}')
         for warning in ep.get('warnings', [])[:4]: print('   Warnung:', warning[:220])
     figures(d)
+    script(d)
     windows(d, db)
+    render_modes(d, db)
     lines = d.get('lines', [])
     print('Erzeugte Sprachdateien:', len(lines), '| Sprachmodell:', d.get('audio_engine'), '| Neuaufnahmen:', d.get('speech_takes'))
     for line in lines[:12]:
@@ -120,6 +122,46 @@ def figures(d):
     for p in d.get('plan', {}).get('cast', []):
         print(f'   {p.get("name")}: ' + ('eigenes Bild' if p.get('name') in own else 'Original: ' + p['original'] if p.get('original') else 'erfunden')
               + f', neu gestaltet {p.get("design_round", 0)}x, Aussehen: {str(p.get("appearance", ""))[:90]}')
+
+
+def script(d):
+    """0.17 screenplay: words, lines, silent actions, shots, doctor and visual pass."""
+    for ei, ep in enumerate(d.get('episodes', [])):
+        st = ep.get('screenplay_stats')
+        if st: print(f'Drehbuch Folge {ei + 1}: {st.get("words")} Wörter (Ziel {st.get("budget", {}).get("words")}), {st.get("lines")} Zeilen, '
+                     f'{st.get("actions")} stumme Aktionen, {st.get("shots")} Einstellungen')
+        store = (d.get('screenplays') or {}).get(str(ei), {})
+        for key in ('doctor_error', 'visual_error'):
+            if store.get(key): print(f'   {key}: {store[key][:200]}')
+
+
+def render_modes(d, db):
+    """Which attention mode and size the lip-sync steps really used (Turbo needs a ComfyUI restart)."""
+    if db is None: return
+    try:
+        rows = db.execute("SELECT graph FROM factory_steps WHERE run_id=? AND step_key LIKE 'video09:%'", (d.get('id'),)).fetchall()
+    except sqlite3.Error: return
+    modes = {}
+    for row in rows:
+        try: graph = json.loads(row[0])
+        except (TypeError, ValueError): continue
+        for node in graph.values():
+            inputs = node.get('inputs', {})
+            if node.get('class_type') == 'WanVideoModelLoader':
+                key = f'{inputs.get("attention_mode")} {inputs.get("quantization")}'; modes[key] = modes.get(key, 0) + 1
+            if node.get('class_type') == 'CayWanVideoSampler':
+                key = 'Audio-Führung nur Schritt 1' if inputs.get('cay_audio_cfg_steps') == 1 else 'Audio-Führung alle Schritte'
+                modes[key] = modes.get(key, 0) + 1
+    if modes: print('Animation lief mit (Aufmerksamkeit, Gewichte):', modes)
+    try:
+        nodes = db.execute("SELECT detail FROM factory_metrics WHERE run_id=?", (d.get('id'),)).fetchall()
+        totals = {}
+        for row in nodes:
+            for nid, info in (json.loads(row[0] or '{}').get('nodes') or {}).items():
+                totals[nid] = totals.get(nid, 0) + float(info.get('seconds') or 0)
+        top = sorted(totals.items(), key=lambda x: -x[1])[:6]
+        if top: print('Rechenzeit je Knoten (Summe, Minuten):', ', '.join(f'{k}: {v / 60:.1f}' for k, v in top))
+    except (sqlite3.Error, ValueError, TypeError): pass
 
 
 def windows(d, db):

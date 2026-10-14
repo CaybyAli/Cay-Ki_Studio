@@ -1,11 +1,12 @@
-# Cay Studio 0.16.1 – so geht es weiter
+# Cay Studio 0.17.0 – so geht es weiter
 
 ## Update installieren
 
 1. ZIP laden, Rechtsklick → **Alle extrahieren** → in einen **neuen** Ordner.
 2. Läuft eine Produktion: **Pausieren** oder fertig werden lassen. Hängt ein Abschnitt: **erst den PC neu starten**.
-3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.16.1 INSTALLIERT** warten.
-4. Im Browser **Strg + F5**. Unten muss **0.16.1** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.17.0 INSTALLIERT** warten.
+4. **PC einmal neu starten** (die schnellere Lippen-Animation lädt erst beim Neustart von ComfyUI), dann **Cay_Studio_Starten.cmd**.
+5. Im Browser **Strg + F5**. Unten muss **0.17.0** stehen.
 
 Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er selbst zur vorherigen zurück. Projekte, Bilder, Stimmen und fertige Filme bleiben erhalten.
 
@@ -17,7 +18,9 @@ Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er se
 - **Look-Vorlagen:** Unter „Figuren, Look-Vorlagen und Musik“ bis zu vier Bilder hochladen (JPG, PNG, WebP). Sie bestimmen nur den Stil. Personen daraus kommen nicht in den Film.
 - **Figuren:** Jede Figur wird einmal gestaltet und in allen Szenen genau so verwendet. Bekannte Figuren wie SpongeBob werden als Original angelegt. Am sichersten: bei der Figur ein eigenes Bild hochladen.
 - **Deine Figuren:** Bei der Bildauswahl siehst du oben jede Figur. **Neu gestalten** zeichnet die Figur und alle Szenen mit ihr neu.
-- **Ziel des Films:** Steht über dem Drehbuch: Haken, Wendung, Pointe. Danach plant die KI jede Szene.
+- **Ziel des Films:** Steht über dem Drehbuch: Haken, Wendung, Pointe.
+- **Drehbuch:** Die KI schreibt den Film als durchgehendes Gespräch, prüft Wortzahl und Sprecherwechsel und überarbeitet es einmal. Über dem Drehbuch steht eine Prüfzeile: Wörter, Einstellungen, stumme Aktionen, später Sprachanteil und längste Pause.
+- **Figuren vorher zeigen:** Ein kurzer Stopp vor den Szenenbildern, auch mit Autopilot. „Neu gestalten“ oder „Eigenes Bild“, dann „Figuren passen, weiter“. Abschaltbar beim Anlegen.
 - **Zahnrad oben rechts:** Einrichtung prüfen, **Turbo einrichten**, Stimmen und Animation einrichten, Figurentausch und bisherige Oberfläche.
 
 ## Turbo

@@ -7,10 +7,16 @@ def clean_text(text):
     text=unicodedata.normalize('NFC',text).replace('\u200b','')
     return re.sub(r'\s+',' ',text).strip()
 
+# Chatterbox: the vendor's own "dramatic" recipe. Up to 0.16 every line ran at
+# exaggeration 0.4 (below the model default 0.5), which flattened the voices.
+CHATTERBOX = {'natural': (.5, .5), 'firm': (.65, .4), 'threat': (.65, .4), 'mocking': (.65, .4), 'annoyed': (.6, .45),
+              'angry': (.85, .3), 'shout': (.9, .3), 'panic': (.85, .3), 'afraid': (.7, .35), 'joy': (.75, .35),
+              'excited': (.85, .3), 'triumph': (.8, .3), 'surprised': (.75, .35), 'sad': (.45, .5), 'whisper': (.35, .5),
+              'pleading': (.6, .4), 'confused': (.55, .45)}
+
 def sampling(emotion):
-    emotion=emotion.lower()
-    emphasis=.55 if any(x in emotion for x in ('wüt','ängst','begeister','erschrock','aufgeregt')) else .4
-    return {'exaggeration':emphasis,'cfg_weight':.5,'temperature':.7,'top_p':.95,'repetition_penalty':1.2}
+    exaggeration, cfg = CHATTERBOX.get(performance_key(emotion), CHATTERBOX['natural'])
+    return {'exaggeration':exaggeration,'cfg_weight':cfg,'temperature':.8,'top_p':.95,'repetition_penalty':1.2}
 
 def finish_voice(data,sr,text):
     import numpy as np
@@ -40,8 +46,60 @@ def finish_voice(data,sr,text):
     if fade:data[:fade]*=np.linspace(0,1,fade);data[-fade:]*=np.linspace(1,0,fade)
     return data,{'duration':duration,'voiced_seconds':round(voiced,2),'words_per_second':round(words/duration,2),'peak':round(float(np.max(np.abs(data))),4),'processing':SPEECH_POLICY}
 
+# Delivery categories. The screenplay asks for one of these German words per
+# line; free text from older plans is matched by stems. Up to 0.16 29 of 40
+# common words ('panisch', 'schreiend', 'triumphierend' …) fell back to the
+# neutral voice, so most lines sounded like calm narration.
+PERFORMANCES = [
+    ('shout', ('schrei', 'brüll', 'bruell', 'kreisch', 'shout', 'yell')),
+    ('panic', ('panik', 'panisch', 'hektisch', 'hysterisch', 'panic')),
+    ('angry', ('wüt', 'wuet', 'zorn', 'aggress', 'empört', 'empoert', 'sauer', 'angry', 'furious')),
+    ('threat', ('droh', 'bedroh', 'gefährlich', 'eiskalt', 'threat', 'menac')),
+    ('mocking', ('spött', 'spoett', 'höhn', 'hoehn', 'sarkas', 'ironisch', 'herablass', 'mock', 'sarcas')),
+    ('annoyed', ('genervt', 'gereizt', 'ungeduld', 'annoy')),
+    ('triumph', ('triumph', 'siegessicher', 'stolz', 'hämisch', 'haemisch', 'gierig', 'gloat')),
+    ('excited', ('begeister', 'aufgeregt', 'euphor', 'enthusi', 'excit')),
+    ('joy', ('freud', 'fröhlich', 'froehlich', 'glücklich', 'gluecklich', 'lach', 'erleichter', 'heiter', 'joy', 'happy')),
+    ('surprised', ('überrasch', 'ueberrasch', 'erstaun', 'verblüfft', 'verbluefft', 'schockiert', 'entsetz', 'surpris', 'shock')),
+    ('afraid', ('ängst', 'aengst', 'angst', 'furcht', 'erschrock', 'nervös', 'nervoes', 'zitter', 'afraid', 'scared')),
+    ('pleading', ('fleh', 'bettel', 'bittend', 'verzweifel', 'plead')),
+    ('sad', ('traurig', 'wein', 'niedergeschlagen', 'enttäusch', 'enttaeusch', 'sad')),
+    ('whisper', ('flüster', 'fluester', 'geheim', 'leise', 'tuschel', 'whisper')),
+    ('confused', ('verwirr', 'ratlos', 'unsicher', 'confus')),
+    ('firm', ('bestimmt', 'entschlossen', 'ernst', 'befehl', 'firm')),
+]
+
 def performance_key(emotion):
-    text=emotion.lower()
-    for key,parts in [('angry',('wüt','wuet','zorn','aggress','angry')),('afraid',('ängst','aengst','panik','angst','erschrock','afraid')),('joy',('freud','begeister','glücklich','aufgeregt','lach','joy')),('sad',('traurig','weinen','verzweifel','sad')),('quiet',('flüster','fluester','geheim','whisper')),('firm',('bestimmt','droh','entschlossen','firm'))]:
+    text=str(emotion or '').lower()
+    for key,parts in PERFORMANCES:
         if any(p in text for p in parts):return key
     return 'natural'
+
+# Mix level per delivery in dB: shouting stands out, whispers sit lower. The
+# compressor and loudnorm used to flatten these differences completely.
+LEVEL_DB = {'shout': 2.5, 'angry': 1.5, 'panic': 1.5, 'excited': 1.0, 'triumph': 1.0, 'whisper': -4.0, 'sad': -1.5, 'pleading': -1.0}
+
+def level_db(emotion):
+    return LEVEL_DB.get(performance_key(emotion), 0.)
+
+def prosody_score(data, sr):
+    """How lively a take sounds: spread of pitch (semitones) and of loudness.
+    Plain numpy (autocorrelation), so it runs in every speech environment.
+    Used to keep the livelier of two takes for emotional lines."""
+    import numpy as np
+    x=np.asarray(data,dtype=np.float64).reshape(-1)
+    if x.size<sr*.3:return 0.
+    frame=int(sr*.04);hop=int(sr*.01);lo,hi=int(sr/500),int(sr/70)
+    frames=[x[i:i+frame] for i in range(0,len(x)-frame,hop)]
+    rms=np.array([np.sqrt(np.mean(f*f)) for f in frames])
+    if not rms.size or rms.max()<=0:return 0.
+    voiced=rms>rms.max()*.12;pitches=[]
+    for f,v in zip(frames,voiced):
+        if not v:continue
+        f=f-f.mean();ac=np.correlate(f,f,'full')[frame-1:]
+        if ac[0]<=0 or hi>=len(ac):continue
+        lag=lo+int(np.argmax(ac[lo:hi]))
+        if ac[lag]/ac[0]>.45:pitches.append(sr/lag)
+    spread=float(np.std(12*np.log2(np.array(pitches)/np.median(pitches)))) if len(pitches)>5 else 0.
+    loud=20*np.log10(rms[voiced]+1e-9)
+    return round(spread+.5*float(np.std(loud))/3,3)

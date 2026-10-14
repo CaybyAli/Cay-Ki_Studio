@@ -7,7 +7,7 @@ Normalize only those documented disabled options, for this invocation only.
 import copy
 import inspect
 
-COMPAT_VERSION = '13.0'
+COMPAT_VERSION = '17.0'
 COUNTS = {'longcat_num_ref_latents', 'longcat_num_cond_latents',
           'num_memory_frames', 'rope_negative_offset'}
 
@@ -37,6 +37,10 @@ class CayWanVideoSampler:
     def INPUT_TYPES(cls):
         schema = copy.deepcopy(sampler_class().INPUT_TYPES())
         schema['required']['cay_compatibility'] = ([COMPAT_VERSION], {'default': COMPAT_VERSION})
+        # Audio guidance only in the first N steps (0 = every step, upstream behaviour).
+        # At cfg 1 each guided step runs a second full transformer pass without audio
+        # (nodes_sampler.py, wrapper 088128b): 4 steps = 8 passes, with N=1 only 5.
+        schema.setdefault('optional', {})['cay_audio_cfg_steps'] = ('INT', {'default': 0, 'min': 0, 'max': 100})
         return schema
 
     RETURN_TYPES = ('LATENT', 'LATENT')
@@ -46,6 +50,12 @@ class CayWanVideoSampler:
 
     def process(self, **inputs):
         inputs.pop('cay_compatibility', None)
+        guided = int(inputs.pop('cay_audio_cfg_steps', 0) or 0)
+        embeds = inputs.get('multitalk_embeds')
+        if guided > 0 and isinstance(embeds, dict) and not isinstance(embeds.get('audio_cfg_scale', 1.0), list):
+            scale = float(embeds.get('audio_cfg_scale', 1.0)); steps = int(inputs.get('steps') or 0)
+            # Copy: ComfyUI caches node outputs, the shared dict must stay unchanged.
+            inputs['multitalk_embeds'] = {**embeds, 'audio_cfg_scale': [scale] * guided + [1.0] * max(1, steps + 1 - guided)}
         original = sampler_class()
         schema = original.INPUT_TYPES()
         for name, field in {**schema.get('required', {}), **schema.get('optional', {})}.items():

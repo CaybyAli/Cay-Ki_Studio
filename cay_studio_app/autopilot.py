@@ -50,7 +50,7 @@ class Autopilot:
             self.stop_autopilot(d, ', '.join(problems))
             d['phase'] = 'Autopilot wartet: ' + ', '.join(problems) + '. Bitte Tonvorschau prüfen und selbst freigeben.'
             return True
-        d.update(render_tracking_version=10, render_segments={}, voice_approval='autopilot', state='rendering',
+        d.update(render_tracking_version=10, render_segments={}, prompt_policy=17, voice_approval='autopilot', state='rendering',
                  phase='Autopilot: Ton freigegeben · Animation in der Warteschlange')
         return True
 

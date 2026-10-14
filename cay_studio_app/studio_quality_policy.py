@@ -39,13 +39,8 @@ def cadence(fps, smooth=False, source_fps=16):
             f'minterpolate=fps={fps}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:'
             'vsbmc=1:scd=fdiff:scd_threshold=6')
 
-def motion_direction(scene, lines, start, duration):
-    """Timed visible behaviour; no claim of phoneme-level lip synchronization.
-
-    Up to 0.15 this asked for "restrained conversational gestures" and listeners
-    with closed mouths. Together with the 4-step fast models that produced
-    standing figures that only moved their lips, which felt like slow motion.
-    """
+def motion_direction_v16(scene, lines, start, duration):
+    """0.16 text, kept only so projects already rendering keep their cached windows."""
     cues=[]
     for line in lines:
         a=max(start,line.get('offset',0));b=min(start+duration,line.get('offset',0)+line['duration'])
@@ -58,3 +53,26 @@ def motion_direction(scene, lines, start, duration):
             'Camera: subtle handheld motion or a slow push-in. Stable facial proportions and materials. '
             'Preserve the approved starting image, costume, head shape, props and lighting. Keep all mouths closed when nobody speaks and show visible action or reaction instead. '
             + ' '.join(cues))
+
+def motion_direction(scene, lines, start, duration):
+    """Visible behaviour for one shot. The text conditioning is global for every
+    81-frame window, so per-second cues do nothing; negatives do nothing at cfg 1.
+
+    0.16 asked for movement "the whole time" in speaking shots. With up to 4 s
+    of silence after each line that meant mouths and hands moving without any
+    voice (Cay: "bewegen den Mund oder die Hände ohne dass Text da ist").
+    0.17: gestures while the voice speaks, stillness with a closed mouth in the
+    pauses, and only the visible figure is named."""
+    names = list(scene.get('cast') or [])
+    frame = (f'Exactly one character in the whole frame: {names[0]}. No other characters or figures anywhere, also not in the background. '
+             if len(names) == 1 else f'Only {" and ".join(names)} in the frame, nobody else. ' if names else 'No characters in the frame. ')
+    base = ('One continuous full-frame shot. No cut, no montage, no split screen, no border. '
+            'No written language, letters, subtitles, captions, menus or watermark in any frame. ' + frame +
+            'Stable facial proportions, materials, costume, head shape, props and lighting as in the starting image. Normal real-time speed, never slow motion. ')
+    if lines:
+        speaker = lines[0]['speaker']
+        return base + (f'{speaker} talks with an expressive face and natural hand gestures while the voice speaks. '
+                       'In pauses and after the last word the mouth stays closed and the body is calm, only breathing and a small reaction. '
+                       'Camera: steady, a subtle slow push-in.')
+    return base + ('Energetic, clearly visible physical action at normal speed. All mouths stay closed, nobody talks. '
+                   'Camera: dynamic but smooth, following the action.')

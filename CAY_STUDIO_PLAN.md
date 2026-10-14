@@ -1,4 +1,4 @@
-# Cay Studio – Plan (Stand 0.16.0, 14.10.2026)
+# Cay Studio – Plan (Stand 0.17.0, 14.10.2026)
 
 Ziel: mehrere 1-Minuten-Videos pro Tag, Einzelfilme und Serien bis 12 Folgen, lokal und ohne laufende Kosten.
 
@@ -51,6 +51,34 @@ Teamwork heißt hier also: **Die Grafikkarte rechnet ohne Pause, alles andere ar
 2. Mehr Bewegung kann mehr Fehler an Armen und Händen bringen. Bitte darauf achten.
 3. 0.16 löst die 5 Stunden nicht. Dafür brauche ich deine neue Diagnose: Sie zeigt jetzt Rechenfenster, Minuten pro Fenster und Modellwechsel.
 
+## 3c. Was 0.17.0 nach dem Krusty-Film ändert
+
+Grundlage: dein Video (Einzelbilder und Tonpausen gemessen), Diagnose 0.16.1, fünf Code-Prüfungen, zwei Recherchen, Quelltext der Animations-Erweiterung (Stand 088128b).
+
+| Dein Problem | Ursache | Änderung |
+| --- | --- | --- |
+| Mund und Hände bewegen sich ohne Text | **[Sicher]** Nur 25 von 60 s waren Sprache. Die fehlenden 35 s hängte 0.16 als Stille ans Ende jeder Sprechszene (2,2 bis 4,5 s). Dazu verlangte der Text „Bewegung die ganze Zeit“. | Sprechszene endet höchstens ~0,6 s nach dem letzten Wort. Fehlende Zeit wird zu stummen Aktionsszenen. Vorgabe: Gesten nur beim Sprechen, in Pausen Mund zu. |
+| Text langweilig, teils sinnlos | **[Sicher]** Das Wortziel wurde nie durchgesetzt (63 statt ~120 Wörter). Fester Rahmen von 10 Szenen mit je einem Sprecher. Fünfmal „kurz / höchstens acht Wörter“. Dialog war ein Feld unter sechzehn, ohne Nachdenken geschrieben. | Drehbuch zuerst als ganzes Gespräch mit Denkmodus. Geprüft: Wortzahl, Sprecherwechsel, Telegrammstil, Besetzung. Fehler gehen mit Zahlen zurück an die KI. Danach Script Doctor, erst dann Schnitt. |
+| Fremde Figuren im Bild | **[Sicher]** Der Bildtext enthielt die ganze Szenenhandlung mit allen Namen. Das Bildmodell malt jede genannte Figur, ohne Vorlage, also falsch oder vermischt. | Bildtext nennt nur Figuren im Bild. Sätze über andere Figuren werden gestrichen. |
+| Mr. Krabs als Wurst, Plankton als grüner SpongeBob | **[Sicher]** „… from the animated series SpongeBob SquarePants“ stand in jedem Figurenentwurf und Szenenbild. **[Wahrscheinlich]** Die Stilübertragung mit Vorlagen gab Mr. Krabs einen Menschenkörper. | Figuren nur mit eigenem Namen. Keine Stilübertragung bei bekannten Figuren. Körperbau zuerst. „Figuren vorher zeigen“ mit „Neu gestalten“ und „Eigenes Bild“. |
+| Monotone Stimmen | **[Sicher]** Die Gefühls-Sprechproben sprachen alle denselben ruhigen Erzähltext. 29 von 40 Gefühlswörtern landeten bei „neutral“. Die Tonmischung glättete laut und leise. | Pro Gefühl ein passender Probetext, 16 Sprechhaltungen, Cartoon-Sprechweise bei Knete/Cartoon, zwei Aufnahmen pro Gefühlszeile (die lebendigere zählt), Schreien lauter und Flüstern leiser in der Mischung. |
+| ~2 h pro Film | **[Sicher]** Mit Audio-Führung 2.0 rechnet die Lippen-Animation jeden der 4 Schritte doppelt (8 Durchläufe pro Rechenblock). | Audio-Führung nur im ersten Schritt: 5 statt 8 Durchläufe. **[Hochrechnung]** Rechenblock ~3,4 → ~2,3 min. Dazu: kein Rechenblock mehr für bloße Stille, knapp zu lange Szenen werden eingepasst. |
+
+**Ehrliche Grenzen:**
+1. Nichts davon ist auf deiner Grafikkarte getestet. Ob Lippen mit Audio-Führung nur im ersten Schritt genauso gut sitzen, zeigt erst dein Film **[Vermutung: kaum Unterschied]**.
+2. Ob das 4B-Bildmodell Mr. Krabs und Plankton ohne Bild trifft, bleibt offen. Mit deinem eigenen Bild ist es sicher.
+3. Die Drehbuchqualität hängt am lokalen Planungsmodell. Der Denkmodus kostet etwa 2 bis 5 min Planung mehr **[Hochrechnung]**.
+4. Stumme Aktionsszenen nutzen Wan 2.2 mit Lightning. Das wirkt laut Berichten oft wie Zeitlupe **[Vermutung]**.
+
+## 4b. Nächste Zeithebel nach deinem Test (alle kostenlos)
+
+| Hebel | Erwartung [Hochrechnung] | Risiko |
+| --- | --- | --- |
+| fp16-Rechnung (fp16_fast) wie in Kijais Beispiel | −20 bis −30 % pro Durchlauf | Farb- oder Schwarzbilder möglich, nur mit Probe |
+| SageAttention 2.2 statt 1.0.6 (selbst gebaut in WSL) | −10 bis −20 % | Einrichtung braucht CUDA-Toolkit |
+| Entwurf 480×832 | 1,6- bis 1,8-mal schneller | weniger Detail |
+| Audio-Führung ganz aus (1.0) | weitere −20 % | Lippen eventuell schwächer |
+
 ## 4. Was eine Minute Film dann kostet [Hochrechnung]
 
 | Qualität | heute (gemessen) | mit 0.15 + Turbo, wenn der RAM stabil ist |
@@ -66,7 +94,7 @@ Figuren wie Phineas und Ferb gehören Disney. Fan-Videos damit können auf TikTo
 
 ## 6. Nächste Schritte
 
-1. 0.16.0 installieren. Turbo prüfen (Zahnrad).
-2. SpongeBob-Idee neu, 60 s, **Entwurf**, Autopilot aus. Bei der Bildauswahl „Deine Figuren“ prüfen.
-3. Diagnose schicken. Daraus entscheide ich die nächste Zeitmaßnahme: Turbo, Entwurf als Standard, WSL-Speicher oder weniger Rechenfenster pro Film.
-4. Danach: Stimmenvergleich, Figurentausch in der neuen Oberfläche.
+1. 0.17.0 installieren, PC neu starten.
+2. SpongeBob-Idee neu: 60 s, Standard, Autopilot an, „Figuren vorher zeigen“ an, für Mr. Krabs und Plankton eigene Bilder.
+3. Video und Diagnose schicken. Daraus: Minuten pro Rechenblock (Ziel ≤ 2,5 min), Sprachanteil (Ziel ≥ 80 %), längste Pause (Ziel ≤ 1 s).
+4. Danach der nächste Zeithebel aus 4b, einzeln und gemessen.
