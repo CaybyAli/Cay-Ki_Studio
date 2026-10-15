@@ -247,3 +247,28 @@ def test_abbreviations_and_markdown_do_not_break_lines():
     title, beats, lines, problems = sp.parse('**SPONGEBOB** [wütend]: **Lass das, Patrick!**\nMR KRABS [drohend]: Und jetzt alle raus hier!', CAST)
     assert not problems and lines[0]['speaker'] == 'SpongeBob' and lines[0]['text'] == 'Lass das, Patrick!'
     assert lines[1]['speaker'] == 'Mr. Krabs'
+
+
+def test_overlapping_names_longest_wins():
+    # 'Tim' must not eat the 'Tims' of 'Tims Oma' (review round 3).
+    family = ['Tim', 'Tims Oma']
+    assert sp.sanitize('Tim backt Kekse mit Tims Oma.', ['Tim'], family) == 'Tim backt Kekse.'
+    assert sp.sanitize('Tims Oma holt ein Blech aus dem Ofen.', ['Tims Oma'], family) == 'Tims Oma holt ein Blech aus dem Ofen.'
+    assert sp.sanitize('Tims Oma winkt Tim zu.', ['Tims Oma'], family).startswith('Tims Oma winkt')
+    assert sp.sanitize('Tim umarmt Tims Mama.', ['Tim'], ['Tim', 'Tims Mama']) == 'Tim umarmt.'
+    for line, seen in [('AKTION: Tims Oma holt ein Blech aus dem Ofen.', ['Tims Oma']), ('AKTION: Tim rennt zu Tims Oma.', ['Tim', 'Tims Oma'])]:
+        title, beats, lines, _ = sp.parse('# 1 | Küche | Backen\n' + line, family)
+        assert sp.shots(title, beats, lines, family)[0]['visible'] == seen
+    from cast_design import strip_names
+    assert 'Tims Oma' not in strip_names('A boy in a red scarf knitted by Tims Oma', ['Tims Oma'], ['Tim'])
+
+
+def test_hidden_figure_as_subject_drops_the_clause():
+    sb = ['SpongeBob', 'Mr. Krabs', 'Patrick Star', 'Plankton']
+    assert sp.sanitize('Mr. Krabs grabs SpongeBob by the collar and shakes him', ['SpongeBob'], sb) == ''
+    assert sp.sanitize('Captain Hook yells at Captain Smee.', ['Captain Smee'], ['Captain Smee', 'Captain Hook']) == ''
+    assert sp.sanitize('SpongeBob und Patrick tanzen auf dem Tisch.', ['SpongeBob'], sb) == 'SpongeBob tanzen auf dem Tisch.'
+    assert sp.sanitize('SpongeBob waves to Mr Krabs.', ['SpongeBob'], sb) == 'SpongeBob waves.'
+    assert sp.sanitize('SpongeBob winkt Herrn Krabs zu.', ['SpongeBob'], sb) == 'SpongeBob winkt.'
+    assert sp.sanitize('SpongeBob hands Mr. Krabs the money while Plankton watches', ['SpongeBob', 'Mr. Krabs'], sb) == 'SpongeBob hands Mr. Krabs the money'
+    assert sp.sanitize('Plankton watches, SpongeBob flips a patty, Patrick waves', ['SpongeBob'], sb) == 'SpongeBob flips a patty'

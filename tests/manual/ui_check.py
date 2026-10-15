@@ -75,6 +75,7 @@ try:
         v = [picture(rid, next(ids), si * 2), picture(rid, next(ids), si * 2 + 1)]
         eps.append(scene(f'Szene {si + 1}', who, [(who[0], 'Hallo.')], v, v[0]))
     eps[0]['dialogues'][0].update(emotion='schreiend', pause_after=.3)   # the line editor must keep the delivery
+    eps[2].update(dialogues=[], dialogue='Hallo.', speaker='Lena', emotion='flüsternd')   # old single-line scene
     project(rid, 'image_review', 'Neue Gesichter', {'cast_refs': {'Lena': str(figure), 'Markus': str(figure)}}, episodes=[{'title': 'Neue Gesichter', 'scenes': eps}])
     # figure check stop (0.17): designs ready, no scene images yet
     rid = '1' * 32
@@ -159,6 +160,10 @@ try:
         page.fill('#lines-form [data-line="1"][data-key="text"]', 'Wo ist der Keks?')
         page.click('#lines-form button[type="submit"]'); page.wait_for_timeout(1200)
         said = json.loads(page.evaluate("fetch('/api/factory/" + 'f' * 32 + "').then(r=>r.text())"))['episodes'][0]['scenes'][0]['dialogues']
+        page.click('[data-action="edit-lines"][data-scene="2"]'); page.wait_for_timeout(500)
+        page.click('#lines-form button[type="submit"]'); page.wait_for_timeout(1200)
+        old = json.loads(page.evaluate("fetch('/api/factory/" + 'f' * 32 + "').then(r=>r.text())"))['episodes'][0]['scenes'][2]['dialogues']
+        r.check('Text ändern (alte Einzelzeile): Sprechhaltung bleibt', [(x['text'], x['emotion']) for x in old] == [('Hallo.', 'flüsternd')])
         r.check('Text ändern: Sprechhaltung und Pause bleiben, neuer Satz natürlich',
                 [(x['text'], x['emotion'], x['pause_after']) for x in said] == [('Hallo, Markus!', 'schreiend', .3), ('Wo ist der Keks?', 'Natürlich', .18)]); print('     ', [(x['text'], x['emotion'], x['pause_after']) for x in said])
         page.once('dialog', lambda dlg: dlg.accept())

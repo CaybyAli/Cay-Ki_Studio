@@ -228,17 +228,31 @@ def name_patterns(names, protected=()):
     return out
 
 
-def _blank(text, protected):
-    """Hide full names of protected figures before matching others ('Tims Mama' is not 'Tim')."""
-    for name in sorted(protected, key=len, reverse=True):
-        for variant in _variants(name):
-            text = re.sub(r'(?<!\w)' + re.escape(variant) + r"(?:'s|s)?(?!\w)", lambda m: ' ' * len(m.group(0)), text)
+def _full_spans(text, names):
+    """(start, end) of every full name (any listed case, optional 's / genitive s)."""
+    return [m.span() for name in names for variant in _variants(name)
+            for m in re.finditer(r'(?<!\w)' + re.escape(variant) + r"(?:'s|s)?(?!\w)", text)]
+
+
+def _blank(text, protected, names=()):
+    """Hide full names of protected figures before matching others ('Tims Mama' is not 'Tim').
+    Where a protected name overlaps a longer full name of a figure we look for, the
+    longer one wins: protecting 'Tim' must not eat the 'Tims' of 'Tims Oma'."""
+    text = str(text)
+    targets = _full_spans(text, names)
+    for a, b in sorted(_full_spans(text, protected), key=lambda s: s[0] - s[1]):
+        if any(x < b and a < y and y - x > b - a for x, y in targets): continue
+        text = text[:a] + ' ' * (b - a) + text[b:]
     return text
 
 
+def _spans(text, names, protected=()):
+    masked = _blank(text, protected, names)
+    return sorted({m.span() for p in name_patterns(names, protected) for m in p.finditer(masked)}, key=lambda s: (s[0], -s[1]))
+
+
 def _mentions(text, names, protected=()):
-    text = _blank(str(text), protected)
-    return any(p.search(text) for p in name_patterns(names, protected))
+    return bool(_spans(str(text), names, protected))
 
 
 # Sentence ends split clauses, but not after a title ('Mr. Krabs' stays one name).
@@ -246,15 +260,18 @@ DELIMS = re.compile(r'(,|;|\bwhile\b|\bwhereas\b|\bwährend\b|\s-\s|'
                     r'(?<=[.!?])(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bJr\.)(?<!\bHr\.)(?<!\bFr\.)(?<!\bProf\.)\s+)')
 
 
+# Removing a name also removes a title or 'and' directly in front of it
+# ('to Mr Krabs', 'Herrn Krabs', 'SpongeBob und Patrick tanzen').
+LEAD = re.compile(r'(?:(?<!\w)(?:and|und)\s+|&\s*)?(?:(?<!\w)(?:Mr|Mrs|Ms|Dr|Prof|Herrn?|Frau)\.?\s+)?$')
+
+
 def _strip(text, names, protected):
-    """Remove mentions of names, never inside a protected full name: the spans are
-    found on a copy with the protected names blanked ('Captain Hook' goes, 'Captain
-    Smee' stays; 'Tim' does not cut into 'Tims Mama')."""
-    masked = _blank(text, protected)
-    spans = sorted({m.span() for p in name_patterns(names, protected) for m in p.finditer(masked)}, key=lambda s: (s[0], -s[1]))
+    """Remove mentions of names, never inside a protected full name ('Captain Hook'
+    goes, 'Captain Smee' stays; 'Tim' does not cut into 'Tims Mama')."""
     out, last = '', 0
-    for a, b in spans:
+    for a, b in _spans(text, names, protected):
         if a < last: continue
+        a = max(last, LEAD.search(text[:a]).start())
         out += text[last:a]; last = b
     return out + text[last:]
 
@@ -269,17 +286,24 @@ def sanitize(text, visible, cast):
     only the off-screen name goes ("SpongeBob waves at Squidward" -> "SpongeBob waves")."""
     hidden = [n for n in cast if n not in visible]
     parts = DELIMS.split(str(text or ''))
-    clauses, delims = parts[0::2], parts[1::2] + ['']
+    # Each delimiter belongs to the clause after it: a dropped clause takes its
+    # 'while' / ',' with it instead of leaving it dangling.
+    clauses, delims = parts[0::2], [''] + parts[1::2]
     out = ''
     for clause, delim in zip(clauses, delims):
         if not clause.strip(): continue
-        if _mentions(clause, hidden, visible):
-            # A visible figure must be named outside the hidden names: 'Captain Hook
-            # shouting' does not count as 'Captain Smee' just because of 'Captain'.
-            if not (visible and _mentions(_blank(clause, hidden), visible, [])): continue
+        gone = _spans(clause, hidden, visible)
+        if gone:
+            # Kept only if a visible figure is the subject, i.e. named before the hidden
+            # one ('SpongeBob waves at Squidward'). 'Mr. Krabs grabs SpongeBob' is the
+            # hidden figure's action and goes; so does 'Captain Hook shouting' (the
+            # shared 'Captain' does not make it Captain Smee's).
+            seen = _spans(clause, visible, hidden)
+            if not seen or seen[0][0] > gone[0][0]: continue
             masked = _strip(clause, hidden, visible)
             clause = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu|an|auf)\s*(?=[,.!?]|$)', '', masked).rstrip()
-        out += clause + (delim if delim.strip() in (',', ';', '') or delim.isspace() else ' ' + delim.strip() + ' ')
+        if out: out += delim if delim.strip() in (',', ';', '') else ' ' + delim.strip() + ' '
+        out += clause
     out = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu)\s*(?=[,.]|$)', '', out)
     return re.sub(r'\s{2,}', ' ', re.sub(r'\s+([,.;])', r'\1', out)).strip(' ,;')
 

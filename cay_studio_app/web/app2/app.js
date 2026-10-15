@@ -340,7 +340,7 @@ function episodeTabs(d) {
   return `<div class="segmented episode-tabs" role="group" aria-label="Folge">${d.episodes.map((e, i) => `<button data-action="episode" data-index="${i}" aria-pressed="${i === S.episode}">Folge ${i + 1}</button>`).join('')}</div>`;
 }
 function linesOf(scene) {
-  return (scene.dialogues && scene.dialogues.length) ? scene.dialogues : scene.dialogue ? [{ speaker: scene.speaker, text: scene.dialogue }] : [];
+  return (scene.dialogues && scene.dialogues.length) ? scene.dialogues : scene.dialogue ? [{ speaker: scene.speaker, text: scene.dialogue, emotion: scene.emotion || 'Natürlich', pause_after: 0.18 }] : [];
 }
 function sectionsView(d) {
   if (!d.episodes || !d.episodes.length) return '';
