@@ -10,9 +10,11 @@ small "Teil N" under it. Template measured: 1.0 s, push-in ~10 %/s, sub-bass hit
 Pieces:
 - cast choice and prompt for the FLUX key art (two variants, Cay picks one),
 - lettering with FFmpeg/libass, the engine that already burns the subtitles of
-  every film. The dashboard environment has no Pillow and the update never
-  installs packages, so no new dependency. Widths are measured by rendering the
-  candidate lines with the same font, so the fit is exact for the real output,
+  every film. Pillow is not a dependency of the dashboard (no dashboard module
+  imports it, the test environment with all dashboard packages has none) and
+  the update never installs packages, so the card adds no new dependency.
+  Widths are measured by rendering the candidate lines with the same font, so
+  the fit is exact for the real output,
 - the 1 s card clip (slow push-in, same encoder settings as every film part),
 - the sub-bass impact under the card and the sample-exact sound around it,
 - the factory mixin: key art, choice, new variants, preview and download.

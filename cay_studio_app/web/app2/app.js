@@ -15,7 +15,7 @@ const PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5h2.5
 /* ---------- data ---------- */
 function defaults() {
   return { request_key: hex(), idea: '', title: '', episodes: 1, duration: 60, look: 'auto', characters: 'invent', participants: [],
-    examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true, cast_check: true };
+    examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true, cast_check: true, cover: 'start' };
 }
 function loadDraft() {
   try { const saved = JSON.parse(localStorage.getItem('cay-draft') || 'null'); if (saved && saved.request_key) return { ...defaults(), ...saved }; } catch (e) { /* private mode */ }
@@ -138,7 +138,7 @@ function composeView() {
         <div class="choice"><span>Figurencheck</span><label class="switch"><input type="checkbox" data-field="cast_check" ${d.cast_check !== false ? 'checked' : ''}><span>Figuren vorher zeigen</span></label>
           <p class="hint">Ein kurzer Blick auf die Figuren, bevor Szenen und Animation entstehen. Danach läuft alles allein.</p></div>
       </div>
-      <details class="more"><summary>Figuren, Look-Vorlagen und Musik</summary>${extrasView()}</details>
+      <details class="more"><summary>Figuren, Look-Vorlagen, Titelbild und Musik</summary>${extrasView()}</details>
       <div class="compose-foot"><p class="muted small" id="estimate"></p><button class="button" data-action="create" id="create">Film starten</button></div>
     </div>
     <aside class="frame preview-frame" id="preview" aria-hidden="true">
@@ -175,12 +175,23 @@ function extrasView() {
       <div class="actions"><button class="button quiet small" data-action="lib-pick-compose">Aus deinen Figuren wählen</button><button class="button quiet small" data-action="add-person">Figur hinzufügen</button></div></section>
     <section class="group"><h3 class="group-title">Titel und Musik</h3>
       <label class="field"><span>Titel (optional)</span><input class="input" data-field="title" value="${esc(d.title)}" maxlength="100" placeholder="Wird sonst aus der Idee gebildet"></label>
+      <div class="field cover-choice"><span>Titelbild</span>${seg('cover', COVER_CHOICES, d.cover || 'start')}<p class="hint" id="cover-hint">${esc(coverHint(d.cover))}</p></div>
       <label class="file-pill ${d.music ? 'set' : ''}">${d.music ? 'Eigene Musik gewählt' : 'Eigene Musik hochladen'}<input type="file" accept="audio/*" data-upload="music"></label>
       <p class="hint">Ohne eigene Musik bleibt die Musik aus.</p></section>`;
 }
+/* Title card (0.18): key art with the film's title as one second of the film. */
+const COVER_CHOICES = [['start', 'Am Anfang'], ['after_hook', 'Nach dem Einstieg'], ['off', 'Aus']];
+function coverHint(position) {
+  return { start: 'TikTok zeigt das erste Bild in deinem Kanal. So erkennt man sofort, zu welcher Reihe der Film gehört.',
+    after_hook: 'Erst die erste Einstellung als Einstieg, dann eine Sekunde Titelbild. Beim Hochladen als Kanal-Vorschau wählbar.',
+    off: 'Der Film beginnt direkt mit der ersten Szene.' }[position] || '';
+}
+/* Projects since 0.18 (edit_policy 18) with the card switched on; older projects never have one. */
+function coverWanted(d) { return (d.edit_policy || 0) >= 18 && ['start', 'after_hook'].includes(d.idea.cover); }
+function coverChosen(d) { const c = d.cover; return !!(c && c.selected && (c.active_variants || []).some(v => v.id === c.selected)); }
 function refreshExtras() {
   const box = $('details.more'); if (!box) return;
-  box.innerHTML = '<summary>Figuren, Look-Vorlagen und Musik</summary>' + extrasView(); box.open = true;
+  box.innerHTML = '<summary>Figuren, Look-Vorlagen, Titelbild und Musik</summary>' + extrasView(); box.open = true;
 }
 async function asPng(file) {
   // The studio stores PNG; convert JPG/WebP/AVIF in the browser and keep it within 2048 px.
@@ -208,6 +219,7 @@ function updateCompose() {
   $('#quality-hint').textContent = d.quality === 'draft' ? 'Etwa doppelt so schnell, etwas weniger scharf. Gut zum Ausprobieren.' : 'Die Qualität deines letzten Films.';
   $('#autopilot-text').textContent = d.autopilot ? 'Ohne Zwischenstopps fertigstellen' : 'Bilder, Ton und Probe selbst freigeben';
   $('#estimate').textContent = estimate(d) + '.';
+  const coverText = $('#cover-hint'); if (coverText) coverText.textContent = coverHint(d.cover);
   $('#create').textContent = d.episodes > 1 ? `Serie mit ${d.episodes} Folgen starten` : 'Film starten';
 }
 async function createFilm() {
@@ -332,10 +344,10 @@ function nextView(d) {
       <div class="actions"><button class="button" data-action="cast-approve">Figuren passen, weiter</button></div></section>`;
   }
   if (d.state === 'image_review') {
-    const scenes = d.episodes.flatMap(e => e.scenes), chosen = scenes.filter(s => s.selected).length;
+    const c = imageChoice(d), cover = coverWanted(d) ? (c.cover ? ' Titelbild gewählt.' : ' Das Titelbild fehlt noch.') : '';
     return `<section class="next wait"><h2 class="headline">Wähle pro Szene ein Bild.</h2>
-      <p>${chosen} von ${scenes.length} Szenen gewählt. Mit dem Autopilot nimmt das Studio überall das erste Bild und macht ohne weitere Stopps fertig.</p>
-      <div class="actions"><button class="button" data-action="approve-images" ${chosen < scenes.length ? 'disabled' : ''}>Bilder übernehmen</button>${autopilotSwitch(d)}</div></section>`;
+      <p>${c.chosen} von ${c.total} Szenen gewählt.${cover} Mit dem Autopilot nimmt das Studio überall das erste Bild und macht ohne weitere Stopps fertig.</p>
+      <div class="actions"><button class="button" data-action="approve-images" ${c.ready ? '' : 'disabled'}>Bilder übernehmen</button>${autopilotSwitch(d)}</div></section>`;
   }
   if (d.state === 'voice_review') return `<section class="next wait"><h2 class="headline">Hör dir den Ton an.</h2>
       <p>Jede Zeile wurde einzeln auf hörbare Sprache geprüft. Passt alles, startet die Animation.</p>
@@ -377,7 +389,7 @@ function sectionsView(d) {
   if (!d.episodes || !d.episodes.length) return '';
   if (d.state === 'done') return filmsSection(d);
   const cast = showsCast(d) ? castPanel(d) : '';
-  if (['image_review', 'pictures', 'cast_review'].includes(d.state)) return cast + scenesSection(d, d.state !== 'cast_review');
+  if (['image_review', 'pictures', 'cast_review'].includes(d.state)) return cast + coverCard(d) + scenesSection(d, d.state !== 'cast_review');
   if (d.state === 'voice_review') return cast + soundSection(d) + scenesSection(d, false);
   return cast + scenesSection(d, false);
 }
@@ -489,8 +501,37 @@ function scenesSection(d, choose) {
       const tools = editable ? `<div class="actions">${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
       return `<article class="scene">${pictures}<div class="scene-text"><h3>${si + 1}. ${esc(sc.title)}</h3><p>${esc(sc.action)}</p>${lines}${tools}</div></article>`;
     }).join('')}</div>
-    ${choose && d.state === 'image_review' ? `<div class="dock"><span>${d.episodes.flatMap(e => e.scenes).filter(s => s.selected).length} von ${d.episodes.flatMap(e => e.scenes).length} gewählt</span><button class="button" data-action="approve-images" ${d.episodes.flatMap(e => e.scenes).every(s => s.selected) ? '' : 'disabled'}>Bilder übernehmen</button></div>` : ''}
+    ${choose && d.state === 'image_review' ? dock(d) : ''}
   </section>`;
+}
+/* Scenes and title card chosen? The title card counts only where the project has one. */
+function imageChoice(d) {
+  const scenes = d.episodes.flatMap(e => e.scenes), chosen = scenes.filter(s => s.selected).length, cover = !coverWanted(d) || coverChosen(d);
+  return { chosen, total: scenes.length, cover, ready: chosen === scenes.length && cover };
+}
+function dock(d) {
+  const c = imageChoice(d);
+  return `<div class="dock"><span>${c.chosen} von ${c.total} gewählt${c.cover ? '' : ' · Titelbild fehlt'}</span><button class="button" data-action="approve-images" ${c.ready ? '' : 'disabled'}>Bilder übernehmen</button></div>`;
+}
+/* The title card above the scenes: two key-art variants with the real lettering, as the film shows it. */
+function coverCard(d) {
+  if (!coverWanted(d) || !['pictures', 'image_review'].includes(d.state)) return '';
+  const box = d.cover || {}, variants = box.active_variants || [], pickable = d.state === 'image_review';
+  const slots = [0, 1].map(i => {
+    const v = variants[i];
+    if (!v) return `<div class="frame"><div class="frame-empty">${d.state === 'pictures' ? 'Titelbild entsteht' : ''}</div></div>`;
+    return `<button class="variant" data-action="cover-choose" data-step="${esc(v.id)}" aria-pressed="${box.selected === v.id}" aria-label="Titelbild ${i + 1} wählen" ${pickable ? '' : 'disabled'}>
+      <div class="frame"><img src="/api/factory/${esc(d.id)}/cover/preview/${esc(v.id)}" alt="Titelbild ${i + 1}" loading="lazy"></div></button>`;
+  }).join('');
+  const where = d.idea.cover === 'start' ? 'Die erste Sekunde deines Films.' : 'Eine Sekunde nach der ersten Einstellung.';
+  const why = d.idea.cover === 'start' ? 'TikTok zeigt dieses Bild in deinem Kanal. So erkennt man sofort, zu welcher Reihe der Film gehört.'
+    : 'Beim Hochladen kannst du es in TikTok als Vorschau für deinen Kanal wählen.';
+  const series = d.episodes.length > 1 ? `<p>Gleiches Bild für alle ${d.episodes.length} Folgen, nur „Teil 1“ bis „Teil ${d.episodes.length}“ ändert sich.</p>` : '';
+  const state = !pickable ? '' : coverChosen(d) ? `<p class="cover-state done">Titelbild ${variants.findIndex(v => v.id === box.selected) + 1} gewählt</p>`
+    : variants.length ? '<p class="cover-state">Wähle eines der beiden Bilder.</p>' : '';
+  return `<section class="cover" aria-labelledby="cover-title"><div class="variants cover-variants">${slots}</div>
+    <div class="cover-text"><h3 class="label" id="cover-title">Titelbild</h3><p class="cover-lead">${where}</p><p>${why}</p>${series}${state}
+      ${pickable ? '<div class="actions"><button class="button quiet small" data-action="cover-revise">Neue Titelbilder</button></div>' : ''}</div></section>`;
 }
 function soundSection(d) {
   const ei = Math.min(S.episode, d.episodes.length - 1), t = (d.timing || [])[ei] || {};
@@ -522,7 +563,7 @@ function filmsSection(d) {
     return `<div class="film"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/export/${i}#t=0.1"></video>
       <span class="tile-title">${d.idea.episodes > 1 ? `Folge ${x.episode + 1}: ` : ''}${esc(ep.title || d.title)}</span>
       ${ep.social ? captionBox(d, ep, x.episode) : ''}
-      <a class="button quiet small" href="/api/factory/${esc(d.id)}/export/${i}?download=true" download>Herunterladen</a></div>`;
+      <div class="actions"><a class="button quiet small" href="/api/factory/${esc(d.id)}/export/${i}?download=true" download>Herunterladen</a>${x.cover ? `<a class="button quiet small" href="/api/factory/${esc(d.id)}/cover/export/${i}?download=true" download title="Zum Hochladen als TikTok-Titelbild">Titelbild herunterladen</a>` : ''}</div></div>`;
   }).join('')}</div></section>`;
 }
 async function refreshRun(force) {
@@ -820,6 +861,13 @@ const actions = {
       <form id="revise-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
       <div class="actions"><button class="button" type="submit">Zwei neue Bilder erzeugen</button></div></form>`);
   },
+  async 'cover-choose'(b) { await post(`/api/factory/${S.rid}/cover/choose`, { step_id: b.dataset.step }); },
+  'cover-revise'() {
+    openSheet(`<div class="sheet-head"><h2 class="headline">Neue Titelbilder</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+      <form id="cover-revise-form"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: alle drei näher zusammen, mehr vom Hafen im Hintergrund"></textarea></label>
+      <p class="muted small">Der Titel wird danach eingesetzt, er steht nie im Bild selbst.</p>
+      <div class="actions"><button class="button" type="submit">Zwei neue Titelbilder erzeugen</button></div></form>`);
+  },
   async 'cast-approve'() { await post(`/api/factory/${S.rid}/cast/approve`); toast('Figuren übernommen. Die Szenenbilder entstehen.'); },
   async 'cast-redo'(b) {
     if (!confirm(`${b.dataset.name} neu gestalten? Alle Szenen mit ${b.dataset.name} bekommen neue Bilder.`)) return;
@@ -928,7 +976,7 @@ function linesSheetFrom(form, lines) {
   const ei = +form.dataset.episode, si = +form.dataset.scene, sc = S.run.episodes[ei].scenes[si];
   const original = sc.dialogues; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); linesSheet(ei, si); sc.dialogues = original;
 }
-const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
+const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'cover-choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
 
 document.addEventListener('click', async event => {
   const nav = event.target.closest('[data-nav]');
@@ -1042,6 +1090,9 @@ document.addEventListener('submit', async event => {
     if (form.id === 'revise-form') {
       await post(`/api/factory/${S.rid}/revise`, { episode: ei, scene: si, note: form.note.value.trim() });
       toast('Zwei neue Bilder werden erzeugt.');
+    } else if (form.id === 'cover-revise-form') {
+      await post(`/api/factory/${S.rid}/cover/revise`, { note: form.note.value.trim() });
+      toast('Zwei neue Titelbilder werden erzeugt.');
     } else if (form.id === 'lines-form') {
       const sc = S.run.episodes[ei].scenes[si];
       await put(`/api/factory/${S.rid}/dialogues`, { episode: ei, scene: si, action: sc.action, dialogues: readLines(form) });

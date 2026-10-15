@@ -434,3 +434,21 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .figure-side .role-src dt:not(:first-child) { margin-top: 0; }
   .cast-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; }
 }
+
+/* Title card (0.18): key art with the film's title, chosen above the scenes like a scene image */
+.cover { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; background: var(--surface); border-radius: var(--radius); padding: 20px 24px; margin: 0 0 28px; }
+.cover h3 { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.cover-text { display: grid; gap: 8px; justify-items: start; align-content: start; }
+.cover-text p { margin: 0; max-width: 34em; color: var(--muted); font-size: 15px; }
+.cover-text .cover-lead { color: var(--ink); font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+.cover-text .cover-state { color: var(--wait); font-weight: 500; }
+.cover-text .cover-state.done { color: var(--done); }
+.cover-text .actions { margin-top: 6px; }
+.cover-variants > .frame { border-radius: calc(var(--frame-radius) * .7); }
+.cover-variants .frame-empty { font-size: 13px; }
+.cover-choice { justify-items: start; }
+.cover-choice .hint { max-width: 36em; }
+@media (max-width: 860px) {
+  .cover { grid-template-columns: 1fr; gap: 18px; padding: 18px; }
+  .cover-variants { max-width: 360px; }
+}

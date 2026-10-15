@@ -205,6 +205,8 @@ def test_export_with_title_card(tmp_path, position, fps):
     at = 0 if position == 'start' else 2 * fps                                 # the card: frames at .. at+fps-1
     assert is_card(out, at) and is_card(out, at + fps - 1) and not is_card(out, at + fps)
     if at: assert not is_card(out, 0) and not is_card(out, at - 1)
+    decoded = subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-i', str(out), '-f', 'null', '-'], capture_output=True)
+    assert decoded.returncode == 0 and not decoded.stderr                       # the copied concat decodes cleanly across the card
     report = json.loads((Path(spec['folder']) / 'Exportpruefung.json').read_text())
     assert report['checked'] == 2 and report['blocking'] == 0
     assert [e['start'] for e in report['lines']] == ([1.12, 3.12] if position == 'start' else [.12, 3.12])
@@ -379,3 +381,88 @@ def test_pictures_draws_the_cover_between_figures_and_scenes():
     try: asyncio.run(factory.Factory.pictures(fake, old))
     finally: factory.validate_nodes = original
     assert not [c for c in fake.calls if c['key'].startswith('cover')] and 'cover' not in old
+
+
+# ---------- choice, new variants, preview, download (the routes of the mixin) ----------
+
+class Routes(cover.TitleCard):
+    """The mixin's routes on an in-memory project store; steps as rows like factory_steps."""
+    def __init__(self, tmp_path):
+        import copy
+        self.copy = copy; self.docs = {}; self.steps = {}; self.base = tmp_path; self.records = []
+        self.g = {'record': lambda kind, text: self.records.append((kind, text))}
+    def get(self, rid):
+        from factory_editor import active_variants
+        from fastapi import HTTPException
+        if rid not in self.docs: raise HTTPException(404, 'Projekt nicht gefunden.')
+        d = self.copy.deepcopy(self.docs[rid])
+        if isinstance(d.get('cover'), dict): d['cover']['active_variants'] = active_variants(d['cover'])
+        return d
+    def save(self, d): self.docs[d['id']] = self.copy.deepcopy(d)
+    def rows(self, query, args):
+        return [self.steps[a] for a in args if a in self.steps]
+    def path(self, p): return Path(p)
+    def folder(self, d): return self.base / d['id']
+
+
+def endpoints(fake):
+    from fastapi import FastAPI
+    app = FastAPI(); fake.cover_routes(app)
+    return {(next(iter(r.methods)), r.path.split('/cover/')[1].split('/')[0]): r.endpoint for r in app.routes if '/cover/' in getattr(r, 'path', '')}
+
+
+def call(endpoint, *args, **kwargs):
+    result = endpoint(*args, **kwargs)
+    return asyncio.run(result) if asyncio.iscoroutine(result) else result
+
+
+def test_choose_revise_preview_and_download(tmp_path):
+    from fastapi import HTTPException
+    from factory_models import CoverChoice, CoverRevise
+    fake = Routes(tmp_path); routes = endpoints(fake); rid = 'e' * 32
+    art = [picture(tmp_path / f'art{k}.png', colour) for k, colour in enumerate(('0xff00ff', '0x00aaff'))]
+    for k, path in enumerate(art): fake.steps[f'{k:032x}'] = {'output': str(path), 'sha256': file_hash(path)}
+    d = {'id': rid, 'title': 'Der letzte Keks', 'state': 'image_review', 'edit_policy': 18, 'idea': {'cover': 'start', 'episodes': 2},
+         'episodes': [{}, {}], 'cover': {'variants': variants(f'{0:032x}', f'{1:032x}'), 'selected': None, 'round': 0}}
+    fake.save(d)
+    with pytest.raises(HTTPException) as foreign:
+        call(routes['POST', 'choose'], rid, CoverChoice(step_id='f' * 32))
+    assert foreign.value.status_code == 400
+    assert call(routes['POST', 'choose'], rid, CoverChoice(step_id=f'{1:032x}'))['cover']['selected'] == f'{1:032x}'
+    preview = call(routes['GET', 'preview'], rid, f'{1:032x}')
+    lettered = Path(preview.path)
+    assert lettered != art[1] and (png_info(lettered)['width'], png_info(lettered)['height']) == (1080, 1920) and not fake.records
+    assert call(routes['GET', 'preview'], rid, f'{1:032x}').path == preview.path            # cached: lettered once
+    after = call(routes['POST', 'revise'], rid, CoverRevise(note='Alle drei näher zusammen'))
+    assert after['state'] == 'pictures' and after['cover']['selected'] is None and after['cover']['image_rounds'] == [1, 1]
+    assert after['cover']['note'] == 'Alle drei näher zusammen' and after['cover']['active_variants'] == []
+    with pytest.raises(HTTPException) as busy:                                              # no choice while the studio draws
+        call(routes['POST', 'choose'], rid, CoverChoice(step_id=f'{1:032x}'))
+    assert busy.value.status_code == 409
+    # Old project: no card, nothing to choose or preview
+    old = {**d, 'id': 'o' * 32, 'state': 'image_review'}; old.pop('edit_policy'); fake.save(old)
+    with pytest.raises(HTTPException) as refused:
+        call(routes['POST', 'choose'], old['id'], CoverChoice(step_id=f'{0:032x}'))
+    assert refused.value.status_code == 409
+    with pytest.raises(HTTPException) as missing:
+        call(routes['GET', 'preview'], old['id'], f'{0:032x}')
+    assert missing.value.status_code == 404
+    # Done: the title card of the export, as a download
+    poster = tmp_path / 'Cover_Folge_01.png'; cover.letter(art[0], poster, 'Der letzte Keks', 'Teil 1')
+    fake.save({**d, 'state': 'done', 'exports': [{'file': 'x.mp4', 'cover': {'file': str(poster)}}, {'file': 'y.mp4'}]})
+    response = call(routes['GET', 'export'], rid, 0, download=True)
+    assert Path(response.path) == poster and 'Cover_Folge_01.png' in response.headers['content-disposition']
+    with pytest.raises(HTTPException) as none:
+        call(routes['GET', 'export'], rid, 1)
+    assert none.value.status_code == 404
+
+
+def test_export_spec_carries_the_chosen_card(tmp_path):
+    fake = Routes(tmp_path); art = picture(tmp_path / 'art.png', '0xff00ff'); sid = 'a' * 32
+    fake.steps[sid] = {'output': str(art), 'sha256': file_hash(art)}
+    d = {'id': 'e' * 32, 'title': 'Der letzte Keks · neue Fassung', 'edit_policy': 18, 'idea': {'cover': 'after_hook', 'episodes': 3},
+         'episodes': [{}, {}, {}], 'cover': {'variants': variants(sid, 'b' * 32), 'selected': sid, 'round': 0}}
+    assert fake.cover_spec(d, 2) == {'position': 'after_hook', 'image': str(art), 'sha256': file_hash(art), 'title': 'Der letzte Keks', 'label': 'Teil 3'}
+    picture(art, '0x00ff00')                                                                 # changed outside the studio
+    with pytest.raises(RuntimeError, match='außerhalb des Studios verändert'):
+        fake.cover_spec(d, 0)
