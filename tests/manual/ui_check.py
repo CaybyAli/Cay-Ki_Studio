@@ -167,7 +167,8 @@ try:
         r.check('Text ändern: Sprechhaltung und Pause bleiben, neuer Satz natürlich',
                 [(x['text'], x['emotion'], x['pause_after']) for x in said] == [('Hallo, Markus!', 'schreiend', .3), ('Wo ist der Keks?', 'Natürlich', .18)]); print('     ', [(x['text'], x['emotion'], x['pause_after']) for x in said])
         page.once('dialog', lambda dlg: dlg.accept())
-        page.click('.cast [data-action="cast-redo"][data-name="Lena"]'); page.wait_for_timeout(1500)
+        page.click('.cast [data-action="figure-menu"][data-name="Lena"]'); page.wait_for_selector('.menu-row')
+        page.click('.menu-row[data-action="cast-redo"]'); page.wait_for_timeout(1500)
         f = json.loads(page.evaluate("fetch('/api/factory/" + 'f' * 32 + "').then(r=>r.text())"))
         scenes = f['episodes'][0]['scenes']
         r.check('Figur neu gestalten: alle Lena-Szenen neu, Markus-Szene bleibt',
@@ -178,7 +179,8 @@ try:
                 and page.locator('.cast .figure').count() == 2 and '118 Wörter' in page.locator('.check-line').inner_text())
         own = work / 'eigenes_bild.jpg'
         subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=0xff6b6b:s=600x900:d=1', '-frames:v', '1', str(own)], check=True)
-        page.set_input_files('.cast input[data-upload="cast"][data-name="Markus"]', str(own)); page.wait_for_timeout(2500)
+        page.click('.cast [data-action="figure-menu"][data-name="Markus"]'); page.wait_for_selector('.menu-row')
+        page.set_input_files('.menu input[data-upload="cast"][data-name="Markus"]', str(own)); page.wait_for_timeout(2500)
         g = json.loads(page.evaluate("fetch('/api/factory/" + '1' * 32 + "').then(r=>r.text())"))
         markus = next((p for p in g['idea']['participants'] if p['name'] == 'Markus'), {})
         r.check('Eigenes Figurenbild: übernommen, Figur wird neu aufgebaut', bool(markus.get('image')) and 'Markus' not in g.get('cast_refs', {})

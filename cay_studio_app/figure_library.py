@@ -27,6 +27,24 @@ def file_sha(path):
     return h.hexdigest()
 
 
+def voice_peaks(path, bars=36):
+    """Loudness outline of a voice (0..1 per bar) for the card's waveform; plain stdlib."""
+    import array, wave
+    try:
+        with wave.open(str(path)) as w:
+            if w.getsampwidth() != 2: return []
+            frames = array.array('h', w.readframes(w.getnframes()))
+            channels = w.getnchannels()
+    except (OSError, EOFError, wave.Error):
+        return []
+    if channels > 1: frames = frames[::channels]
+    if not frames: return []
+    step = max(1, len(frames) // bars)
+    peaks = [max((abs(x) for x in frames[i:i + step]), default=0) for i in range(0, step * bars, step)][:bars]
+    top = max(peaks) or 1
+    return [round(x / top, 2) for x in peaks]
+
+
 class Library:
     def init_library(self):
         self.sql('CREATE TABLE IF NOT EXISTS figure_library(id TEXT PRIMARY KEY,document TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL)')
@@ -46,6 +64,11 @@ class Library:
 
     def library_save(self, doc):
         now = self.g['now'](); doc['updated'] = now; doc.setdefault('created', now)
+        if doc.get('voice') and doc.get('peaks_of') != doc['voice']:
+            try: doc['voice_peaks'] = voice_peaks(self.path(Path(self.asset(doc['voice'], 'voice')['path'])))
+            except HTTPException: doc['voice_peaks'] = []
+            doc['peaks_of'] = doc['voice']
+        if not doc.get('voice'): doc['voice_peaks'] = []; doc.pop('peaks_of', None)
         self.sql('INSERT INTO figure_library(id,document,created,updated) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,updated=excluded.updated',
                  (doc['id'], json.dumps(doc, ensure_ascii=False, sort_keys=True), doc['created'], now))
         return doc
