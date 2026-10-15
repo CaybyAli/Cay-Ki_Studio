@@ -18,8 +18,10 @@ class Participant(Strict):
     voice:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     voice_text:str=Field(default='',max_length=2500)
     # 'neutral': the upload is redrawn once with a neutral face (a laughing photo must not make
-    # the figure laugh in every scene); 'exact': the upload is the design as it is.
-    image_mode:Literal['neutral','exact']='neutral'
+    # the figure laugh in every scene); 'exact': the upload is the design as it is. The app sends
+    # it explicitly (default neutral there); a missing value keeps the pre-0.18 meaning 'exact'
+    # (new edition of an old project, classic view).
+    image_mode:Literal['neutral','exact']='exact'
     library_id:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     voice_design:VoiceRecipe|None=None
     # Which library profile the image and the voice come from (shown on the figure card),

@@ -16,7 +16,7 @@ T0 = datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc)
 def studio(clock):
     db = sqlite3.connect(':memory:'); db.row_factory = sqlite3.Row
     db.execute('CREATE TABLE performance_stages(id INTEGER PRIMARY KEY AUTOINCREMENT,project TEXT,stage TEXT,resource TEXT,started TEXT,seconds REAL,status TEXT,detail TEXT)')
-    resources = Resources.__new__(Resources); resources.running = {}; resources.tokens = 0
+    resources = Resources.__new__(Resources); resources.running = {}; resources.tokens = 0; resources.running_lock = __import__('threading').Lock()
     resources.g = {'now': lambda: clock[0].isoformat()}
     factory = Factory.__new__(Factory); factory.g = {'resources': resources}
     factory.rows = lambda q, a=(): db.execute(q, a).fetchall()

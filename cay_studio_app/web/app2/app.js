@@ -388,6 +388,8 @@ function showsCast(d) {
   return !!(d.plan && (d.plan.cast || []).length) && (CAST_STATES.has(d.state) || (d.state === 'blocked' && ['pictures', 'voicing', 'audio_mixing'].includes(d.resume_state)));
 }
 function participantOf(d, name) { return (d.idea.participants || []).find(x => x.name === name) || {}; }
+/* A project document from before 0.18 has no image_mode: its uploads were used exactly as they are. */
+function imageMode(e) { return e.image ? (e.image_mode || 'exact') : null; }
 function libraryFigure(id) { return id ? (S.library || []).find(f => f.id === id) : null; }
 function nameKey(s) { return String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
 function lookRank(f, look) { return f.look === look ? 2 : (f.look === 'auto' || look === 'auto') ? 1 : 0; }
@@ -408,7 +410,7 @@ function partsText(parts) { return parts.length === 2 ? 'Bild und Stimme' : part
 function imageSource(d, p) {
   const e = participantOf(d, p.name), lib = libraryFigure(e.library_image);
   if (e.library_image) return lib ? lib.label : 'Aus deinen Figuren';
-  if (e.image) return e.image_mode === 'exact' ? 'Dein Bild, genau so' : 'Dein Bild, neutral nachgezeichnet';
+  if (e.image) return imageMode(e) === 'exact' ? 'Dein Bild, genau so' : 'Dein Bild, neutral nachgezeichnet';
   return p.original ? 'Original' : 'Vom Studio gestaltet';
 }
 function voiceSource(d, p) {
@@ -709,12 +711,12 @@ function figureSheet(name) {
       ${row(`data-action="lib-pick-project" data-name="${esc(name)}"`, 'Aus deinen Figuren wählen', `Bild und Stimme aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(name)}.`)}</div>` : '';
   const ownImage = e.image && !e.library_image;
   const image = w.image === 'now' ? `<div class="menu-section"><p class="menu-title">Bild</p>
-      ${!e.image || e.image_mode !== 'exact' ? row(`data-action="cast-redo" data-name="${esc(name)}"`, 'Neu gestalten', `Das Studio zeichnet ${esc(name)} noch einmal.`) : ''}
+      ${imageMode(e) !== 'exact' ? row(`data-action="cast-redo" data-name="${esc(name)}"`, 'Neu gestalten', `Das Studio zeichnet ${esc(name)} noch einmal.`) : ''}
       <label class="menu-row"><b>Eigenes Bild hochladen</b><span>Mit neutralem Gesicht übernommen, jede Szene bestimmt den Ausdruck.</span><input type="file" accept="image/*" data-upload="cast" data-name="${esc(name)}"></label>
-      ${e.image ? (e.image_mode === 'exact'
+      ${e.image ? (imageMode(e) === 'exact'
         ? row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="neutral"`, 'Gesicht neutral nachzeichnen', `${ownImage ? 'Dein Bild' : 'Das Bild'} wird einmal mit neutralem Gesicht gezeichnet, damit ${esc(name)} in jeder Szene passend schaut.`)
         : row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="exact"`, 'Bild genau so verwenden', 'Richtig für fertige Figurenblätter. Der Gesichtsausdruck aus dem Bild bleibt dann in allen Szenen.')) : ''}</div>`
-    : `<div class="menu-section"><p class="menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Neu gestalten und eigene Bilder gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.image || '')}</p></div>`;
+    : `<div class="menu-section"><p class="menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Figuren aus deiner Bibliothek kannst du schon jetzt vormerken. Zum Neu-Gestalten oder für ein eigenes Bild das Projekt kurz pausieren.` : w.image || '')}</p></div>`;
   const voice = w.voice === 'now' ? `<div class="menu-section"><p class="menu-title">Stimme</p>
       ${row(`data-action="figure-voice-new" data-name="${esc(name)}"`, 'Andere Stimme gestalten', `Das Studio gestaltet eine neue Stimme für ${esc(name)}. Die Sätze werden neu eingesprochen.`)}
       <label class="menu-row"><b>Eigene Aufnahme hochladen</b><span>Eine Sprachaufnahme dieser Figur, 5 bis 20 Sekunden.</span><input type="file" accept="audio/*" data-upload="cast-voice" data-name="${esc(name)}"></label></div>`

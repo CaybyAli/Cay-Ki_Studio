@@ -48,7 +48,7 @@ class Resources:
     def __init__(self,g):
         self.g=g;self.options=cpu_options();self.slots=asyncio.Semaphore(self.options['workers'])
         self.active={};self.waiting={};self.previous=None;self.latest={};self.host_memory={};self.host_read_at=0
-        self.running={};self.tokens=0
+        self.running={};self.tokens=0;self.running_lock=__import__('threading').Lock()
 
     def init(self):
         self.g['execute']('CREATE TABLE IF NOT EXISTS performance_stages(id INTEGER PRIMARY KEY AUTOINCREMENT,project TEXT,stage TEXT,resource TEXT,started TEXT,seconds REAL,status TEXT,detail TEXT)')
@@ -59,13 +59,19 @@ class Resources:
 
     def begin(self,project):
         """Mark a measured step as running (live compute timer); end() with the returned token."""
-        self.tokens+=1;self.running[self.tokens]={'project':project,'since':self.g['now']()}
-        return self.tokens
+        # Request threads read this while the event loop writes it (clock and project list).
+        with self.running_lock:
+            self.tokens+=1;self.running[self.tokens]={'project':project,'since':self.g['now']()}
+            return self.tokens
 
-    def end(self,token):self.running.pop(token,None)
+    def end(self,token):
+        with self.running_lock:self.running.pop(token,None)
+
+    def running_projects(self):
+        with self.running_lock:return {r['project'] for r in self.running.values()}
 
     def running_since(self,project):
-        times=[r['since'] for r in self.running.values() if r['project']==project]
+        with self.running_lock:times=[r['since'] for r in self.running.values() if r['project']==project]
         return min(times) if times else None
 
     @asynccontextmanager

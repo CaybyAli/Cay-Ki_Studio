@@ -3,6 +3,7 @@ import asyncio,contextlib,copy,hashlib,json,os,signal,sys,uuid
 from pathlib import Path
 import httpx
 from fastapi import HTTPException
+from figure_library import drop_library_voice
 from fastapi.responses import FileResponse
 from factory_models import Idea,Review,VoiceSettings,SceneDialogueEdit,MixSettings,ProductionSettings
 from factory_audio import turns,layout,mix
@@ -62,7 +63,9 @@ class Quality:
         if self.paused(d['id']):return
         # Pinned once: a project voiced before 0.17 keeps its approved voices and cached
         # lines (0.16 references, sampling and signatures); new projects get 0.17 voices.
-        policy=d.setdefault('voice_policy',16 if d.get('voice_profiles') or d.get('lines') else 17)
+        # 18 = 17 plus the transcript of own and library recordings: a project voiced with 0.17
+        # keeps cloning its recordings without transcript, so its approved lines stay cached.
+        policy=d.setdefault('voice_policy',16 if d.get('voice_profiles') or d.get('lines') else 18)
         if lines and not audio_only:
             async with httpx.AsyncClient(trust_env=False,timeout=15) as c:await self.idle(c,True)
             speaking={l['speaker'] for l in lines};cast=[p for p in cast if p['name'] in speaking]
@@ -97,6 +100,11 @@ class Quality:
                 'music':{'file':music['path'],'sha256':music['sha256']} if music else None,
                 'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds']})
         d['state']='audio_mixing';d['phase']='CPU: Dialog, Musik und Geräusche mischen · GPU wieder frei';self.save(d)
+    def image_open(self,d):
+        """Own image or redesign: the same window as a library image, but never kept for later."""
+        window=self.cast_window(d,'image')
+        if window=='later':raise HTTPException(409,'Das Studio zeichnet gerade. Pausiere kurz, dann kannst du neu gestalten oder ein eigenes Bild wählen.')
+        if window!='now':raise HTTPException(409,window)
     def voice_open(self,d):
         """Voices change until the animation starts; refuse with the reason otherwise."""
         window=self.cast_window(d,'voice')
@@ -203,10 +211,8 @@ class Quality:
             p.update(voice_preset=body.voice_preset,voice_description=body.voice_description)
             if body.new_variant:p['voice_variant']=p.get('voice_variant',0)+1
             for participant in d['idea']['participants']:
-                if participant['name']==body.name:
-                    # A designed voice from the studio: the library voice and its recipe no longer apply.
-                    participant['voice']=None;participant['voice_text']='';participant.pop('voice_design',None);participant.pop('library_voice',None)
-                    if not participant.get('library_image'):participant.pop('library_id',None)
+                # A designed voice from the studio: the library voice and its recipe no longer apply.
+                if participant['name']==body.name:drop_library_voice(participant)
             self.voice_changed(d)
             self.save(d);return self.get(rid)
         @app.put('/api/factory/{rid}/dialogues')
