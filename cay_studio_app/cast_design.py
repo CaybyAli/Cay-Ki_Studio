@@ -60,6 +60,30 @@ def identity_prompt(person, style, cast_names=()):
             + 'Rendered as: ' + strip_names(style, others, [person['name']]).strip() + ' ' + SHEET)
 
 
+def neutral_prompt(person, style, cast_names=()):
+    """Redraw an uploaded figure with a neutral face: identity from the upload, expression from
+    each scene later. Cay's laughing SpongeBob photo made him laugh in every afraid line (0.17)."""
+    name = person['name']; others = [n for n in cast_names if n != name]
+    return (f'Character sheet of {name}, the same character as in reference image 1: copy the head shape, face shape, '
+            'body shape, size, proportions, colours, materials, surface texture, clothing and accessories exactly. '
+            'Neutral relaxed expression, mouth closed, eyes open looking forward, standing upright, arms relaxed, full body, front view. '
+            'Plain light grey background, soft even light, a single character, nothing else, no text. '
+            'Keep the rendering style of reference image 1. ' + strip_names(style, others, [name]).strip())
+
+
+def upload_key(person, upload_sha):
+    return 'castup:' + person['name'] + ':' + digest([upload_sha, person.get('design_round', 0), POLICY])[:12]
+
+
+async def from_upload(factory, document, person, upload, upload_sha, models):
+    """Design from Cay's own image: one image prompt with the upload as reference."""
+    names = [p['name'] for p in document['plan'].get('cast', [])]
+    sheet = await factory.render(document, upload_key(person, upload_sha),
+                                 build_graph(neutral_prompt(person, document['plan']['style'], names), [factory.stage(upload)],
+                                             seed(person['name'], person.get('design_round', 0) + 2000), '', models))
+    return sheet['output']
+
+
 def style_prompt(person, style, cast_names=()):
     name = person['name']; others = [n for n in cast_names if n != name]
     return (f'Image 1 shows {name}. Redraw exactly this character from image 1: identical face, eyes, mouth, colours, '
@@ -92,8 +116,9 @@ def scene_prompt(scene, cast, names, style):
     if len(names) == 1: prompt += f'Medium shot of {names[0]} alone. '
     for i, name in enumerate(names, 1):
         person = next(p for p in cast if p['name'] == name)
-        prompt += (f'Reference image {i} is the approved design of {name}: copy {name}\'s face, eyes, mouth, colours, '
-                   f'body shape, size and outfit exactly from reference image {i}. {strip_names(person["appearance"], hidden, names, aliases).rstrip(".")}. ')
+        prompt += (f'Reference image {i} is the approved design of {name}: copy {name}\'s head and face shape, colours, '
+                   f'materials, body shape, size and outfit exactly from reference image {i}; facial expression, mouth, eyes and pose '
+                   f'come from this scene, not from the reference image. {strip_names(person["appearance"], hidden, names, aliases).rstrip(".")}. ')
     if len(names) == 1: prompt += f'{names[0]} is the only character in the whole picture; the background shows only the location and its props. '
     elif not names: prompt += 'Only the location and its props, no characters. '
     else: prompt += f'Only {" and ".join(names)} are in the picture, nobody else. '
@@ -141,7 +166,9 @@ def signature(document):
 def needs_review(document):
     """Stop once before scene images if a figure was designed (not uploaded) and Cay wants to see it."""
     if not document['idea'].get('cast_check', False): return False
-    own = {p['name'] for p in document['idea'].get('participants', []) if p.get('image')}
+    # Uploads used exactly as they are need no look; a neutral redraw of an upload does.
+    # (projects from before 0.18 carry no image_mode: their uploads were always used as they are).
+    own = {p['name'] for p in document['idea'].get('participants', []) if p.get('image') and p.get('image_mode', 'exact') == 'exact'}
     designed = [p['name'] for p in document['plan']['cast'] if p['name'] not in own]
     return bool(designed) and document.get('cast_approval') != signature(document)
 

@@ -87,7 +87,7 @@ function estimate(draft) {
 /* ---------- shell ---------- */
 function route() {
   const hash = decodeURIComponent(location.hash.slice(1));
-  if (hash.startsWith('p=')) { S.page = 'project'; if (S.rid !== hash.slice(2)) { S.rid = hash.slice(2); S.run = null; S.progress = null; S.sig = ''; S.episode = 0; } }
+  if (hash.startsWith('p=')) { S.page = 'project'; if (S.rid !== hash.slice(2)) { S.rid = hash.slice(2); S.run = null; S.progress = null; S.clock = null; S.sig = ''; S.episode = 0; } }
   else S.page = hash === 'projects' ? hash : 'new';
 }
 function render() {
@@ -132,8 +132,8 @@ function composeView() {
         <div class="choice"><span>Look</span>${seg('look', LOOKS, d.look)}</div>
         <div class="choice"><span>Qualität</span>${seg('quality', [['draft', 'Entwurf'], ['fast', 'Standard']], d.quality)}
           <p class="hint" id="quality-hint"></p></div>
-        <div class="choice"><span>Autopilot</span><label class="switch"><input type="checkbox" data-field="autopilot" ${d.autopilot ? 'checked' : ''}><span id="autopilot-text"></span></label>
-          <label class="switch"><input type="checkbox" data-field="cast_check" ${d.cast_check !== false ? 'checked' : ''}><span>Figuren vorher zeigen</span></label>
+        <div class="choice"><span>Autopilot</span><label class="switch"><input type="checkbox" data-field="autopilot" ${d.autopilot ? 'checked' : ''}><span id="autopilot-text"></span></label></div>
+        <div class="choice"><span>Figurencheck</span><label class="switch"><input type="checkbox" data-field="cast_check" ${d.cast_check !== false ? 'checked' : ''}><span>Figuren vorher zeigen</span></label>
           <p class="hint">Ein kurzer Blick auf die Figuren, bevor Szenen und Animation entstehen. Danach läuft alles allein.</p></div>
       </div>
       <details class="more"><summary>Figuren, Look-Vorlagen und Musik</summary>${extrasView()}</details>
@@ -233,6 +233,26 @@ function thumbnail(doc) {
   }
   return null;
 }
+/* Measured compute time: base seconds plus a live count while the project is on the GPU. */
+function clockSeconds(c) {
+  if (!c) return 0;
+  const since = c.since ? Date.parse(c.since) : NaN;
+  return (c.seconds || 0) + (isNaN(since) ? 0 : Math.max(0, (Date.now() - since) / 1000));
+}
+function clockText(seconds) {
+  const s = Math.round(seconds), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`;
+}
+function clockTag(c, done) {
+  if (!c || (!c.seconds && !c.since)) return '';
+  const live = c.since ? ` data-clock="${esc(JSON.stringify(c))}"` : '';
+  return `<span class="clock${c.since ? ' live' : ''}"${live} title="Gemessene Rechenzeit (ohne Wartezeit auf deine Freigaben)">${done ? 'Rechenzeit ' : '⏱ '}<b>${clockText(clockSeconds(c))}</b></span>`;
+}
+function tickClocks() {
+  document.querySelectorAll('[data-clock]').forEach(el => {
+    try { const b = el.querySelector('b'); if (b) b.textContent = clockText(clockSeconds(JSON.parse(el.dataset.clock))); } catch (e) { /* ignore */ }
+  });
+}
 function projectsView() {
   if (!S.runs) return '<p class="muted">Projekte werden geladen …</p>';
   const head = `<div class="page-head"><h1 class="title">Projekte</h1><a class="button" href="#new">Neuer Film</a></div>`;
@@ -243,7 +263,7 @@ function projectsView() {
     const [cls, label] = status(r);
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     const badge = r.episodes > 1 ? `<span class="frame-badge">${r.finished}/${r.episodes} Folgen</span>` : '';
-    return `<a class="tile" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span><span class="status ${cls}">${esc(label)}</span></a>`;
+    return `<a class="tile" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span><span class="status ${cls}">${esc(label)}</span>${clockTag(r.clock, r.state === 'done')}</a>`;
   }).join('')}</div>`;
 }
 async function refreshRuns() {
@@ -279,7 +299,7 @@ function projectView() {
   return `<div class="project-head">
       <a class="back" href="#projects">Alle Projekte</a>
       <h1 class="title">${esc(d.title)}</h1>
-      <p class="muted">${esc(settingsLine(d))}</p>
+      <p class="muted">${esc(settingsLine(d))} <span id="clock-slot">${clockTag(S.clock, d.state === 'done')}</span></p>
       ${stepsView(d)}
     </div>
     ${nextView(d)}
@@ -434,6 +454,8 @@ async function refreshRun(force) {
   if (!S.rid) return;
   const d = await api('/api/factory/' + S.rid);
   d.autopilot = d.idea && d.idea.autopilot;
+  S.clock = await api(`/api/factory/${S.rid}/clock`).catch(() => S.clock);
+  const slot = $('#clock-slot'); if (slot) slot.innerHTML = clockTag(S.clock, d.state === 'done');
   const changed = d.revision !== S.sig;
   S.run = d; S.sig = d.revision;
   if (force || ((changed || S.deferred) && !busyUI())) render(); else if (changed) S.deferred = true;
@@ -677,6 +699,6 @@ async function start() {
   S.speed = await api('/api/factory/speed').catch(() => null);
   route(); await load(); health();
   window.addEventListener('hashchange', () => { route(); load(); });
-  setInterval(tick, 2500); setInterval(health, 15000);
+  setInterval(tick, 2500); setInterval(health, 15000); setInterval(tickClocks, 1000);
 }
 start().catch(e => { $('#main').innerHTML = `<div class="empty"><h2 class="headline">Das Studio antwortet nicht.</h2><p class="muted">${esc(e.message)} Cay_Studio_Starten.cmd erneut öffnen.</p></div>`; });

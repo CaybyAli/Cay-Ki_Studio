@@ -333,6 +333,18 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if best:return best[0]
             raise RuntimeError(label+': Die KI hat keinen verwertbaren Text geliefert. '+last[:600])
     def paused(self,rid):return self.get(rid).get('paused',False)
+    def clocks(self,rid=None):
+        """Measured compute time per project (planning, images, voices, animation, export).
+        'since' = end of the last measured step while the project is on the GPU: the UI counts
+        on from there, so the timer runs live during a long animation window."""
+        try:
+            rows=self.rows('SELECT project,SUM(seconds) AS s,MAX(started) AS last FROM performance_stages'+(' WHERE project=?' if rid else '')+' GROUP BY project',(rid,) if rid else ())
+        except Exception:return {}            # no measurements table (fresh start)
+        out={r['project']:{'seconds':round(r['s'] or 0),'since':None} for r in rows}
+        if self.busy and (rid is None or rid==self.busy):
+            last=next((r['last'] for r in rows if r['project']==self.busy),None)
+            out.setdefault(self.busy,{'seconds':0,'since':None})['since']=last or self.get(self.busy).get('updated')
+        return out
     async def plan(self,d):
         idea=d['idea']
         if not d.get('preflight'):
@@ -674,7 +686,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if self.paused(d['id']):return
             name=person['name']
             if name in refs:continue
-            if provided.get(name,{}).get('image'):refs[name]=self.asset(provided[name]['image'],'image')['path']
+            if provided.get(name,{}).get('image'):
+                upload=self.asset(provided[name]['image'],'image')
+                if provided[name].get('image_mode')=='exact':refs[name]=upload['path']
+                else:
+                    d['phase']='Figur aus deinem Bild vorbereiten: '+name;self.save(d)
+                    refs[name]=await cast_design.from_upload(self,d,person,upload['path'],upload['sha256'],models)
             else:
                 d['phase']='Figur gestalten: '+name;self.save(d)
                 refs[name]=await cast_design.design(self,d,person,examples,models)
@@ -845,12 +862,16 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             # Same order as the worker: active, not paused, oldest first. Position 0 = on the GPU now.
             queue=[r['id'] for r in self.rows("SELECT r.id FROM factory_runs r LEFT JOIN factory_control c ON c.id=r.id WHERE r.state IN ('planning','pictures','voicing','rendering','correcting') AND COALESCE(c.paused,0)=0 ORDER BY r.created")]
             if self.busy in queue:queue.remove(self.busy);queue.insert(0,self.busy)
+            clocks=self.clocks()
             for r in self.rows('SELECT id FROM factory_runs ORDER BY created DESC'):
                 d=self.get(r['id'])
                 if d.get('deleted'):continue
                 result.append({k:d.get(k) for k in ('id','title','state','phase','paused','created','updated','error') }|{'episodes':d['idea']['episodes'],'finished':len(d.get('exports',[])),
-                    'busy':self.busy==d['id'],'queue':queue.index(d['id']) if d['id'] in queue else None})
+                    'busy':self.busy==d['id'],'queue':queue.index(d['id']) if d['id'] in queue else None,'clock':clocks.get(d['id'],{'seconds':0,'since':None})})
             return {'runs':result}
+        @app.get('/api/factory/{rid}/clock')
+        def clock(rid:str):
+            self.get(rid);return self.clocks(rid).get(rid,{'seconds':0,'since':None})
         @app.get('/api/factory/turbo')
         def turbo_status():
             running=bool(getattr(self,'turbo_task',None) and not self.turbo_task.done())
@@ -1099,7 +1120,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             person=next((p for p in d['idea']['participants'] if p['name']==body.name),None)
             if person is None:
                 person={'name':body.name,'traits':'','image':None,'voice':None};d['idea']['participants'].append(person)
-            person['image']=body.asset_id
+            person['image']=body.asset_id;person['image_mode']=body.image_mode
             count=cast_design.invalidate(d,body.name)
             d['state']='pictures';d['phase']=f'Dein Bild für {body.name} wird verwendet · {count} Szenen folgen';self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/cast/redo')

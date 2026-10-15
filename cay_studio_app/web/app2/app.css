@@ -285,3 +285,9 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .next { padding: 22px 20px; }
   .dock { border-radius: 22px; }
 }
+
+/* Compute timer (0.18) */
+.clock { display: inline-flex; gap: 4px; align-items: baseline; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.clock b { font-weight: 600; color: var(--ink); }
+.clock.live b { color: var(--accent); }
+.tile .clock { margin-top: 2px; }

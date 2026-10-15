@@ -11,6 +11,9 @@ class Participant(Strict):
     image:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     voice:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     voice_text:str=Field(default='',max_length=2500)
+    # 'neutral': the upload is redrawn once with a neutral face (a laughing photo must not make
+    # the figure laugh in every scene); 'exact': the upload is the design as it is.
+    image_mode:Literal['neutral','exact']='neutral'
 
 class Idea(Strict):
     request_key:str=Field(pattern=r'^[a-f0-9]{32}$')
@@ -125,6 +128,7 @@ class CastRedo(Strict):
 class CastImage(Strict):
     name:str=Field(min_length=1,max_length=60)
     asset_id:str=Field(pattern=r'^[a-f0-9]{32}$')
+    image_mode:Literal['neutral','exact']='neutral'
 
 class AutopilotSwitch(Strict):
     enabled:bool

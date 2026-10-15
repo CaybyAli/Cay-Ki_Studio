@@ -99,7 +99,21 @@ VISUAL_INSTRUCTION = ('Du bist Kameramann und Bildregisseur. Für jede Einstellu
     'bei stummen Einstellungen die Handlung selbst. camera: Bildausschnitt, zum Beispiel "medium shot", "close-up", "low angle". '
     'ambience: Umgebungsgeräusch. Ort und Licht über aufeinander folgende Einstellungen gleich halten. '
     'Figuren immer genau mit ihrem Namen aus visible nennen, nie mit Originalnamen, Spitznamen oder Übersetzungen '
-    '(nicht "Squidward" für Thaddäus, nicht "Grandma" für Oma).')
+    '(nicht "Squidward" für Thaddäus, nicht "Grandma" für Oma). '
+    'Im still steht der Gesichtsausdruck passend zur Emotion der Zeile auf Englisch (z. B. "afraid, wide eyes, tense"), '
+    'nie ein Ausdruck aus einem Referenzbild.')
+# English face for each delivery: the scene image decides the expression of the whole shot.
+EXPRESSIONS = {'natural': 'relaxed, attentive', 'firm': 'determined, firm look', 'threat': 'menacing, narrowed eyes',
+               'mocking': 'smug, mocking grin', 'annoyed': 'annoyed frown', 'angry': 'angry, furrowed brows',
+               'shout': 'shouting, mouth wide open', 'panic': 'panicked, wide eyes', 'afraid': 'afraid, wide eyes, raised eyebrows, tense',
+               'joy': 'happy smile', 'excited': 'excited, big grin', 'triumph': 'triumphant grin', 'surprised': 'surprised, raised eyebrows',
+               'sad': 'sad, drooping eyes', 'whisper': 'secretive, leaning in', 'pleading': 'pleading, worried eyebrows',
+               'confused': 'confused, one eyebrow raised'}
+
+
+def expression(emotion):
+    from speech_quality import performance_key
+    return EXPRESSIONS.get(performance_key(emotion), EXPRESSIONS['natural'])
 VISUAL_REPAIR = ('Diese Einstellungen nennen Figuren, die NICHT im Bild sind. Schreibe still und motion dieser Einstellungen neu, '
                  'nur mit den Figuren aus visible; die anderen Figuren kommen überhaupt nicht vor, auch nicht als Objekt, Besitzer oder im Hintergrund.')
 
@@ -543,7 +557,7 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity):
         v = by_number.get(i + 1, {})
         visible = shot['visible']
         speaker = shot['lines'][0]['speaker'] if shot['lines'] else ''
-        fallback_still = (f'{" and ".join(visible)} in {shot["place"]}, ' + (f'{speaker} speaking, {shot["lines"][0]["emotion"]} expression' if speaker else shot['what']))
+        fallback_still = (f'{" and ".join(visible)} in {shot["place"]}, ' + (f'{speaker} speaking, {expression(shot["lines"][0]["emotion"])} expression' if speaker else shot['what']))
         names = [c['name'] for c in cast]; aliases = figure_aliases(cast)
         still = sanitize(v.get('still') or fallback_still, visible, names, aliases)
         if len(still) < 10: still = sanitize(fallback_still, visible, names, aliases) or f'{" and ".join(visible)} in {shot["place"]}'
