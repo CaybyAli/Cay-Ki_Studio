@@ -442,7 +442,13 @@ def sanitize(text, visible, cast, aliases=None):
     hidden_names = [n for n in hidden_names if n not in seen_names]
     every = seen_names + hidden_names
     text = _groups(str(text or ''), seen_names, hidden_names)
-    parts = DELIMS.split(text)
+    # Never split inside a name ('Herr Dann', 'Spider–Man', 'Batman: Beyond').
+    names_at = [(a, b) for a, b, _ in _spans(text, every)]
+    parts, last = [], 0
+    for m in DELIMS.finditer(text):
+        if any(a < m.end() and m.start() < b for a, b in names_at): continue
+        parts += [text[last:m.start()], m.group(0)]; last = m.end()
+    parts.append(text[last:])
     pieces = [(parts[0], '')] + list(zip(parts[2::2], parts[1::2]))
     clauses = []
     for clause, delim in pieces:
@@ -596,8 +602,10 @@ async def repair_visuals(factory, d, cut, listing, answer):
     try:
         fixed = await factory.llm(ShotVisuals, VISUAL_INSTRUCTION + ' ' + VISUAL_REPAIR + ' Genau diese Nummern: ' + ', '.join(map(str, wrong)) + '.',
                                   {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': ask})
-    except (RuntimeError, ValueError):
-        return answer                                     # sanitize() still removes the names
+    except Exception:
+        # Advisory only: a timeout, a crashed model or a busy GPU must not stop the planning
+        # (CancelledError is no Exception and still stops it). sanitize() removes the names.
+        return answer
     better = {v['shot']: v for v in fixed['shots'] if v['shot'] in wrong
               and not offscreen_names(v.get('still', '') + ' ' + v.get('motion', ''), cut[v['shot'] - 1]['visible'], names, aliases)}
     return {**answer, 'shots': [better.get(v['shot'], v) for v in answer['shots']]}
@@ -663,8 +671,8 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
                 raise ValueError('Einstellungsnummern verschoben: ' + ', '.join(map(str, numbers))[:200])
             missing = [n for n in range(1, len(cut) + 1) if n not in numbers]
             if missing: store['visual_error'] = 'Ohne eigene Bildbeschreibung: Einstellung ' + ', '.join(map(str, missing))
-            answer = await repair_visuals(factory, d, cut, listing, answer)
-            store['visuals'] = answer; factory.save(d)
+            store['visuals'] = answer; factory.save(d)          # kept even if the repair below is interrupted
+            store['visuals'] = await repair_visuals(factory, d, cut, listing, answer); factory.save(d)
         except (RuntimeError, ValueError) as error:
             store['visual_error'] = 'Bildbeschreibungen fehlen, einfache Beschreibungen verwendet: ' + str(error)[:400]
     episode = assemble(title, spine, outline, cut, store.get('visuals') or {'shots': []}, d['plan']['cast'], continuity)

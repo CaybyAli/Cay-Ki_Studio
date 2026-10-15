@@ -145,3 +145,22 @@ def test_visuals_naming_offscreen_figures_are_written_again():
     fixed = asyncio.run(sp.repair_visuals(Planner(), d, cut, listing, first))
     assert Planner.calls == [[1]]                                     # only the wrong shot is asked again
     assert fixed['shots'][0]['still'] == 'SpongeBob grins at the grill, alone' and fixed['shots'][1] == first['shots'][1]
+
+
+def test_names_with_delimiters_stay_whole():
+    assert sp.sanitize('Herr Dann laughs. SpongeBob waves.', ['SpongeBob'], ['SpongeBob', 'Herr Dann']) == 'SpongeBob waves.'
+    assert sp.sanitize('Spider–Man laughs. SpongeBob waves.', ['Spider–Man'], ['SpongeBob', 'Spider–Man']) == 'Spider–Man laughs.'
+    assert sp.sanitize('SpongeBob grins while Wo Fat watches.', ['Wo Fat'], ['SpongeBob', 'Wo Fat']) == 'Wo Fat watches.'
+
+
+@pytest.mark.parametrize('error', [TimeoutError('timed out'), ConnectionError('ollama down'), KeyError('x')])
+def test_failed_visual_repair_keeps_the_first_answer(error):
+    import asyncio
+    cut = [{'visible': ['SpongeBob'], 'lines': [], 'kind': 'action', 'place': 'Kitchen', 'what': 'x', 'beat': 0}]
+    d = {'plan': {'style': 'clay', 'cast': [{'name': 'SpongeBob'}, {'name': 'Plankton'}]}}
+    first = {'shots': [{'shot': 1, 'still': 'SpongeBob grins at Plankton', 'motion': 'waves', 'camera': 'medium', 'ambience': 'room'}]}
+
+    class Planner:
+        async def llm(self, schema, instruction, data): raise error
+
+    assert asyncio.run(sp.repair_visuals(Planner(), d, cut, [{'shot': 1, 'visible': ['SpongeBob']}], first)) == first
