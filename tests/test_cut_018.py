@@ -674,11 +674,11 @@ def route(app, path, method):
 
 
 def app_text(studio, tmp_path):
-    """Factory.routes() with only its own routes (the editor, quality and library routes are other tests)."""
+    """Factory.routes() with only its own routes (the editor, quality, library and cover routes are other tests)."""
     import fastapi
     factory = pytest.importorskip('factory')
     app = fastapi.FastAPI()
-    studio.editor_routes = studio.quality_routes = studio.library_routes = lambda app: None
+    studio.editor_routes = studio.quality_routes = studio.library_routes = studio.cover_routes = lambda app: None
     studio.g = {'RUNTIME': tmp_path}
     factory.Factory.routes(studio, app)
     return app

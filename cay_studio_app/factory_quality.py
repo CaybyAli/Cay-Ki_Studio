@@ -251,4 +251,6 @@ class Quality:
         async def edition(rid:str):
             old=self.get(rid);idea=copy.deepcopy(old['idea']);idea['request_key']=uuid.uuid4().hex;idea['title']=(old['title']+' · neue Fassung')[:100];idea['idea']=idea['idea']+'\nÜberarbeitung: Nur EIN Ereignis mit Ziel, Hindernis und Pointe. Keine gesamte Filmhandlung in einer Minute. Mehrere kurze Dialogwechsel und passende Altersstimmen. Alte Vorgaben mit einem Satz je Szene sind aufgehoben. Bei Lebensmittel-Parodien keine Verwandlung in Menschen.'
             if len(idea['idea'])>100000:idea['idea']=old['idea']['idea']
+            # A new edition is a new film: an original from before 0.18 (no field) gets the title card too.
+            idea.setdefault('cover','start')
             create=next(r.endpoint for r in app.routes if getattr(r,'path','')=='/api/factory' and 'POST' in (getattr(r,'methods',None) or set()));return create(Idea.model_validate(idea))

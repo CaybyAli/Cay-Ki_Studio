@@ -74,6 +74,10 @@ class Idea(Strict):
     # Show the designed figures once before scene images (0.17). The new UI sends it;
     # old projects and the classic UI (no cast_review screen) leave it off.
     cast_check:bool=False
+    # Title card (0.18): key art with the title as the film's first second ('start': TikTok's
+    # channel grid shows that frame), after the first shot, or none. Only projects with
+    # edit_policy 18 use it; a client that does not send it gets 'off' (see create).
+    cover:Literal['start','after_hook','off']='start'
 
 class CastPlan(Strict):
     name:str=Field(min_length=1,max_length=60)
@@ -112,6 +116,12 @@ class Choice(Strict):
 
 class Review(Strict):
     revision:str=Field(pattern=r'^[a-f0-9]{64}$')
+
+class CoverChoice(Strict):
+    step_id:str=Field(pattern=r'^[a-f0-9]{32}$')
+
+class CoverRevise(Strict):
+    note:str=Field(default='',max_length=700)
 
 class ReviseScene(Strict):
     episode:int=Field(ge=0,le=11)

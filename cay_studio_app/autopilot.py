@@ -1,12 +1,13 @@
 """Autopilot: produce without waiting at the three review stops.
 
-Images: the first variant of every scene. Sound: approved only after the
+Images: the first variant of every scene (and of the title card). Sound: approved only after the
 per-line speech check passed (a failing mix never reaches voice_review) and
 the same consistency checks as the manual approval hold. Sample: skipped.
 Errors still stop the project; a failed speech check gets two automatic
 retakes of the affected lines, then waits for Cay.
 """
 import copy
+import cover
 from factory_editor import active_variants
 from factory_timing import POLICY
 from factory_video import file_hash
@@ -37,6 +38,11 @@ class Autopilot:
         return isinstance(stop, dict) and stop.get('state') == d['state'] and stop.get('audio_revision') == d.get('audio_revision')
 
     def auto_images(self, d):
+        if cover.wanted(d) and not cover.chosen(d):
+            # Title card (0.18): the first key-art variant, like the first image of every scene.
+            choices = active_variants(d.get('cover') or {})
+            if not choices: return False
+            d['cover']['selected'] = choices[0]['id']
         for episode in d['episodes']:
             for scene in episode['scenes']:
                 if not scene.get('selected'):

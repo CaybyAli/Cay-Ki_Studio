@@ -133,7 +133,8 @@ def scene_prompt(scene, cast, names, style):
     from screenplay import figure_aliases
     hidden = [p['name'] for p in cast if p['name'] not in names]; aliases = figure_aliases(cast)
     prompt = 'One coherent vertical 9:16 film frame, no text or panels. ' + strip_names(style, hidden, names, aliases).strip().rstrip('.') + '. '
-    if len(names) == 1: prompt += f'Medium shot of {names[0]} alone. '
+    # 0.18 reactions (close-up) and establishing shots (wide) bring their own framing.
+    if len(names) == 1: prompt += f'{names[0]} alone in the frame. ' if scene.get('kind') in ('reaction', 'establish') else f'Medium shot of {names[0]} alone. '
     for i, name in enumerate(names, 1):
         person = next(p for p in cast if p['name'] == name)
         prompt += (f'Reference image {i} is the approved design of {name}: copy {name}\'s head and face shape, colours, '
@@ -194,6 +195,9 @@ def invalidate(document, name):
         for scene in episode['scenes']:
             if name in scene.get('cast', []):
                 regenerate(scene, [0, 1]); count += 1
+    # 0.18 title card: the key art shows the main figures; one of them changed, so it is drawn again.
+    cover = document.get('cover')
+    if isinstance(cover, dict) and name in cover.get('cast', []): regenerate(cover, [0, 1])
     return count
 
 
