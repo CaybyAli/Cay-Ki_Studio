@@ -490,7 +490,8 @@ async function settingsSheet() {
 function linesSheet(ei, si) {
   const sc = S.run.episodes[ei].scenes[si], lines = linesOf(sc);
   const row = (l, i) => `<div class="person"><select class="input" data-line="${i}" data-key="speaker" aria-label="Sprecher">${sc.cast.map(n => `<option ${n === l.speaker ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
-    <input class="input" data-line="${i}" data-key="text" value="${esc(l.text)}" maxlength="240" aria-label="Satz"><button class="button danger small" data-action="drop-line" data-index="${i}">Entfernen</button></div>`;
+    <input class="input" data-line="${i}" data-key="text" value="${esc(l.text)}" maxlength="240" aria-label="Satz">
+    <input type="hidden" data-line="${i}" data-key="emotion" value="${esc(l.emotion || 'Natürlich')}"><input type="hidden" data-line="${i}" data-key="pause_after" value="${l.pause_after ?? 0.18}"><button class="button danger small" data-action="drop-line" data-index="${i}">Entfernen</button></div>`;
   openSheet(`<div class="sheet-head"><h2 class="headline">Szene ${si + 1}: Text</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
     <form id="lines-form" data-episode="${ei}" data-scene="${si}">${lines.map(row).join('')}
     ${sc.cast.length ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>' : '<p class="muted">In dieser Szene ist niemand im Bild.</p>'}
@@ -500,7 +501,9 @@ function linesSheet(ei, si) {
 function readLines(form) {
   const rows = {};
   form.querySelectorAll('[data-line]').forEach(el => { (rows[el.dataset.line] ||= {})[el.dataset.key] = el.value.trim(); });
-  return Object.values(rows).filter(l => l.text).map(l => ({ speaker: l.speaker, text: l.text, emotion: 'Natürlich', pause_after: 0.18 }));
+  // Delivery and pause travel with each line: saving must not turn 'schreiend' into 'Natürlich'.
+  const pause = v => (v === undefined || v === '' || !isFinite(+v)) ? 0.18 : +v;
+  return Object.values(rows).filter(l => l.text).map(l => ({ speaker: l.speaker, text: l.text, emotion: l.emotion || 'Natürlich', pause_after: pause(l.pause_after) }));
 }
 
 /* ---------- actions ---------- */

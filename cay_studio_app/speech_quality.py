@@ -14,9 +14,16 @@ CHATTERBOX = {'natural': (.5, .5), 'firm': (.65, .4), 'threat': (.65, .4), 'mock
               'excited': (.85, .3), 'triumph': (.8, .3), 'surprised': (.75, .35), 'sad': (.45, .5), 'whisper': (.35, .5),
               'pleading': (.6, .4), 'confused': (.55, .45)}
 
-def sampling(emotion):
+def sampling(emotion,policy=17):
+    if policy<17:return sampling_v16(emotion)
     exaggeration, cfg = CHATTERBOX.get(performance_key(emotion), CHATTERBOX['natural'])
     return {'exaggeration':exaggeration,'cfg_weight':cfg,'temperature':.8,'top_p':.95,'repetition_penalty':1.2}
+
+def sampling_v16(emotion):
+    # Projects voiced before 0.17 keep this exact recipe (it is part of the line cache signature).
+    emotion=emotion.lower()
+    emphasis=.55 if any(x in emotion for x in ('wüt','ängst','begeister','erschrock','aufgeregt')) else .4
+    return {'exaggeration':emphasis,'cfg_weight':.5,'temperature':.7,'top_p':.95,'repetition_penalty':1.2}
 
 def finish_voice(data,sr,text):
     import numpy as np
@@ -69,15 +76,28 @@ PERFORMANCES = [
     ('firm', ('bestimmt', 'entschlossen', 'ernst', 'befehl', 'firm')),
 ]
 
+# Words that contain a stem by accident: 'neugierig' is not greedy-triumphant,
+# 'beschreibend' is no shout, 'flach'/'gescheitert' contain 'lach'/'heiter'.
+NOT_STEMS = re.compile(r'neugier|wissbegier|schreib|flach|scheiter')
+
 def performance_key(emotion):
-    text=str(emotion or '').lower()
+    text=NOT_STEMS.sub('',str(emotion or '').lower())
     for key,parts in PERFORMANCES:
         if any(p in text for p in parts):return key
     return 'natural'
 
+def performance_key_v16(emotion):
+    # 0.16 categories, kept for projects voiced before 0.17 (selects their emotion references).
+    text=str(emotion or '').lower()
+    for key,parts in [('angry',('wüt','wuet','zorn','aggress','angry')),('afraid',('ängst','aengst','panik','angst','erschrock','afraid')),('joy',('freud','begeister','glücklich','aufgeregt','lach','joy')),('sad',('traurig','weinen','verzweifel','sad')),('quiet',('flüster','fluester','geheim','whisper')),('firm',('bestimmt','droh','entschlossen','firm'))]:
+        if any(p in text for p in parts):return key
+    return 'natural'
+
 # Mix level per delivery in dB: shouting stands out, whispers sit lower. The
-# compressor and loudnorm used to flatten these differences completely.
-LEVEL_DB = {'shout': 2.5, 'angry': 1.5, 'panic': 1.5, 'excited': 1.0, 'triumph': 1.0, 'whisper': -4.0, 'sad': -1.5, 'pleading': -1.0}
+# compressor and loudnorm used to flatten these differences completely. Whispers
+# only -2 dB: the music ducking ignores this gain, and the speech check blocks a
+# line the music masks (a breathy take is already quiet on its own).
+LEVEL_DB = {'shout': 2.5, 'angry': 1.5, 'panic': 1.5, 'excited': 1.0, 'triumph': 1.0, 'whisper': -2.0, 'sad': -1.5, 'pleading': -1.0}
 
 def level_db(emotion):
     return LEVEL_DB.get(performance_key(emotion), 0.)
@@ -89,7 +109,9 @@ def prosody_score(data, sr):
     import numpy as np
     x=np.asarray(data,dtype=np.float64).reshape(-1)
     if x.size<sr*.3:return 0.
-    frame=int(sr*.04);hop=int(sr*.01);lo,hi=int(sr/500),int(sr/70)
+    # Up to 1000 Hz: child and cartoon voices go above 500 Hz when shouting; a lower
+    # limit made those frames jump an octave and look 'lively' by mistake.
+    frame=int(sr*.04);hop=int(sr*.01);lo,hi=int(sr/1000),int(sr/70)
     frames=[x[i:i+frame] for i in range(0,len(x)-frame,hop)]
     rms=np.array([np.sqrt(np.mean(f*f)) for f in frames])
     if not rms.size or rms.max()<=0:return 0.
@@ -99,7 +121,14 @@ def prosody_score(data, sr):
         f=f-f.mean();ac=np.correlate(f,f,'full')[frame-1:]
         if ac[0]<=0 or hi>=len(ac):continue
         lag=lo+int(np.argmax(ac[lo:hi]))
-        if ac[lag]/ac[0]>.45:pitches.append(sr/lag)
-    spread=float(np.std(12*np.log2(np.array(pitches)/np.median(pitches)))) if len(pitches)>5 else 0.
+        # A maximum on the edge of the search range is no pitch (half-filled frame at a pause).
+        if lo<lag<hi-1 and ac[lag]/ac[0]>.45:pitches.append(sr/lag)
+    spread=0.
+    if len(pitches)>5:
+        tones=12*np.log2(np.array(pitches)/np.median(pitches))
+        # Octave errors are single-frame jumps: drop frames > 7 semitones off the local median.
+        local=np.array([np.median(tones[max(0,i-2):i+3]) for i in range(len(tones))])
+        tones=tones[np.abs(tones-local)<=7]
+        if len(tones)>5:spread=float(np.std(tones))
     loud=20*np.log10(rms[voiced]+1e-9)
     return round(spread+.5*float(np.std(loud))/3,3)

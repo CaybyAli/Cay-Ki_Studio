@@ -33,13 +33,14 @@ def main():
     if args.probe:
         print(json.dumps({'ready':True,'default_voice':(ckpt/'conds.pt').is_file()}));return
     job=json.loads(Path(args.job).read_text());out=Path(job['output']);out.mkdir(parents=True,exist_ok=True)
+    policy=int(job.get('voice_policy',17))  # before 0.17: same sampling, so cached lines stay valid
     options={'t3_model':'t3_mtl23ls_v2.safetensors'} if 't3_model' in inspect.signature(ChatterboxMultilingualTTS.from_local).parameters else {}
     model=ChatterboxMultilingualTTS.from_local(ckpt,device='cuda',**options);default=copy.deepcopy(model.conds)
     def generate(text,ref,emotion,seed):
         random.seed(seed);np.random.seed(seed%2**32);torch.manual_seed(seed)
         model.conds=copy.deepcopy(default)
         if not ref and model.conds is None:raise RuntimeError('Für erfundene Stimmen fehlt die lokale Standardstimme (conds.pt). Bitte eine Stimmprobe im Projekt ergänzen.')
-        requested=sampling(emotion)
+        requested=sampling(emotion,policy)
         accepted=inspect.signature(model.generate).parameters
         requested={k:v for k,v in requested.items() if k in accepted}
         wave=model.generate(text=clean_text(text),language_id='de',audio_prompt_path=str(ref) if ref else None,**requested)
@@ -54,7 +55,7 @@ def main():
         raise RuntimeError('Für '+name+' fehlt ein Stimmprofil. Zuerst Stimmenstudio einrichten.')
     result=[]
     for index,line in enumerate(job['lines']):
-        signature=hashlib.sha256(json.dumps({'line':line,'voice_sha256':hashlib.sha256(Path(voices[line['speaker']]).read_bytes()).hexdigest(),'checkpoint':str(ckpt),'processing':SPEECH_POLICY,'sampling':sampling(line['emotion'])},sort_keys=True).encode()).hexdigest()
+        signature=hashlib.sha256(json.dumps({'line':line,'voice_sha256':hashlib.sha256(Path(voices[line['speaker']]).read_bytes()).hexdigest(),'checkpoint':str(ckpt),'processing':SPEECH_POLICY,'sampling':sampling(line['emotion'],policy)},sort_keys=True).encode()).hexdigest()
         target=out/(line['key']+'_'+signature[:12]+'.wav');meta=target.with_suffix('.json')
         if not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature):
             for attempt in range(2):

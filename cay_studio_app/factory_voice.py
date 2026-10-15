@@ -1,7 +1,7 @@
 """Isolated Qwen VoiceDesign setup and persistent reference generation."""
 import argparse,fcntl,hashlib,json,os,random,shutil,subprocess,sys,time
 from pathlib import Path
-from speech_quality import finish_voice,performance_key
+from speech_quality import finish_voice,performance_key,performance_key_v16
 PRESETS={'child_boy':'A fictional boy around ten, naturally youthful light voice, curious and energetic, not an adult falsetto.','child_girl':'A fictional girl around ten, naturally youthful bright voice, expressive and confident, not an adult falsetto.','young_man':'A young adult man, light tenor, relaxed and lively.','young_woman':'A young adult woman, clear bright voice, lively.','man':'An adult man, resonant mid-low baritone, confident.','woman':'An adult woman, rich warm midrange voice, expressive.','grandpa':'An elderly man, warm weathered baritone, slight gravel and breath texture, animated rather than excessively slow.','grandma':'An elderly woman, warm mature alto, subtle grain and expressive melody, animated rather than excessively slow.','creature':'A whimsical cartoon creature, distinctive texture and expressive articulation.'}
 REPO='Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign'
 # The clone continues the melody of its reference. 0.16 used one calm narrator
@@ -32,6 +32,11 @@ CARTOON='German cartoon dubbing voice actor, highly animated and theatrical, wid
 NATURAL='Native German actor, natural conversational delivery, varied intonation, never a synthetic announcer. '
 def cartoonish(person,look):return look in ('cartoon','clay','paper') or bool(person.get('original')) or person.get('voice_preset')=='creature'
 def description(person,index,look=''):return PRESETS.get(person.get('voice_preset'),PRESETS['man'])+' '+(CARTOON if cartoonish(person,look) else NATURAL)+person.get('voice_description','')+' Character: '+person.get('personality','')+'. Clean dry studio speech, no music, reverb or background noise. '+['Precise consonants, dry smile.','Soft consonants, rounded resonance.','Light textured timbre, clear articulation.','Melodic, crisp diction.'][index%4]
+# Projects voiced before 0.17 keep their voices: these texts are part of the cache
+# signature, so a later partial re-voice reuses the approved 0.16 references.
+REFERENCE_TEXT_V16='Heute beginnt unsere Geschichte. Ich weiß noch nicht, was uns erwartet. Aber eines ist sicher: Wir halten zusammen. Hör genau zu, dann finden wir den richtigen Weg.'
+ACTING_V16={'angry':'angry, controlled intensity','afraid':'afraid, tense breath','joy':'joyful and animated','sad':'sad, vulnerable','quiet':'intimate low whisper','firm':'firm and determined'}
+def description_v16(person,index):return PRESETS.get(person.get('voice_preset'),PRESETS['man'])+' Native German actor, natural conversational delivery, relaxed breath, varied intonation, never a synthetic announcer or exaggerated imitation. '+person.get('voice_description','')+' Character: '+person.get('personality','')+'. Clean dry studio speech, no music, reverb or background noise. '+['Precise consonants, dry smile.','Soft consonants, rounded resonance.','Light textured timbre, clear articulation.','Melodic, crisp diction.'][index%4]
 def setup(base):
     env=base/'envs/studio-voices';model=base/'models/studio-voices/VoiceDesign';marker=env/'bereit.json';env.parent.mkdir(parents=True,exist_ok=True)
     def run(args):subprocess.run(list(map(str,args)),check=True)
@@ -55,43 +60,55 @@ def generate(base,job_path,probe=False):
     if not torch.cuda.is_available():raise RuntimeError('CUDA in der Stimmenumgebung nicht verfügbar.')
     if probe:print(json.dumps({'ready':True}));return
     job=json.loads(Path(job_path).read_text());out=Path(job['output']);out.mkdir(parents=True,exist_ok=True);profiles={};model=None
+    legacy=int(job.get('voice_policy',17))<17;reference=REFERENCE_TEXT_V16 if legacy else REFERENCE_TEXT
     for i,p in enumerate(job['cast']):
         if p.get('voice_file'):
             f=Path(p['voice_file'])
             if hashlib.sha256(f.read_bytes()).hexdigest()!=p['voice_hash']:raise RuntimeError('Stimmprobe verändert.')
             profiles[p['name']]={'file':str(f),'sha256':p['voice_hash'],'source':'upload'};continue
-        instruction=description(p,i,job.get('look',''));sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],REFERENCE_TEXT,'design17'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
+        instruction=description_v16(p,i) if legacy else description(p,i,job.get('look',''))
+        sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],reference,'design08' if legacy else 'design17'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
         if not f.is_file():
             if model is None:model=Qwen3TTSModel.from_pretrained(str(model_path),device_map='cuda:0',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True)
             seed=int(hashlib.sha256((job['run_id']+p['name']+str(p.get('voice_variant',0))).encode()).hexdigest()[:8],16)
             for attempt in range(2):
                 random.seed(seed+attempt);np.random.seed((seed+attempt)%2**32);torch.manual_seed(seed+attempt)
-                waves,sr=model.generate_voice_design(text=REFERENCE_TEXT,language='German',instruct=instruction,temperature=.7,top_p=.9,max_new_tokens=650)
-                try:data,quality=finish_voice(waves[0],sr,REFERENCE_TEXT);break
+                waves,sr=model.generate_voice_design(text=reference,language='German',instruct=instruction,temperature=.7,top_p=.9,max_new_tokens=650)
+                try:data,quality=finish_voice(waves[0],sr,reference);break
                 except RuntimeError:
                     if attempt:raise
             temp=f.with_suffix('.partial.wav');sf.write(temp,data,sr,subtype='PCM_16');os.replace(temp,f);f.with_suffix('.json').write_text(json.dumps({'description':instruction,'seed':seed+attempt,'quality':quality}))
-        profiles[p['name']]={'file':str(f),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'source':'designed','preset':p.get('voice_preset','man'),'voice_text':REFERENCE_TEXT};print('Stimme gestaltet: '+p['name'],flush=True)
+        profiles[p['name']]={'file':str(f),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'source':'designed','preset':p.get('voice_preset','man'),'voice_text':reference};print('Stimme gestaltet: '+p['name'],flush=True)
     # Reuse the same identity description and seed while changing acting direction.
     # The clone adapter can condition on a performed reference instead of ignoring emotion.
     for i,p in enumerate(job['cast']):
         if p.get('voice_file') or not job.get('performances'):continue
-        moods=sorted({performance_key(line.get('emotion','Natürlich')) for line in job.get('lines',[]) if line['speaker']==p['name']})
+        key=performance_key_v16 if legacy else performance_key
+        moods=sorted({key(line.get('emotion','Natürlich')) for line in job.get('lines',[]) if line['speaker']==p['name']})
         profiles[p['name']]['emotion_profiles']={}
         for emotion in moods:
             if emotion=='natural':continue
-            acting,text=EMOTION_TEXTS.get(emotion,EMOTION_TEXTS['firm'])
-            instruction=description(p,i,job.get('look',''))+' Acting for this take, strongly performed: '+acting+'. Same person, same age and timbre. Do not speak the direction aloud.'
-            sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],text,'performance17'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
+            if legacy:
+                text=reference;sampling={'temperature':.7,'top_p':.9}
+                instruction=description_v16(p,i)+' Acting direction for this take: '+ACTING_V16[emotion]+'. Keep the same age, vocal identity and timbre. Do not speak the direction aloud.'
+                sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],text,'performance11'],ensure_ascii=False).encode()).hexdigest()
+            else:
+                acting,text=EMOTION_TEXTS.get(emotion,EMOTION_TEXTS['firm']);sampling={'temperature':.9,'top_p':1.}
+                instruction=description(p,i,job.get('look',''))+' Acting for this take, strongly performed: '+acting+'. Same person, same age and timbre. Do not speak the direction aloud.'
+                sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],text,'performance17'],ensure_ascii=False).encode()).hexdigest()
+            f=out/(sig+'.wav')
             if not f.is_file():
                 if model is None:model=Qwen3TTSModel.from_pretrained(str(model_path),device_map='cuda:0',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True)
-                seed=int(hashlib.sha256((job['run_id']+p['name']+str(p.get('voice_variant',0))).encode()).hexdigest()[:8],16)
+                # Own seed per mood (0.17): moods do not share one unlucky seed.
+                seed=int(hashlib.sha256((job['run_id']+p['name']+str(p.get('voice_variant',0))+('' if legacy else emotion)).encode()).hexdigest()[:8],16);data=None
                 for attempt in range(2):
                     random.seed(seed+attempt);np.random.seed((seed+attempt)%2**32);torch.manual_seed(seed+attempt)
-                    waves,sr=model.generate_voice_design(text=text,language='German',instruct=instruction,temperature=.9,top_p=1.,max_new_tokens=650)
+                    waves,sr=model.generate_voice_design(text=text,language='German',instruct=instruction,max_new_tokens=650,**sampling)
                     try:data,quality=finish_voice(waves[0],sr,text);break
-                    except RuntimeError:
-                        if attempt:raise
+                    except RuntimeError:pass
+                if data is None:
+                    # One failed mood must not stop the whole cast: these lines use the base voice.
+                    print('Gefühlsprobe übersprungen: '+p['name']+' '+emotion,flush=True);continue
                 temp=f.with_suffix('.partial.wav');sf.write(temp,data,sr,subtype='PCM_16');os.replace(temp,f)
             profiles[p['name']]['emotion_profiles'][emotion]={'file':str(f),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'voice_text':text}
     temp=out/'Profile.partial.json';temp.write_text(json.dumps(profiles));os.replace(temp,out/'Profile.json')

@@ -1,6 +1,7 @@
 'use strict';
 labels.blocked='Fehler · angehalten';
 labels.sample_review='Produktionsprobe freigeben';
+labels.cast_review='Figuren prüfen';
 const thirteenRun=runView,thirteenMix=mixPreview,thirteenProduction=productionMarkup;
 function memorySummary(sys={},gpu={}){
  const gb=n=>Number.isFinite(n)?(n/1024**3).toFixed(1)+' GB':'—';
@@ -9,7 +10,10 @@ function memorySummary(sys={},gpu={}){
 }
 productionMarkup=function(p,d){return thirteenProduction(p,d)+memorySummary(p.resources,p.gpu)};
 runView=function(){
- const d=state.run;let html=thirteenRun();
+ const d=state.run;
+ // 0.17 figure check: the classic view has no figure gallery, so show the step and link to the new studio.
+ if(d&&!d.deleted&&d.state==='cast_review')return `<h1>${esc(d.title)}</h1><section class="repair-card"><p class="section-kicker">DEIN NÄCHSTER SCHRITT</p><h2>Figuren prüfen</h2><p>Die Figurenbilder sind fertig. Ansehen, neu gestalten oder eigenes Bild hochladen geht in der neuen Oberfläche.</p><p><a class="button" href="/#p=${encodeURIComponent(d.id)}">In der neuen Oberfläche öffnen</a> <button data-action="cast-approve-classic">Figuren passen, weiter</button></p></section>`;
+ let html=thirteenRun();
  if(!d||d.deleted)return html;
  if(d.state==='blocked'&&['planning','voicing','rendering','finishing','audio_mixing'].includes(d.resume_state)){
   const sampler=/WanVideoSampler|NoneType|CayWanVideoSampler/.test(d.error||''),speech=/SPRACHPRÜFUNG/.test(d.error||''),silent=/DIALOG FEHLT/.test(d.error||'');
@@ -42,4 +46,12 @@ document.addEventListener('click',async event=>{
  const b=event.target.closest('[data-action="reopen-voices"]');if(!b)return;
  event.preventDefault();event.stopImmediatePropagation();if(state.busy)return;state.busy=true;b.disabled=true;
  try{const rid=state.rid,epoch=state.navigationEpoch;await post('/api/factory/'+rid+'/reopen-voices',{revision:state.run.revision});if(epoch===state.navigationEpoch&&state.rid===rid){await refreshRun();toast('Tonvorschau geöffnet. Bei Bedarf auf „Dialoge ergänzen“ klicken.')}}catch(e){toast(e.message)}finally{state.busy=false;if(b.isConnected)b.disabled=false}
+},true);
+document.addEventListener('click',async event=>{
+ const b=event.target.closest('[data-action="cast-approve-classic"]');if(!b)return;
+ event.preventDefault();event.stopImmediatePropagation();if(state.busy)return;
+ state.busy=true;b.disabled=true;
+ try{await post('/api/factory/'+state.rid+'/cast/approve',{});await refreshRun();toast('Figuren freigegeben. Die Bilder entstehen jetzt.')}
+ catch(e){toast(e.message||String(e))}
+ finally{state.busy=false;b.disabled=false}
 },true);

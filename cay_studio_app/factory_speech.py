@@ -1,7 +1,7 @@
 """Qwen Base dialogue adapter in the existing isolated voice environment."""
 import argparse,hashlib,json,os,random,shutil,sys,time
 from pathlib import Path
-from speech_quality import clean_text,finish_voice,SPEECH_POLICY,performance_key,prosody_score
+from speech_quality import clean_text,finish_voice,SPEECH_POLICY,performance_key,performance_key_v16,prosody_score
 
 REPO='Qwen/Qwen3-TTS-12Hz-1.7B-Base'
 
@@ -32,13 +32,15 @@ def generate(base,path):
     job=json.loads(Path(path).read_text());out=Path(job['output']);out.mkdir(parents=True,exist_ok=True)
     model_path=base/'models/studio-voices/Base';model=None;prompts={};cast={p['name']:p for p in job['cast']};result=[]
     model_identity=(model_path/'source.json').read_text() if (model_path/'source.json').is_file() else str(model_path)
+    # Projects voiced before 0.17 keep 0.16 references, sampling and cache signatures.
+    legacy=int(job.get('voice_policy',17))<17;key=performance_key_v16 if legacy else performance_key
     for i,line in enumerate(job['lines']):
-        person=dict(cast[line['speaker']]);performed=person.get('emotion_profiles',{}).get(performance_key(line.get('emotion','')))
+        person=dict(cast[line['speaker']]);performed=person.get('emotion_profiles',{}).get(key(line.get('emotion','')))
         if performed:person.update(voice_file=performed['file'],voice_hash=performed['sha256'],voice_text=performed['voice_text'])
         ref=Path(person['voice_file'])
         if hashlib.sha256(ref.read_bytes()).hexdigest()!=person['voice_hash']:raise RuntimeError('Stimmreferenz wurde verändert.')
         delivery=performance_key(line.get('emotion',''))
-        signature=hashlib.sha256(json.dumps({'line':line,'voice':person['voice_hash'],'ref_text':person.get('voice_text',''),'model':model_identity,'processing':SPEECH_POLICY,'engine':'qwen-base-17-takes'},sort_keys=True).encode()).hexdigest()
+        signature=hashlib.sha256(json.dumps({'line':line,'voice':person['voice_hash'],'ref_text':person.get('voice_text',''),'model':model_identity,'processing':SPEECH_POLICY,'engine':'qwen-base-11-performance' if legacy else 'qwen-base-17-takes'},sort_keys=True).encode()).hexdigest()
         target=out/(line['key']+'_'+signature[:12]+'.wav');meta=target.with_suffix('.json')
         cached=target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature
         if not cached:
@@ -49,13 +51,15 @@ def generate(base,path):
                 prompts[prompt_key]=model.create_voice_clone_prompt(ref_audio=str(ref),ref_text=transcript,x_vector_only_mode=not bool(transcript))
             # Library defaults (0.9 / 1.0 / 50) instead of 0.7 / 0.9: more melody.
             # Emotional lines get two valid takes; the livelier one is kept.
-            wanted=1 if delivery=='natural' else 2;takes=[];error=None
+            wanted=1 if delivery=='natural' or legacy else 2;takes=[];error=None
             for attempt in range(wanted+1):
                 if len(takes)>=wanted:break
                 seed=(line['seed']+attempt)%2**32;random.seed(seed);np.random.seed(seed);torch.manual_seed(seed)
-                options=dict(text=clean_text(line['text']),language='German',voice_clone_prompt=prompts[prompt_key],non_streaming_mode=True,temperature=.9,top_p=1.,max_new_tokens=min(650,max(128,len(line['text'].split())*15+80)))
-                try:waves,sr=model.generate_voice_clone(**options,top_k=50)
-                except TypeError:waves,sr=model.generate_voice_clone(**options)
+                options=dict(text=clean_text(line['text']),language='German',voice_clone_prompt=prompts[prompt_key],non_streaming_mode=True,temperature=.7 if legacy else .9,top_p=.9 if legacy else 1.,max_new_tokens=min(650,max(128,len(line['text'].split())*15+80)))
+                if legacy:waves,sr=model.generate_voice_clone(**options)
+                else:
+                    try:waves,sr=model.generate_voice_clone(**options,top_k=50)
+                    except TypeError:waves,sr=model.generate_voice_clone(**options)
                 try:
                     data,quality=finish_voice(waves[0],sr,line['text'])
                     takes.append((prosody_score(data,sr),data,{**quality,'prosody':prosody_score(data,sr),'seed':seed}))

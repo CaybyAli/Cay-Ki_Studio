@@ -57,12 +57,15 @@ class Quality:
                 'Der Film wäre stumm. „Neue Fassung planen“ übernimmt Idee und Einstellungen; dieses Projekt bleibt erhalten.')
         audio_only=d.pop('audio_only',False) and bool(d.get('lines') or not lines)
         if self.paused(d['id']):return
+        # Pinned once: a project voiced before 0.17 keeps its approved voices and cached
+        # lines (0.16 references, sampling and signatures); new projects get 0.17 voices.
+        policy=d.setdefault('voice_policy',16 if d.get('voice_profiles') or d.get('lines') else 17)
         if lines and not audio_only:
             async with httpx.AsyncClient(trust_env=False,timeout=15) as c:await self.idle(c,True)
             speaking={l['speaker'] for l in lines};cast=[p for p in cast if p['name'] in speaking]
             if any(not p.get('voice_file') for p in cast):
                 if not self.voice_ready():raise RuntimeError('Für verschiedene erfundene Stimmen einmalig „Stimmenstudio einrichten“ wählen. Danach dieses Projekt fortsetzen. Die alte Einheitsstimme wird nicht mehr verwendet.')
-                job=self.folder(d)/'Stimmgestaltung.json';out=self.folder(d)/'03_Stimmen/Profile';self.atomic(job,json.dumps({'run_id':d['id'],'cast':cast,'lines':lines,'performances':options['speech_engine']=='qwen' or options['speech_engine']=='auto' and speech_ready(self.base),'look':d['plan'].get('visual',''),'output':str(out)}).encode());d['phase']='Eigene Stimmen für die Figuren gestalten';self.save(d)
+                job=self.folder(d)/'Stimmgestaltung.json';out=self.folder(d)/'03_Stimmen/Profile';self.atomic(job,json.dumps({'run_id':d['id'],'cast':cast,'lines':lines,'performances':options['speech_engine']=='qwen' or options['speech_engine']=='auto' and speech_ready(self.base),'look':d['plan'].get('visual',''),'voice_policy':policy,'output':str(out)}).encode());d['phase']='Eigene Stimmen für die Figuren gestalten';self.save(d)
                 async with self.measured(d,'Stimmgestaltung'):await self.command([self.base/'envs/studio-voices/bin/python',Path(__file__).with_name('factory_voice.py'),'--base',self.base,'--job',job],7200)
                 profiles=json.loads((out/'Profile.json').read_text());d['voice_profiles']=profiles
                 for p in cast:
@@ -74,7 +77,7 @@ class Quality:
             python=self.base/('envs/studio-voices/bin/python' if engine=='qwen' else 'envs/chatterbox/bin/python')
             if not python.is_file():raise RuntimeError('Die ausgewählte lokale Sprachumgebung fehlt.')
             d['audio_engine']=engine
-            folder=self.folder(d)/'03_Stimmen/Dialoge';job=self.folder(d)/'Sprachauftrag.json';self.atomic(job,json.dumps({'cast':cast,'lines':lines,'output':str(folder)}).encode());d['phase']=f'{len(lines)} Dialogbeiträge werden eingesprochen';self.save(d)
+            folder=self.folder(d)/'03_Stimmen/Dialoge';job=self.folder(d)/'Sprachauftrag.json';self.atomic(job,json.dumps({'cast':cast,'lines':lines,'voice_policy':policy,'output':str(folder)}).encode());d['phase']=f'{len(lines)} Dialogbeiträge werden eingesprochen';self.save(d)
             async with self.measured(d,'Sprache · '+engine):await self.command([python,Path(__file__).with_name('factory_speech.py' if engine=='qwen' else 'factory_tts.py'),'--base',self.base,'--job',job],14400)
             d['lines']=json.loads((folder/'Ergebnis.json').read_text())['lines']
             if len(d['lines'])!=len(lines):raise RuntimeError('Sprachvorschau unvollständig.')

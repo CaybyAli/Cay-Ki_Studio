@@ -1,0 +1,3415 @@
+{
+ "source": "Cay Studio 0.16.1 (git 9fbc214)",
+ "layouts": [
+  {
+   "input": {
+    "episode": {
+     "dialogue_mode": "rich",
+     "scenes": [
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      }
+     ]
+    },
+    "lines": [
+     {
+      "episode": 0,
+      "scene": 0,
+      "turn": 0,
+      "duration": 1.7,
+      "pause_after": 0.15
+     },
+     {
+      "episode": 0,
+      "scene": 0,
+      "turn": 1,
+      "duration": 2.4,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 1,
+      "turn": 2,
+      "duration": 3.1,
+      "pause_after": 0.15
+     },
+     {
+      "episode": 0,
+      "scene": 3,
+      "turn": 3,
+      "duration": 0.9,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 3,
+      "turn": 4,
+      "duration": 1.2,
+      "pause_after": 0.15
+     },
+     {
+      "episode": 0,
+      "scene": 3,
+      "turn": 5,
+      "duration": 2.2,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 5,
+      "turn": 6,
+      "duration": 4.6,
+      "pause_after": 0.15
+     }
+    ],
+    "minimum": 60
+   },
+   "report": [
+    {
+     "seconds": 60.08,
+     "speech_seconds": 16.1,
+     "speech_share": 0.268,
+     "longest_speech_gap": 20.34,
+     "target_seconds": 60.0,
+     "minimum_met": true,
+     "timing_policy": 3,
+     "fps": 25,
+     "talk_windows": 8
+    }
+   ],
+   "scenes": [
+    {
+     "seconds": 4,
+     "render_seconds": 5.68,
+     "timeline_start": 0.0,
+     "action_seconds": 1.58
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 4.48,
+     "timeline_start": 5.68,
+     "action_seconds": 1.38
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 18.96,
+     "timeline_start": 10.16,
+     "action_seconds": 18.96
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 6.0,
+     "timeline_start": 29.12,
+     "action_seconds": 1.7
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 18.96,
+     "timeline_start": 35.12,
+     "action_seconds": 18.96
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 6.0,
+     "timeline_start": 54.08,
+     "action_seconds": 1.4
+    }
+   ],
+   "lines": [
+    {
+     "episode": 0,
+     "scene": 0,
+     "turn": 0,
+     "duration": 1.7,
+     "pause_after": 0.15,
+     "offset": 0.08,
+     "timeline_start": 0.08
+    },
+    {
+     "episode": 0,
+     "scene": 0,
+     "turn": 1,
+     "duration": 2.4,
+     "pause_after": 0.18,
+     "offset": 1.93,
+     "timeline_start": 1.93
+    },
+    {
+     "episode": 0,
+     "scene": 1,
+     "turn": 2,
+     "duration": 3.1,
+     "pause_after": 0.15,
+     "offset": 0.08,
+     "timeline_start": 5.76
+    },
+    {
+     "episode": 0,
+     "scene": 3,
+     "turn": 3,
+     "duration": 0.9,
+     "pause_after": 0.18,
+     "offset": 0.08,
+     "timeline_start": 29.2
+    },
+    {
+     "episode": 0,
+     "scene": 3,
+     "turn": 4,
+     "duration": 1.2,
+     "pause_after": 0.15,
+     "offset": 1.16,
+     "timeline_start": 30.28
+    },
+    {
+     "episode": 0,
+     "scene": 3,
+     "turn": 5,
+     "duration": 2.2,
+     "pause_after": 0.18,
+     "offset": 2.51,
+     "timeline_start": 31.63
+    },
+    {
+     "episode": 0,
+     "scene": 5,
+     "turn": 6,
+     "duration": 4.6,
+     "pause_after": 0.15,
+     "offset": 0.08,
+     "timeline_start": 54.16
+    }
+   ]
+  },
+  {
+   "input": {
+    "episode": {
+     "dialogue_mode": "rich",
+     "scenes": [
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      },
+      {
+       "seconds": 4
+      }
+     ]
+    },
+    "lines": [
+     {
+      "episode": 0,
+      "scene": 0,
+      "turn": 0,
+      "duration": 1.7,
+      "pause_after": 0.15
+     },
+     {
+      "episode": 0,
+      "scene": 0,
+      "turn": 1,
+      "duration": 2.4,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 1,
+      "turn": 2,
+      "duration": 3.1,
+      "pause_after": 0.15
+     },
+     {
+      "episode": 0,
+      "scene": 3,
+      "turn": 3,
+      "duration": 0.9,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 3,
+      "turn": 4,
+      "duration": 1.2,
+      "pause_after": 0.15
+     },
+     {
+      "episode": 0,
+      "scene": 3,
+      "turn": 5,
+      "duration": 2.2,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 5,
+      "turn": 6,
+      "duration": 4.6,
+      "pause_after": 0.15
+     }
+    ],
+    "minimum": 30
+   },
+   "report": [
+    {
+     "seconds": 30.08,
+     "speech_seconds": 16.1,
+     "speech_share": 0.535,
+     "longest_speech_gap": 5.34,
+     "target_seconds": 30.0,
+     "minimum_met": true,
+     "timing_policy": 3,
+     "fps": 25,
+     "talk_windows": 8
+    }
+   ],
+   "scenes": [
+    {
+     "seconds": 4,
+     "render_seconds": 5.68,
+     "timeline_start": 0.0,
+     "action_seconds": 1.58
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 4.48,
+     "timeline_start": 5.68,
+     "action_seconds": 1.38
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 3.96,
+     "timeline_start": 10.16,
+     "action_seconds": 3.96
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 6.0,
+     "timeline_start": 14.12,
+     "action_seconds": 1.7
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 3.96,
+     "timeline_start": 20.12,
+     "action_seconds": 3.96
+    },
+    {
+     "seconds": 4,
+     "render_seconds": 6.0,
+     "timeline_start": 24.08,
+     "action_seconds": 1.4
+    }
+   ],
+   "lines": [
+    {
+     "episode": 0,
+     "scene": 0,
+     "turn": 0,
+     "duration": 1.7,
+     "pause_after": 0.15,
+     "offset": 0.08,
+     "timeline_start": 0.08
+    },
+    {
+     "episode": 0,
+     "scene": 0,
+     "turn": 1,
+     "duration": 2.4,
+     "pause_after": 0.18,
+     "offset": 1.93,
+     "timeline_start": 1.93
+    },
+    {
+     "episode": 0,
+     "scene": 1,
+     "turn": 2,
+     "duration": 3.1,
+     "pause_after": 0.15,
+     "offset": 0.08,
+     "timeline_start": 5.76
+    },
+    {
+     "episode": 0,
+     "scene": 3,
+     "turn": 3,
+     "duration": 0.9,
+     "pause_after": 0.18,
+     "offset": 0.08,
+     "timeline_start": 14.2
+    },
+    {
+     "episode": 0,
+     "scene": 3,
+     "turn": 4,
+     "duration": 1.2,
+     "pause_after": 0.15,
+     "offset": 1.16,
+     "timeline_start": 15.28
+    },
+    {
+     "episode": 0,
+     "scene": 3,
+     "turn": 5,
+     "duration": 2.2,
+     "pause_after": 0.18,
+     "offset": 2.51,
+     "timeline_start": 16.63
+    },
+    {
+     "episode": 0,
+     "scene": 5,
+     "turn": 6,
+     "duration": 4.6,
+     "pause_after": 0.15,
+     "offset": 0.08,
+     "timeline_start": 24.16
+    }
+   ]
+  },
+  {
+   "input": {
+    "episode": {
+     "scenes": [
+      {
+       "seconds": 5
+      },
+      {
+       "seconds": 3
+      },
+      {
+       "seconds": 6
+      }
+     ]
+    },
+    "lines": [
+     {
+      "episode": 0,
+      "scene": 0,
+      "turn": 0,
+      "duration": 2.0,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 2,
+      "turn": 1,
+      "duration": 3.3,
+      "pause_after": 0.2
+     }
+    ],
+    "minimum": 20
+   },
+   "report": [
+    {
+     "seconds": 20.08,
+     "speech_seconds": 5.3,
+     "speech_share": 0.264,
+     "longest_speech_gap": 13.32,
+     "target_seconds": 20.0,
+     "minimum_met": true,
+     "timing_policy": 3,
+     "fps": 25,
+     "talk_windows": 3
+    }
+   ],
+   "scenes": [
+    {
+     "seconds": 5,
+     "render_seconds": 3.12,
+     "timeline_start": 0.0,
+     "action_seconds": 1.12
+    },
+    {
+     "seconds": 3,
+     "render_seconds": 12.2,
+     "timeline_start": 3.12,
+     "action_seconds": 12.2
+    },
+    {
+     "seconds": 6,
+     "render_seconds": 4.76,
+     "timeline_start": 15.32,
+     "action_seconds": 1.46
+    }
+   ],
+   "lines": [
+    {
+     "episode": 0,
+     "scene": 0,
+     "turn": 0,
+     "duration": 2.0,
+     "pause_after": 0.18,
+     "offset": 0.08,
+     "timeline_start": 0.08
+    },
+    {
+     "episode": 0,
+     "scene": 2,
+     "turn": 1,
+     "duration": 3.3,
+     "pause_after": 0.2,
+     "offset": 0.08,
+     "timeline_start": 15.4
+    }
+   ]
+  },
+  {
+   "input": {
+    "episode": {
+     "scenes": [
+      {
+       "seconds": 5
+      },
+      {
+       "seconds": 3
+      },
+      {
+       "seconds": 6
+      }
+     ]
+    },
+    "lines": [
+     {
+      "episode": 0,
+      "scene": 0,
+      "turn": 0,
+      "duration": 2.0,
+      "pause_after": 0.18
+     },
+     {
+      "episode": 0,
+      "scene": 2,
+      "turn": 1,
+      "duration": 3.3,
+      "pause_after": 0.2
+     }
+    ],
+    "minimum": null
+   },
+   "report": [
+    {
+     "seconds": 9.2,
+     "speech_seconds": 5.3,
+     "speech_share": 0.576,
+     "longest_speech_gap": 3.44,
+     "target_seconds": 0.0,
+     "minimum_met": true,
+     "timing_policy": 3,
+     "fps": 25,
+     "talk_windows": 3
+    }
+   ],
+   "scenes": [
+    {
+     "seconds": 5,
+     "render_seconds": 2.44,
+     "timeline_start": 0.0,
+     "action_seconds": 0.44
+    },
+    {
+     "seconds": 3,
+     "render_seconds": 3.0,
+     "timeline_start": 2.44,
+     "action_seconds": 3.0
+    },
+    {
+     "seconds": 6,
+     "render_seconds": 3.76,
+     "timeline_start": 5.44,
+     "action_seconds": 0.46
+    }
+   ],
+   "lines": [
+    {
+     "episode": 0,
+     "scene": 0,
+     "turn": 0,
+     "duration": 2.0,
+     "pause_after": 0.18,
+     "offset": 0.08,
+     "timeline_start": 0.08
+    },
+    {
+     "episode": 0,
+     "scene": 2,
+     "turn": 1,
+     "duration": 3.3,
+     "pause_after": 0.2,
+     "offset": 0.08,
+     "timeline_start": 5.52
+    }
+   ]
+  }
+ ],
+ "graphs": {
+  "fast:3.2": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 81,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 576,
+     "height": 1024,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "fast:6.08": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 153,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 576,
+     "height": 1024,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "fast:6.87": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 173,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 576,
+     "height": 1024,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "fast:8.96": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 229,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 576,
+     "height": 1024,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "draft:3.2": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 81,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 480,
+     "height": 832,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "draft:6.08": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 153,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 480,
+     "height": 832,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "draft:6.87": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 173,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 480,
+     "height": 832,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "draft:8.96": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 229,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 2.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ],
+     "lora": [
+      "16",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 480,
+     "height": 832,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 4,
+     "cfg": 1.0,
+     "shift": 2.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   },
+   "16": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "lora",
+     "strength": 1.0,
+     "low_mem_load": false,
+     "merge_loras": true
+    }
+   }
+  },
+  "high:3.2": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 81,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 4.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 720,
+     "height": 1280,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 40,
+     "cfg": 1.0,
+     "shift": 5.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   }
+  },
+  "high:6.08": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 153,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 4.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 720,
+     "height": 1280,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 40,
+     "cfg": 1.0,
+     "shift": 5.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   }
+  },
+  "high:6.87": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 173,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 4.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 720,
+     "height": 1280,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 40,
+     "cfg": 1.0,
+     "shift": 5.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   }
+  },
+  "high:8.96": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "a.png"
+    }
+   },
+   "2": {
+    "class_type": "LoadAudio",
+    "inputs": {
+     "audio": "a.wav"
+    }
+   },
+   "3": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+     "model_name": "vae",
+     "precision": "bf16"
+    }
+   },
+   "4": {
+    "class_type": "MultiTalkModelLoader",
+    "inputs": {
+     "model": "talk"
+    }
+   },
+   "5": {
+    "class_type": "Wav2VecModelLoader",
+    "inputs": {
+     "model": "wav",
+     "base_precision": "fp16",
+     "load_device": "offload_device"
+    }
+   },
+   "6": {
+    "class_type": "MultiTalkWav2VecEmbeds",
+    "inputs": {
+     "wav2vec_model": [
+      "5",
+      0
+     ],
+     "audio_1": [
+      "2",
+      0
+     ],
+     "normalize_loudness": false,
+     "num_frames": 229,
+     "fps": 25.0,
+     "audio_scale": 1.0,
+     "audio_cfg_scale": 4.0,
+     "multi_audio_type": "para",
+     "add_noise_floor": false,
+     "smooth_transients": false
+    }
+   },
+   "7": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+     "clip_name": "vision"
+    }
+   },
+   "8": {
+    "class_type": "WanVideoClipVisionEncode",
+    "inputs": {
+     "clip_vision": [
+      "7",
+      0
+     ],
+     "image_1": [
+      "1",
+      0
+     ],
+     "strength_1": 1.0,
+     "crop": "center",
+     "force_offload": true
+    }
+   },
+   "9": {
+    "class_type": "WanVideoTextEncodeCached",
+    "inputs": {
+     "model_name": "text",
+     "precision": "bf16",
+     "positive_prompt": "p Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.",
+     "negative_prompt": "talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping",
+     "quantization": "disabled",
+     "use_disk_cache": true,
+     "device": "gpu"
+    }
+   },
+   "10": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "model",
+     "base_precision": "bf16",
+     "quantization": "fp8_e4m3fn",
+     "load_device": "offload_device",
+     "attention_mode": "sdpa",
+     "multitalk_model": [
+      "4",
+      0
+     ],
+     "block_swap_args": [
+      "17",
+      0
+     ]
+    }
+   },
+   "11": {
+    "class_type": "WanVideoImageToVideoMultiTalk",
+    "inputs": {
+     "vae": [
+      "3",
+      0
+     ],
+     "width": 720,
+     "height": 1280,
+     "frame_window_size": 81,
+     "motion_frame": 9,
+     "force_offload": true,
+     "colormatch": "disabled",
+     "start_image": [
+      "1",
+      0
+     ],
+     "tiled_vae": true,
+     "clip_embeds": [
+      "8",
+      0
+     ],
+     "mode": "infinitetalk",
+     "output_path": ""
+    }
+   },
+   "12": {
+    "class_type": "CayWanVideoSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "image_embeds": [
+      "11",
+      0
+     ],
+     "text_embeds": [
+      "9",
+      0
+     ],
+     "multitalk_embeds": [
+      "6",
+      0
+     ],
+     "steps": 40,
+     "cfg": 1.0,
+     "shift": 5.0,
+     "seed": 7,
+     "force_offload": true,
+     "scheduler": "euler",
+     "riflex_freq_index": 0,
+     "start_step": 0,
+     "end_step": -1
+    }
+   },
+   "13": {
+    "class_type": "WanVideoPassImagesFromSamples",
+    "inputs": {
+     "samples": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "CreateVideo",
+    "inputs": {
+     "images": [
+      "13",
+      0
+     ],
+     "fps": 25.0
+    }
+   },
+   "15": {
+    "class_type": "SaveVideo",
+    "inputs": {
+     "video": [
+      "14",
+      0
+     ],
+     "filename_prefix": "",
+     "format": "mp4",
+     "codec": "h264"
+    }
+   },
+   "17": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+     "blocks_to_swap": 20,
+     "vace_blocks_to_swap": 0,
+     "offload_img_emb": true,
+     "offload_txt_emb": true,
+     "use_non_blocking": true,
+     "prefetch_blocks": 1
+    }
+   }
+  }
+ },
+ "compat_required": {
+  "cay_compatibility": [
+   [
+    "13.0"
+   ],
+   {
+    "default": "13.0"
+   }
+  ]
+ },
+ "voice": {
+  "design_files": {
+   "Mr. Krabs": {
+    "base": "9f3e2b729bf01595f829eef15380f0d8b48eb9c6a008edf5dac72be0229a46a3.wav",
+    "moods": {
+     "angry": "d678c12fc028e471b884e6ea51df4b86238a17dd3b0a3cde26e9ef24e04c0aaa.wav"
+    }
+   },
+   "Plankton": {
+    "base": "cfa6fb05a394c6e8cdfaa1356398330399ef4892dedc61b8ed9a66e83dd02f50.wav",
+    "moods": {
+     "afraid": "c5516c1023139ff96efb93e9dedae79d95e6f30e221573ea96510ccbf1213278.wav",
+     "quiet": "3aff0de1c1187cc2dbe477d92c5fa759ce6720a4ffce1d4a93bd63828193edc4.wav"
+    }
+   }
+  },
+  "design_calls": [
+   [
+    "design",
+    {
+     "text": "Heute beginnt unsere Geschichte. Ich weiß noch nicht, was uns erwartet. Aber eines ist sicher: Wir halten zusammen. Hör genau zu, dann finden wir den richtigen Weg.",
+     "language": "German",
+     "instruct": "An adult man, resonant mid-low baritone, confident. Native German actor, natural conversational delivery, relaxed breath, varied intonation, never a synthetic announcer or exaggerated imitation. gravelly Character: geizig. Clean dry studio speech, no music, reverb or background noise. Precise consonants, dry smile.",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 650
+    }
+   ],
+   [
+    "design",
+    {
+     "text": "Heute beginnt unsere Geschichte. Ich weiß noch nicht, was uns erwartet. Aber eines ist sicher: Wir halten zusammen. Hör genau zu, dann finden wir den richtigen Weg.",
+     "language": "German",
+     "instruct": "A whimsical cartoon creature, distinctive texture and expressive articulation. Native German actor, natural conversational delivery, relaxed breath, varied intonation, never a synthetic announcer or exaggerated imitation.  Character: listig. Clean dry studio speech, no music, reverb or background noise. Soft consonants, rounded resonance.",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 650
+    }
+   ],
+   [
+    "design",
+    {
+     "text": "Heute beginnt unsere Geschichte. Ich weiß noch nicht, was uns erwartet. Aber eines ist sicher: Wir halten zusammen. Hör genau zu, dann finden wir den richtigen Weg.",
+     "language": "German",
+     "instruct": "An adult man, resonant mid-low baritone, confident. Native German actor, natural conversational delivery, relaxed breath, varied intonation, never a synthetic announcer or exaggerated imitation. gravelly Character: geizig. Clean dry studio speech, no music, reverb or background noise. Precise consonants, dry smile. Acting direction for this take: angry, controlled intensity. Keep the same age, vocal identity and timbre. Do not speak the direction aloud.",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 650
+    }
+   ],
+   [
+    "design",
+    {
+     "text": "Heute beginnt unsere Geschichte. Ich weiß noch nicht, was uns erwartet. Aber eines ist sicher: Wir halten zusammen. Hör genau zu, dann finden wir den richtigen Weg.",
+     "language": "German",
+     "instruct": "A whimsical cartoon creature, distinctive texture and expressive articulation. Native German actor, natural conversational delivery, relaxed breath, varied intonation, never a synthetic announcer or exaggerated imitation.  Character: listig. Clean dry studio speech, no music, reverb or background noise. Soft consonants, rounded resonance. Acting direction for this take: afraid, tense breath. Keep the same age, vocal identity and timbre. Do not speak the direction aloud.",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 650
+    }
+   ],
+   [
+    "design",
+    {
+     "text": "Heute beginnt unsere Geschichte. Ich weiß noch nicht, was uns erwartet. Aber eines ist sicher: Wir halten zusammen. Hör genau zu, dann finden wir den richtigen Weg.",
+     "language": "German",
+     "instruct": "A whimsical cartoon creature, distinctive texture and expressive articulation. Native German actor, natural conversational delivery, relaxed breath, varied intonation, never a synthetic announcer or exaggerated imitation.  Character: listig. Clean dry studio speech, no music, reverb or background noise. Soft consonants, rounded resonance. Acting direction for this take: intimate low whisper. Keep the same age, vocal identity and timbre. Do not speak the direction aloud.",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 650
+    }
+   ]
+  ],
+  "line_files": [
+   "E01_S01_T01_abc_3c21986596f6.wav",
+   "E01_S01_T02_abc_04ecd618c1be.wav",
+   "E01_S01_T03_abc_1819ced91e68.wav",
+   "E01_S01_T04_abc_9b33bc6c775b.wav"
+  ],
+  "clone_calls": [
+   [
+    "clone",
+    {
+     "text": "Wo ist mein Geld geblieben?",
+     "language": "German",
+     "non_streaming_mode": true,
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 155
+    }
+   ],
+   [
+    "clone",
+    {
+     "text": "Ich weiß von nichts, ehrlich!",
+     "language": "German",
+     "non_streaming_mode": true,
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 155
+    }
+   ],
+   [
+    "clone",
+    {
+     "text": "Dann such es eben mit mir.",
+     "language": "German",
+     "non_streaming_mode": true,
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 170
+    }
+   ],
+   [
+    "clone",
+    {
+     "text": "Psst, hier liegt es ja!",
+     "language": "German",
+     "non_streaming_mode": true,
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 155
+    }
+   ]
+  ],
+  "sampling": {
+   "Natürlich": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "wütend": {
+    "exaggeration": 0.55,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "ängstlich": {
+    "exaggeration": 0.55,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "begeistert": {
+    "exaggeration": 0.55,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "erschrocken": {
+    "exaggeration": 0.55,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "aufgeregt": {
+    "exaggeration": 0.55,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "traurig": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "flüsternd": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "drohend": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "schreiend": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "panisch": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "neugierig": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "genervt": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "fröhlich": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "bestimmt": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   },
+   "": {
+    "exaggeration": 0.4,
+    "cfg_weight": 0.5,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "repetition_penalty": 1.2
+   }
+  },
+  "performance_key": {
+   "Natürlich": "natural",
+   "wütend": "angry",
+   "ängstlich": "afraid",
+   "begeistert": "joy",
+   "erschrocken": "afraid",
+   "aufgeregt": "joy",
+   "traurig": "sad",
+   "flüsternd": "quiet",
+   "drohend": "firm",
+   "schreiend": "natural",
+   "panisch": "natural",
+   "neugierig": "natural",
+   "genervt": "natural",
+   "fröhlich": "natural",
+   "bestimmt": "firm",
+   "": "natural"
+  }
+ }
+}
