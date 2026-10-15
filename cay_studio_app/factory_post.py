@@ -66,7 +66,7 @@ class PostProduction:
                 if row['kind']=='export':(work/'.completed').touch()
             else:
                 def mixing():
-                    path=mix(Path(spec['folder']),spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix'))
+                    path=mix(Path(spec['folder']),spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix'),spec.get('edit_policy',17))
                     return {'episode':row['episode'],'file':str(path),'sha256':file_hash(path),'seconds':spec['seconds']}
                 result=await resources.cpu(row['run_id'],'Tonmischung',mixing)
             self.sql("UPDATE factory_post SET status='done',result=?,error=NULL WHERE id=?",(canonical(result),row['id']))

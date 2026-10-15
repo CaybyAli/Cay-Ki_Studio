@@ -16,7 +16,7 @@ from figure_library import Library
 import cast_design
 import screenplay
 import turbo
-from factory_audio import turns
+from factory_audio import turns,edit_spec,scene_kinds
 from factory_timing import plan_seconds, POLICY
 from factory_editor import Editor, image_rounds, active_variants, regenerate
 from studio_quality_policy import settings,segments,scene_segments,motion_direction,motion_direction_v16,RENDER_POLICY
@@ -787,8 +787,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 continue
             spec=[{'clips':[],'seconds':sc['render_seconds'],
                    'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],
-                   'ambience':sc.get('ambience','room'),'sound_cues':sc.get('sound_cues',[])}
-                  for si,sc in enumerate(ep['scenes'])]
+                   'ambience':sc.get('ambience','room'),'sound_cues':sc.get('sound_cues',[]),**kind}
+                  for si,(sc,kind) in enumerate(zip(ep['scenes'],scene_kinds(d,ep['scenes'])))]
             # All lip-sync shots first, then all silent motion shots. render() unloads
             # every model when the family changes; alternating cost a full reload
             # of the 14B models per scene. Scenes are independent (own start image).
@@ -838,7 +838,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     clips.append({'file':clip['output'],'sha256':clip['sha256'],'seconds':duration})
                     spec[si]['clips']=list(clips)
                     self.queue_post(d,f'prepare:{si}:{seg}',ei,{'fps':fps,'smooth':options['smooth'],
-                        'title':ep['title'],'scenes':spec,'_only_part':[si,seg],**part_label(ei,len(d['episodes']))})
+                        'title':ep['title'],'scenes':spec,'_only_part':[si,seg],**part_label(ei,len(d['episodes'])),**edit_spec(d)})
                     start+=duration
                     if seg<count-1:
                         next_image=self.folder(d)/'04_Animation'/('Anschluss_'+clip['sha256'][:20]+'.png')
@@ -856,7 +856,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                   'scenes':spec,'output':str(out),'title':ep['title'],
                   'audio_mix':next((p for p in d.get('previews',[]) if p['episode']==ei),None),
                   'mix':d.get('mix'),'mood':d['plan']['mood'],
-                  'music':{'file':music['path'],'sha256':music['sha256']} if music else None}
+                  'music':{'file':music['path'],'sha256':music['sha256']} if music else None,**edit_spec(d)}
             self.queue_post(d,'export',ei,spec)
             return
         d['state']='finishing';d['phase']='CPU: Schnitt, Ton und Export · GPU für andere Aufträge frei';self.save(d)

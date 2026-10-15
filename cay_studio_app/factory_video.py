@@ -94,9 +94,47 @@ def stamp(seconds):
     cs=round(seconds*100);h,cs=divmod(cs,360000);m,cs=divmod(cs,6000);s,cs=divmod(cs,100)
     return f'{h}:{m:02}:{s:02}.{cs:02}'
 
+EDIT_POLICY=18   # d['edit_policy'] from which the export has 0.18 captions, camera moves and sound bed
+CAPTION_WORDS=4  # TikTok-style captions: 2-4 words at a time (measured in Cay's templates)
+CAPTION_STYLE='Style: Caption,DejaVu Sans,78,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,-1,0,0,0,100,100,1,0,1,6,3,2,140,180,430,1'
+ZOOM_UPSCALE='4320:7680'  # zoompan rounds to whole input pixels: at 4x the rest jitter is ~0.05 px (2x: ~0.27 px)
+
+def caption_chunks(text,start,duration,limit=CAPTION_WORDS):
+    """Split one spoken line into 2-4 word captions, timed by their share of characters.
+    No word timings exist (TTS gives one duration per line), so there is no karaoke highlight."""
+    words=text.split();chunks=[];current=[]
+    for word in words:
+        current.append(word)
+        if len(current)>=limit or (word[-1] in ',.;:!?…–—' and len(current)>=2):chunks.append(current);current=[]
+    if current:chunks.append(current)
+    # A short last word ("ja", "fünf") never stands alone: join the chunk before or borrow its last
+    # word. After punctuation a single word may stand ("..., Patrick?"), it is its own beat.
+    if len(chunks)>1 and len(chunks[-1])==1 and chunks[-2][-1][-1] not in ',.;:!?…–—':
+        if len(chunks[-2])<limit:chunks[-2]+=chunks.pop()
+        elif len(chunks[-1][0])<=5:chunks[-1].insert(0,chunks[-2].pop())
+    weights=[sum(len(w) for w in c)+len(c) for c in chunks];total=sum(weights) or 1;out=[];t=start
+    for chunk,weight in zip(chunks,weights):
+        end=t+duration*weight/total;out.append((t,end,' '.join(chunk).upper()));t=end
+    return out
+
+def camera(scene,t0,fps):
+    """Directed camera on the CPU (0.18): no GPU time, no lip-sync risk. A talking shot of 4.5 s or
+    more pushes in slowly (1.00 -> 1.06), a second line punches in (x1.12), a reaction pushes in
+    gently (1.00 -> 1.04). Silent action shots keep the motion Wan rendered. Returns a zoompan
+    expression over the whole shot (t0 = start of this clip within the shot) or None."""
+    kind=scene.get('kind','line');lines=scene.get('lines') or [];T=float(scene['seconds'])
+    t=f'(on/{fps}+{t0:.6f})'
+    if kind=='reaction':return f'1+0.04*{t}/{T:.6f}'
+    if kind in ('action','establish') or not lines:return None
+    push=f'(1+0.06*{t}/{T:.6f})' if T>=4.5 else '1'
+    if len(lines)<2:return None if push=='1' else push
+    return f'{push}*if(gte({t}\\,{float(lines[1].get("offset",0)):.6f})\\,1.12\\,1)'
+
 def prepare(spec):
     """Encode available sections while the GPU produces subsequent animation."""
     folder=Path(spec['folder']);folder.mkdir(parents=True,exist_ok=True);fps=spec['fps'];parts=[];cursor=0;events=[]
+    look=int(spec.get('edit_policy',17))>=EDIT_POLICY
+    cover=spec.get('cover');cover_first=bool(cover) and (cover.get('position') if isinstance(cover,dict) else cover)=='start'
     timings={'encode_seconds':0.,'mux_seconds':0.,'cached_parts':0,'lossy_passes':1,'encoder':'libx264','cpu_options':cpu_options()}
     for scene in spec['scenes']:
         if not spec.get('_only_part') and abs(sum(c['seconds'] for c in scene['clips'])-scene['seconds'])>1e-5:raise RuntimeError('Schnittabschnitte passen nicht zur Szenendauer.')
@@ -104,7 +142,10 @@ def prepare(spec):
             if file_hash(line['file'])!=line['sha256']:raise RuntimeError('Eine freigegebene Sprachspur wurde verändert.')
             start=cursor+line.get('offset',.15)
             text=line['text_de'].replace('\\','／').replace('{','(').replace('}',')').replace('\n',' ')
-            events.append(f'Dialogue: 0,{stamp(start)},{stamp(start+line["duration"])},Default,,0,0,0,,{text}')
+            if look:
+                # Higher (72-78 % of the frame, clear of TikTok's buttons and caption), bold, short chunks.
+                for a,b,chunk in caption_chunks(text,start,float(line['duration'])):events.append(f'Dialogue: 0,{stamp(a)},{stamp(b)},Caption,,0,0,0,,{chunk}')
+            else:events.append(f'Dialogue: 0,{stamp(start)},{stamp(start+line["duration"])},Default,,0,0,0,,{text}')
         cursor+=scene['seconds']
     ass='''[Script Info]
 ScriptType: v4.00+
@@ -118,14 +159,17 @@ Style: Default,DejaVu Sans,52,&H00FFFFFF,&H00FFFFFF,&H00101010,&H50000000,-1,0,0
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 '''
-    if spec.get('part_label'):
+    if look:ass=ass.replace('\n[Events]','\n'+CAPTION_STYLE+'\n[Events]',1)
+    # With the title card first, the card shows the part ("Teil 2"); no second label on top.
+    if spec.get('part_label') and not (look and cover_first):
         # Series: a small top label in the first seconds (e.g. "Teil 3/12").
         events.insert(0,f'Dialogue: 1,{stamp(0)},{stamp(min(2.5,cursor))},Part,,0,0,0,,{spec["part_label"]}')
     (folder/'Untertitel.ass').write_text(ass+'\n'.join(events)+'\n',encoding='utf-8')
     subtitle_hash=file_hash(folder/'Untertitel.ass');scene_offset=0.
     for i,scene in enumerate(spec['scenes']):
-        offset=scene_offset;scene_offset+=scene['seconds']
+        offset=scene_offset;scene_offset+=scene['seconds'];within=0.
         for j,clip in enumerate(scene['clips']):
+            zoom=camera(scene,within,fps) if look else None;within+=clip['seconds']
             if spec.get('_only_part') is not None and spec['_only_part']!=[i,j]:
                 offset+=round(clip['seconds']*fps)/fps;continue
             source=Path(clip['file'])
@@ -138,6 +182,8 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
             filtering=('setpts=PTS-STARTPTS,'+cadence(fps,spec.get('smooth',False),native_fps)+
                 f',trim=end_frame={expected_frames},setpts=PTS-STARTPTS,'+
                 'scale=1080:1920:flags=lanczos:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,'+
+                # Zoom before the subtitles, so captions never move; centred a bit above the middle (faces).
+                (f"scale={ZOOM_UPSCALE}:flags=bicubic,zoompan=z='{zoom}':x='(iw-iw/zoom)/2':y='(ih-ih/zoom)*0.42':d=1:s=1080x1920:fps={fps},setsar=1," if zoom else '')+
                 f'setpts=PTS+{offset:.9f}/TB,subtitles=Untertitel.ass,setpts=PTS-STARTPTS')
             key=hashlib.sha256(json.dumps([9,clip['sha256'],filtering,subtitle_hash,expected_frames,'libx264-medium-crf17'],sort_keys=True).encode()).hexdigest()
             name=f'Part_{i:03}_{j:03}_{key[:16]}.mp4';dest=folder/name;metadata=dest.with_suffix('.json')
@@ -173,7 +219,7 @@ def finish(spec):
         if file_hash(audio)!=preview['sha256']:raise RuntimeError('Freigegebene Tonmischung verändert.')
     else:
         from factory_audio import mix
-        audio=Path(mix(folder/'Ton',spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix')))
+        audio=Path(mix(folder/'Ton',spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix'),spec.get('edit_policy',17)))
     if abs(float(probe(audio)['format']['duration'])-cursor)>.05:raise RuntimeError('Ton und Bild haben unterschiedliche Laufzeiten.')
     args=['-f','concat','-safe','1','-i','Clips.txt','-i',str(audio)]
     out=Path(spec['output']);out.parent.mkdir(parents=True,exist_ok=True);tmp=folder/('Export.'+uuid.uuid4().hex+'.partial.mp4');mux_start=time.monotonic()

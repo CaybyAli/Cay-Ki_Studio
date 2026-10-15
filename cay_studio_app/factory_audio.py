@@ -33,10 +33,42 @@ def synth_music(path,seconds,mood,variant=0,tempo=1):
     fade=int(RATE*.5)
     for i in range(min(fade,n)):data[i]*=i/fade;data[n-i-1]*=i/fade
     write_wav(path,data)
-def synth_environment(path,scenes,level=1):
+def edit_spec(d):
+    """0.18 export look (captions, camera, sound bed) only for projects created with it: specs of older
+    projects stay byte-identical, so their queued mixes and cached parts keep their keys."""
+    return {'edit_policy':d['edit_policy']} if d.get('edit_policy',17)>=18 else {}
+def scene_kinds(d,scenes):
+    return [{'kind':sc.get('kind','line')} if edit_spec(d) else {} for sc in scenes]
+# 0.18 sound bed: the room tone of 0.17 measured about -58 dBFS in Cay's film (inaudible, silent
+# shots felt dead); his templates keep a continuous bed about 25 dB under the dialogue.
+BED_POLICY=18
+BED_RMS=.0105       # every scene's ambience at one level (room tone was ~19 dB under wind): with the
+                    # default ambience level 0.6 this lands near -40 dBFS RMS after the final loudness pass
+def bed_cues(scenes):
+    """A short whoosh opens each silent action shot that has no cue of its own."""
+    return [dict(s,sound_cues=s.get('sound_cues') or ([{'kind':'whoosh','position':0}] if s.get('kind')=='action' else [])) for s in scenes]
+def synth_environment(path,scenes,level=1,bed=False):
     data=array('f',[0])*math.ceil(sum(s['seconds'] for s in scenes)*RATE);rng=random.Random(173);cursor=0
     for s in scenes:
         first=round(cursor*RATE);end=min(len(data),round((cursor+s['seconds'])*RATE));kind=s.get('ambience','room');smooth=0.
+        if bed and end>first:
+            # 0.18: synthesise this scene at unit level, then bring it to BED_RMS (fades stay).
+            part=[0.]*(end-first);sm=0.;raw=[]
+            for i in range(first,end):
+                t=(i-first)/RATE;sm=.96*sm+.04*rng.uniform(-1,1)
+                v=(.005*sm if kind=='room' else .045*sm*(.65+.35*math.sin(t*.8)) if kind=='wind' else .016*rng.uniform(-1,1)+.025*sm if kind=='rain'
+                   else .02*sm+(.009*math.sin(math.tau*(1600+150*math.sin(t*7))*t) if t%3<.25 else 0) if kind=='forest'
+                   else .02*sm+.009*math.sin(math.tau*65*t)+(.03*rng.uniform(-1,1) if t%.65<.02 else 0) if kind=='train' else 0.)
+                raw.append(v)
+            rms=math.sqrt(sum(v*v for v in raw)/len(raw)) if raw else 0
+            gain=BED_RMS*level/rms if rms>1e-9 else 0
+            # Continuous across cuts: fade only where the sound of the place changes (and at both ends).
+            index=scenes.index(s);same_before=index>0 and scenes[index-1].get('ambience','room')==kind
+            same_after=index+1<len(scenes) and scenes[index+1].get('ambience','room')==kind
+            for j,v in enumerate(raw):
+                t=j/RATE;fade=min(1,1 if same_before else t/.15,1 if same_after else (s['seconds']-t)/.15)
+                data[first+j]+=v*gain*max(0,fade)
+            cursor+=s['seconds'];continue
         for i in range(first,end):
             t=(i-first)/RATE;smooth=.96*smooth+.04*rng.uniform(-1,1);v=0.
             if kind=='room':v=.005*smooth
@@ -81,7 +113,8 @@ def duck_music(source,target,intervals):
         for i in range(max(0,int((start-attack)*RATE)),min(len(data),math.ceil((end+release)*RATE))):
             t=i/RATE;g=(1-(1-low)*(t-start+attack)/attack) if t<start else (low if t<=end else low+(1-low)*(t-end)/release);envelope[i]=min(envelope[i],max(low,min(1,g)))
     write_wav(target,(v/32768*g for v,g in zip(data,envelope)))
-def mix(folder,scenes,mood,music=None,settings=None):
+def mix(folder,scenes,mood,music=None,settings=None,policy=17):
+    bed=int(policy)>=BED_POLICY
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);settings={'music_mode':'uploaded' if music else 'auto','music_level':1.,'effects_level':1.,'ambience_level':1.,**(settings or {})};duration=sum(s['seconds'] for s in scenes);cursor=0.;args=[];filters=[];labels=[];index=0;intervals=[]
     for s in scenes:
         for l in s.get('lines') or ([s['line']] if s.get('line') else []):
@@ -133,7 +166,7 @@ def mix(folder,scenes,mood,music=None,settings=None):
     else:path=folder/'Musik.wav';synth_music(path,duration,mood,settings.get('music_variant',0),settings.get('tempo',1));args=['-i',str(path)]
     gain=0 if settings['music_mode']=='off' else settings['music_level'];normalized=folder/'Musik_Normalisiert.wav';ducked=folder/'Musik_Dialogabsenkung.wav'
     ff([*args,'-af',exact('loudnorm=I=-24:TP=-5:LRA=7,aresample=24000',duration)+f',volume={gain},afade=t=out:st={max(0,duration-.5)}:d=0.5','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized],folder);duck_music(normalized,ducked,intervals)
-    ambience=folder/'Umgebung.wav';effects=folder/'Effekte.wav';synth_environment(ambience,scenes,settings['ambience_level']);synth_effects(effects,scenes,settings['effects_level'])
+    ambience=folder/'Umgebung.wav';effects=folder/'Effekte.wav';synth_environment(ambience,scenes,settings['ambience_level'],bed);synth_effects(effects,bed_cues(scenes) if bed else scenes,settings['effects_level'])
     args=['-i',str(dialogue),'-i',str(ducked),'-i',str(ambience),'-i',str(effects)];graph=f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,alimiter=limit=0.94:level=0:latency=1,atrim=duration={duration},'+exact(f'loudnorm=I={TARGET_LUFS}:TP=-1.5:LRA=11,aresample=48000',duration)+'[sound]';target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav'
     ff([*args,'-filter_complex',graph,'-map','[sound]','-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
     with wave.open(str(temp)) as w:
