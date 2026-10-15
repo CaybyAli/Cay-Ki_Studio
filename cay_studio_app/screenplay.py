@@ -29,12 +29,18 @@ EMOTIONS = ('ruhig', 'fröhlich', 'begeistert', 'wütend', 'schreiend', 'ängstl
 AMBIENCE = ('room', 'wind', 'forest', 'rain', 'train', 'none')
 
 
-def budget(duration):
-    """Word band, turns and silent action lines for one film of `duration` seconds."""
+MAX_SHOTS = 44
+
+
+def budget(duration, speakers=2):
+    """Word band, turns and silent action lines for one film of `duration` seconds.
+    A single figure has no speaker changes: turns are not required then."""
     target = round(duration * WORDS_PER_SECOND)
+    actions = max(2, round(duration / 12))
     return {'words': target, 'min_words': math.floor(target * .85), 'max_words': math.ceil(target * 1.3),
-            'min_turns': max(4, round(duration / 5)), 'max_turns': max(8, round(duration / 2.2)),
-            'min_actions': 1 if duration < 40 else 2, 'max_actions': max(2, round(duration / 12))}
+            'min_turns': max(4, round(duration / 5)) if speakers > 1 else 0,
+            'max_turns': min(max(8, round(duration / 2.2)), MAX_SHOTS - actions - 4) if speakers > 1 else MAX_SHOTS,
+            'min_actions': 1 if duration < 40 else 2, 'max_actions': actions}
 
 
 FORMAT = '''Format, exakt so, eine Angabe pro Zeile:
@@ -95,8 +101,12 @@ VISUAL_INSTRUCTION = ('Du bist Kameramann und Bildregisseur. Für jede Einstellu
 
 
 def _resolve(raw, cast):
+    raw = re.sub(r'[*_`]', '', raw).strip()
     name = resolve_name(raw, cast)
     if name in cast: return name
+    plain = lambda x: re.sub(r'[^\w\s]', '', name_key(x)).strip()
+    exact = [c for c in cast if plain(c) == plain(raw)]
+    if len(exact) == 1: return exact[0]
     key = name_key(raw)
     # "KRABS" or "Krabs" for "Mr. Krabs": a unique name part of four or more letters.
     parts = [c for c in cast if any(len(p) >= 4 and p == key for p in name_key(c).replace('.', ' ').split())]
@@ -111,7 +121,7 @@ def parse(text, cast):
     """Return (title, beats, lines, problems). Never guesses an unknown speaker."""
     title = ''; beats = []; lines = []; problems = []
     for number, raw in enumerate(str(text).replace('\r', '').split('\n'), 1):
-        row = raw.strip().strip('*').strip()
+        row = re.sub(r'\*\*|__|`', '', raw).strip().strip('*').strip()
         if not row or row.startswith('```'): continue
         upper = row.upper()
         if upper.startswith('TITEL:'): title = row.split(':', 1)[1].strip()[:100]; continue
@@ -144,13 +154,14 @@ def words(text):
 def telegram(text):
     """'Geld. Jetzt. Sofort.' / 'Dein Geld. Mein Tisch.': only full stops between one- or two-word fragments.
     'Halt! Bleib stehen!' stays allowed: exclamations are natural speech."""
-    parts = [p for p in str(text).split('.') if p.strip()]
+    text = re.sub(r'\b(Mr|Mrs|Ms|Dr|St|Prof|Hr|Fr|Nr|bzw|ca|z\. ?B|u\. ?a)\.', r'\1', str(text))
+    parts = [p for p in text.split('.') if p.strip()]
     return len(parts) >= 2 and all(words(p) <= 2 for p in parts) and not re.search(r'[!?]', text)
 
 
 def check(title, beats, lines, problems, cast, duration):
     """Concrete, countable problems the planner gets back. Empty list = usable."""
-    b = budget(duration); errors = list(problems)
+    b = budget(duration, len(cast)); errors = list(problems)
     spoken = [l for l in lines if l['kind'] == 'line']; actions = [l for l in lines if l['kind'] == 'action']
     total = sum(words(l['text']) for l in spoken)
     if total < b['min_words']: errors.append(f'Zu wenig Dialog: {total} Wörter, nötig {b["min_words"]} bis {b["max_words"]} (Ziel {b["words"]}). Mehr Wortwechsel, längere natürliche Sätze.')
@@ -167,6 +178,8 @@ def check(title, beats, lines, problems, cast, duration):
     tiny = sum(1 for l in spoken if words(l['text']) <= 2)
     if spoken and tiny > max(2, len(spoken) // 4): errors.append(f'{tiny} Zeilen haben höchstens zwei Wörter. Höchstens jede vierte Zeile darf ein kurzer Ausruf sein.')
     if cast and len({l['speaker'] for l in spoken}) < min(2, len(cast)): errors.append('Mindestens zwei Figuren müssen miteinander sprechen.')
+    count = len(ensure_action(shots(title, beats, lines, cast), duration))
+    if count > MAX_SHOTS: errors.append(f'Zu viele Einstellungen: {count}, höchstens {MAX_SHOTS}. Aufeinander folgende Zeilen derselben Figur zusammenfassen, weniger AKTION-Zeilen.')
     return errors
 
 
@@ -181,7 +194,7 @@ def shots(title, beats, lines, cast):
     for line in lines:
         beat = beats[line['beat']] if line['beat'] < len(beats) else {'place': 'Ort', 'what': ''}
         if line['kind'] == 'action':
-            visible = [c for c in cast if re.search(r'(?<!\w)' + re.escape(name_key(c).split(' ')[-1]) + r'(?!\w)', name_key(line['text']))][:2]
+            visible = [c for c in cast if _mentions(line['text'], [c])][:2]
             result.append({'kind': 'action', 'beat': line['beat'], 'place': beat['place'], 'what': line['text'],
                            'visible': visible or ([result[-1]['visible'][0]] if result and result[-1]['visible'] else cast[:1]), 'lines': []})
             continue
@@ -195,11 +208,40 @@ def shots(title, beats, lines, cast):
     return result
 
 
-def _mentions(text, names):
+def name_patterns(names, protected=()):
+    """Regexes for figure names: the full name as written or in capitals (with possessive 's / German
+    genitive s); name parts of 4+ letters only capitalised as written, so 'sandy seabed'
+    or 'stars' stay, and never a part that also belongs to a visible figure
+    ('Captain' of Captain Smee stays when only Captain Hook is off-screen)."""
+    keep = {q.lower() for v in protected for q in re.split(r'[\s.]+', v) if q}
+    out = []
     for name in names:
-        for part in {name} | {p for p in re.split(r'[\s.]+', name) if len(p) >= 4}:
-            if re.search(r"(?i)(?<!\w)" + re.escape(part) + r"(?:'s|s'|s)?(?!\w)", text): return True
-    return False
+        # As written or in capitals; 'Sandy' must not catch 'sandy seabed'.
+        out.append(re.compile(r"(?<!\w)(?:" + re.escape(name) + '|' + re.escape(name.upper()) + r")(?:'s|s)?(?!\w)"))
+        for part in {q for q in re.split(r'[\s.]+', name) if len(q) >= 4 and q != name and q.lower() not in keep}:
+            out.append(re.compile(r"(?<!\w)" + re.escape(part) + r"(?:'s|s)?(?!\w)"))
+    return out
+
+
+def _mentions(text, names, protected=()):
+    return any(p.search(str(text)) for p in name_patterns(names, protected))
+
+
+def sanitize(text, visible, cast):
+    """Image and motion text may only describe figures in the frame.
+
+    A clause naming someone off-screen is dropped ("SpongeBob at the table,
+    Mr. Krabs looming over him" -> "SpongeBob at the table"): the image model
+    draws every figure it reads about, without a reference, so as a wrong or
+    blended figure. Leftover names are removed as a last resort."""
+    hidden = [n for n in cast if n not in visible]
+    clauses = re.split(r'(?:,|;|\bwhile\b|\bas\b|\bwhereas\b|\bwährend\b|\s-\s)', str(text or ''))
+    kept = [c.strip() for c in clauses if c.strip() and not _mentions(c, hidden, visible)]
+    out = ', '.join(kept)
+    for pattern in name_patterns(hidden, visible):
+        out = pattern.sub('', out)
+    out = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu)\s*(?=[,.]|$)', '', out)
+    return re.sub(r'\s{2,}', ' ', re.sub(r'\s+,', ',', out)).strip(' ,')
 
 
 def ensure_action(cut, duration):
@@ -212,24 +254,6 @@ def ensure_action(cut, duration):
     reaction = {'kind': 'action', 'beat': before['beat'], 'place': before['place'], 'visible': who, 'lines': [],
                 'what': f'{who[0] if who else "Die Figur"} reagiert stumm mit einer großen, deutlichen Geste.'}
     return cut[:middle] + [reaction] + cut[middle:]
-
-
-def sanitize(text, visible, cast):
-    """Image and motion text may only describe figures in the frame.
-
-    A clause naming someone off-screen is dropped ("SpongeBob at the table,
-    Mr. Krabs looming over him" -> "SpongeBob at the table"): the image model
-    draws every figure it reads about, without a reference, so as a wrong or
-    blended figure. Leftover names are replaced as a last resort."""
-    hidden = [n for n in cast if n not in visible]
-    clauses = re.split(r'(?:,|;|\bwhile\b|\bas\b|\bwhereas\b|\bwährend\b|\bwhile\b|\s-\s)', str(text or ''))
-    kept = [c.strip() for c in clauses if c.strip() and not _mentions(c, hidden)]
-    out = ', '.join(kept)
-    for name in hidden:
-        for part in sorted({name} | {p for p in re.split(r'[\s.]+', name) if len(p) >= 4}, key=len, reverse=True):
-            out = re.sub(r"(?i)(?<!\w)" + re.escape(part) + r"(?:'s|s'|s)?(?!\w)", '', out)
-    out = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu)\s*(?=[,.]|$)', '', out)
-    return re.sub(r'\s{2,}', ' ', re.sub(r'\s+,', ',', out)).strip(' ,')
 
 
 def beat_label(index, count, cliffhanger):
@@ -292,7 +316,7 @@ def render_text(title, beats, lines):
 
 async def write_episode(factory, d, index, outline, source, continuity, spine):
     """Screenplay -> check -> doctor -> shots -> visuals. Stored drafts survive a restart."""
-    idea = d['idea']; cast = [p['name'] for p in d['plan']['cast']]; b = budget(idea['duration'])
+    idea = d['idea']; cast = [p['name'] for p in d['plan']['cast']]; b = budget(idea['duration'], len(cast))
     store = d.setdefault('screenplays', {}).setdefault(str(index), {})
     context = {'idee_des_nutzers': source, 'serie': {k: v for k, v in d['plan'].items() if k not in ('episodes',)},
                'folge': index + 1, 'folgen_gesamt': idea['episodes'], 'outline': outline, 'ziel_des_films': spine,
@@ -305,7 +329,8 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
               'Ist fortsetzung.end_with gesetzt, wird die Hauptfrage vorher aufgelöst und der letzte Abschnitt zeigt genau diesen Cliffhanger. ')
     instruction = ('Du bist Head-Autor für virale deutsche Kurzfilme auf TikTok und YouTube Shorts. Schreibe das komplette Drehbuch dieser Folge '
                    f'als ein durchgehendes Gespräch für etwa {idea["duration"]} Sekunden. Gesamt {b["min_words"]} bis {b["max_words"]} gesprochene Wörter '
-                   f'(Ziel {b["words"]}), {b["min_turns"]} bis {b["max_turns"]} Sprecherwechsel, {b["min_actions"]} bis {b["max_actions"]} AKTION-Zeilen. '
+                   f'(Ziel {b["words"]}), ' + (f'{b["min_turns"]} bis {b["max_turns"]} Sprecherwechsel, ' if len(cast) > 1 else 'ein Monolog der einzigen Figur, ')
+                   + f'{b["min_actions"]} bis {b["max_actions"]} AKTION-Zeilen, höchstens {MAX_SHOTS} Einstellungen. '
                    + series + RULES + '\n' + FORMAT + '\n' + EXAMPLE)
     def problems(text): return check(*parse(text, cast), cast, idea['duration'])
     if not store.get('final'):
@@ -329,20 +354,29 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
     title, beats, lines, problems = parse(store['final'], cast)
     remaining = check(title, beats, lines, problems, cast, idea['duration'])
     cut = ensure_action(shots(title, beats, lines, cast), idea['duration'])
-    if not cut: raise RuntimeError('Das Drehbuch enthält keine verwertbaren Zeilen. „Neu planen“ schreibt es neu.')
-    if len(cut) > 44: raise RuntimeError(f'Das Drehbuch ergibt {len(cut)} Einstellungen; höchstens 44. „Neu planen“ schreibt es kompakter.')
+    if not cut or len(cut) > MAX_SHOTS:
+        # Unusable: forget it, so "Neu planen" really writes a new one (it used to parse the same text again).
+        d['screenplays'].pop(str(index), None); factory.save(d)
+        raise RuntimeError('Das Drehbuch enthält keine verwertbaren Zeilen.' if not cut else
+                           f'Das Drehbuch ergibt {len(cut)} Einstellungen; höchstens {MAX_SHOTS}.' + ' „Neu planen“ schreibt es neu.')
     if not store.get('visuals'):
         d['phase'] = f'Folge {index + 1}: Bilder und Bewegungen der {len(cut)} Einstellungen beschreiben'; factory.save(d)
         listing = [{'shot': i + 1, 'visible': s['visible'], 'place': s['place'], 'situation': s['what'],
                     'lines': [{'speaker': l['speaker'], 'emotion': l['emotion'], 'text': l['text']} for l in s['lines']]} for i, s in enumerate(cut)]
         try:
-            visuals = await factory.llm(ShotVisuals, VISUAL_INSTRUCTION + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.',
-                                        {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': listing})
-            if sorted(v['shot'] for v in visuals['shots']) != list(range(1, len(cut) + 1)): raise ValueError('Einstellungsnummern passen nicht.')
+            answer = await factory.llm(ShotVisuals, VISUAL_INSTRUCTION + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.',
+                                       {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': listing})
+            # Partial answers are usable: assemble() falls back per missing shot.
+            seen = {}
+            for v in answer['shots']:
+                if 1 <= v['shot'] <= len(cut) and v['shot'] not in seen: seen[v['shot']] = v
+            missing = [n for n in range(1, len(cut) + 1) if n not in seen]
+            if missing: store['visual_error'] = 'Ohne eigene Bildbeschreibung: Einstellung ' + ', '.join(map(str, missing))
+            store['visuals'] = {'shots': list(seen.values())}; factory.save(d)
         except (RuntimeError, ValueError) as error:
-            visuals = {'shots': []}; store['visual_error'] = str(error)[:500]
-        store['visuals'] = visuals; factory.save(d)
-    episode = assemble(title, spine, outline, cut, store['visuals'], d['plan']['cast'], continuity)
+            # Not stored: a resume asks again; this run uses the per-shot fallbacks.
+            store['visual_error'] = str(error)[:500]
+    episode = assemble(title, spine, outline, cut, store.get('visuals') or {'shots': []}, d['plan']['cast'], continuity)
     episode['screenplay'] = store['final']
     stats = {'words': sum(words(l['text']) for l in lines if l['kind'] == 'line'), 'lines': sum(l['kind'] == 'line' for l in lines),
              'actions': sum(l['kind'] == 'action' for l in lines), 'shots': len(cut), 'budget': b}

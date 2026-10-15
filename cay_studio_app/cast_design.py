@@ -30,12 +30,13 @@ def name_parts(name):
     return sorted({name} | {p for p in re.split(r'[\s.]+', name) if len(p) >= 4}, key=len, reverse=True)
 
 
-def strip_names(text, names):
-    """Remove figure names (and their parts, possessives) from free text."""
+def strip_names(text, names, protected=()):
+    """Remove figure names from free text (same matching as screenplay.sanitize:
+    full name in any case, capitalised name parts, never a part of a visible figure)."""
+    from screenplay import name_patterns
     out = str(text or '')
-    for name in names:
-        for part in name_parts(name):
-            out = re.sub(r"(?i)(?<!\w)" + re.escape(part) + r"(?:'s|s'|s)?(?!\w)", '', out)
+    for pattern in name_patterns(names, protected):
+        out = pattern.sub('', out)
     return re.sub(r'\s{2,}', ' ', re.sub(r'\s+([,.;])', r'\1', out)).strip()
 
 
@@ -53,11 +54,11 @@ def own_name(person, cast_names=()):
 
 def identity_prompt(person, style, cast_names=()):
     others = [n for n in cast_names if n != person['name']]
-    who = own_name(person, cast_names)
+    who = strip_names(own_name(person, cast_names), others, [person['name']]) or person['name']
     known = ('The well-known cartoon character exactly as in the original, instantly recognisable, not a look-alike or a new version. '
              if is_known(person) else '')
-    return (f'Character sheet of {who}. Body and look: ' + person['appearance'].strip().rstrip('.') + '. ' + known
-            + 'Rendered as: ' + strip_names(style, others).strip() + ' ' + SHEET)
+    return (f'Character sheet of {who}. Body and look: ' + strip_names(person['appearance'], others, [person['name']]).strip().rstrip('.') + '. ' + known
+            + 'Rendered as: ' + strip_names(style, others, [person['name']]).strip() + ' ' + SHEET)
 
 
 def style_prompt(person, style, cast_names=()):
@@ -65,7 +66,7 @@ def style_prompt(person, style, cast_names=()):
     return (f'Image 1 shows {name}. Redraw exactly this character from image 1: identical face, eyes, mouth, colours, '
             'body shape, size and outfit. From the other images take only the visual style: material, surface texture, '
             'lighting and rendering. Take no person, character, face, body, hair, clothing, text or background from '
-            'the other images. ' + SHEET + ' Style: ' + strip_names(style, others).strip())
+            'the other images. ' + SHEET + ' Style: ' + strip_names(style, others, [name]).strip())
 
 
 def digest(value):
@@ -87,12 +88,12 @@ def scene_prompt(scene, cast, names, style):
     """Positive framing: the reference images carry identity, the text says who is in the picture.
     No 'original' label (it named SpongeBob in every Krabs shot), no other figure names."""
     hidden = [p['name'] for p in cast if p['name'] not in names]
-    prompt = 'One coherent vertical 9:16 film frame, no text or panels. ' + strip_names(style, hidden).strip().rstrip('.') + '. '
+    prompt = 'One coherent vertical 9:16 film frame, no text or panels. ' + strip_names(style, hidden, names).strip().rstrip('.') + '. '
     if len(names) == 1: prompt += f'Medium shot of {names[0]} alone. '
     for i, name in enumerate(names, 1):
         person = next(p for p in cast if p['name'] == name)
         prompt += (f'Reference image {i} is the approved design of {name}: copy {name}\'s face, eyes, mouth, colours, '
-                   f'body shape, size and outfit exactly from reference image {i}. {strip_names(person["appearance"], hidden).rstrip(".")}. ')
+                   f'body shape, size and outfit exactly from reference image {i}. {strip_names(person["appearance"], hidden, names).rstrip(".")}. ')
     if len(names) == 1: prompt += f'{names[0]} is the only character in the whole picture; the background shows only the location and its props. '
     elif not names: prompt += 'Only the location and its props, no characters. '
     else: prompt += f'Only {" and ".join(names)} are in the picture, nobody else. '
@@ -105,7 +106,7 @@ def scene_text(scene, cast):
     from screenplay import sanitize
     names = [p['name'] for p in cast]; visible = scene.get('cast', [])
     picture = sanitize(scene.get('still') or scene.get('action', ''), visible, names)
-    place = strip_names(scene.get('location', ''), [n for n in names if n not in visible])
+    place = strip_names(scene.get('location', ''), [n for n in names if n not in visible], visible)
     framing = sanitize(scene.get('camera', ''), visible, names)
     return ' '.join(x for x in (f'Scene: {picture}.' if picture else '', f'Location: {place}.' if place else '', f'Framing: {framing}.' if framing else ''))
 

@@ -354,7 +354,8 @@ function castStrip(d) {
   if (!cast.length) return '';
   const own = new Set((d.idea.participants || []).filter(p => p.image).map(p => p.name));
   const items = cast.map((p, i) => {
-    const pic = refs[p.name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${p.design_round || 0}" alt="" loading="lazy">` : '<div class="frame-empty">entsteht</div>';
+    // Cache key from the reference itself: an own upload changes the file, not design_round.
+    const pic = refs[p.name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[p.name]).slice(-48))}-${p.design_round || 0}" alt="" loading="lazy">` : '<div class="frame-empty">entsteht</div>';
     const note = own.has(p.name) ? 'Dein Bild' : p.original ? 'Original' : 'Erfunden';
     const open = ['cast_review', 'image_review'].includes(d.state);
     const redo = open ? `${own.has(p.name) ? '' : `<button class="button quiet small" data-action="cast-redo" data-name="${esc(p.name)}">Neu gestalten</button>`}

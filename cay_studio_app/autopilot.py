@@ -16,6 +16,13 @@ AUTO_RETAKES = 2
 
 
 class Autopilot:
+    def prompt_policy_for(self, d):
+        """16 if lip-sync windows of this project were already rendered (they stay cached:
+        the render key is the graph digest), else 17 (0.17 prompts and audio guidance)."""
+        rows = getattr(self, 'rows', None)
+        done = rows and rows("SELECT 1 FROM factory_steps WHERE run_id=? AND status='done' AND step_key LIKE 'video09:%' LIMIT 1", (d.get('id'),))
+        return 16 if done else 17
+
     def autopilot_on(self, d):
         return bool(d.get('idea', {}).get('autopilot'))
 
@@ -50,7 +57,8 @@ class Autopilot:
             self.stop_autopilot(d, ', '.join(problems))
             d['phase'] = 'Autopilot wartet: ' + ', '.join(problems) + '. Bitte Tonvorschau prüfen und selbst freigeben.'
             return True
-        d.update(render_tracking_version=10, render_segments={}, prompt_policy=17, voice_approval='autopilot', state='rendering',
+        d.setdefault('prompt_policy', self.prompt_policy_for(d))
+        d.update(render_tracking_version=10, render_segments={}, voice_approval='autopilot', state='rendering',
                  phase='Autopilot: Ton freigegeben · Animation in der Warteschlange')
         return True
 

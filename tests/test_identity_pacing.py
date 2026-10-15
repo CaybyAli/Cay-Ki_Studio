@@ -257,3 +257,9 @@ def test_cast_check_stops_once_before_scene_images():
         assert cast_design.invalidate(d, 'SpongeBob') == 1 and cast_design.needs_review(d)
     finally:
         factory.validate_nodes = original
+
+
+def test_design_never_names_other_figures_in_appearance():
+    plankton = {'name': 'Plankton', 'original': 'Plankton', 'appearance': 'tiny green copepod with one red eye, smaller than SpongeBob'}
+    prompt = cast_design.identity_prompt(plankton, 'clay', ['SpongeBob', 'Plankton'])
+    assert 'SpongeBob' not in prompt and 'one red eye' in prompt

@@ -184,3 +184,66 @@ def test_a_silent_shot_always_exists_for_the_missing_time():
     actions = [c for c in cut if c['kind'] == 'action']
     assert len(actions) == 1 and actions[0]['visible'] and not actions[0]['lines']
     assert sp.ensure_action(cut, 60) == cut and len(sp.ensure_action(cut[:3], 15)) == 3
+
+
+# --- Fixes from the 0.17 review -------------------------------------------------
+
+def test_unusable_screenplay_is_forgotten_so_replanning_writes_a_new_one():
+    huge = '# 1 | Ort | x\n' + '\n'.join(f'{"SPONGEBOB" if i % 2 else "PATRICK"} [fröhlich]: Zeile {i} ist hier.' for i in range(50))
+    planner = FakePlanner([huge] * 6)
+    d = document()
+    with pytest.raises(RuntimeError, match='höchstens 44'):
+        asyncio.run(sp.write_episode(planner, d, 0, {'title': 'x'}, 'Idee', {}, None))
+    assert '0' not in d['screenplays']
+
+
+def test_shot_cap_is_fed_back_to_the_writer():
+    huge = '# 1 | Ort | x\n' + '\n'.join(f'{"SPONGEBOB" if i % 2 else "PATRICK"} [fröhlich]: Das ist die Zeile Nummer {i}.' for i in range(50))
+    assert any('Zu viele Einstellungen' in e for e in sp.check(*sp.parse(huge, CAST), CAST, 90))
+
+
+def test_partial_visuals_are_kept_and_failed_visuals_not_cached():
+    class Partial(FakePlanner):
+        async def llm(self, schema, instruction, data):
+            self.calls.append(schema.__name__)
+            return {'shots': [{'shot': i + 1, 'still': f'{s["visible"][0]} in the cave', 'motion': 'waves', 'camera': 'medium', 'ambience': 'room'}
+                              for i, s in enumerate(data['shots'])][:-1]}
+    d = document()
+    asyncio.run(sp.write_episode(Partial([GOOD, GOOD]), d, 0, {'title': 'x'}, 'Idee', {}, None))
+    store = d['screenplays']['0']
+    assert len(store['visuals']['shots']) == store['visuals']['shots'][-1]['shot'] and 'Einstellung' in store['visual_error']
+
+    class Broken(FakePlanner):
+        async def llm(self, schema, instruction, data): raise RuntimeError('kaputt')
+    d = document()
+    ep = asyncio.run(sp.write_episode(Broken([GOOD, GOOD]), d, 0, {'title': 'x'}, 'Idee', {}, None))
+    assert 'visuals' not in d['screenplays']['0'] and ep['scenes'][0]['still']
+
+
+def test_single_figure_film_needs_no_speaker_changes():
+    mono = '# 1 | Bühne | Oma erzählt\n' + '\n'.join(f'OMA [fröhlich]: Und dann hab ich den Kuchen ganz allein gegessen, Nummer {i}!' for i in range(12)) + \
+           '\nAKTION: Oma tanzt.\nAKTION: Oma fällt um.'
+    errors = sp.check(*sp.parse(mono, ['Oma']), ['Oma'], 60)
+    assert not any('Sprecherwechsel' in e for e in errors) and sp.budget(60, 1)['min_turns'] == 0
+
+
+def test_action_shot_sees_the_figure_by_first_name_and_genitive():
+    cast = ['SpongeBob', 'Patrick Star']
+    title, beats, lines, _ = sp.parse('# 1 | Ort | x\nAKTION: Patrick springt mit einem Netz aus dem Schatten.\nAKTION: SpongeBobs Spatel fliegt durch die Luft.', cast)
+    cut = sp.shots(title, beats, lines, cast)
+    assert cut[0]['visible'] == ['Patrick Star'] and cut[1]['visible'] == ['SpongeBob']
+
+
+def test_sanitize_keeps_common_words_and_shared_name_parts():
+    assert sp.sanitize('SpongeBob stands on the sandy seabed, holding a spatula', ['SpongeBob'], ['SpongeBob', 'Sandy']) == \
+        'SpongeBob stands on the sandy seabed, holding a spatula'
+    assert sp.sanitize('SpongeBob looks up at the stars, smiling', ['SpongeBob'], ['SpongeBob', 'Patrick Star']).startswith('SpongeBob looks up at the stars')
+    assert sp.sanitize('Captain Smee polishing a cannon, Captain Hook shouting', ['Captain Smee'], ['Captain Smee', 'Captain Hook']) == 'Captain Smee polishing a cannon'
+    assert sp.sanitize("SpongeBob grins, Sandy's helmet glints", ['SpongeBob'], ['SpongeBob', 'Sandy']) == 'SpongeBob grins'
+
+
+def test_abbreviations_and_markdown_do_not_break_lines():
+    assert not sp.telegram('Danke, Mr. Krabs.') and not sp.telegram('Ja, Mr. Krabs.')
+    title, beats, lines, problems = sp.parse('**SPONGEBOB** [wütend]: **Lass das, Patrick!**\nMR KRABS [drohend]: Und jetzt alle raus hier!', CAST)
+    assert not problems and lines[0]['speaker'] == 'SpongeBob' and lines[0]['text'] == 'Lass das, Patrick!'
+    assert lines[1]['speaker'] == 'Mr. Krabs'

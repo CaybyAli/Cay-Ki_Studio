@@ -195,7 +195,7 @@ class Quality:
             if any(l.speaker not in s['cast'] for l in body.dialogues):raise HTTPException(400,'Sprecher muss zur Besetzung der Szene gehören.')
             if body.action!=s['action']:
                 if d['state']=='voice_review':raise HTTPException(409,'Bildhandlung in der Bildauswahl ändern.')
-                regenerate(s,[0,1]);s['action']=body.action;s['animation_prompt']='';s['motion']=[body.action];d['state']='pictures'
+                regenerate(s,[0,1]);s['action']=body.action;s['animation_prompt']='';s['motion']=[body.action];s['still']='';d['state']='pictures'
             s['dialogues']=[x.model_dump() for x in body.dialogues];s['dialogue']='';s['speaker']='';d.pop('voice_approval',None);d['previews']=[]
             if d['state']=='voice_review':d['state']='voicing'
             self.save(d);return self.get(rid)

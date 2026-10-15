@@ -29,8 +29,9 @@ class Idea(Strict):
     speech_engine:Literal['auto','qwen','chatterbox']='auto'
     lip_sync:Literal['audio','off']='audio'
     autopilot:bool=False
-    # Show the designed figures once before scene images (0.17). Old projects: field missing = off.
-    cast_check:bool=True
+    # Show the designed figures once before scene images (0.17). The new UI sends it;
+    # old projects and the classic UI (no cast_review screen) leave it off.
+    cast_check:bool=False
 
 class CastPlan(Strict):
     name:str=Field(min_length=1,max_length=60)
