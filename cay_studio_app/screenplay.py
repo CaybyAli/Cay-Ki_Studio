@@ -12,6 +12,15 @@ errors; 3) a script doctor rewrites it once; 4) the screenplay is cut into
 shots deterministically: one shot per speaker turn, silent action shots for
 AKTION lines; 5) a separate JSON pass writes the image and motion text, which
 may only describe the visible figures. The dialogue cannot change there.
+
+0.18 (policy 14), after Cay's second film ("1 Person spricht, nächste Szene,
+andere Person spricht"): 13 lip-sync shots with exactly one line each, 12
+speaker changes, every figure alone and frontal. The budget no longer forces a
+change every five seconds, the rules ask for speech blocks, one shot holds a
+block up to three lip-sync windows, the last line of every second block is
+heard off-screen over the listener's silent reaction (L-cut), and a new place
+opens with a wide establishing shot. Screenplays written before keep policy 13:
+the policy is stored with the screenplay and with the episode (story_policy).
 """
 import math
 import re
@@ -20,10 +29,16 @@ from pydantic import Field
 from factory_models import Strict
 from factory_cast import name_key, resolve_name
 
-POLICY = 13
+POLICY = 14
+LEGACY_POLICY = 13          # screenplays written before 0.18: one shot per speaker turn
 WORDS_PER_SECOND = 2.0      # target for the script; Qwen speaks ~2.5 words/s
 MAX_LINE_WORDS = 22
-MERGE_WORDS = 24            # consecutive lines of one speaker share a shot up to this
+MERGE_WORDS = 24            # policy 13: consecutive lines of one speaker share a shot up to this
+SPEECH_RATE = 2.6           # words per second measured in Cay's 0.17 film
+LINE_PAUSE = .18
+MERGE_SECONDS = 8.6         # policy 14: one shot holds a block up to three lip-sync windows (8.96 s)
+REACTION_WORDS = 12         # a line heard over the listener's reaction stays short
+MAX_ESTABLISH = 2
 EMOTIONS = ('ruhig', 'fröhlich', 'begeistert', 'wütend', 'schreiend', 'ängstlich', 'panisch', 'traurig', 'flüsternd',
             'drohend', 'spöttisch', 'überrascht', 'triumphierend', 'flehend', 'genervt', 'verwirrt')
 AMBIENCE = ('room', 'wind', 'forest', 'rain', 'train', 'none')
@@ -32,14 +47,19 @@ AMBIENCE = ('room', 'wind', 'forest', 'rain', 'train', 'none')
 MAX_SHOTS = 44
 
 
-def budget(duration, speakers=2):
+def budget(duration, speakers=2, policy=POLICY):
     """Word band, turns and silent action lines for one film of `duration` seconds.
-    A single figure has no speaker changes: turns are not required then."""
+    A single figure has no speaker changes: turns are not required then.
+
+    Policy 13 asked for a speaker change every five seconds (12 for 60 s), so every
+    line became its own shot. Policy 14: speech blocks, 6 to 15 changes for 60 s."""
     target = round(duration * WORDS_PER_SECOND)
     actions = max(2, round(duration / 12))
+    if policy >= 14: low, high = max(3, round(duration / 10)), max(6, round(duration / 4))
+    else: low, high = max(4, round(duration / 5)), max(8, round(duration / 2.2))
     return {'words': target, 'min_words': math.floor(target * .85), 'max_words': math.ceil(target * 1.3),
-            'min_turns': max(4, round(duration / 5)) if speakers > 1 else 0,
-            'max_turns': min(max(8, round(duration / 2.2)), MAX_SHOTS - actions - 4) if speakers > 1 else MAX_SHOTS,
+            'min_turns': low if speakers > 1 else 0,
+            'max_turns': min(high, MAX_SHOTS - actions - 4) if speakers > 1 else MAX_SHOTS,
             'min_actions': 1 if duration < 40 else 2, 'max_actions': actions}
 
 
@@ -69,6 +89,39 @@ RULES = '''Regeln für das Drehbuch:
 - Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.
 - AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.
 - Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.'''
+
+# Policy 14: speech blocks instead of one sentence per speaker change.
+EXAMPLE_BLOCKS = '''Beispiel für Ton, Redeblöcke und Format (andere Figuren, nicht übernehmen):
+TITEL: Der verschwundene Kuchen
+# 1 | Küche | Oma steht vor einem leeren Teller, Krümel auf dem Boden
+OMA [wütend]: Wer hat meinen Kuchen gegessen? Ich zähl bis drei!
+OMA [drohend]: Und wer jetzt lügt, kriegt eine Woche lang keinen Nachtisch.
+TIM [ängstlich]: Ich war's nicht, ehrlich! Ich war die ganze Zeit … im Bad.
+TIM [flehend]: Frag doch Opa, der hat mich da gesehen!
+OMA [spöttisch]: Im Bad. Mit Sahne an der Nase?
+AKTION: Tim wischt sich hastig die Nase und versteckt die Hände hinter dem Rücken.
+# 2 | Garten mit Hängematte | Opa schläft, ein leerer Teller liegt auf seinem Bauch
+OPA [verwirrt]: Hm? Ach, das … das ist nur ein Kissen, Liebling.
+OPA [fröhlich]: Ein sehr leckeres Kissen übrigens, mit Kirschen drauf.
+TIM [panisch]: Opa! Das solltest du doch nicht verraten!'''
+
+RULES_BLOCKS = '''Regeln für das Drehbuch:
+- Ein durchgehendes Gespräch in Redeblöcken: Eine Figur sagt oft zwei oder drei Sätze nacheinander, jeder Satz als eigene Zeile derselben Figur, bevor die andere antwortet. Jeder Block reagiert auf den vorigen, mit Widerspruch, Ausrede, Drohung, Witz oder Überraschung. Kein Ping-Pong mit nur einem Satz pro Sprecherwechsel. Keine Zeile ohne Bezug.
+- Natürliches gesprochenes Deutsch, meist 7 bis 14 Wörter pro Zeile, ab und zu ein kurzer Ausruf. Kein Telegrammstil wie "Geld. Jetzt. Sofort." oder "Dein X. Mein Y.".
+- Lebendig sprechbar: Fragen, Ausrufe, Unterbrechungen mit "–", Zögern mit "…", Interjektionen wie "Hey!", "Au!", "Ha!".
+- Jede Figur klingt wie sie selbst. Bekannte Figuren reden und handeln wie im Original (Wortwahl, Ticks, Eigenheiten).
+- Spannung: Haken in der ersten Zeile, klares Ziel, zwei echte Steigerungen, eine vorbereitete Wendung, eine Pointe am Schluss. Setup und Payoff für den Witz.
+- Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.
+- AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.
+- Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.'''
+
+
+def rules(policy=POLICY):
+    return RULES_BLOCKS if policy >= 14 else RULES
+
+
+def example(policy=POLICY):
+    return EXAMPLE_BLOCKS if policy >= 14 else EXAMPLE
 
 
 class ParsedLine(Strict):
@@ -102,6 +155,33 @@ VISUAL_INSTRUCTION = ('Du bist Kameramann und Bildregisseur. Für jede Einstellu
     '(nicht "Squidward" für Thaddäus, nicht "Grandma" für Oma). '
     'Im still steht der Gesichtsausdruck passend zur Emotion der Zeile auf Englisch (z. B. "afraid, wide eyes, tense"), '
     'nie ein Ausdruck aus einem Referenzbild.')
+# Policy 14: every shot has a role in the cut; speaking shots vary the framing.
+SHOT_ROLES = {'line': 'speaking', 'reaction': 'reaction: listens silently, voice from off-screen, mouth closed',
+              'action': 'action', 'establish': 'establish: wide view of the new place'}
+VISUAL_INSTRUCTION_CUT = ('Du bist Kameramann und Bildregisseur. Für jede Einstellung genau ein Eintrag mit derselben Nummer. '
+    'role sagt, was die Einstellung im Schnitt tut: speaking = die Figur aus visible spricht ihre lines; '
+    'reaction = die Figur aus visible hört schweigend zu, die Stimme (hears) kommt von außerhalb des Bildes, ihr Mund bleibt geschlossen, '
+    'sie reagiert nur mit Augen, Augenbrauen, Kopf und Körper (nicken, zurückweichen, Arme verschränken); '
+    'action = stumme Handlung, alle Münder geschlossen; establish = weite Totale, die den neuen Ort zeigt. '
+    'still: ENGLISCHE Bildbeschreibung des Standbilds, nur mit den Figuren aus visible: Pose, Gesichtsausdruck, Requisit, Ort, Licht. '
+    'Figuren, die nicht in visible stehen, sind außerhalb des Bildes und werden NICHT genannt, auch nicht im Hintergrund '
+    'und auch nicht als Stimme aus dem Off. Nur die Figuren aus visible sind im Bild. '
+    'motion: ENGLISCH, eine klar sichtbare Körperbewegung in normaler Geschwindigkeit, die zur Zeile passt; '
+    'bei reaction eine kleine stumme Reaktion mit geschlossenem Mund; bei action die Handlung selbst; bei establish ruhige Bewegung im Ort. '
+    'camera: Bildausschnitt mit Abwechslung. Sprechende Einstellungen wechseln zwischen "medium shot", "medium close-up", '
+    '"low angle shot", "high angle medium shot" und "medium shot from the side", nie zweimal hintereinander derselbe Ausschnitt; '
+    'reaction "close-up"; establish "wide establishing shot"; action "medium wide shot" oder eine dynamische Perspektive. '
+    'ambience: Umgebungsgeräusch. Ort und Licht über aufeinander folgende Einstellungen gleich halten. '
+    'Figuren immer genau mit ihrem Namen aus visible nennen, nie mit Originalnamen, Spitznamen oder Übersetzungen '
+    '(nicht "Squidward" für Thaddäus, nicht "Grandma" für Oma). '
+    'Im still steht der Gesichtsausdruck passend zur Emotion der Zeile auf Englisch (z. B. "afraid, wide eyes, tense"), '
+    'bei reaction mit geschlossenem Mund (z. B. "worried, lips pressed together"), nie ein Ausdruck aus einem Referenzbild.')
+
+
+def visual_instruction(policy=POLICY):
+    return VISUAL_INSTRUCTION_CUT if policy >= 14 else VISUAL_INSTRUCTION
+
+
 # English face for each delivery: the scene image decides the expression of the whole shot.
 EXPRESSIONS = {'natural': 'relaxed, attentive', 'firm': 'determined, firm look', 'threat': 'menacing, narrowed eyes',
                'mocking': 'smug, mocking grin', 'annoyed': 'annoyed frown', 'angry': 'angry, furrowed brows',
@@ -114,6 +194,43 @@ EXPRESSIONS = {'natural': 'relaxed, attentive', 'firm': 'determined, firm look',
 def expression(emotion):
     from speech_quality import performance_key
     return EXPRESSIONS.get(performance_key(emotion), EXPRESSIONS['natural'])
+
+
+# A silent face never opens its mouth: no 'shouting', 'mouth wide open' or 'big grin' for a
+# listener. Wan 2.2 opened mouths in Cay's silent shots; over an off-screen voice that reads
+# as the wrong figure speaking.
+REACTION_EXPRESSIONS = {'natural': 'attentive, listening, lips closed', 'firm': 'determined look, lips pressed together',
+                        'threat': 'narrowed eyes, lips pressed together', 'mocking': 'smug closed-mouth smirk, one eyebrow raised',
+                        'annoyed': 'annoyed frown, lips pressed together', 'angry': 'angry frown, furrowed brows, lips pressed together',
+                        'shout': 'furious glare, clenched jaw, lips pressed together', 'panic': 'panicked wide eyes, lips pressed together',
+                        'afraid': 'afraid, wide eyes, raised eyebrows, lips pressed together', 'joy': 'warm closed-mouth smile',
+                        'excited': 'excited sparkling eyes, closed-mouth smile', 'triumph': 'satisfied closed-mouth smirk',
+                        'surprised': 'surprised, raised eyebrows, wide eyes, lips closed', 'sad': 'sad, drooping eyes, lips closed',
+                        'whisper': 'secretive look, leaning in, lips closed', 'pleading': 'pleading, worried eyebrows, lips closed',
+                        'confused': 'confused, one eyebrow raised, lips closed'}
+REACTION_GESTURES = {'angry': 'frowns and crosses the arms', 'shout': 'clenches the fists and glares',
+                     'annoyed': 'sighs through the nose and rolls the eyes', 'mocking': 'rolls the eyes and folds the arms',
+                     'afraid': 'flinches and leans back a little', 'panic': 'flinches, eyes darting, hands gripping each other',
+                     'surprised': 'eyebrows shoot up and the head pulls back', 'sad': 'lowers the eyes, the shoulders sink',
+                     'joy': 'a small closed-mouth smile and a nod', 'excited': 'bounces slightly with a closed-mouth smile',
+                     'triumph': 'lifts the chin with a closed-mouth smirk', 'confused': 'tilts the head, one eyebrow raised',
+                     'pleading': 'clasps the hands, worried eyebrows', 'threat': 'narrows the eyes and leans in slowly'}
+
+
+def reaction_expression(emotion):
+    from speech_quality import performance_key
+    return REACTION_EXPRESSIONS.get(performance_key(emotion), REACTION_EXPRESSIONS['natural'])
+
+
+def reaction_gesture(emotion):
+    from speech_quality import performance_key
+    return REACTION_GESTURES.get(performance_key(emotion), 'a small nod, eyes following the voice')
+
+
+# Words that open a mouth in a still or motion text; a reaction shot falls back to its own text then.
+OPEN_MOUTH = re.compile(r'(?i)\b(?:shout|yell|scream|talk|speak|say|laugh|grin|sing|whisper|cheer|exclaim|gasp|argu|answer|repl|call)'
+                        r'(?:s|es|ed|ing|ning|ned|ies|ied|e|y)?\b|\b(?:spoke|said|sang)\b|\bmouth\s+(?:wide\s+)?open'
+                        r'|\bopen(?:s|ed|ing)?\s+(?:the\s+|his\s+|her\s+|its\s+|their\s+)?mouth')
 VISUAL_REPAIR = ('Diese Einstellungen nennen Figuren, die NICHT im Bild sind. Schreibe still und motion dieser Einstellungen neu, '
                  'nur mit den Figuren aus visible; die anderen Figuren kommen überhaupt nicht vor, auch nicht als Objekt, Besitzer oder im Hintergrund.')
 
@@ -184,9 +301,9 @@ def telegram(text):
     return len(parts) >= 2 and all(words(p) <= 2 for p in parts) and not re.search(r'[!?]', text)
 
 
-def check(title, beats, lines, problems, cast, duration):
+def check(title, beats, lines, problems, cast, duration, policy=POLICY):
     """Concrete, countable problems the planner gets back. Empty list = usable."""
-    b = budget(duration, len(cast)); errors = list(problems)
+    b = budget(duration, len(cast), policy); errors = list(problems)
     spoken = [l for l in lines if l['kind'] == 'line']; actions = [l for l in lines if l['kind'] == 'action']
     total = sum(words(l['text']) for l in spoken)
     if total < b['min_words']: errors.append(f'Zu wenig Dialog: {total} Wörter, nötig {b["min_words"]} bis {b["max_words"]} (Ziel {b["words"]}). Mehr Wortwechsel, längere natürliche Sätze.')
@@ -203,7 +320,7 @@ def check(title, beats, lines, problems, cast, duration):
     tiny = sum(1 for l in spoken if words(l['text']) <= 2)
     if spoken and tiny > max(2, len(spoken) // 4): errors.append(f'{tiny} Zeilen haben höchstens zwei Wörter. Höchstens jede vierte Zeile darf ein kurzer Ausruf sein.')
     if cast and len({l['speaker'] for l in spoken}) < min(2, len(cast)): errors.append('Mindestens zwei Figuren müssen miteinander sprechen.')
-    count = len(ensure_action(shots(title, beats, lines, cast), duration))
+    count = len(ensure_action(shots(title, beats, lines, cast, policy), duration))
     if count > MAX_SHOTS: errors.append(f'Zu viele Einstellungen: {count}, höchstens {MAX_SHOTS}. Aufeinander folgende Zeilen derselben Figur zusammenfassen, weniger AKTION-Zeilen.')
     return errors
 
@@ -213,8 +330,15 @@ def emotion_of(raw):
     return next((e for e in EMOTIONS if e in raw or raw in e), raw or 'ruhig')
 
 
-def shots(title, beats, lines, cast):
-    """Deterministic cut: one shot per speaker turn, one per AKTION line."""
+def spoken_seconds(entries):
+    """Estimated speaking time of lines said in one go: 2.6 words/s plus a short pause between lines."""
+    return sum(words(x['text']) for x in entries) / SPEECH_RATE + LINE_PAUSE * max(0, len(entries) - 1)
+
+
+def shots(title, beats, lines, cast, policy=POLICY):
+    """Deterministic cut. Policy 13: one shot per speaker turn, one per AKTION line.
+    Policy 14: speech blocks, reaction shots (L-cut) and establishing shots, see block_cut()."""
+    if policy >= 14: return block_cut(beats, lines, cast)
     result = []
     for line in lines:
         beat = beats[line['beat']] if line['beat'] < len(beats) else {'place': 'Ort', 'what': ''}
@@ -231,6 +355,89 @@ def shots(title, beats, lines, cast):
         result.append({'kind': 'line', 'beat': line['beat'], 'place': beat['place'], 'what': beat['what'],
                        'visible': [line['speaker']], 'lines': [entry]})
     return result
+
+
+def block_cut(beats, lines, cast):
+    """Policy 14 cut, in three steps.
+
+    1) Blocks: consecutive lines of one speaker in one section share a lip-sync shot while
+       their estimated length fits three lip-sync windows (8.6 s) and at most three lines.
+    2) Establishing shots: a section at a new place opens with a silent wide shot (at most two
+       per film, never before the first shot, not where an AKTION line already opens it).
+    3) Reactions (L-cut at a line boundary): the last line of every second eligible block is
+       heard off-screen over the listener's silent reaction. Never in the first or the last
+       speaking block (hook and payoff stay on a face), only lines of at most 12 words, at most
+       about a third of all speaking shots. The listener is the next other speaker of the same
+       section, else the previous one; nobody from another place.
+    Optional shots never push the film over MAX_SHOTS (one place stays free for ensure_action)."""
+    result = []
+    for line in lines:
+        beat = beats[line['beat']] if line['beat'] < len(beats) else {'place': 'Ort', 'what': ''}
+        if line['kind'] == 'action':
+            visible = [c for c in cast if _mentions(line['text'], [c], [o for o in cast if o != c])][:2]
+            result.append({'kind': 'action', 'beat': line['beat'], 'place': beat['place'], 'what': line['text'],
+                           'visible': visible or ([result[-1]['visible'][0]] if result and result[-1]['visible'] else cast[:1]), 'lines': []})
+            continue
+        entry = {'speaker': line['speaker'], 'text': line['text'], 'emotion': emotion_of(line['emotion'])}
+        last = result[-1] if result else None
+        if (last and last['kind'] == 'line' and last['visible'] == [line['speaker']] and last['beat'] == line['beat']
+                and len(last['lines']) < 3 and spoken_seconds(last['lines'] + [entry]) <= MERGE_SECONDS):
+            last['lines'].append(entry); continue
+        result.append({'kind': 'line', 'beat': line['beat'], 'place': beat['place'], 'what': beat['what'],
+                       'visible': [line['speaker']], 'lines': [entry]})
+    # Few establishing shots first (a new place matters more than one more reaction), then reactions.
+    room = lambda shots: MAX_SHOTS - len(shots) - (0 if any(s['kind'] == 'action' for s in shots) else 1)
+    result = _establishing(result, beats, room(result))
+    return _reactions(result, room(result))
+
+
+def _listener(result, index):
+    """(listener, emotion of the reaction) for the block at `index`, or (None, None)."""
+    speaker = result[index]['visible'][0]; beat = result[index]['beat']
+    others = lambda shots: [l for s in shots if s['kind'] == 'line' and s['beat'] == beat for l in s['lines'] if l['speaker'] != speaker]
+    later = others(result[index + 1:])
+    # The listener answers next: the reaction already carries the emotion of that answer.
+    if later: return later[0]['speaker'], later[0]['emotion']
+    earlier = others(result[:index])
+    return (earlier[-1]['speaker'], 'ruhig') if earlier else (None, None)
+
+
+def _reactions(result, room):
+    speaking = [i for i, s in enumerate(result) if s['kind'] == 'line']
+    eligible = []
+    for i in speaking[1:-1]:
+        block = result[i]
+        if len(block['lines']) < 2 or words(block['lines'][-1]['text']) > REACTION_WORDS: continue
+        who, mood = _listener(result, i)
+        if who: eligible.append((i, who, mood))
+    chosen = {i: (who, mood) for i, who, mood in eligible[::2][:max(0, min(room, len(speaking) // 2))]}
+    out = []
+    for i, shot in enumerate(result):
+        if i not in chosen:
+            out.append(shot); continue
+        who, mood = chosen[i]; heard = shot['lines'][-1]
+        out.append(dict(shot, lines=shot['lines'][:-1]))
+        out.append({'kind': 'reaction', 'beat': shot['beat'], 'place': shot['place'], 'what': shot['what'], 'visible': [who],
+                    'lines': [heard], 'voice_of': heard['speaker'], 'emotion': mood})
+    return out
+
+
+def _place_key(place):
+    return re.sub(r'[\W_]+', '', str(place).lower())
+
+
+def _establishing(result, beats, room):
+    out, seen, added = [], set(), 0
+    for i, shot in enumerate(result):
+        key = _place_key(shot['place'])
+        opens = i and result[i - 1]['beat'] != shot['beat']
+        if opens and key and key not in seen and shot['kind'] != 'action' and added < min(MAX_ESTABLISH, room):
+            figures = list(dict.fromkeys(n for s in result if s['beat'] == shot['beat'] for n in s['visible']))[:2]
+            what = beats[shot['beat']]['what'] if shot['beat'] < len(beats) else ''
+            out.append({'kind': 'establish', 'beat': shot['beat'], 'place': shot['place'], 'what': what, 'visible': figures, 'lines': []})
+            added += 1
+        seen.add(key); out.append(shot)
+    return out
 
 
 # Possessive / genitive after a name: 's, ’s, s, or a bare apostrophe after s ("Mr. Krabs' office").
@@ -535,8 +742,12 @@ def ensure_action(cut, duration):
     lip-sync shots (mouths move without a voice). If the planner wrote no AKTION
     line, a short silent reaction of the figure who spoke last is added mid-film."""
     if duration < 30 or not cut or any(s['kind'] == 'action' for s in cut): return cut
-    middle = len(cut) // 2; before = cut[max(0, middle - 1)]
-    who = before['visible'][:1]
+    middle = len(cut) // 2
+    # Policy 14: never between a block and the reaction that carries its last line.
+    while middle < len(cut) and cut[middle]['kind'] == 'reaction': middle += 1
+    before = cut[max(0, middle - 1)]
+    # An establishing shot may show nobody: take the last shot with a figure.
+    who = next((s['visible'][:1] for s in reversed(cut[:middle]) if s['visible']), before['visible'][:1])
     reaction = {'kind': 'action', 'beat': before['beat'], 'place': before['place'], 'visible': who, 'lines': [],
                 'what': f'{who[0] if who else "Die Figur"} reagiert stumm mit einer großen, deutlichen Geste.'}
     return cut[:middle] + [reaction] + cut[middle:]
@@ -549,18 +760,30 @@ def beat_label(index, count, cliffhanger):
     return 'turn' if index == round(count * .65) else 'attempt'
 
 
-def assemble(title, spine, outline, cut, visuals, cast, continuity):
-    """EpisodePlan-compatible dict; old downstream code keeps working."""
+SPEAK_CAMERAS = ('medium shot', 'medium close-up', 'low angle medium shot')
+
+
+def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLICY):
+    """EpisodePlan-compatible dict; old downstream code keeps working. Policy 14 adds two shot
+    kinds that exist only here: 'reaction' (with voice_of) and 'establish'. They are never
+    validated against factory_models.Shot, whose JSON schema the older scene planner still sends
+    to the model unchanged."""
     by_number = {v['shot']: v for v in (visuals or {}).get('shots', [])}
     scenes = []
     for i, shot in enumerate(cut):
         v = by_number.get(i + 1, {})
+        if policy >= 14 and shot['kind'] in ('reaction', 'establish'):
+            scenes.append(_cut_scene(i, shot, v, cut, cast, continuity)); continue
         visible = shot['visible']
         speaker = shot['lines'][0]['speaker'] if shot['lines'] else ''
         fallback_still = (f'{" and ".join(visible)} in {shot["place"]}, ' + (f'{speaker} speaking, {expression(shot["lines"][0]["emotion"])} expression' if speaker else shot['what']))
         names = [c['name'] for c in cast]; aliases = figure_aliases(cast)
         still = sanitize(v.get('still') or fallback_still, visible, names, aliases)
         if len(still) < 10: still = sanitize(fallback_still, visible, names, aliases) or f'{" and ".join(visible)} in {shot["place"]}'
+        if policy >= 14 and not speaker and visible:
+            # A silent face keeps its mouth closed: in Cay's 0.17 film a grin in the still became a
+            # mouth moving without any voice.
+            still = still[:580].rstrip(' .,') + (', mouth closed' if len(visible) == 1 else ', mouths closed')
         motion = sanitize(v.get('motion') or ('talks with expressive face and natural gestures' if speaker else shot['what']), visible, names, aliases)
         if len(motion) < 5: motion = 'talks with expressive face and natural gestures' if speaker else 'moves quickly with a clear physical action'
         scenes.append({
@@ -568,7 +791,7 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity):
             # At least 5 characters: the text editor validates action with min_length 5.
             'action': (shot['what'] if len(shot['what'].strip()) >= 5 else (f'{speaker} spricht in {shot["place"]}.' if speaker else f'Stumme Szene in {shot["place"]}.'))[:800],
             'location': shot['place'][:250] or 'Ort',
-            'camera': (v.get('camera') or ('medium shot' if speaker else 'wide shot'))[:250],
+            'camera': ((v.get('camera') or ('medium shot' if speaker else 'wide shot')) if policy < 14 else _camera(i, shot, v, cut, scenes))[:250],
             'cast': visible,
             'dialogue': '', 'speaker': '', 'emotion': shot['lines'][0]['emotion'] if shot['lines'] else 'Natürlich',
             'continuity': 'same location and lighting as the previous shot',
@@ -587,7 +810,60 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity):
             'goal': (spine.get('goal') or outline.get('plot', ''))[:400] or 'Ziel',
             'obstacle': (spine.get('stakes') or (spine.get('escalations') or [''])[0] or 'Hindernis')[:400],
             'resolution': (spine.get('payoff') or outline.get('ending', ''))[:400] or 'Auflösung',
-            'scenes': scenes, 'story_policy': POLICY, 'dialogue_mode': 'rich', 'script': 'screenplay'}
+            'scenes': scenes, 'story_policy': policy, 'dialogue_mode': 'rich', 'script': 'screenplay'}
+
+
+def _same_framing(a, b):
+    return str(a).strip().lower() == str(b).strip().lower()
+
+
+def _camera(i, shot, v, cut, scenes):
+    """Policy 14 framing: the planner's choice, else speaking shots alternate medium shot,
+    medium close-up and low angle. Two speaking shots in a row never share a framing (Cay's
+    film: thirteen frontal medium shots), and after a close-up reaction the same figure
+    speaks in a medium shot, not in a second close-up (a jump cut)."""
+    if shot['kind'] != 'line': return v.get('camera') or 'wide shot'
+    k = sum(1 for s in cut[:i] if s['kind'] == 'line')
+    camera = v.get('camera') or SPEAK_CAMERAS[k % len(SPEAK_CAMERAS)]
+    before = cut[i - 1] if i else None
+    if not before: return camera
+    if before['kind'] == 'reaction' and before['visible'] == shot['visible'] and 'close' in camera.lower(): return 'medium shot'
+    if before['kind'] == 'line' and scenes and _same_framing(camera, scenes[-1]['camera']):
+        return next(c for c in SPEAK_CAMERAS if not _same_framing(c, camera))
+    return camera
+
+
+def _cut_scene(i, shot, v, cut, cast, continuity):
+    """A reaction (the listener in the frame, the voice off-screen) or an establishing shot.
+    The off-screen speaker is never named in the picture or motion text."""
+    names = [c['name'] for c in cast]; aliases = figure_aliases(cast); visible = shot['visible']; place = shot['place']
+    common = {'location': place[:250] or 'Ort', 'cast': visible, 'dialogue': '', 'speaker': '',
+              'continuity': 'same location and lighting as the previous shot', 'beat': beat_label(i, len(cut), bool(continuity.get('end_with'))),
+              'ambience': v.get('ambience') if v.get('ambience') in AMBIENCE else 'room', 'sound_cues': [], 'kind': shot['kind']}
+    if shot['kind'] == 'reaction':
+        listener, speaker, mood = visible[0], shot['voice_of'], shot['emotion']
+        own_still = f'Close-up of {listener} in {place}, listening in silence to a voice from outside the frame, {reaction_expression(mood)}'
+        still = sanitize(v.get('still') or '', visible, names, aliases)
+        if len(still) < 10 or OPEN_MOUTH.search(still): still = sanitize(own_still, visible, names, aliases)
+        own_motion = f'listens in silence with lips closed, {reaction_gesture(mood)}'
+        motion = sanitize(v.get('motion') or '', visible, names, aliases)
+        if len(motion) < 5 or OPEN_MOUTH.search(motion): motion = own_motion
+        return {**common, 'title': f'Reaktion: {listener} hört {speaker} zu'[:100],
+                'action': f'{listener} hört schweigend zu, die Stimme von {speaker} kommt aus dem Off.'[:800],
+                'camera': 'close-up', 'emotion': mood, 'because': f'Reaktion auf {speaker}'[:400],
+                'dialogues': [{'speaker': l['speaker'], 'text': l['text'], 'emotion': l['emotion'], 'pause_after': .15} for l in shot['lines']],
+                'motion': [motion], 'animation_prompt': motion[:1400], 'still': still[:600], 'voice_of': speaker}
+    own_still = f'Wide establishing view of {place}' + (f', {" and ".join(visible)} small in the frame' if visible else ', no characters')
+    still = sanitize(v.get('still') or '', visible, names, aliases)
+    if len(still) < 10 or OPEN_MOUTH.search(still): still = sanitize(own_still, visible, names, aliases) or f'Wide view of {place}'
+    # The planner may describe the figures up close; this shot exists to show the place.
+    if not re.search(r'(?i)\bwide\b', still): still = 'Wide establishing view, ' + still
+    motion = sanitize(v.get('motion') or '', visible, names, aliases)
+    if len(motion) < 5: motion = 'slow smooth camera movement across the location, calm natural movement'
+    what = shot['what'].strip()
+    return {**common, 'title': f'Totale: {place}'[:100], 'action': (what if len(what) >= 5 else f'Weite Ansicht: {place}.')[:800],
+            'camera': 'wide establishing shot', 'emotion': 'Natürlich', 'because': 'Neuer Ort', 'dialogues': [],
+            'motion': [motion], 'animation_prompt': motion[:1400], 'still': still[:600]}
 
 
 def render_text(title, beats, lines):
@@ -601,7 +877,7 @@ def render_text(title, beats, lines):
     return '\n'.join(out)
 
 
-async def repair_visuals(factory, d, cut, listing, answer):
+async def repair_visuals(factory, d, cut, listing, answer, instruction=VISUAL_INSTRUCTION):
     """The planner writes the image text; it also gets its own mistakes back. Shots whose
     still or motion name an off-screen figure are written again once with that error
     (local model, about a minute). The text filter stays the last safety net."""
@@ -614,7 +890,7 @@ async def repair_visuals(factory, d, cut, listing, answer):
     if not wrong: return answer
     ask = [dict(x, error='nennt ' + ', '.join(wrong[x['shot']]) + ', nicht im Bild') for x in listing if x['shot'] in wrong]
     try:
-        fixed = await factory.llm(ShotVisuals, VISUAL_INSTRUCTION + ' ' + VISUAL_REPAIR + ' Genau diese Nummern: ' + ', '.join(map(str, wrong)) + '.',
+        fixed = await factory.llm(ShotVisuals, instruction + ' ' + VISUAL_REPAIR + ' Genau diese Nummern: ' + ', '.join(map(str, wrong)) + '.',
                                   {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': ask})
     except Exception:
         # Advisory only: a timeout, a crashed model or a busy GPU must not stop the planning
@@ -625,10 +901,25 @@ async def repair_visuals(factory, d, cut, listing, answer):
     return {**answer, 'shots': [better.get(v['shot'], v) for v in answer['shots']]}
 
 
+def shot_listing(entry, shot):
+    """Policy 14: the shot's role in the cut. A reaction lists what the listener hears, not
+    who says it: the off-screen speaker must not end up in the picture text."""
+    entry = dict(entry, role=SHOT_ROLES.get(shot['kind'], shot['kind']))
+    if shot['kind'] == 'reaction': entry.update(lines=[], hears=shot['lines'][0]['text'] if shot['lines'] else '')
+    return entry
+
+
 async def write_episode(factory, d, index, outline, source, continuity, spine):
     """Screenplay -> check -> doctor -> shots -> visuals. Stored drafts survive a restart."""
-    idea = d['idea']; cast = [p['name'] for p in d['plan']['cast']]; b = budget(idea['duration'], len(cast))
-    store = d.setdefault('screenplays', {}).setdefault(str(index), {})
+    idea = d['idea']; cast = [p['name'] for p in d['plan']['cast']]
+    stores = d.setdefault('screenplays', {}); store = stores.setdefault(str(index), {})
+    # Pinned with the screenplay and per project: a project that began writing screenplays before
+    # 0.18 (a stored draft without a policy, or an episode planned with 13) keeps the 0.17 rules
+    # and cut for all its episodes, so a series does not change its cut halfway.
+    started = (any(s.get('policy', LEGACY_POLICY if s.get('draft') or s.get('final') else None) == LEGACY_POLICY for s in stores.values())
+               or any(ep.get('script') == 'screenplay' and ep.get('story_policy', LEGACY_POLICY) == LEGACY_POLICY for ep in d.get('episodes', [])))
+    policy = store.setdefault('policy', LEGACY_POLICY if started else POLICY)
+    b = budget(idea['duration'], len(cast), policy)
     context = {'idee_des_nutzers': source, 'serie': {k: v for k, v in d['plan'].items() if k not in ('episodes',)},
                'folge': index + 1, 'folgen_gesamt': idea['episodes'], 'outline': outline, 'ziel_des_films': spine,
                'fortsetzung': continuity, 'dauer_sekunden': idea['duration'],
@@ -642,8 +933,8 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
                    f'als ein durchgehendes Gespräch für etwa {idea["duration"]} Sekunden. Gesamt {b["min_words"]} bis {b["max_words"]} gesprochene Wörter '
                    f'(Ziel {b["words"]}), ' + (f'{b["min_turns"]} bis {b["max_turns"]} Sprecherwechsel, ' if len(cast) > 1 else 'ein Monolog der einzigen Figur, ')
                    + f'{b["min_actions"]} bis {b["max_actions"]} AKTION-Zeilen, höchstens {MAX_SHOTS} Einstellungen. '
-                   + series + RULES + '\n' + FORMAT + '\n' + EXAMPLE)
-    def problems(text): return check(*parse(text, cast), cast, idea['duration'])
+                   + series + rules(policy) + '\n' + FORMAT + '\n' + example(policy))
+    def problems(text): return check(*parse(text, cast), cast, idea['duration'], policy)
     if not store.get('final'):
         draft = store.get('draft')
         if not draft:
@@ -654,7 +945,7 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
         doctor = ('Du bist Script Doctor für virale Kurzfilme. Lies das Drehbuch laut im Kopf, Zeile für Zeile. Finde: Zeilen ohne Sinn oder Bezug, '
                   'Antworten, die nicht reagieren, Logikfehler (wer hat was, wo ist wer), fehlende Spannung oder Steigerung, schwache Pointe, '
                   'Telegrammstil, Wiederholungen, Figuren, die nicht wie sie selbst klingen. Verbessere alles davon. Ereignisse aus der Idee und '
-                  'das Wortbudget bleiben. Antworte nur mit dem vollständigen überarbeiteten Drehbuch. ' + series + RULES + '\n' + FORMAT)
+                  'das Wortbudget bleiben. Antworte nur mit dem vollständigen überarbeiteten Drehbuch. ' + series + rules(policy) + '\n' + FORMAT)
         try:
             final = await factory.write(doctor, {**context, 'drehbuch': draft}, label='Drehbuch-Doktor', check=problems)
             # Advisory: a rewrite that breaks more rules than the draft is dropped.
@@ -663,8 +954,8 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
             final = draft; store['doctor_error'] = str(error)[:500]
         store['final'] = final; factory.save(d)
     title, beats, lines, problems = parse(store['final'], cast)
-    remaining = check(title, beats, lines, problems, cast, idea['duration'])
-    cut = ensure_action(shots(title, beats, lines, cast), idea['duration'])
+    remaining = check(title, beats, lines, problems, cast, idea['duration'], policy)
+    cut = ensure_action(shots(title, beats, lines, cast, policy), idea['duration'])
     if not cut or len(cut) > MAX_SHOTS:
         # Unusable: forget it, so "Neu planen" really writes a new one (it used to parse the same text again).
         d['screenplays'].pop(str(index), None); factory.save(d)
@@ -674,8 +965,9 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
         d['phase'] = f'Folge {index + 1}: Bilder und Bewegungen der {len(cut)} Einstellungen beschreiben'; factory.save(d)
         listing = [{'shot': i + 1, 'visible': s['visible'], 'place': s['place'], 'situation': s['what'],
                     'lines': [{'speaker': l['speaker'], 'emotion': l['emotion'], 'text': l['text']} for l in s['lines']]} for i, s in enumerate(cut)]
+        if policy >= 14: listing = [shot_listing(x, s) for x, s in zip(listing, cut)]
         try:
-            answer = await factory.llm(ShotVisuals, VISUAL_INSTRUCTION + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.',
+            answer = await factory.llm(ShotVisuals, visual_instruction(policy) + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.',
                                        {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': listing})
             # Partial answers are usable: assemble() falls back per missing shot.
             numbers = [v['shot'] for v in answer['shots']]
@@ -686,13 +978,15 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
             missing = [n for n in range(1, len(cut) + 1) if n not in numbers]
             if missing: store['visual_error'] = 'Ohne eigene Bildbeschreibung: Einstellung ' + ', '.join(map(str, missing))
             store['visuals'] = answer; factory.save(d)          # kept even if the repair below is interrupted
-            store['visuals'] = await repair_visuals(factory, d, cut, listing, answer); factory.save(d)
+            store['visuals'] = await repair_visuals(factory, d, cut, listing, answer, visual_instruction(policy)); factory.save(d)
         except (RuntimeError, ValueError) as error:
             store['visual_error'] = 'Bildbeschreibungen fehlen, einfache Beschreibungen verwendet: ' + str(error)[:400]
-    episode = assemble(title, spine, outline, cut, store.get('visuals') or {'shots': []}, d['plan']['cast'], continuity)
+    episode = assemble(title, spine, outline, cut, store.get('visuals') or {'shots': []}, d['plan']['cast'], continuity, policy)
     episode['screenplay'] = store['final']
     stats = {'words': sum(words(l['text']) for l in lines if l['kind'] == 'line'), 'lines': sum(l['kind'] == 'line' for l in lines),
              'actions': sum(l['kind'] == 'action' for l in lines), 'shots': len(cut), 'budget': b}
+    if policy >= 14: stats.update(reactions=sum(s['kind'] == 'reaction' for s in cut), establishing=sum(s['kind'] == 'establish' for s in cut),
+                                  lip_sync=sum(s['kind'] == 'line' for s in cut))
     episode['screenplay_stats'] = stats
     if remaining: episode['warnings'] = ['Drehbuch prüfen: ' + '; '.join(remaining)[:900]]
     if store.get('visual_error'): episode.setdefault('warnings', []).append(store['visual_error'][:400])

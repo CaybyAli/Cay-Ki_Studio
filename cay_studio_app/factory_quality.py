@@ -10,7 +10,7 @@ from factory_audio import turns,layout,mix,edit_spec,scene_kinds
 from factory_video import file_hash
 from factory_editor import regenerate
 from factory_speech import ready as speech_ready
-from factory_timing import POLICY
+from factory_timing import POLICY,audio_layout,off_screen,allowed_speakers
 from studio_quality_policy import settings
 from lipsync_shots import silent_by_accident,MISSING_MARK
 class Quality:
@@ -90,9 +90,11 @@ class Quality:
             if self.apply_pending(d):return        # a voice chosen meanwhile: speak its lines again, then mix
         elif not lines:d['lines']=[];d['voice_profiles']={}
         if self.paused(d['id']):return
-        # Pinned once: a 0.16 sound version keeps the 0.16 layout (same shot lengths, cached windows).
-        d.setdefault('timing_layout',16 if d.get('timing') and not any(t.get('layout') or 'silent_shots' in t for t in d['timing']) else 17)
-        d['timing']=layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],d['timing_layout']);d['timing_policy']=POLICY;d['timing_fps']=options['fps'];d['audio_revision']=d.get('audio_revision',0)+1;d['previews']=[];music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
+        # Pinned once: a 0.16 sound version keeps the 0.16 layout (same shot lengths, cached windows),
+        # a 0.17 one keeps 17. Only a project without any sound version gets the 0.18 cut (layout 18:
+        # reaction and establishing shots, longer silent action); factory_audio.layout knows 16/17 only.
+        version=d.setdefault('timing_layout',18 if not d.get('timing') else 16 if not any(t.get('layout') or 'silent_shots' in t for t in d['timing']) else 17)
+        d['timing']=(audio_layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version=version) if version>=18 else layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version));d['timing_policy']=POLICY;d['timing_fps']=options['fps'];d['audio_revision']=d.get('audio_revision',0)+1;d['previews']=[];music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
         for ei,ep in enumerate(d['episodes']):
             if self.paused(d['id']):return
             d['phase']=f'Folge {ei+1}: Dialog, Musik und Geräusche mischen';self.save(d);scenes=[{'seconds':s['render_seconds'],'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],'ambience':s.get('ambience','room'),'sound_cues':s.get('sound_cues',[]),**kind} for si,(s,kind) in enumerate(zip(ep['scenes'],scene_kinds(d,ep['scenes'])))];folder=self.folder(d)/'03_Stimmen'/f'Mischung_{d["audio_revision"]:03}'/f'Folge_{ei+1:02}'
@@ -221,7 +223,13 @@ class Quality:
             if d['state'] not in ('image_review','voice_review'):raise HTTPException(409,'Dialoge während der Vorschau bearbeiten.')
             try:s=d['episodes'][body.episode]['scenes'][body.scene]
             except IndexError:raise HTTPException(404,'Szene nicht gefunden.')
-            if any(l.speaker not in s['cast'] for l in body.dialogues):raise HTTPException(400,'Sprecher muss zur Besetzung der Szene gehören.')
+            # 0.18: in a reaction the figure in the frame listens and only the voice from off-screen speaks;
+            # a wide establishing shot shows the place and stays silent.
+            allowed=allowed_speakers(s)
+            if any(l.speaker not in allowed for l in body.dialogues):
+                if off_screen(s):raise HTTPException(400,f'In dieser Reaktion hört {", ".join(s["cast"])} nur zu. Sprechen kann hier nur {s.get("voice_of") or "die Stimme aus dem Off"}.')
+                if s.get('kind')=='establish':raise HTTPException(400,'Diese Totale zeigt nur den neuen Ort. Hier spricht niemand.')
+                raise HTTPException(400,'Sprecher muss zur Besetzung der Szene gehören.')
             if body.action!=s['action']:
                 if d['state']=='voice_review':raise HTTPException(409,'Bildhandlung in der Bildauswahl ändern.')
                 regenerate(s,[0,1]);s['action']=body.action;s['animation_prompt']='';s['motion']=[body.action];s['still']='';d['state']='pictures'

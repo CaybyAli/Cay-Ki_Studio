@@ -474,6 +474,16 @@ function spineCard(ep) {
   return `<div class="spine"><h3 class="label">Ziel des Films</h3><p>${esc(sp.logline)}</p>
     <dl><dt>Haken</dt><dd>${esc(sp.hook)}</dd><dt>Wendung</dt><dd>${esc(sp.twist)}</dd><dt>Pointe</dt><dd>${esc(sp.payoff)}</dd></dl></div>`;
 }
+/* 0.18 cut: in a reaction only the voice from off-screen speaks, a wide establishing shot stays
+   silent (same rule as factory_timing.allowed_speakers). Older scenes have no kind. */
+function sceneSpeakers(sc) {
+  if (sc.kind === 'reaction') return sc.voice_of ? [sc.voice_of] : [];
+  return sc.kind === 'establish' ? [] : (sc.cast || []);
+}
+function sceneRole(sc) {
+  if (sc.kind === 'reaction') return `<p class="scene-role"><span class="chip accent">Reaktion</span> Stimme von ${esc(sc.voice_of || 'einer Figur')} aus dem Off</p>`;
+  return sc.kind === 'establish' ? '<p class="scene-role"><span class="chip">Totale</span> zeigt den neuen Ort</p>' : '';
+}
 function scenesSection(d, choose) {
   const ep = d.episodes[S.episode] || d.episodes[0], ei = d.episodes.indexOf(ep);
   const editable = ['image_review', 'voice_review'].includes(d.state);
@@ -487,7 +497,7 @@ function scenesSection(d, choose) {
         : `<div class="frame"><div class="frame-empty">${choose ? 'Bilder entstehen' : ''}</div></div>`;
       const lines = linesOf(sc).map(l => `<p class="line"><b>${esc(l.speaker)}:</b> ${esc(l.text)}</p>`).join('') || '<p class="muted small">Ohne Dialog</p>';
       const tools = editable ? `<div class="actions">${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
-      return `<article class="scene">${pictures}<div class="scene-text"><h3>${si + 1}. ${esc(sc.title)}</h3><p>${esc(sc.action)}</p>${lines}${tools}</div></article>`;
+      return `<article class="scene">${pictures}<div class="scene-text"><h3>${si + 1}. ${esc(sc.title)}</h3>${sceneRole(sc)}<p>${esc(sc.action)}</p>${lines}${tools}</div></article>`;
     }).join('')}</div>
     ${choose && d.state === 'image_review' ? `<div class="dock"><span>${d.episodes.flatMap(e => e.scenes).filter(s => s.selected).length} von ${d.episodes.flatMap(e => e.scenes).length} gewählt</span><button class="button" data-action="approve-images" ${d.episodes.flatMap(e => e.scenes).every(s => s.selected) ? '' : 'disabled'}>Bilder übernehmen</button></div>` : ''}
   </section>`;
@@ -764,15 +774,18 @@ async function settingsSheet() {
     <p class="small muted">Cay Studio ${esc(S.version)}. Alles läuft lokal, ohne Abo und ohne kostenpflichtige Dienste.</p>`);
 }
 function linesSheet(ei, si) {
-  const sc = S.run.episodes[ei].scenes[si], lines = linesOf(sc);
-  const row = (l, i) => `<div class="person"><select class="input" data-line="${i}" data-key="speaker" aria-label="Sprecher">${sc.cast.map(n => `<option ${n === l.speaker ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+  const sc = S.run.episodes[ei].scenes[si], lines = linesOf(sc), speakers = sceneSpeakers(sc);
+  const row = (l, i) => `<div class="person"><select class="input" data-line="${i}" data-key="speaker" aria-label="Sprecher">${speakers.map(n => `<option ${n === l.speaker ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
     <input class="input" data-line="${i}" data-key="text" value="${esc(l.text)}" maxlength="240" aria-label="Satz">
     <input type="hidden" data-line="${i}" data-key="emotion" value="${esc(l.emotion || 'Natürlich')}"><input type="hidden" data-line="${i}" data-key="pause_after" value="${l.pause_after ?? 0.18}"><button class="button danger small" data-action="drop-line" data-index="${i}">Entfernen</button></div>`;
-  openSheet(`<div class="sheet-head"><h2 class="headline">Szene ${si + 1}: Text</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+  const editable = speakers.length || lines.length;   // nothing to save in a wide shot without text
+  openSheet(`<div class="sheet-head"><h2 class="headline">Szene ${si + 1}: Text</h2><button class="button quiet small" data-action="close">${editable ? 'Abbrechen' : 'Schließen'}</button></div>
     <form id="lines-form" data-episode="${ei}" data-scene="${si}">${lines.map(row).join('')}
-    ${sc.cast.length ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>' : '<p class="muted">In dieser Szene ist niemand im Bild.</p>'}
-    <p class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</p>
-    <div class="actions"><button class="button" type="submit">Speichern</button></div></form>`);
+    ${sc.kind === 'reaction' ? `<p class="muted">${esc(sc.cast.join(' und '))} hört hier nur zu. Die Stimme kommt von ${esc(speakers[0] || 'einer Figur')} aus dem Off.</p>` : ''}
+    ${speakers.length ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>'
+      : `<p class="muted">${sc.kind === 'establish' ? 'Diese Totale zeigt den neuen Ort. Hier spricht niemand.' : 'In dieser Szene ist niemand im Bild.'}</p>`}
+    ${editable ? `<p class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</p>
+    <div class="actions"><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
 }
 function readLines(form) {
   const rows = {};
@@ -827,7 +840,7 @@ const actions = {
     closeSheet(); toast(`${b.dataset.name} wird neu gestaltet.`);
   },
   'edit-lines'(b) { linesSheet(+b.dataset.episode, +b.dataset.scene); },
-  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form); lines.push({ speaker: sc.cast[0], text: '' }); linesSheetFrom(form, lines); },
+  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form); lines.push({ speaker: sceneSpeakers(sc)[0], text: '' }); linesSheetFrom(form, lines); },
   'drop-line'(b) { const form = $('#lines-form'), lines = readLines(form); lines.splice(+b.dataset.index, 1); linesSheetFrom(form, lines); },
   async 'approve-images'() { await post(`/api/factory/${S.rid}/approve-images`, { revision: S.run.revision }); toast('Bilder übernommen. Die Stimmen entstehen.'); },
   async 'approve-voices'() { await post(`/api/factory/${S.rid}/approve-voices`, { revision: S.run.revision }); toast('Ton freigegeben. Die Animation beginnt.'); },

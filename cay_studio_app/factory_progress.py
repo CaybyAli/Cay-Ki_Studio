@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 from comfy_socket import messages
 from studio_quality_policy import segments, scene_segments, settings
+from factory_timing import off_screen
 
 LABELS = {'LoadImage':'Referenzbild laden','UNETLoader':'Animationsmodell bereitstellen',
           'CLIPLoader':'Textmodell bereitstellen','CLIPTextEncode':'Text verarbeiten',
@@ -191,14 +192,15 @@ class RenderProgress:
             export_index=next((i for i,e in enumerate(d.get('exports',[])) if e['episode']==ei),None)
             job=next((j for j in d.get('cpu_jobs',[]) if j['kind']=='export' and j['episode']==ei),None)
             for si,scene in enumerate(episode['scenes']):
-                talking=options['lip_sync']=='audio' and any(l['episode']==ei and l['scene']==si for l in d.get('lines',[]))
+                # A 0.18 reaction carries a voice from off-screen but renders as silent motion.
+                talking=options['lip_sync']=='audio' and not off_screen(scene) and any(l['episode']==ei and l['scene']==si for l in d.get('lines',[]))
                 durations=scene_segments(scene.get('render_seconds',scene.get('seconds',0)),options['fps'],talking)
                 for seg,duration in enumerate(durations):
                     count+=1;row=by_slot.get(f'{ei}:{si}:{seg}')
                     if row and row['status']=='done':
                         completed+=1;latest={'step_id':row['id'],'episode':ei,'scene':si,'segment':seg}
                     else:
-                        is_talk=options['lip_sync']=='audio' and any(l['episode']==ei and l['scene']==si for l in d.get('lines',[]))
+                        is_talk=talking
                         remaining.append((row,4*math.ceil(duration*(25 if is_talk else 16)/4)+1,is_talk))
                         if row and active and row['id']==active['step_id']:
                             current={'scene':si,'segment':seg,'segments':len(durations)};active.update(episode=ei,**current)
