@@ -82,7 +82,8 @@ def motion_direction(scene, lines, start, duration, story_policy=0):
                        'the face reacts with the eyes, eyebrows and head, a small natural reaction of the body, calm breathing. '
                        'Camera: steady close-up, a very slow push-in.')
     if kind == 'establish':
-        return base + ('A calm wide view of the location' + (', the characters small in the frame with closed lips and small natural movements. ' if names else '. ')
+        who = ' and '.join(names)
+        return base + ('A calm wide view of the location' + (f', {who} small in the frame with closed lips and small natural movements. ' if names else ', only the place and its props. ')
                        + 'Camera: a slow, smooth movement across the location.')
     if lines:
         speaker = lines[0]['speaker']

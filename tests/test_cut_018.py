@@ -249,9 +249,14 @@ def test_reaction_rules_word_limit_alternation_and_cap():
     assert len(found) == 5 and 3 * len(found) <= len(speaking) + 1
     blocks_before = [sum(1 for s in cut[:i] if s['kind'] == 'line') for i, _ in found]
     assert all(b - a >= 2 for a, b in zip(blocks_before, blocks_before[1:]))   # never two eligible blocks in a row
-    few = [('SpongeBob', [6], 'ruhig')] + [(('Mr. Krabs', 'SpongeBob')[i % 2], [6, 6], 'ruhig') for i in range(3)] + [('Mr. Krabs', [6], 'ruhig')]
+    # Five speaking blocks (the payoff is another speaker, so nothing merges): two reactions at most.
+    few = [('SpongeBob', [6], 'ruhig')] + [(('Mr. Krabs', 'SpongeBob')[i % 2], [6, 6], 'ruhig') for i in range(3)] + [('SpongeBob', [6], 'ruhig')]
     cut = sp.shots(*sp.parse(block_text(few), cast)[:3], cast)
     assert len(reactions(cut)) == 2 and 3 * len(reactions(cut)) <= len([s for s in cut if s['lines']]) + 1
+    # A payoff line of the same speaker joins the block before it: that block is the last one and stays on the face.
+    merged = few[:-1] + [('Mr. Krabs', [6], 'ruhig')]
+    cut = sp.shots(*sp.parse(block_text(merged), cast)[:3], cast)
+    assert [len(s['lines']) for s in cut if s['kind'] == 'line'][-1] == 3 and len(reactions(cut)) == 1
 
 
 def test_listener_is_never_someone_from_another_place():
@@ -326,7 +331,10 @@ def test_reaction_and_establish_scene_fields():
     assert [l['speaker'] for l in reaction['dialogues']] == ['Mr. Krabs'] and reaction['emotion'] == 'ängstlich'
     for text in (reaction['still'], reaction['animation_prompt']):
         assert 'Krabs' not in text and not sp.OPEN_MOUTH.search(text)
-    assert 'lips' in reaction['still'] and 'listening in silence' in reaction['still']
+    # The planner's own still is kept (without the off-screen figure); the face comes with the picture text.
+    assert reaction['still'] == 'SpongeBob in the cave'
+    picture = cast_design.scene_text(reaction, PEOPLE['cay_blocks'])
+    assert 'lips pressed together, listening in silence' in picture and 'Framing: close-up.' in picture and 'Krabs' not in picture
     establish = next(s for s in scenes if s['kind'] == 'establish')
     assert establish['camera'] == 'wide establishing shot' and establish['dialogues'] == [] and establish['title'].startswith('Totale: ')
     assert len(establish['cast']) <= 2
@@ -335,6 +343,32 @@ def test_reaction_and_establish_scene_fields():
     assert len({s['camera'] for s in speaking}) >= 2 and all('voice_of' not in s for s in speaking)
     for scene in scenes:
         assert not sp.offscreen_names(scene['still'] + ' ' + scene['animation_prompt'], scene['cast'], cs.CAST), scene['title']
+
+
+def test_speaking_shots_change_framing_and_silent_faces_keep_their_mouths_closed():
+    """Cay's film: thirteen frontal medium shots in a row and grinning, talking mouths in silent shots."""
+    cut, _ = blocks_episode()
+    same = {'shots': [{'shot': i + 1, 'still': f'{(s["visible"] or ["The place"])[0]} grins widely in the cave', 'motion': 'moves',
+                       'camera': 'medium shot', 'ambience': 'room'} for i, s in enumerate(cut)]}
+    _, episode = blocks_episode(same)
+    scenes = episode['scenes']
+    for a, b in zip(scenes, scenes[1:]):
+        if a['kind'] == b['kind'] == 'line': assert a['camera'] != b['camera'], (a['title'], b['title'])
+    after_reaction = [b for a, b in zip(scenes, scenes[1:]) if a['kind'] == 'reaction' and b['kind'] == 'line' and b['cast'] == a['cast']]
+    assert all('close' not in s['camera'] for s in after_reaction)
+    actions = [s for s in scenes if s['kind'] == 'action']
+    assert actions and all(s['still'].endswith(('mouth closed', 'mouths closed')) for s in actions)
+    assert all(not s['still'].endswith('closed') for s in scenes if s['kind'] == 'line')
+    establish = next(s for s in scenes if s['kind'] == 'establish')
+    assert establish['still'].startswith('Wide establishing view') and establish['camera'] == 'wide establishing shot'
+
+
+def test_who_may_speak_where():
+    from factory_timing import allowed_speakers
+    assert allowed_speakers({'kind': 'reaction', 'cast': ['SpongeBob'], 'voice_of': 'Mr. Krabs'}) == ['Mr. Krabs']
+    assert allowed_speakers({'kind': 'establish', 'cast': ['Oma']}) == []
+    for old in ({'cast': ['Oma', 'Tim']}, {'kind': 'line', 'cast': ['Oma']}, {'kind': 'action', 'cast': ['Tim']}, {'kind': 'scene', 'cast': []}):
+        assert allowed_speakers(old) == old['cast']
 
 
 def test_planner_text_with_an_open_mouth_never_reaches_a_reaction():
@@ -438,16 +472,77 @@ def test_reaction_absorbs_extra_time_only_up_to_its_cap():
     assert episode['scenes'][1]['render_seconds'] == pytest.approx(REACTION_MIN, abs=.04)
 
 
-def test_timing_layout_pin(tmp_path):
-    """factory_quality picks the layout once: a project without any sound version gets 18,
-    an existing sound version keeps 16 or 17 on every re-voice."""
-    import inspect
+class Voicing:
+    """Quality.quality_voices() for a project whose lines are already spoken (audio_only):
+    layout pin, timing and the mix order, no speech model."""
+    def __init__(self, folder):
+        self.posts = []; self.folder_path = folder
+    def apply_pending(self, d): return False
+    def paused(self, rid): return False
+    def save(self, d): pass
+    def folder(self, d): return self.folder_path
+    def asset(self, aid, kind=None): raise AssertionError('no music or recordings in this test')
+    def queue_post(self, d, kind, ei, spec): self.posts.append((kind, ei, spec))
+
+
+def voiced(episode, lines, timing=None, **extra):
+    d = {'id': 'v' * 32, 'idea': {'duration': 60, 'episodes': 1, 'fps': 25, 'participants': [], 'lip_sync': 'audio'},
+         'plan': {'cast': [{'name': n} for n in cs.CAST], 'mood': 'playful'}, 'episodes': [episode], 'lines': lines,
+         'audio_only': True, 'voice_policy': 18, **extra}
+    if timing is not None: d['timing'] = timing
+    return d
+
+
+def speak(lines, folder):
+    """A real WAV of the planned length for every line (sine tones, 24 kHz mono)."""
+    import hashlib, subprocess
+    folder.mkdir(parents=True, exist_ok=True)
+    for i, line in enumerate(lines):
+        f = folder / f'l{i}.wav'
+        subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', f'sine=frequency={180 + 15 * i}:duration={line["duration"]}',
+                        '-ar', '24000', '-ac', '1', str(f)], check=True)
+        line.update(file=str(f), sha256=hashlib.sha256(f.read_bytes()).hexdigest())
+    return lines
+
+
+def test_new_sound_version_gets_layout_18_and_the_real_mix_accepts_it(tmp_path):
+    """factory_quality pins the layout once: a project without any sound version gets 18. The mix
+    order then goes through the real FFmpeg mix with its checks ("Dialog passt nicht zur
+    Szenendauer", per-line speech check): every off-screen line stays inside its reaction shot."""
+    import shutil
+    if not shutil.which('ffmpeg'): pytest.skip('ffmpeg fehlt')
     from factory_quality import Quality
-    source = inspect.getsource(Quality.quality_voices)
-    assert "d.setdefault('timing_layout',18 if not d.get('timing') else 16 if not any(t.get('layout') or 'silent_shots' in t for t in d['timing']) else 17)" in source
-    pick = lambda d: 18 if not d.get('timing') else 16 if not any(t.get('layout') or 'silent_shots' in t for t in d['timing']) else 17
-    assert pick({}) == 18 and pick({'timing': [{'seconds': 60}]}) == 16 and pick({'timing': [{'layout': 17}]}) == 17
-    assert pick({'timing': [{'silent_shots': 1}]}) == 17
+    from factory_audio import mix
+    _, episode = blocks_episode(); plan_seconds(episode, 60, 25)
+    studio = Voicing(tmp_path); d = voiced(episode, speak(cs.timed_lines(episode), tmp_path / 'lines'))
+    asyncio.run(Quality.quality_voices(studio, d))
+    assert d['timing_layout'] == 18 and d['timing'][0]['layout'] == 18 and d['timing'][0]['reaction_shots'] == 2 and d['state'] == 'audio_mixing'
+    (kind, ei, spec), = studio.posts
+    reaction = next(i for i, s in enumerate(d['episodes'][0]['scenes']) if s['kind'] == 'reaction')
+    assert [l['speaker'] for l in spec['scenes'][reaction]['lines']] == ['Mr. Krabs']          # the voice stays in the mix
+    result = mix(tmp_path / 'mix', spec['scenes'], spec['mood'], None, {'music_mode': 'off'})
+    assert Path(result).is_file() and json.loads((tmp_path / 'mix' / 'Sprachpruefung.json').read_text())['checked'] == len(d['lines'])
+
+
+def test_existing_sound_versions_keep_their_layout(tmp_path):
+    from factory_audio import layout
+    from factory_quality import Quality
+    text, cast = cs.TEXTS['cay_pingpong']
+    title, beats, lines, _ = sp.parse(text, cast)
+    ping = sp.assemble(title, None, {'title': 'x'}, sp.ensure_action(sp.shots(title, beats, lines, cast, 13), 60), {'shots': []}, PEOPLE['cay_pingpong'], {}, 13)
+    plan_seconds(ping, 60, 25)
+    for timing, expected in (([{'seconds': 60, 'layout': 17}], 17), ([{'seconds': 60, 'silent_shots': 4}], 17), ([{'seconds': 60}], 16)):
+        d = voiced(copy.deepcopy(ping), cs.timed_lines(ping), timing)
+        asyncio.run(Quality.quality_voices(Voicing(tmp_path), d))
+        reference, reference_lines = copy.deepcopy(ping), cs.timed_lines(ping)
+        report = layout([reference], reference_lines, 60, 25, expected)
+        assert d['timing_layout'] == expected and d['timing'] == report, expected
+        assert d['episodes'][0]['scenes'] == reference['scenes'] and d['lines'] == reference_lines
+    # Pinned: a project re-voiced later keeps 18 even though it now has a sound version.
+    _, episode = blocks_episode(); plan_seconds(episode, 60, 25)
+    d = voiced(episode, cs.timed_lines(episode), [{'seconds': 60, 'layout': 18}], timing_layout=18)
+    asyncio.run(Quality.quality_voices(Voicing(tmp_path), d))
+    assert d['timing'][0]['layout'] == 18
 
 
 # --- Part 5: downstream ---------------------------------------------------------------------
@@ -464,7 +559,7 @@ def test_render_order_and_lip_sync_lock_skip_reactions():
 class Movies:
     """Factory.movies() with ComfyUI, ffmpeg and the database replaced."""
     def __init__(self, folder):
-        self.renders = []; self.posts = []; self.folder_path = folder; self.g = {'RUNTIME': folder}; self.comfy = folder
+        self.renders = []; self.posts = []; self.folder_path = folder; self.g = {'RUNTIME': folder, 'ROOT': folder}; self.comfy = folder
     async def object_info(self): return {}
     def autopilot_on(self, d): return True
     def post_rows(self, d, kind): return []
@@ -562,6 +657,17 @@ def route(app, path, method):
     return next(r.endpoint for r in app.routes if getattr(r, 'path', '') == path and method in (getattr(r, 'methods', None) or set()))
 
 
+def app_text(studio, tmp_path):
+    """Factory.routes() with only its own routes (the editor, quality and library routes are other tests)."""
+    import fastapi
+    factory = pytest.importorskip('factory')
+    app = fastapi.FastAPI()
+    studio.editor_routes = studio.quality_routes = studio.library_routes = lambda app: None
+    studio.g = {'RUNTIME': tmp_path}
+    factory.Factory.routes(studio, app)
+    return app
+
+
 def editing_project():
     d = movie_project(); d['state'] = 'voice_review'
     d['episodes'][0]['scenes'].append({'kind': 'establish', 'cast': ['SpongeBob', 'Mr. Krabs'], 'action': 'Weite Ansicht der Höhle.', 'dialogues': []})
@@ -569,7 +675,7 @@ def editing_project():
     return d
 
 
-def test_dialogue_editor_keeps_a_reaction_on_its_off_screen_voice():
+def test_dialogue_editor_keeps_a_reaction_on_its_off_screen_voice(tmp_path):
     fastapi = pytest.importorskip('fastapi')
     from fastapi import HTTPException
     from factory_models import SceneDialogueEdit
@@ -583,11 +689,26 @@ def test_dialogue_editor_keeps_a_reaction_on_its_off_screen_voice():
     assert refused.value.status_code == 400 and 'hört SpongeBob nur zu' in refused.value.detail and 'Mr. Krabs' in refused.value.detail
     d = asyncio.run(edit(rid, body(1, 'Mr. Krabs')))
     assert d['episodes'][0]['scenes'][1]['dialogues'][0]['speaker'] == 'Mr. Krabs' and d['state'] == 'voicing'
-    with pytest.raises(HTTPException, match='') as refused:
-        asyncio.run(edit(rid, body(4, 'SpongeBob')))                       # a wide shot with two figures stays silent
-    assert 'Totale' in refused.value.detail
-    with pytest.raises(HTTPException):
+    reopen = lambda: studio.docs[rid].update(state='voice_review')
+    reopen()
+    for who in ('SpongeBob', 'Mr. Krabs'):                                  # a wide establishing shot stays silent
+        with pytest.raises(HTTPException) as refused:
+            asyncio.run(edit(rid, body(4, who)))
+        assert refused.value.status_code == 400 and 'Totale' in refused.value.detail
+    with pytest.raises(HTTPException) as refused:
         asyncio.run(edit(rid, body(0, 'Mr. Krabs')))                       # unchanged: a speaking shot needs its visible speaker
+    assert refused.value.detail == 'Sprecher muss zur Besetzung der Szene gehören.'
+    d = asyncio.run(edit(rid, body(0, 'SpongeBob')))
+    assert d['episodes'][0]['scenes'][0]['dialogues'][0]['speaker'] == 'SpongeBob'
+    # The older single-line editor follows the same rule.
+    reopen(); text = route(app_text(studio, tmp_path), '/api/factory/{rid}/text', 'PUT')
+    from factory_models import SceneText
+    line = lambda scene, who: SceneText(episode=0, scene=scene, action=studio.get(rid)['episodes'][0]['scenes'][scene]['action'], dialogue='Raus hier, sofort!', speaker=who)
+    for scene, who in ((1, 'SpongeBob'), (4, 'SpongeBob')):
+        with pytest.raises(HTTPException) as refused:
+            asyncio.run(text(rid, line(scene, who)))
+        assert refused.value.status_code == 400
+    assert asyncio.run(text(rid, line(1, 'Mr. Krabs')))['episodes'][0]['scenes'][1]['dialogue'] == 'Raus hier, sofort!'
 
 
 def test_story_rules_and_dialogue_additions_respect_reactions():
@@ -598,7 +719,10 @@ def test_story_rules_and_dialogue_additions_respect_reactions():
     episode['scenes'][1]['dialogues'] = [{'speaker': 'Mr. Krabs', 'text': 'Raus hier!', 'emotion': 'wütend'}]
     episode['scenes'][0]['dialogues'] = [{'speaker': 'SpongeBob', 'text': 'Hallo!', 'emotion': 'ruhig'}]
     assert dialogue_errors(episode) == []
-    assert split_episode({'scenes': [episode['scenes'][1]]})['scenes'][0]['cast'] == ['SpongeBob']     # never split into a talking shot
+    unpictured = {k: v for k, v in episode['scenes'][1].items() if k not in ('selected', 'variants')}
+    assert split_episode({'scenes': [unpictured]})['scenes'] == [unpictured]                        # never split into a talking shot
+    silent_wide = copy.deepcopy(episode); silent_wide['scenes'][4]['dialogues'] = [{'speaker': 'SpongeBob', 'text': 'Hallo!', 'emotion': 'ruhig'}]
+    assert any('Totale' in e for e in dialogue_errors(silent_wide))
     wrong = copy.deepcopy(episode); wrong['scenes'][1]['dialogues'][0]['speaker'] = 'SpongeBob'
     assert dialogue_errors(wrong) and 'Reaktion' in dialogue_errors(wrong)[0]
     added = apply_additions(episode, {'scenes': [{'scene': 2, 'lines': [{'speaker': 'SpongeBob', 'text': 'Ich hör ja zu!', 'emotion': 'ruhig', 'pause_after': .2}]},

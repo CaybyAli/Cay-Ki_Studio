@@ -162,8 +162,8 @@ def faces(scene):
     leave it out, and the design sheet must not decide it (a laughing upload laughed in every
     afraid line). Image keys carry no prompt digest, so finished images stay as they are.
 
-    0.18 reaction shot: the figure in the frame listens with a closed-mouth face; the voice
-    belongs to a figure off-screen, which gets no face and is never named."""
+    0.18 reaction shot (story policy 14): the figure in the frame listens with a closed-mouth
+    face; the voice belongs to a figure off-screen, which gets no face and is never named."""
     from screenplay import expression, reaction_expression
     if scene.get('kind') == 'reaction':
         face = reaction_expression(scene.get('emotion') or '')

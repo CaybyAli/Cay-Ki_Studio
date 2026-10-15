@@ -17,7 +17,7 @@ import cast_design
 import screenplay
 import turbo
 from factory_audio import turns
-from factory_timing import plan_seconds, POLICY, off_screen
+from factory_timing import plan_seconds, POLICY, off_screen, allowed_speakers
 from factory_editor import Editor, image_rounds, active_variants, regenerate
 from studio_quality_policy import settings,segments,scene_segments,motion_direction,motion_direction_v16,RENDER_POLICY
 from story_source import manifest,validate_count,prepare_notes,episode_source,SeriesHeader
@@ -1202,9 +1202,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if d['state'] not in ('image_review','voice_review'):raise HTTPException(409,'Text nur während der Vorschau bearbeiten.')
             try:s=d['episodes'][body.episode]['scenes'][body.scene]
             except IndexError:raise HTTPException(404,'Szene fehlt.')
-            # 0.18: a reaction speaks only with the voice from off-screen; a wide shot with several figures stays silent.
-            speakers=[s.get('voice_of')] if off_screen(s) else [] if s.get('kind')=='establish' and len(s['cast'])>1 else s['cast']
-            if body.dialogue and (body.speaker not in speakers or len(body.dialogue.split())>10):raise HTTPException(400,'Wähle eine Figur dieser Szene und höchstens 10 Wörter pro Zeile.')
+            # 0.18: a reaction speaks only with the voice from off-screen, a wide establishing shot not at all.
+            if body.dialogue and (body.speaker not in allowed_speakers(s) or len(body.dialogue.split())>10):raise HTTPException(400,'Wähle eine Figur dieser Szene und höchstens 10 Wörter pro Zeile.')
             if body.action!=s['action']:
                 if d['state']!='image_review':raise HTTPException(409,'Bildhandlung kann hier nicht geändert werden.')
                 s['action']=body.action;s['animation_prompt']='';s['motion']=[body.action];s['still']='';regenerate(s,[0,1]);d['state']='pictures'

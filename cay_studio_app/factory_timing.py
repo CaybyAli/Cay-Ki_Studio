@@ -9,6 +9,13 @@ def off_screen(scene):
     Rendered as silent motion (never lip-sync); the voice stays in the mix."""
     return isinstance(scene, dict) and scene.get('kind') == 'reaction'
 
+def allowed_speakers(scene):
+    """Who may speak in this shot. A reaction (0.18) only with the voice from off-screen, a wide
+    establishing shot (0.18) not at all; every other shot with the figures in the frame."""
+    if off_screen(scene): return [scene['voice_of']] if scene.get('voice_of') else []
+    if scene.get('kind') == 'establish': return []
+    return list(scene.get('cast', []))
+
 def scene_lines(scene):
     return scene.get('dialogues') or ([{'speaker':scene.get('speaker',''), 'text':scene['dialogue'],
         'pause_after':.18}] if scene.get('dialogue') else [])

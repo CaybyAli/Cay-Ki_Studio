@@ -69,6 +69,9 @@ def dialogue_errors(episode):
             if any(l['speaker'] in s.get('cast',[]) or l['speaker']!=s.get('voice_of') for l in lines):
                 errors.append(f'Szene {i+1}: In einer Reaktion spricht nur {s.get("voice_of") or "die Stimme aus dem Off"}; die Figur im Bild hört zu.')
             continue
+        if s.get('kind')=='establish' and lines:
+            # 0.18 wide establishing shot: shows the new place, faces too small for lip-sync.
+            errors.append(f'Szene {i+1}: Eine Totale zeigt nur den Ort und bleibt ohne Text.');continue
         if lines and (len(s.get('cast',[]))!=1 or len({l['speaker'] for l in lines})!=1):
             errors.append(f'Szene {i+1}: Für eindeutige Lippensynchronität nur einen sichtbaren Sprecher zeigen; Antwort als Gegenansicht planen.')
     return errors

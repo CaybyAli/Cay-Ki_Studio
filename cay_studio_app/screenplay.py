@@ -162,7 +162,7 @@ VISUAL_INSTRUCTION_CUT = ('Du bist Kameramann und Bildregisseur. Für jede Einst
     'role sagt, was die Einstellung im Schnitt tut: speaking = die Figur aus visible spricht ihre lines; '
     'reaction = die Figur aus visible hört schweigend zu, die Stimme (hears) kommt von außerhalb des Bildes, ihr Mund bleibt geschlossen, '
     'sie reagiert nur mit Augen, Augenbrauen, Kopf und Körper (nicken, zurückweichen, Arme verschränken); '
-    'action = stumme Handlung; establish = weite Totale, die den neuen Ort zeigt. '
+    'action = stumme Handlung, alle Münder geschlossen; establish = weite Totale, die den neuen Ort zeigt. '
     'still: ENGLISCHE Bildbeschreibung des Standbilds, nur mit den Figuren aus visible: Pose, Gesichtsausdruck, Requisit, Ort, Licht. '
     'Figuren, die nicht in visible stehen, sind außerhalb des Bildes und werden NICHT genannt, auch nicht im Hintergrund '
     'und auch nicht als Stimme aus dem Off. Nur die Figuren aus visible sind im Bild. '
@@ -764,7 +764,10 @@ SPEAK_CAMERAS = ('medium shot', 'medium close-up', 'low angle medium shot')
 
 
 def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLICY):
-    """EpisodePlan-compatible dict; old downstream code keeps working."""
+    """EpisodePlan-compatible dict; old downstream code keeps working. Policy 14 adds two shot
+    kinds that exist only here: 'reaction' (with voice_of) and 'establish'. They are never
+    validated against factory_models.Shot, whose JSON schema the older scene planner still sends
+    to the model unchanged."""
     by_number = {v['shot']: v for v in (visuals or {}).get('shots', [])}
     scenes = []
     for i, shot in enumerate(cut):
@@ -777,6 +780,10 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLIC
         names = [c['name'] for c in cast]; aliases = figure_aliases(cast)
         still = sanitize(v.get('still') or fallback_still, visible, names, aliases)
         if len(still) < 10: still = sanitize(fallback_still, visible, names, aliases) or f'{" and ".join(visible)} in {shot["place"]}'
+        if policy >= 14 and not speaker and visible:
+            # A silent face keeps its mouth closed: in Cay's 0.17 film a grin in the still became a
+            # mouth moving without any voice.
+            still = still[:580].rstrip(' .,') + (', mouth closed' if len(visible) == 1 else ', mouths closed')
         motion = sanitize(v.get('motion') or ('talks with expressive face and natural gestures' if speaker else shot['what']), visible, names, aliases)
         if len(motion) < 5: motion = 'talks with expressive face and natural gestures' if speaker else 'moves quickly with a clear physical action'
         scenes.append({
@@ -806,18 +813,23 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLIC
             'scenes': scenes, 'story_policy': policy, 'dialogue_mode': 'rich', 'script': 'screenplay'}
 
 
+def _same_framing(a, b):
+    return str(a).strip().lower() == str(b).strip().lower()
+
+
 def _camera(i, shot, v, cut, scenes):
     """Policy 14 framing: the planner's choice, else speaking shots alternate medium shot,
-    medium close-up and low angle. Two shots of the same figure in a row never get the same
-    framing (a jump cut), and after a close-up reaction the figure speaks in a medium shot."""
+    medium close-up and low angle. Two speaking shots in a row never share a framing (Cay's
+    film: thirteen frontal medium shots), and after a close-up reaction the same figure
+    speaks in a medium shot, not in a second close-up (a jump cut)."""
     if shot['kind'] != 'line': return v.get('camera') or 'wide shot'
     k = sum(1 for s in cut[:i] if s['kind'] == 'line')
     camera = v.get('camera') or SPEAK_CAMERAS[k % len(SPEAK_CAMERAS)]
     before = cut[i - 1] if i else None
-    if not before or before['visible'] != shot['visible']: return camera
-    if before['kind'] == 'reaction' and 'close' in camera.lower(): return 'medium shot'
-    if before['kind'] == 'line' and scenes and camera.strip().lower() == scenes[-1]['camera'].strip().lower():
-        return next(c for c in SPEAK_CAMERAS if c != camera.strip().lower())
+    if not before: return camera
+    if before['kind'] == 'reaction' and before['visible'] == shot['visible'] and 'close' in camera.lower(): return 'medium shot'
+    if before['kind'] == 'line' and scenes and _same_framing(camera, scenes[-1]['camera']):
+        return next(c for c in SPEAK_CAMERAS if not _same_framing(c, camera))
     return camera
 
 
@@ -842,8 +854,10 @@ def _cut_scene(i, shot, v, cut, cast, continuity):
                 'dialogues': [{'speaker': l['speaker'], 'text': l['text'], 'emotion': l['emotion'], 'pause_after': .15} for l in shot['lines']],
                 'motion': [motion], 'animation_prompt': motion[:1400], 'still': still[:600], 'voice_of': speaker}
     own_still = f'Wide establishing view of {place}' + (f', {" and ".join(visible)} small in the frame' if visible else ', no characters')
-    still = sanitize(v.get('still') or own_still, visible, names, aliases)
-    if len(still) < 10: still = sanitize(own_still, visible, names, aliases) or f'Wide view of {place}'
+    still = sanitize(v.get('still') or '', visible, names, aliases)
+    if len(still) < 10 or OPEN_MOUTH.search(still): still = sanitize(own_still, visible, names, aliases) or f'Wide view of {place}'
+    # The planner may describe the figures up close; this shot exists to show the place.
+    if not re.search(r'(?i)\bwide\b', still): still = 'Wide establishing view, ' + still
     motion = sanitize(v.get('motion') or '', visible, names, aliases)
     if len(motion) < 5: motion = 'slow smooth camera movement across the location, calm natural movement'
     what = shot['what'].strip()
