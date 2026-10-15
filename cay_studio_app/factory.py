@@ -691,7 +691,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild {variant+1}/2';self.save(d)
                     names=scene['cast'];references=[self.stage(path) for path in cast_design.scene_references(refs,names)]
                     prompt=cast_design.scene_prompt(scene,d['plan']['cast'],names,d['plan']['style'])+cast_design.scene_text(scene,d['plan']['cast'])
-                    if scene.get('image_note'):prompt+=' Specific correction: '+cast_design.strip_names(scene['image_note'],[p['name'] for p in d['plan']['cast'] if p['name'] not in names])
+                    if scene.get('image_note'):prompt+=' Specific correction: '+cast_design.strip_names(scene['image_note'],[p['name'] for p in d['plan']['cast'] if p['name'] not in names],names,screenplay.figure_aliases(d['plan']['cast']))
                     s=await self.render(d,key,build_graph(prompt,references,int(digest(d['id']+key)[:12],16),'',models))
                     scene['variants'].append({'id':s['id'],'key':key});self.save(d)
         d['state']='image_review';d['phase']='Deine Szenen sind bereit. Wähle pro Szene ein Bild.';self.save(d)
@@ -758,8 +758,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         prompt=d['plan']['style']+'. '+(scene.get('animation_prompt') or action+'. '+scene['camera'])+'. '+motion_direction_v16(scene,talking,start,duration)+' '+identities
                     else:
                         names=[p['name'] for p in d['plan']['cast']];hidden=[n for n in names if n not in scene['cast']]
-                        movement=screenplay.sanitize(scene.get('animation_prompt') or action+'. '+scene['camera'],scene['cast'],names) or 'natural movement'
-                        prompt=cast_design.strip_names(d['plan']['style'],hidden)+'. '+movement+'. '+motion_direction(scene,talking,start,duration)+' '+identities
+                        aliases=screenplay.figure_aliases(d['plan']['cast'])
+                        movement=screenplay.sanitize(scene.get('animation_prompt') or action+'. '+scene['camera'],scene['cast'],names,aliases) or 'natural movement'
+                        prompt=cast_design.strip_names(d['plan']['style'],hidden,scene['cast'],aliases)+'. '+movement+'. '+motion_direction(scene,talking,start,duration)+' '+identities
                     seed=int(digest([d['id'],ei,si,scene['selected'],seg,RENDER_POLICY])[:12],16)
                     if lines and options['lip_sync']=='audio':
                         # Include actual pauses; never drive lips with the music mix.

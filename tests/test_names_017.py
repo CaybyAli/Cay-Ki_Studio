@@ -60,6 +60,35 @@ CASES = [
     # short last word of a longer name ('Oma' for 'Tims Oma')
     (TIM, ['Tim'], 'Oma holt den Kuchen aus dem Ofen, Tim schaut hungrig zu.', 'Tim schaut hungrig zu.'),
     (['Frau Müller', 'Herr Müller'], ['Frau Müller'], 'Frau Müller schimpft mit Herrn Müller', 'Frau Müller schimpft'),
+    # review round 4
+    (SB, ['SpongeBob'], 'SpongeBob giggles while Patrick poses as a pirate with an eye patch', 'SpongeBob giggles'),
+    (SB, ['SpongeBob'], 'SpongeBob flips a patty while Patrick dances behind him, waving his arms', 'SpongeBob flips a patty'),
+    (SB, ['SpongeBob'], 'SpongeBob dresses as a pirate for Patrick.', 'SpongeBob dresses as a pirate.'),
+    (['Tom', 'Jerry', 'Spike'], ['Jerry'], 'Jerry steals the cheese but Tom catches him by the tail', 'Jerry steals the cheese'),
+    (['Tom', 'Jerry', 'Spike'], ['Tom'], 'Jerry steals the cheese but Tom catches him by the tail', 'Tom catches him by the tail'),
+    (['Tom', 'Jerry', 'Spike'], ['Tom'], 'Tom creeps closer to the matchbox where Jerry sleeps', 'Tom creeps closer to the matchbox'),
+    (SB, ['SpongeBob'], 'SpongeBob öffnet die Tür und dann rennt Patrick herein.', 'SpongeBob öffnet die Tür'),
+    (['Mario', 'Princess Peach', 'Toad'], ['Mario', 'Princess Peach'], 'Peach umarmt Mario und Toad jubelt.', 'Peach umarmt Mario'),
+    (['Mario', 'Princess Peach', 'Toad'], ['Toad'], 'Peach umarmt Mario und Toad jubelt.', 'Toad jubelt.'),
+    (SB, ['SpongeBob'], 'Hinter SpongeBob schleicht Plankton zum Tresor.', ''),
+    (SB, ['SpongeBob'], 'Mr. Krabs, rot vor Wut, packt SpongeBob am Kragen.', ''),
+    (SB, ['Mr. Krabs'], 'Mr. Krabs, rot vor Wut, packt SpongeBob am Kragen.', 'Mr. Krabs, rot vor Wut, packt am Kragen.'),
+    (SB, ['SpongeBob'], 'SpongeBob stands at the grill. Patrick bursts in. He grabs the spatula.', 'SpongeBob stands at the grill.'),
+    (TIM, ['Lena'], 'Lena sits on the swing. She waves at Tim and laughs.', 'Lena sits on the swing. She waves and laughs.'),
+    (['Chase', 'Marshall', 'Ryder'], ['Chase'], 'Chase springt zu Ryder, den roten Ball im Maul.', 'Chase springt, den roten Ball im Maul.'),
+    (SB, ['SpongeBob', 'Sandy'], 'SpongeBob hugs Sandy, Patrick and Plankton cry.', 'SpongeBob hugs Sandy'),
+    (SB, ['SpongeBob'], 'SpongeBob grins and Mr Krabs counts money.', 'SpongeBob grins'),
+    (SB, ['SpongeBob'], 'SpongeBob grins at Sandy and Patrick waves', 'SpongeBob grins'),
+    (SB, ['SpongeBob'], 'SpongeBob schaut erschrocken zu, wie Plankton die Formel stiehlt.', 'SpongeBob schaut erschrocken zu'),
+    (SB, ['SpongeBob'], 'Als Plankton kommt, versteckt sich SpongeBob.', 'versteckt sich SpongeBob.'),
+    (PF, ['Dr. Doofenshmirtz'], 'Dr. Doofenshmirtz shakes his fist at Perry the Platypus', 'Dr. Doofenshmirtz shakes his fist'),
+    # other spellings of a name
+    (SB, ['SpongeBob'], 'SpongeBob dances while Thaddaeus plays the clarinet', 'SpongeBob dances'),
+    (['Mario', 'Bowser', 'Bowser Jr.'], ['Bowser Jr.'], 'Bowser Jr laughs and sticks out his tongue at the camera', 'Bowser Jr laughs and sticks out his tongue at the camera'),
+    (['Mario', 'Bowser', 'Bowser Jr.'], ['Bowser'], 'Bowser Jr laughs and sticks out his tongue at the camera', ''),
+    (['Peter Pan', 'Tinker Bell'], ['Peter Pan'], 'Peter Pan laughs as Tinkerbell glows next to him', 'Peter Pan laughs'),
+    (TIM + ['Papa'], ['Tim'], "Tim's grandma knits a scarf by the fireplace", ''),
+    (['Kim Possible', 'Ron Stoppable'], ['Kim Possible'], 'Kim and Ron run to the car.', 'Kim run to the car.'),
 ]
 
 
@@ -88,3 +117,31 @@ def test_aktion_visibility_with_short_and_shared_names():
 def test_strip_names_in_appearance_texts():
     assert strip_names("Wears a hat and Opa's old scarf", ['Opa'], ['Tim']) == 'Wears a hat and old scarf'
     assert 'Oma' not in strip_names('A boy in a red scarf knitted by Tims Oma', ['Tims Oma'], ['Tim'])
+
+
+def test_original_names_are_aliases():
+    cast = [{'name': 'SpongeBob'}, {'name': 'Thaddäus', 'original': 'Squidward Tentacles from the animated series SpongeBob SquarePants'}]
+    aliases = sp.figure_aliases(cast)
+    assert aliases == {'Thaddäus': ['Squidward Tentacles']}
+    assert sp.sanitize('SpongeBob waves at Squidward through the kitchen window', ['SpongeBob'], ['SpongeBob', 'Thaddäus'], aliases) == 'SpongeBob waves through the kitchen window'
+    assert sp.offscreen_names('Squidward rolls his eyes', ['SpongeBob'], ['SpongeBob', 'Thaddäus'], aliases) == ['Thaddäus']
+
+
+def test_visuals_naming_offscreen_figures_are_written_again():
+    import asyncio
+    cut = [{'visible': ['SpongeBob'], 'lines': [], 'kind': 'action', 'place': 'Kitchen', 'what': 'x', 'beat': 0},
+           {'visible': ['Thaddäus'], 'lines': [], 'kind': 'action', 'place': 'Kitchen', 'what': 'x', 'beat': 0}]
+    d = {'plan': {'style': 'clay', 'cast': [{'name': 'SpongeBob'}, {'name': 'Thaddäus', 'original': 'Squidward Tentacles from the series'}]}}
+    first = {'shots': [{'shot': 1, 'still': 'SpongeBob grins at Squidward', 'motion': 'waves', 'camera': 'medium', 'ambience': 'room'},
+                       {'shot': 2, 'still': 'Thaddäus plays the clarinet', 'motion': 'sways', 'camera': 'medium', 'ambience': 'room'}]}
+
+    class Planner:
+        calls = []
+        async def llm(self, schema, instruction, data):
+            Planner.calls.append([x['shot'] for x in data['shots']])
+            return {'shots': [{'shot': 1, 'still': 'SpongeBob grins at the grill, alone', 'motion': 'waves', 'camera': 'medium', 'ambience': 'room'}]}
+
+    listing = [{'shot': i + 1, 'visible': s['visible']} for i, s in enumerate(cut)]
+    fixed = asyncio.run(sp.repair_visuals(Planner(), d, cut, listing, first))
+    assert Planner.calls == [[1]]                                     # only the wrong shot is asked again
+    assert fixed['shots'][0]['still'] == 'SpongeBob grins at the grill, alone' and fixed['shots'][1] == first['shots'][1]
