@@ -54,7 +54,7 @@ def motion_direction_v16(scene, lines, start, duration):
             'Preserve the approved starting image, costume, head shape, props and lighting. Keep all mouths closed when nobody speaks and show visible action or reaction instead. '
             + ' '.join(cues))
 
-def motion_direction(scene, lines, start, duration):
+def motion_direction(scene, lines, start, duration, story_policy=0):
     """Visible behaviour for one shot. The text conditioning is global for every
     81-frame window, so per-second cues do nothing; negatives do nothing at cfg 1.
 
@@ -62,17 +62,35 @@ def motion_direction(scene, lines, start, duration):
     of silence after each line that meant mouths and hands moving without any
     voice (Cay: "bewegen den Mund oder die Hände ohne dass Text da ist").
     0.17: gestures while the voice speaks, stillness with a closed mouth in the
-    pauses, and only the visible figure is named."""
+    pauses, and only the visible figure is named.
+
+    0.18 (episodes with story_policy 14; reaction and establishing shots exist only
+    there): in Cay's silent Wan shots mouths opened without a voice. A reaction is
+    the listener with lips closed while a voice comes from off-screen, phrased only
+    positively; silent action and wide shots say "lips stay closed" too. Older
+    episodes keep the 0.17 text: the video cache key is the graph digest."""
     names = list(scene.get('cast') or [])
     frame = (f'Exactly one character in the whole frame: {names[0]}. No other characters or figures anywhere, also not in the background. '
              if len(names) == 1 else f'Only {" and ".join(names)} in the frame, nobody else. ' if names else 'No characters in the frame. ')
     base = ('One continuous full-frame shot. No cut, no montage, no split screen, no border. '
             'No written language, letters, subtitles, captions, menus or watermark in any frame. ' + frame +
             'Stable facial proportions, materials, costume, head shape, props and lighting as in the starting image. Normal real-time speed, never slow motion. ')
+    kind = scene.get('kind')
+    if kind == 'reaction':
+        who = names[0] if names else 'The character'
+        return base + (f'{who} listens in silence to a voice from outside the frame: the lips stay closed and still the whole time, '
+                       'the face reacts with the eyes, eyebrows and head, a small natural reaction of the body, calm breathing. '
+                       'Camera: steady close-up, a very slow push-in.')
+    if kind == 'establish':
+        return base + ('A calm wide view of the location' + (', the characters small in the frame with closed lips and small natural movements. ' if names else '. ')
+                       + 'Camera: a slow, smooth movement across the location.')
     if lines:
         speaker = lines[0]['speaker']
         return base + (f'{speaker} talks with an expressive face and natural hand gestures while the voice speaks. '
                        'In pauses and after the last word the mouth stays closed and the body is calm, only breathing and a small reaction. '
                        'Camera: steady, a subtle slow push-in.')
+    if story_policy >= 14:
+        return base + ('Energetic, clearly visible physical action at normal speed. Every mouth stays closed the whole time, '
+                       'faces show the feeling with the eyes and eyebrows. Camera: dynamic but smooth, following the action.')
     return base + ('Energetic, clearly visible physical action at normal speed. All mouths stay closed, nobody talks. '
                    'Camera: dynamic but smooth, following the action.')

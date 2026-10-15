@@ -4,6 +4,11 @@ import math
 FPS = 25
 POLICY = 3
 
+def off_screen(scene):
+    """0.18 reaction shot: the figure in the frame listens, its line comes from off-screen.
+    Rendered as silent motion (never lip-sync); the voice stays in the mix."""
+    return isinstance(scene, dict) and scene.get('kind') == 'reaction'
+
 def scene_lines(scene):
     return scene.get('dialogues') or ([{'speaker':scene.get('speaker',''), 'text':scene['dialogue'],
         'pause_after':.18}] if scene.get('dialogue') else [])
@@ -93,16 +98,23 @@ def fill_target(base, talking, target, weights):
     """
     times=list(base);missing=float(target)-sum(times)
     order=[i for i,t in enumerate(talking) if t]
-    for i in order:
-        if missing<=0:break
-        if times[i]>=TALK_SEGMENT_SECONDS-MARGIN:continue
-        free=max(0.,min(TALK_TAIL_MAX,talk_window_seconds(times[i])-times[i]-MARGIN))
-        take=min(free,missing);times[i]+=take;missing-=take
+    missing=_talk_tails(times,order,missing)
     silent=[i for i,t in enumerate(talking) if not t]
     if missing>0 and silent:
         share=[max(.01,float(weights[i])) for i in silent]
         for i,w in zip(silent,share):times[i]+=missing*w/sum(share)
         missing=0
+    return _talk_rest(times,order,missing,weights)
+
+def _talk_tails(times, order, missing):
+    for i in order:
+        if missing<=0:break
+        if times[i]>=TALK_SEGMENT_SECONDS-MARGIN:continue
+        free=max(0.,min(TALK_TAIL_MAX,talk_window_seconds(times[i])-times[i]-MARGIN))
+        take=min(free,missing);times[i]+=take;missing-=take
+    return missing
+
+def _talk_rest(times, order, missing, weights):
     if missing>0:
         for i in sorted(order,key=lambda i:talk_window_seconds(times[i])-times[i],reverse=True):
             if missing<=0:break
@@ -116,22 +128,65 @@ def fill_target(base, talking, target, weights):
         for i,w in zip(pool,share):times[i]+=missing*w/sum(share)
     return times
 
-def audio_layout(episodes, lines, minimum_seconds=None, fps=FPS):
-    """Speech starts on the cut; extra time becomes action, never a pause before the words."""
-    reports=[]
+# Layout 18 (0.18 cut): reaction shots carry an off-screen voice but no lip-sync window,
+# silent action gets room to happen, a new place gets a short wide shot.
+REACTION_TAIL = .45     # the listener's visible reaction after the last off-screen word
+REACTION_MIN = 1.4
+REACTION_CAP = 4.6      # extra time stops here (one motion clip); a longer voice keeps its length
+ACTION_BASE = 3.2       # 0.17: 2.5 s (2.52 s measured in Cay's film), too short for an action
+ESTABLISH_BASE = 2.4
+
+def voice_plan(group):
+    """Off-screen voice over a reaction shot: placed like a talking shot, nothing snapped to windows."""
+    durations=[float(x['duration']) for x in group]
+    pauses=[float(x.get('pause_after',.18)) for x in group[:-1]]+[0.]
+    natural=HEAD+sum(durations)+sum(pauses)+REACTION_TAIL
+    return {'seconds':max(REACTION_MIN,natural),'head':HEAD,'pauses':pauses,'tail':REACTION_TAIL}
+
+def fill_target_cut(base, talking, caps, target, weights):
+    """Layout 18: like fill_target, but the silent shots include reactions, and a reaction
+    stops taking time at its cap; the rest goes to action and establishing shots."""
+    times=list(base);missing=float(target)-sum(times)
+    order=[i for i,t in enumerate(talking) if t]
+    missing=_talk_tails(times,order,missing)
+    pool=[i for i,t in enumerate(talking) if not t]
+    while missing>1e-9 and pool:
+        share={i:max(.01,float(weights[i])) for i in pool};total=sum(share.values())
+        full=[i for i in pool if caps[i] is not None and times[i]+missing*share[i]/total>=caps[i]]
+        if not full:
+            for i in pool:times[i]+=missing*share[i]/total
+            missing=0;break
+        for i in full:
+            take=max(0.,caps[i]-times[i]);times[i]+=take;missing-=take;pool.remove(i)
+    return _talk_rest(times,order,max(0.,missing),weights)
+
+def audio_layout(episodes, lines, minimum_seconds=None, fps=FPS, version=17):
+    """Speech starts on the cut; extra time becomes action, never a pause before the words.
+    Version 18 adds the 0.18 cut (reaction and establishing shots, longer silent action);
+    with version 17 every number stays as it was in 0.17."""
+    reports=[];cut=version>=18
     for ei,episode in enumerate(episodes):
         scenes=episode['scenes'];groups=[];base=[];plans=[]
         for si,scene in enumerate(scenes):
             group=sorted([line for line in lines if line['episode']==ei and line['scene']==si],key=lambda x:x.get('turn',0))
             groups.append(group)
-            plan=talk_plan(group) if group else None;plans.append(plan)
-            base.append(plan['seconds'] if group else max(2.5,float(scene.get('seconds',4))))
+            plan=voice_plan(group) if cut and off_screen(scene) else talk_plan(group) if group else None;plans.append(plan)
+            base.append(plan['seconds'] if plan else max(2.5,float(scene.get('seconds',4))))
         target=float(minimum_seconds if minimum_seconds is not None else episode.get('minimum_seconds',0))
         rich=episode.get('dialogue_mode')=='rich' and any(groups)
-        if rich:
+        # Lip-sync shots: a reaction's voice comes from off-screen, it is never one of them.
+        talking=[bool(g) and not (cut and off_screen(s)) for s,g in zip(scenes,groups)]
+        if rich and cut:
+            base=[seconds if talk or off_screen(scene) else ESTABLISH_BASE if scene.get('kind')=='establish' else ACTION_BASE
+                  for seconds,talk,scene in zip(base,talking,scenes)]
+        elif rich:
             base=[seconds if group else 2.5 for seconds,group in zip(base,groups)]
         weights=[scene.get('seconds',4) if not group else sum(float(l['duration']) for l in group) for scene,group in zip(scenes,groups)]
-        planned=fill_target(base,[bool(g) for g in groups],target,weights)
+        if cut:
+            # Silent shots share the extra time by their own length: an action more than a wide shot.
+            weights=[w if talk else seconds for w,talk,seconds in zip(weights,talking,base)]
+            planned=fill_target_cut(base,talking,[REACTION_CAP if off_screen(s) else None for s in scenes],target,weights)
+        else:planned=fill_target(base,[bool(g) for g in groups],target,weights)
         # Whole frames; rounding only ever adds, the minimum stays met.
         times=distribute_frames(planned,target,weights,fps)
         cursor=0.;speech=0.;intervals=[]
@@ -148,12 +203,16 @@ def audio_layout(episodes, lines, minimum_seconds=None, fps=FPS):
             cursor+=seconds
         previous=0.;longest=0.
         for start,end in intervals:longest=max(longest,start-previous);previous=end
-        reports.append({'seconds':round(cursor,2),'speech_seconds':round(speech,2),
+        report={'seconds':round(cursor,2),'speech_seconds':round(speech,2),
             'speech_share':round(speech/cursor,3) if cursor else 0,
             'longest_speech_gap':round(max(longest,cursor-previous),2),'target_seconds':target,
             'minimum_met':cursor+1e-7>=target,'timing_policy':POLICY,'fps':fps,
-            'talk_windows':sum(rendered_windows(t,fps) for t,g in zip(times,groups) if g),
-            'silent_shots':sum(1 for g in groups if not g),'layout':17})
+            'talk_windows':sum(rendered_windows(t,fps) for t,g in zip(times,talking if cut else groups) if g),
+            'silent_shots':sum(1 for g in groups if not g),'layout':18 if cut else 17}
+        if cut:
+            report.update(lip_sync_shots=sum(talking),reaction_shots=sum(1 for s in scenes if off_screen(s)),
+                          establish_shots=sum(1 for s in scenes if s.get('kind')=='establish'))
+        reports.append(report)
     return reports
 
 # ---------------------------------------------------------------------------

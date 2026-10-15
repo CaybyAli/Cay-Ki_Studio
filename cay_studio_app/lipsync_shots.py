@@ -8,7 +8,7 @@ Only used before any picture exists: picture and render caches are keyed by
 scene index, so splitting later would attach old images to new shots.
 """
 import copy
-from factory_timing import scene_lines
+from factory_timing import scene_lines, off_screen
 
 MAX_SHOTS = 30
 CAMERAS = ('Medium shot', 'Dynamic medium close-up', 'Low-angle medium shot', 'Medium shot with a slow push-in')
@@ -16,7 +16,8 @@ CAMERAS = ('Medium shot', 'Dynamic medium close-up', 'Low-angle medium shot', 'M
 
 def needs_split(scene):
     lines = scene_lines(scene)
-    if not lines: return False
+    # 0.18 reaction: the speaker is off-screen on purpose (silent motion, no lip-sync).
+    if not lines or off_screen(scene): return False
     speakers = {line['speaker'] for line in lines}
     return len(speakers) != 1 or list(scene.get('cast', [])) != [lines[0]['speaker']]
 

@@ -16,7 +16,7 @@ import cast_design
 import screenplay
 import turbo
 from factory_audio import turns
-from factory_timing import plan_seconds, POLICY
+from factory_timing import plan_seconds, POLICY, off_screen
 from factory_editor import Editor, image_rounds, active_variants, regenerate
 from studio_quality_policy import settings,segments,scene_segments,motion_direction,motion_direction_v16,RENDER_POLICY
 from story_source import manifest,validate_count,prepare_notes,episode_source,SeriesHeader
@@ -37,7 +37,8 @@ from factory_cast import (name_key as _name_key, canonical_scene as _canonical_s
 from story_policy import shot_count, DIRECTION, structure_errors, dialogue_errors, StoryReview, StoryNotes, apply_notes, StorySpine, SPINE_INSTRUCTION
 
 def render_order(scenes,episode,lines,lip_sync='audio'):
-    talking={l['scene'] for l in lines if l['episode']==episode} if lip_sync=='audio' else set()
+    # A reaction (0.18) carries a voice from off-screen but is silent motion, not lip-sync.
+    talking={l['scene'] for l in lines if l['episode']==episode and not (l['scene']<len(scenes) and off_screen(scenes[l['scene']]))} if lip_sync=='audio' else set()
     return sorted(enumerate(scenes),key=lambda item:item[0] not in talking)
 
 def scene_limits(duration):
@@ -770,6 +771,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             for ei,ep in enumerate(d['episodes']):
                 for si,scene in enumerate(ep['scenes']):
                     speakers={l['speaker'] for l in d['lines'] if l['episode']==ei and l['scene']==si}
+                    if off_screen(scene):
+                        # 0.18 reaction: silent motion of the listener; the voice in it must belong to someone off-screen.
+                        if speakers&set(scene['cast']):raise RuntimeError(f'Folge {ei+1}, Szene {si+1}: Diese Reaktion zeigt die sprechende Figur. Unter „Text ändern“ die Stimme aus dem Off wählen. Keine falsche Mundzuordnung gerendert.')
+                        continue
                     if speakers and (len(scene['cast'])!=1 or len(speakers)!=1):raise RuntimeError(f'Folge {ei+1}, Szene {si+1}: Mehrere sichtbare Figuren brauchen eine eindeutige Sprecherzuordnung. Für diese ältere Fassung Gegenansichten planen oder unter Qualität bewusst Off-Kommentar wählen. Keine falsche Mundzuordnung gerendert.')
         from wan_text_encoder import validate_selected
         validate_selected(self.comfy,models['clip'])
@@ -800,7 +805,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 if file_hash(self.path(s['output']))!=s['sha256']:raise RuntimeError('Ein freigegebenes Bild wurde verändert.')
                 image=self.stage(s['output']);seconds=scene['render_seconds'];clips=[];start=0
                 lines=[l for l in d['lines'] if l['episode']==ei and l['scene']==si]
-                durations=scene_segments(seconds,fps,bool(lines) and options['lip_sync']=='audio');count=len(durations)
+                # Lip-sync only where the voice belongs to the figure in the frame (not in a 0.18 reaction).
+                talk=bool(lines) and options['lip_sync']=='audio' and not off_screen(scene)
+                durations=scene_segments(seconds,fps,talk);count=len(durations)
                 for seg,duration in enumerate(durations):
                     if self.paused(d['id']):return
                     # Cache includes model/profile, timing and direction. Old degraded
@@ -808,7 +815,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     d['phase']=f'Animation · Folge {ei+1}/{len(d["episodes"])} · Szene {si+1}/{len(ep["scenes"])} · Abschnitt {seg+1}/{count}';self.save(d)
                     motion=scene.get('motion') or [scene['action']];action=motion[min(len(motion)-1,math.floor(seg*len(motion)/count))]
                     identities=' '.join(p['name']+': '+p['appearance'] for p in d['plan']['cast'] if p['name'] in scene['cast'])
-                    talking=lines if options['lip_sync']=='audio' else []
+                    talking=lines if talk else []
                     if legacy:
                         # Started before 0.17: same text, so finished windows stay cached (key = graph digest).
                         prompt=d['plan']['style']+'. '+(scene.get('animation_prompt') or action+'. '+scene['camera'])+'. '+motion_direction_v16(scene,talking,start,duration)+' '+identities
@@ -816,9 +823,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         names=[p['name'] for p in d['plan']['cast']];hidden=[n for n in names if n not in scene['cast']]
                         aliases=screenplay.figure_aliases(d['plan']['cast'])
                         movement=screenplay.sanitize(scene.get('animation_prompt') or action+'. '+scene['camera'],scene['cast'],names,aliases) or 'natural movement'
-                        prompt=cast_design.strip_names(d['plan']['style'],hidden,scene['cast'],aliases)+'. '+movement+'. '+motion_direction(scene,talking,start,duration)+' '+identities
+                        prompt=cast_design.strip_names(d['plan']['style'],hidden,scene['cast'],aliases)+'. '+movement+'. '+motion_direction(scene,talking,start,duration,ep.get('story_policy',0))+' '+identities
                     seed=int(digest([d['id'],ei,si,scene['selected'],seg,RENDER_POLICY])[:12],16)
-                    if lines and options['lip_sync']=='audio':
+                    if talk:
                         # Include actual pauses; never drive lips with the music mix.
                         audio=await asyncio.to_thread(dialogue_window,lines,start,duration,self.folder(d)/'04_Animation'/f'Dialog_{ei}_{si}_{seg}_{d.get("audio_revision",0)}.wav')
                         graph=audio_graph(info,image,self.stage(audio),prompt,seed,duration,options['quality'],attention=turbo.attention(self.g['RUNTIME'],info),
@@ -842,7 +849,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if seg<count-1:
                         next_image=self.folder(d)/'04_Animation'/('Anschluss_'+clip['sha256'][:20]+'.png')
                         if not next_image.exists():
-                            await asyncio.to_thread(ff,['-i',clip['output'],'-vf',f'select=eq(n\\,{max(0,round(duration*(25 if lines and options["lip_sync"]=="audio" else 16))-1)})','-frames:v','1',next_image])
+                            await asyncio.to_thread(ff,['-i',clip['output'],'-vf',f'select=eq(n\\,{max(0,round(duration*(25 if talk else 16))-1)})','-frames:v','1',next_image])
                         image=self.stage(next_image)
                 spec[si]['clips']=clips
             if self.paused(d['id']):return
@@ -1196,7 +1203,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if d['state'] not in ('image_review','voice_review'):raise HTTPException(409,'Text nur während der Vorschau bearbeiten.')
             try:s=d['episodes'][body.episode]['scenes'][body.scene]
             except IndexError:raise HTTPException(404,'Szene fehlt.')
-            if body.dialogue and (body.speaker not in s['cast'] or len(body.dialogue.split())>10):raise HTTPException(400,'Wähle eine Figur dieser Szene und höchstens 10 Wörter pro Zeile.')
+            # 0.18: a reaction speaks only with the voice from off-screen; a wide shot with several figures stays silent.
+            speakers=[s.get('voice_of')] if off_screen(s) else [] if s.get('kind')=='establish' and len(s['cast'])>1 else s['cast']
+            if body.dialogue and (body.speaker not in speakers or len(body.dialogue.split())>10):raise HTTPException(400,'Wähle eine Figur dieser Szene und höchstens 10 Wörter pro Zeile.')
             if body.action!=s['action']:
                 if d['state']!='image_review':raise HTTPException(409,'Bildhandlung kann hier nicht geändert werden.')
                 s['action']=body.action;s['animation_prompt']='';s['motion']=[body.action];s['still']='';regenerate(s,[0,1]);d['state']='pictures'

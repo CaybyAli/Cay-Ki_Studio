@@ -160,8 +160,14 @@ def scene_text(scene, cast):
 def faces(scene):
     """Each speaking figure's face from its line's delivery, in English: the planner's still may
     leave it out, and the design sheet must not decide it (a laughing upload laughed in every
-    afraid line). Image keys carry no prompt digest, so finished images stay as they are."""
-    from screenplay import expression
+    afraid line). Image keys carry no prompt digest, so finished images stay as they are.
+
+    0.18 reaction shot: the figure in the frame listens with a closed-mouth face; the voice
+    belongs to a figure off-screen, which gets no face and is never named."""
+    from screenplay import expression, reaction_expression
+    if scene.get('kind') == 'reaction':
+        face = reaction_expression(scene.get('emotion') or '')
+        return ' '.join(f"{name}'s facial expression: {face}, listening in silence." for name in scene.get('cast', []))
     seen = {}
     for line in scene.get('dialogues') or ([{'speaker': scene.get('speaker'), 'emotion': scene.get('emotion')}] if scene.get('dialogue') else []):
         name = line.get('speaker')
