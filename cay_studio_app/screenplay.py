@@ -912,9 +912,13 @@ def shot_listing(entry, shot):
 async def write_episode(factory, d, index, outline, source, continuity, spine):
     """Screenplay -> check -> doctor -> shots -> visuals. Stored drafts survive a restart."""
     idea = d['idea']; cast = [p['name'] for p in d['plan']['cast']]
-    store = d.setdefault('screenplays', {}).setdefault(str(index), {})
-    # Pinned with the screenplay: a draft written before 0.18 keeps the 0.17 rules and cut.
-    policy = store.setdefault('policy', LEGACY_POLICY if store.get('draft') or store.get('final') else POLICY)
+    stores = d.setdefault('screenplays', {}); store = stores.setdefault(str(index), {})
+    # Pinned with the screenplay and per project: a project that began writing screenplays before
+    # 0.18 (a stored draft without a policy, or an episode planned with 13) keeps the 0.17 rules
+    # and cut for all its episodes, so a series does not change its cut halfway.
+    started = (any(s.get('policy', LEGACY_POLICY if s.get('draft') or s.get('final') else None) == LEGACY_POLICY for s in stores.values())
+               or any(ep.get('script') == 'screenplay' and ep.get('story_policy', LEGACY_POLICY) == LEGACY_POLICY for ep in d.get('episodes', [])))
+    policy = store.setdefault('policy', LEGACY_POLICY if started else POLICY)
     b = budget(idea['duration'], len(cast), policy)
     context = {'idee_des_nutzers': source, 'serie': {k: v for k, v in d['plan'].items() if k not in ('episodes',)},
                'folge': index + 1, 'folgen_gesamt': idea['episodes'], 'outline': outline, 'ziel_des_films': spine,

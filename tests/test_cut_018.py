@@ -110,6 +110,22 @@ def test_screenplay_written_before_0_18_keeps_its_cut(name):
     assert planner.calls == [] and plain(episode) == ref['episode'] and d['screenplays']['0']['policy'] == 13
 
 
+def test_a_series_planned_before_0_18_keeps_policy_13_for_its_next_episodes():
+    """A 0.17 project still planning: episode 1 was written with 13, episode 2 is written now."""
+    text, cast = cs.TEXTS['cay_blocks']
+    for earlier in ({'screenplays': {'0': {'draft': 'x', 'final': 'x'}}}, {'screenplays': {'0': {'policy': 13, 'final': 'x'}}},
+                    {'episodes': [{'title': 'Folge 1', 'script': 'screenplay', 'story_policy': 13, 'scenes': []}]}):
+        d = document(cast); d.update(copy.deepcopy(earlier)); planner = Planner(text)
+        episode = asyncio.run(sp.write_episode(planner, d, 1, {'title': 'x'}, 'Idee', {}, None))
+        assert d['screenplays']['1']['policy'] == 13 and episode['story_policy'] == 13 and 'reaction' not in [s['kind'] for s in episode['scenes']]
+    d = document(cast); planner = Planner(text)                                  # a new project
+    episode = asyncio.run(sp.write_episode(planner, d, 0, {'title': 'x'}, 'Idee', {}, None))
+    assert d['screenplays']['0']['policy'] == 14 and episode['story_policy'] == 14 and 'reaction' in [s['kind'] for s in episode['scenes']]
+    assert 'Redeblöcken' in planner.calls[0]['instruction'] and 'role' in planner.calls[-1]['data']['shots'][0]
+    d['episodes'].append(episode); planner = Planner(text)                       # its next episode stays 14
+    assert asyncio.run(sp.write_episode(planner, d, 1, {'title': 'x'}, 'Idee', {}, None))['story_policy'] == 14
+
+
 def test_layout_17_and_motion_text_are_unchanged():
     from factory_audio import layout
     for case, ref in zip(cs.layout_cases(), REF['layouts']):
