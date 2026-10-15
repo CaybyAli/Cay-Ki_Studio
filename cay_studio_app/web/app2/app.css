@@ -125,6 +125,14 @@ details.more summary::-webkit-details-marker { display: none; }
 .icon-remove { position: static; background: var(--fill); color: var(--muted); width: 32px; height: 32px; }
 .people { display: grid; gap: 14px; }
 .person { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px; align-items: start; }
+/* Line editor: the speaker's whole name stays readable ("Mr. Krabs", not "M"). */
+#lines-form .person { grid-template-columns: minmax(6.5em, max-content) minmax(0, 1fr) auto; align-items: center; }
+#lines-form .person + .person { margin-top: 10px; }
+@media (max-width: 560px) {
+  #lines-form .person { grid-template-columns: minmax(0, max-content) auto; justify-content: space-between; gap: 8px 14px; }
+  #lines-form .person + .person { margin-top: 18px; }
+  #lines-form .person [data-key="text"] { grid-column: 1 / -1; grid-row: 2; }
+}
 .person-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 10px; justify-items: start; }
 .person-fields .input { width: 100%; }
 .person-fields .file-pill { grid-column: 1 / -1; }
