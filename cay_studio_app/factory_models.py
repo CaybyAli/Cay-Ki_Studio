@@ -5,6 +5,12 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 class Strict(BaseModel):
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
 
+class VoiceRecipe(Strict):
+    """How a designed voice was made (VoiceDesign instruction and seed): a library voice keeps
+    its emotional range in every new project."""
+    instruction:str=Field(min_length=10,max_length=2000)
+    seed:int=Field(ge=0)
+
 class Participant(Strict):
     name:str=Field(min_length=1,max_length=60)
     traits:str=Field(default='',max_length=1500)
@@ -14,6 +20,32 @@ class Participant(Strict):
     # 'neutral': the upload is redrawn once with a neutral face (a laughing photo must not make
     # the figure laugh in every scene); 'exact': the upload is the design as it is.
     image_mode:Literal['neutral','exact']='neutral'
+    library_id:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
+    voice_design:VoiceRecipe|None=None
+
+class LibraryFigure(Strict):
+    name:str=Field(min_length=1,max_length=60)
+    label:str=Field(min_length=1,max_length=80)
+    look:Literal['auto','film','cartoon','clay','paper']='auto'
+    traits:str=Field(default='',max_length=1500)
+    image:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
+    image_mode:Literal['neutral','exact']='neutral'
+    voice:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
+    voice_text:str=Field(default='',max_length=2500)
+    voice_design:VoiceRecipe|None=None
+    voice_preset:str=Field(default='',max_length=40)
+    original:str=Field(default='',max_length=300)
+
+class LibraryFromProject(Strict):
+    project:str=Field(pattern=r'^[a-f0-9]{32}$')
+    name:str=Field(min_length=1,max_length=60)
+    label:str=Field(min_length=1,max_length=80)
+
+class CastProfile(Strict):
+    name:str=Field(min_length=1,max_length=60)
+    library_id:str=Field(pattern=r'^[a-f0-9]{32}$')
+    image:bool=True
+    voice:bool=True
 
 class Idea(Strict):
     request_key:str=Field(pattern=r'^[a-f0-9]{32}$')

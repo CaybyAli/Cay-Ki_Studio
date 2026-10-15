@@ -40,6 +40,8 @@ class Quality:
             row=dict(person);asset=provided.get(person['name'],{}).get('voice')
             if asset:
                 ref=self.asset(asset,'voice');row.update(voice_file=ref['path'],voice_hash=ref['sha256'],voice_text=provided[person['name']].get('voice_text',''))
+                # A library voice brings its design recipe: emotion takes in the same voice.
+                if provided[person['name']].get('voice_design'):row['voice_design']=provided[person['name']]['voice_design']
             cast.append(row)
         takes=d.get('speech_takes',{})
         for ei,ep in enumerate(d['episodes']):
@@ -63,7 +65,7 @@ class Quality:
         if lines and not audio_only:
             async with httpx.AsyncClient(trust_env=False,timeout=15) as c:await self.idle(c,True)
             speaking={l['speaker'] for l in lines};cast=[p for p in cast if p['name'] in speaking]
-            if any(not p.get('voice_file') for p in cast):
+            if any(not p.get('voice_file') or p.get('voice_design') for p in cast):
                 if not self.voice_ready():raise RuntimeError('Für verschiedene erfundene Stimmen einmalig „Stimmenstudio einrichten“ wählen. Danach dieses Projekt fortsetzen. Die alte Einheitsstimme wird nicht mehr verwendet.')
                 job=self.folder(d)/'Stimmgestaltung.json';out=self.folder(d)/'03_Stimmen/Profile';self.atomic(job,json.dumps({'run_id':d['id'],'cast':cast,'lines':lines,'performances':options['speech_engine']=='qwen' or options['speech_engine']=='auto' and speech_ready(self.base),'look':d['plan'].get('visual',''),'voice_policy':policy,'output':str(out)}).encode());d['phase']='Eigene Stimmen für die Figuren gestalten';self.save(d)
                 async with self.measured(d,'Stimmgestaltung'):await self.command([self.base/'envs/studio-voices/bin/python',Path(__file__).with_name('factory_voice.py'),'--base',self.base,'--job',job],7200)

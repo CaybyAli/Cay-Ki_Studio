@@ -11,6 +11,7 @@ from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality
 from factory_post import PostProduction
 from autopilot import Autopilot
+from figure_library import Library
 import cast_design
 import screenplay
 import turbo
@@ -46,7 +47,7 @@ def scene_limits(duration):
 class Wait(Exception):pass
 class Uncertain(Exception):pass
 
-class Factory(Quality,Editor,PostProduction,Autopilot):
+class Factory(Quality,Editor,PostProduction,Autopilot,Library):
     def __init__(self,g):
         self.g=g;self.base=g['RUNTIME'].parent;self.busy=None;self.proc=None
         self.comfy=self.base/'apps/ComfyUI';self.init_quality()
@@ -71,6 +72,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
 ''')
         self.init_editor()
         self.init_post()
+        self.init_library()
         self.progress.init()
     def get(self,rid):
         rows=self.rows('SELECT * FROM factory_runs WHERE id=?',(rid,))
@@ -854,6 +856,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
     def routes(self,app):
         self.editor_routes(app)
         self.quality_routes(app)
+        self.library_routes(app)
         from render_routes import add_routes
         add_routes(self,app)
         @app.get('/api/factory')

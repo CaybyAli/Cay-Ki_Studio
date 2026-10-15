@@ -65,7 +65,8 @@ def generate(base,job_path,probe=False):
         if p.get('voice_file'):
             f=Path(p['voice_file'])
             if hashlib.sha256(f.read_bytes()).hexdigest()!=p['voice_hash']:raise RuntimeError('Stimmprobe verändert.')
-            profiles[p['name']]={'file':str(f),'sha256':p['voice_hash'],'source':'upload'};continue
+            # 0.18: keep the transcript of an own recording (the clone is much closer with it).
+            profiles[p['name']]={'file':str(f),'sha256':p['voice_hash'],'source':'upload',**({} if legacy else {'voice_text':p.get('voice_text','')})};continue
         instruction=description_v16(p,i) if legacy else description(p,i,job.get('look',''))
         sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],reference,'design08' if legacy else 'design17'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
         if not f.is_file():
@@ -82,7 +83,10 @@ def generate(base,job_path,probe=False):
     # Reuse the same identity description and seed while changing acting direction.
     # The clone adapter can condition on a performed reference instead of ignoring emotion.
     for i,p in enumerate(job['cast']):
-        if p.get('voice_file') or not job.get('performances'):continue
+        # Own recordings get no emotion takes (VoiceDesign cannot clone them); library voices
+        # bring their design recipe and get emotion takes in the same designed voice.
+        recipe=p.get('voice_design') if p.get('voice_file') and not legacy else None
+        if (p.get('voice_file') and not recipe) or not job.get('performances'):continue
         key=performance_key_v16 if legacy else performance_key
         moods=sorted({key(line.get('emotion','Natürlich')) for line in job.get('lines',[]) if line['speaker']==p['name']})
         profiles[p['name']]['emotion_profiles']={}
@@ -94,13 +98,14 @@ def generate(base,job_path,probe=False):
                 sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],text,'performance11'],ensure_ascii=False).encode()).hexdigest()
             else:
                 acting,text=EMOTION_TEXTS.get(emotion,EMOTION_TEXTS['firm']);sampling={'temperature':.9,'top_p':1.}
-                instruction=description(p,i,job.get('look',''))+' Acting for this take, strongly performed: '+acting+'. Same person, same age and timbre. Do not speak the direction aloud.'
+                base=recipe['instruction'] if recipe else description(p,i,job.get('look',''))
+                instruction=base+' Acting for this take, strongly performed: '+acting+'. Same person, same age and timbre. Do not speak the direction aloud.'
                 sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],text,'performance17'],ensure_ascii=False).encode()).hexdigest()
             f=out/(sig+'.wav')
             if not f.is_file():
                 if model is None:model=Qwen3TTSModel.from_pretrained(str(model_path),device_map='cuda:0',dtype=torch.bfloat16,attn_implementation='sdpa',local_files_only=True)
                 # Own seed per mood (0.17): moods do not share one unlucky seed.
-                seed=int(hashlib.sha256((job['run_id']+p['name']+str(p.get('voice_variant',0))+('' if legacy else emotion)).encode()).hexdigest()[:8],16);data=None
+                seed=(int(recipe['seed'])+int(hashlib.sha256(emotion.encode()).hexdigest()[:6],16))%2**31 if recipe else int(hashlib.sha256((job['run_id']+p['name']+str(p.get('voice_variant',0))+('' if legacy else emotion)).encode()).hexdigest()[:8],16);data=None
                 for attempt in range(2):
                     random.seed(seed+attempt);np.random.seed((seed+attempt)%2**32);torch.manual_seed(seed+attempt)
                     waves,sr=model.generate_voice_design(text=text,language='German',instruct=instruction,max_new_tokens=650,**sampling)

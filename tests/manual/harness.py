@@ -39,9 +39,9 @@ class Studio:
             except OSError: time.sleep(.5)
         self.db = sqlite3.connect(self.runtime / 'data/cay_studio.sqlite3')
 
-    def call(self, path, body=None):
+    def call(self, path, body=None, method=None):
         request = urllib.request.Request('http://127.0.0.1:8787' + path, data=json.dumps(body).encode() if body is not None else None,
-                                         headers={'Content-Type': 'application/json', 'X-Cay-Token': self.token}, method='POST' if body is not None else 'GET')
+                                         headers={'Content-Type': 'application/json', 'X-Cay-Token': self.token}, method=method or ('POST' if body is not None else 'GET'))
         try:
             with self.opener.open(request, timeout=20) as r: return r.status, json.load(r)
         except urllib.error.HTTPError as e: return e.code, json.loads(e.read() or b'{}')
