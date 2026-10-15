@@ -206,8 +206,9 @@ class Editor:
             if answer['name'] != req['name']: raise RuntimeError('Die KI hat die falsche Stimme gewählt. Bitte erneut versuchen.')
             person = next(p for p in d['plan']['cast'] if p['name'] == req['name'])
             person.update(voice_preset=answer['voice_preset'], voice_description=answer['voice_description'], voice_variant=person.get('voice_variant', 0) + 1)
+            from figure_library import drop_library_voice
             for p in d['idea']['participants']:
-                if p['name'] == req['name']: p['voice'] = None
+                if p['name'] == req['name']: drop_library_voice(p)
             d['state'] = 'voicing' if entry['return_state'] == 'voice_review' else 'image_review'
         elif kind == 'music':
             if answer['music_mode'] == 'uploaded' and not d['idea'].get('music'): raise RuntimeError('Keine eigene Musikdatei vorhanden.')

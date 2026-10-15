@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / 'tests'))
 import voice_fakes as vf  # noqa: E402
 
 
-def job(root, cast, lines, policy=17):
+def job(root, cast, lines, policy=18):
     out = root / 'profile'
     (root / 'job.json').write_text(json.dumps({'run_id': 'run9', 'cast': cast, 'lines': lines, 'performances': True, 'look': 'clay',
                                                'voice_policy': policy, 'output': str(out)}))
@@ -37,6 +37,19 @@ def test_library_voice_gets_emotion_takes_from_its_recipe(monkeypatch, tmp_path)
     assert len(designs) == 1 and designs[0]['instruct'].startswith(recipe['instruction'] + ' Acting for this take')
     assert profiles['Gary'].get('emotion_profiles', {}) == {}                      # own recording: no designed takes
     assert profiles['Gary']['voice_text'] == ''
+
+
+def test_projects_voiced_with_017_keep_cloning_recordings_without_transcript(monkeypatch, tmp_path):
+    """voice policy 17 (0.17): the transcript would change every cached line of an own recording."""
+    vf.install(monkeypatch)
+    root = vf.base_dir(tmp_path)
+    base = root / 'oma.wav'; vf.write_wav(base, vf.take('Na endlich'), vf.RATE)
+    import hashlib
+    sha = hashlib.sha256(base.read_bytes()).hexdigest()
+    cast = [{'name': 'Oma', 'voice_file': str(base), 'voice_hash': sha, 'voice_text': 'Na endlich'}, {'name': 'Gary'}]
+    out = job(root, cast, [dict(vf.LINES[0], speaker='Oma'), dict(vf.LINES[1], speaker='Gary')], policy=17)
+    vf.load(ROOT / 'cay_studio_app', 'factory_voice').generate(root, root / 'job.json')
+    assert 'voice_text' not in json.loads((out / 'Profile.json').read_text())['Oma']
 
 
 def test_legacy_projects_ignore_recipes(monkeypatch, tmp_path):
