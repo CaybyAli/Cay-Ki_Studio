@@ -209,29 +209,44 @@ def shots(title, beats, lines, cast):
     return result
 
 
+# Possessive / genitive after a name: 's, ’s, s, or a bare apostrophe after s ("Mr. Krabs' office").
+SUFFIX = r"(?P<pos>['’]s|s|(?<=s)['’](?!\w))?"
+TITLES = {'mr', 'mrs', 'ms', 'dr', 'jr', 'sr', 'st', 'prof', 'herr', 'herrn', 'frau', 'the', 'der', 'die', 'das', 'von', 'van', 'de'}
+
+
 def _variants(word):
-    return {word, word.upper(), word.capitalize(), word[:1].upper() + word[1:]}
+    forms = [word] + (['Herrn ' + word[5:]] if word.startswith('Herr ') else [])
+    return {v for f in forms for v in (f, f.upper(), f.capitalize(), f[:1].upper() + f[1:])}
+
+
+def _parts(name):
+    """Name parts that stand for the figure: words of 4+ letters, and the last word
+    of a longer name ('Oma' in 'Tims Oma', 'Bob' in 'Onkel Bob')."""
+    words = [q for q in re.split(r'[\s.]+', name) if q]
+    parts = {q for q in words if len(q) >= 4}
+    if len(words) > 1 and len(words[-1]) >= 3 and words[-1][0].isupper() and words[-1].lower() not in TITLES:
+        parts.add(words[-1])
+    return parts
 
 
 def name_patterns(names, protected=()):
-    """Regexes for figure names: the full name and its parts of 4+ letters, as written,
-    capitalised or in capitals (with possessive 's / German genitive s). Never lower
-    case, so 'sandy seabed' or 'stars' stay; never a part that also belongs to a
-    protected (visible) figure ('Captain' when only Captain Hook is off-screen)."""
+    """Regexes for figure names: the full name and its parts, as written, capitalised
+    or in capitals (with possessive / genitive ending). Never lower case, so 'sandy
+    seabed' or 'stars' stay; never a part that also belongs to a protected (visible)
+    figure ('Captain' when only Captain Hook is off-screen)."""
     keep = {q.lower() for v in protected for q in re.split(r'[\s.]+', v) if q}
     out = []
     for name in names:
-        words = {name} | {q for q in re.split(r'[\s.]+', name) if len(q) >= 4 and q.lower() not in keep}
-        for word in words:
+        for word in {name} | {q for q in _parts(name) if q.lower() not in keep}:
             alternatives = '|'.join(re.escape(v) for v in sorted(_variants(word), key=len, reverse=True))
-            out.append(re.compile(r"(?<!\w)(?:" + alternatives + r")(?:'s|s)?(?!\w)"))
+            out.append(re.compile(r"(?<!\w)(?:" + alternatives + r")" + SUFFIX + r"(?!\w)"))
     return out
 
 
 def _full_spans(text, names):
-    """(start, end) of every full name (any listed case, optional 's / genitive s)."""
+    """(start, end) of every full name (any listed case, with possessive ending)."""
     return [m.span() for name in names for variant in _variants(name)
-            for m in re.finditer(r'(?<!\w)' + re.escape(variant) + r"(?:'s|s)?(?!\w)", text)]
+            for m in re.finditer(r'(?<!\w)' + re.escape(variant) + SUFFIX + r'(?!\w)', text)]
 
 
 def _blank(text, protected, names=()):
@@ -247,65 +262,137 @@ def _blank(text, protected, names=()):
 
 
 def _spans(text, names, protected=()):
+    """Mentions of names as (start, end, possessive), longest first at each start, no overlaps."""
     masked = _blank(text, protected, names)
-    return sorted({m.span() for p in name_patterns(names, protected) for m in p.finditer(masked)}, key=lambda s: (s[0], -s[1]))
+    found = sorted({(m.start(), m.end(), bool(m.group('pos'))) for p in name_patterns(names, protected) for m in p.finditer(masked)},
+                   key=lambda s: (s[0], -s[1]))
+    out = []
+    for span in found:
+        if out and span[0] < out[-1][1]: continue
+        out.append(span)
+    return out
 
 
 def _mentions(text, names, protected=()):
     return bool(_spans(str(text), names, protected))
 
 
-# Sentence ends split clauses, but not after a title ('Mr. Krabs' stays one name).
-DELIMS = re.compile(r'(,|;|\bwhile\b|\bwhereas\b|\bwährend\b|\s-\s|'
+# Sentence ends and linking words split clauses, but not after a title ('Mr. Krabs' stays one name).
+# A linking word splits only before a new subject (a name or an article): 'while Plankton
+# watches', 'as the crocodile ticks'; not 'runs as fast as he can' or 'waves while running'.
+DELIMS = re.compile(r'(,|;|\s-\s|(?i:\b(?:while|whereas|as|when|whenever|because|until|although|während|als|weil|wenn|sobald|nachdem|bevor|obwohl)\b)'
+                    r'(?=\s+(?:[A-ZÄÖÜ]|(?:the|a|an|his|her|their|its|der|die|das|ein|eine|sein|seine|ihr|ihre)\b))|'
                     r'(?<=[.!?])(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bJr\.)(?<!\bHr\.)(?<!\bFr\.)(?<!\bProf\.)\s+)')
-
-
-# Removing a name also removes a title or 'and' directly in front of it
-# ('to Mr Krabs', 'Herrn Krabs', 'SpongeBob und Patrick tanzen').
-LEAD = re.compile(r'(?:(?<!\w)(?:and|und)\s+|&\s*)?(?:(?<!\w)(?:Mr|Mrs|Ms|Dr|Prof|Herrn?|Frau)\.?\s+)?$')
+TITLE = r'(?:(?<!\w)(?:Mr|Mrs|Ms|Dr|Prof|Herrn?|Frau)\.?\s+)'
+PREPOSITION = (r'(?<!\w)(?i:at|to|toward|towards|with|behind|beside|next to|near|from|for|of|by|on|onto|into|in|inside|under|over|above|around|'
+               r'against|like|than|mit|zu|zum|zur|neben|hinter|vor|bei|von|vom|an|am|auf|unter|über|gegen|für|um|wie|als)\s+')
+BEFORE_NAME = re.compile('(?:' + PREPOSITION + ')?' + TITLE + '?$')
+AFTER_PREPOSITION = re.compile(PREPOSITION + TITLE + '?$')
+BEFORE_TITLE = re.compile(TITLE + '?$')
+# 'who …' / German 'der auf …' (a relative pronoun, not the article in 'die Augen').
+RELATIVE = re.compile(r'^\s*(?:(?i:who|whose|whom|which)\b|(?:der|die|das|dem|den|deren|dessen)\s+(?![A-ZÄÖÜ]))')
 
 
 def _strip(text, names, protected):
     """Remove mentions of names, never inside a protected full name ('Captain Hook'
-    goes, 'Captain Smee' stays; 'Tim' does not cut into 'Tims Mama')."""
+    goes, 'Captain Smee' stays; 'Tim' does not cut into 'Tims Mama'). A title and a
+    preposition in front go too ('waves to Mr Krabs', 'hinter Thaddäus'); in front of
+    a possessive only the title ('into Mr. Krabs' office' -> 'into office')."""
     out, last = '', 0
-    for a, b in _spans(text, names, protected):
+    for a, b, possessive in _spans(text, names, protected):
         if a < last: continue
-        a = max(last, LEAD.search(text[:a]).start())
+        if last and re.fullmatch(r'\s*(?:,\s*)?(?:(?:and|und|sowie|&)\s*)?', text[last:a]):
+            a = last                                     # 'Patrick und Sandy': the joiner goes with both
+        else:
+            a = max(last, (BEFORE_TITLE if possessive else BEFORE_NAME).search(text[:a]).start())
         out += text[last:a]; last = b
     return out + text[last:]
+
+
+def _groups(text, visible, hidden):
+    """'Phineas und Ferb bauen', 'Patrick and SpongeBob argue': a list of names joined by
+    and/und/& is one subject. The off-screen members leave the list, the visible
+    ones keep the action ('Ferb bauen', 'SpongeBob argue')."""
+    names = sorted([(a, b, p, True) for a, b, p in _spans(text, visible, hidden)] +
+                   [(a, b, p, False) for a, b, p in _spans(text, hidden, visible)])
+    runs, run = [], []
+    for span in names:
+        gap = text[run[-1][1]:span[0]] if run else ''
+        if run and not run[-1][2] and re.fullmatch(r'\s*(?:,\s*)?(?:(?:and|und|sowie|&)\s+)?|\s*,\s*', gap) and gap.strip():
+            run.append(span)
+        else:
+            if len(run) > 1: runs.append(run)
+            run = [span]
+    if len(run) > 1: runs.append(run)
+    for run in reversed(runs):
+        gaps = [text[x[1]:y[0]] for x, y in zip(run, run[1:])]
+        kept = [text[a:b] for a, b, _, seen in run if seen]
+        if not kept or len(kept) == len(run) or not any(re.search(r'\b(?:and|und|sowie)\b|&', g) for g in gaps): continue
+        word = 'und' if any('und' in g for g in gaps) else 'and'
+        joined = kept[0] if len(kept) == 1 else ', '.join(kept[:-1]) + f' {word} ' + kept[-1]
+        text = text[:run[0][0]] + joined + text[run[-1][1]:]
+    return text
+
+
+def _coordinated(clause, cast):
+    """'SpongeBob laughs and Patrick cries' is two clauses: split before 'and/und <Name>'
+    unless the name before 'and' makes it a list or the name is a possessive."""
+    spans = _spans(clause, cast)
+    pieces, last = [], 0
+    for i, (a, b, possessive) in enumerate(spans):
+        m = re.search(r'\s(and|und|&)\s+$', clause[last:a])
+        if not m or possessive or (i and clause[spans[i - 1][1]:last + m.start()].strip() == ''): continue
+        pieces += [clause[last:last + m.start()], m.group(1)]; last = a
+    return pieces + [clause[last:]]
 
 
 def sanitize(text, visible, cast):
     """Image and motion text may only describe figures in the frame.
 
-    A clause about someone off-screen is dropped ("SpongeBob at the table,
-    Mr. Krabs looming over him" -> "SpongeBob at the table"): the image model
-    draws every figure it reads about, without a reference, so as a wrong or
-    blended figure. A clause that also names a visible figure keeps its subject;
-    only the off-screen name goes ("SpongeBob waves at Squidward" -> "SpongeBob waves")."""
+    The image model draws every figure it reads about, without a reference, so as a
+    wrong or blended figure. A clause whose subject is off-screen is dropped ("Mr.
+    Krabs grabs SpongeBob", "SpongeBob laughs and Patrick cries" -> "SpongeBob
+    laughs"); off-screen co-subjects, objects and possessives lose only the name
+    ("Phineas und Ferb bauen" -> "Ferb bauen", "waves at Squidward" -> "waves",
+    "Hinter Thaddäus schleicht SpongeBob" -> "schleicht SpongeBob")."""
+    visible = [n for n in visible if n in cast] or list(visible)
     hidden = [n for n in cast if n not in visible]
-    parts = DELIMS.split(str(text or ''))
-    # Each delimiter belongs to the clause after it: a dropped clause takes its
-    # 'while' / ',' with it instead of leaving it dangling.
-    clauses, delims = parts[0::2], [''] + parts[1::2]
-    out = ''
-    for clause, delim in zip(clauses, delims):
+    text = _groups(str(text or ''), visible, hidden)
+    parts = DELIMS.split(text)
+    pieces = [(parts[0], '')] + list(zip(parts[2::2], parts[1::2]))
+    clauses = []
+    for clause, delim in pieces:
+        sub = _coordinated(clause, cast)
+        clauses += [(sub[0], delim)] + list(zip(sub[2::2], sub[1::2]))
+    out, last_name, dropped = '', None, False     # last_name: (name, visible, its clause dropped)
+    for clause, delim in clauses:
         if not clause.strip(): continue
+        if last_name and RELATIVE.match(clause):
+            # ', who dodges' belongs to the figure named just before it: gone with it if
+            # that figure is off-screen; named again if its clause was dropped.
+            if not last_name[1]: continue
+            if last_name[2] and re.match(r'\s*(?i:who)\b', clause): clause = re.sub(r'^\s*(?i:who)\b', lambda m: last_name[0], clause, count=1)
         gone = _spans(clause, hidden, visible)
+        seen = _spans(clause, visible, hidden)
+        named = sorted([(s, True) for s in seen] + [(s, False) for s in gone])
+        tail = named[-1] if named and not clause[named[-1][0][1]:].strip(' .!?') else None
+        last_name = (clause[tail[0][0]:tail[0][1]], tail[1], False) if tail else None
         if gone:
-            # Kept only if a visible figure is the subject, i.e. named before the hidden
-            # one ('SpongeBob waves at Squidward'). 'Mr. Krabs grabs SpongeBob' is the
-            # hidden figure's action and goes; so does 'Captain Hook shouting' (the
-            # shared 'Captain' does not make it Captain Smee's).
-            seen = _spans(clause, visible, hidden)
-            if not seen or seen[0][0] > gone[0][0]: continue
-            masked = _strip(clause, hidden, visible)
-            clause = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu|an|auf)\s*(?=[,.!?]|$)', '', masked).rstrip()
-        if out: out += delim if delim.strip() in (',', ';', '') else ' ' + delim.strip() + ' '
-        out += clause
-    out = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu)\s*(?=[,.]|$)', '', out)
-    return re.sub(r'\s{2,}', ' ', re.sub(r'\s+([,.;])', r'\1', out)).strip(' ,;')
+            subject = [s for s in gone if not s[2] and not AFTER_PREPOSITION.search(clause[:s[0]])]
+            if not seen or (subject and subject[0][0] < seen[0][0]):
+                if last_name: last_name = (*last_name[:2], True)
+                dropped = True; continue
+            clause = re.sub(r'(?<!\w)(?i:at|to|with|towards|and|und|&)\s*(?=[,.!?]|$)', '', _strip(clause, hidden, visible)).rstrip()
+            if not clause.strip(' .!?,;'): dropped = True; continue
+        if not out and not dropped and delim.strip() not in ('', ',', ';'):
+            out = delim.strip() + ' '                    # the text opens with it: 'Als Plankton kommt, …'
+        elif out:
+            # The delimiter belongs to the clause after it; a dropped sentence end is restored.
+            d, sentence = delim.strip(), out[-1] in '.!?'
+            out += (' ' if sentence else '. ') if not d else (' ' if sentence else d + ' ') if d in (',', ';') else f' {d} '
+        out += clause.strip()
+    out = re.sub(r'\s{2,}', ' ', re.sub(r'\s+([,.;!?])', r'\1', out))
+    return out.strip(' ,;')
 
 
 def ensure_action(cut, duration):

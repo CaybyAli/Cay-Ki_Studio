@@ -121,14 +121,15 @@ Analyse: Video (Einzelbilder, silencedetect: 2,2–4,5 s Stille nach jeder Zeile
 - UI: Figurenprüfung, eigenes Figurenbild, Prüfzeile (Wörter, Sprachanteil, Pause, Rechenblöcke), Status „Wartet auf dich“ bei Autopilot-Stopp. Diagnose: Drehbuch, Aufmerksamkeit/Audio-Führung, Knotenzeiten.
 - Nicht geprüft: alles auf der GPU (Bild, Lippen, Stimmen, Zeitgewinn).
 
-### 0.17.0 – drei unabhängige Prüfrunden (15.10.2026), alle echten Funde behoben
+### 0.17.0 – vier unabhängige Prüfrunden (15.10.2026), alle echten Funde behoben
 - Alte Projekte rechnen nichts doppelt: je Projekt festgehalten `prompt_policy` (Bewegungstext), `timing_layout` (Szenenlängen 0.16), `voice_policy` (Stimmen/Sampling/Signaturen 0.16). Beleg: `tests/test_compat_016.py` vergleicht mit Referenz aus 0.16.1 (git `9fbc214`, `tests/fixtures/v16_reference.json`): Layout, Lippen-Graph vor/nach Neustart, Sampler-Version, Stimmdateinamen und Modellaufrufe. Gegenprobe: 5 absichtlich eingebaute Fehler werden erkannt.
 - Neue schnelle Lippen-Animation ohne ComfyUI-Neustart: klare Meldung „PC neu starten“ statt stiller Doppelrechnung; Installer sagt das am Ende.
 - Namen: „Mr. Krabs“ bleibt ein Name (kein Satzende), „Captain Hook“ wird entfernt, „Captain Smee“ bleibt; Groß-/Kleinschreibung (Spongebob, oma).
 - Stimmen: „neugierig/beschreibend/flach/gescheitert“ nicht mehr als Triumph/Schrei/Freude; misslungene Gefühlsprobe → Grundstimme statt Abbruch; Tonhöhenmessung bis 1000 Hz ohne Oktavsprünge; Flüstern −2 dB.
 - Neue App „Text ändern“ behält Sprechhaltung und Pause; klassische Ansicht zeigt „Figuren prüfen“.
 - Runde 3 (Gegenprüfung, 3 bestätigt, 8 widerlegt): überlappende Namen – der längere gewinnt („Tims Oma“ vor „Tim“); handelt die unsichtbare Figur („Mr. Krabs packt SpongeBob“), fällt der Satzteil ganz weg; Titel/„und“ vor gestrichenem Namen und hängendes „while“ werden mit entfernt; alte Einzelzeilen behalten im Editor ihre Sprechhaltung.
-- Prüfungen: `pytest` 93 bestanden; Browser `ui_check.py` 30/30, `autopilot_check.py` 5/5, `abort_step_check.py` 11/11, `queue_check.py` bestanden; Update gebaut (Payload `47a87b72`, 78 Dateien) und Trockeninstallation bytegleich, neuer Release-Ordner.
+- Runde 4 (Namensfilter, 11 Funde bestätigt): Filter strukturiert neu – Namenslisten („Phineas und Ferb bauen“ → „Ferb bauen“), Name nach Präposition oder mit Besitz-s ist kein Subjekt („Hinter Thaddäus schleicht SpongeBob“), „… und Patrick weint“ ist ein eigener Satzteil, Nebensätze (as/when/als/weil …) nur vor neuem Subjekt, Relativsätze folgen der zuletzt genannten Figur („…, who dodges“ → „Peter Pan dodges“), deutsche Verbteile („macht die Tür zu“) bleiben, kurze Namensteile („Oma“ für „Tims Oma“), „Herrn Müller“. Beleg: 1973 Durchläufe über ~170 Prüfersätze ohne einen Fall mit unsichtbarer Figur im Text; `tests/test_names_017.py` (36 Fälle).
+- Prüfungen: `pytest` 129 bestanden; Browser `ui_check.py` 30/30, `autopilot_check.py` 5/5, `abort_step_check.py` 11/11, `queue_check.py` bestanden; Update gebaut (Payload `3ad68634`, 78 Dateien) und Trockeninstallation bytegleich, neuer Release-Ordner.
 
 ## Nächster konkreter Schritt
 Cay: 0.17.0 installieren, PC neu starten, SpongeBob-Film 60 s Standard mit Autopilot und Figurenprüfung, Video + Diagnose schicken.

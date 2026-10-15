@@ -269,6 +269,6 @@ def test_hidden_figure_as_subject_drops_the_clause():
     assert sp.sanitize('Captain Hook yells at Captain Smee.', ['Captain Smee'], ['Captain Smee', 'Captain Hook']) == ''
     assert sp.sanitize('SpongeBob und Patrick tanzen auf dem Tisch.', ['SpongeBob'], sb) == 'SpongeBob tanzen auf dem Tisch.'
     assert sp.sanitize('SpongeBob waves to Mr Krabs.', ['SpongeBob'], sb) == 'SpongeBob waves.'
-    assert sp.sanitize('SpongeBob winkt Herrn Krabs zu.', ['SpongeBob'], sb) == 'SpongeBob winkt.'
+    assert sp.sanitize('SpongeBob winkt Herrn Krabs zu.', ['SpongeBob'], sb) == 'SpongeBob winkt zu.'   # 'zu' is part of the verb
     assert sp.sanitize('SpongeBob hands Mr. Krabs the money while Plankton watches', ['SpongeBob', 'Mr. Krabs'], sb) == 'SpongeBob hands Mr. Krabs the money'
     assert sp.sanitize('Plankton watches, SpongeBob flips a patty, Patrick waves', ['SpongeBob'], sb) == 'SpongeBob flips a patty'
