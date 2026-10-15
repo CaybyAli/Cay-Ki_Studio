@@ -60,13 +60,15 @@ def generate(base,job_path,probe=False):
     if not torch.cuda.is_available():raise RuntimeError('CUDA in der Stimmenumgebung nicht verfügbar.')
     if probe:print(json.dumps({'ready':True}));return
     job=json.loads(Path(job_path).read_text());out=Path(job['output']);out.mkdir(parents=True,exist_ok=True);profiles={};model=None
-    legacy=int(job.get('voice_policy',17))<17;reference=REFERENCE_TEXT_V16 if legacy else REFERENCE_TEXT
+    legacy=int(job.get('voice_policy',17))<17;transcript=int(job.get('voice_policy',17))>=18;reference=REFERENCE_TEXT_V16 if legacy else REFERENCE_TEXT
     for i,p in enumerate(job['cast']):
         if p.get('voice_file'):
             f=Path(p['voice_file'])
             if hashlib.sha256(f.read_bytes()).hexdigest()!=p['voice_hash']:raise RuntimeError('Stimmprobe verändert.')
             # 0.18: keep the transcript of an own recording (the clone is much closer with it).
-            profiles[p['name']]={'file':str(f),'sha256':p['voice_hash'],'source':'upload',**({} if legacy else {'voice_text':p.get('voice_text','')})};continue
+            # The transcript conditions the clone (more exact voice); only from voice policy 18 on, so
+            # 0.17 projects keep their x-vector clones and cached lines.
+            profiles[p['name']]={'file':str(f),'sha256':p['voice_hash'],'source':'upload',**({'voice_text':p.get('voice_text','')} if transcript else {})};continue
         instruction=description_v16(p,i) if legacy else description(p,i,job.get('look',''))
         sig=hashlib.sha256(json.dumps([instruction,p.get('voice_variant',0),job['run_id'],p['name'],reference,'design08' if legacy else 'design17'],ensure_ascii=False).encode()).hexdigest();f=out/(sig+'.wav')
         if not f.is_file():

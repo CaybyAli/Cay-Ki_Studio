@@ -21,6 +21,15 @@ IMAGE_STATES = ('cast_review', 'pictures', 'image_review')
 VOICE_STATES = ('cast_review', 'pictures', 'image_review', 'voicing', 'audio_mixing', 'voice_review')
 IMAGE_LATE = 'Die Szenenbilder sind schon gewählt. Bilder lassen sich bis zur Bildauswahl tauschen.'
 VOICE_LATE = 'Die Animation hat begonnen. Bild und Stimme lassen sich jetzt nur in einer neuen Fassung tauschen.'
+BLOCKED_FIRST = 'Die Produktion ist angehalten. Erst „Fortsetzen“ wählen, danach kannst du Bild und Stimme tauschen.'
+WORKER_STATES = ('planning', 'pictures', 'voicing', 'rendering', 'correcting')
+
+
+def drop_library_voice(participant):
+    """The figure gets a studio-designed voice: no recording, no library voice, no recipe."""
+    participant['voice'] = None; participant['voice_text'] = ''
+    participant.pop('voice_design', None); participant.pop('library_voice', None)
+    if not participant.get('library_image'): participant.pop('library_id', None)
 
 
 def file_sha(path):
@@ -165,13 +174,16 @@ class Library:
         state = d['state']
         if state == 'blocked':
             resume = d.get('resume_state')
-            if part == 'image': return 'now' if resume == 'pictures' else IMAGE_LATE
-            return 'now' if resume in ('pictures', 'voicing', 'audio_mixing') else VOICE_LATE
+            if resume in ('rendering', 'finishing'): return VOICE_LATE
+            if part == 'image': return 'now' if resume == 'pictures' else IMAGE_LATE if resume in ('voicing', 'audio_mixing') else BLOCKED_FIRST
+            return 'now' if resume in ('pictures', 'voicing', 'audio_mixing') else BLOCKED_FIRST
         if state == 'planning': return 'Die Figuren entstehen gerade. Sobald sie zu sehen sind, kannst du sie tauschen.'
         if part == 'image':
             if state not in IMAGE_STATES: return IMAGE_LATE if state in VOICE_STATES else VOICE_LATE
         elif state not in VOICE_STATES: return VOICE_LATE
-        if (self.busy == d['id'] and not owner) or (part == 'voice' and state == 'audio_mixing'): return 'later'
+        # 'later' only while the worker really computes this state (it owns its copy of the document);
+        # in a review state the worker is at most in its cleanup, which never saves the document.
+        if (self.busy == d['id'] and not owner and state in WORKER_STATES) or (part == 'voice' and state == 'audio_mixing'): return 'later'
         return 'now'
 
     def cast_windows(self, d):
@@ -193,9 +205,10 @@ class Library:
             scenes = cast_design.invalidate(d, name)
             if d['state'] != 'blocked': d['state'] = 'pictures'
         if use_voice:
+            from factory_audio import turns
             entry.update(voice=fig['voice'], voice_text=fig.get('voice_text', ''), voice_design=fig.get('voice_design'), library_voice=fig['id'])
             self.voice_changed(d)
-            lines = sum(1 for ep in d.get('episodes', []) for sc in ep['scenes'] for l in (sc.get('dialogues') or []) if l.get('speaker') == name)
+            lines = sum(1 for ep in d.get('episodes', []) for sc in ep['scenes'] for l in turns(sc) if l.get('speaker') == name)
         return scenes, lines
 
     def pending_cast(self, rid):

@@ -11,7 +11,7 @@ from fastapi import HTTPException
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'cay_studio_app'))
 
-from figure_library import Library, IMAGE_LATE, VOICE_LATE  # noqa: E402
+from figure_library import Library, IMAGE_LATE, VOICE_LATE, BLOCKED_FIRST  # noqa: E402
 from factory_quality import Quality  # noqa: E402
 from factory_models import CastProfile  # noqa: E402
 
@@ -102,7 +102,11 @@ def test_refused_once_the_animation_runs_and_while_planning():
             studio.apply_profile(rid, CastProfile(name='Patrick', library_id=PATRICK, image=False))
         assert refused.value.status_code == 409 and refused.value.detail == reason
     rid = project(studio, 'blocked', resume_state='rendering')
-    assert studio.cast_windows(studio.get(rid)) == {'image': IMAGE_LATE, 'voice': VOICE_LATE}
+    assert studio.cast_windows(studio.get(rid)) == {'image': VOICE_LATE, 'voice': VOICE_LATE}
+    rid = project(studio, 'blocked', resume_state='audio_mixing')
+    assert studio.cast_windows(studio.get(rid)) == {'image': IMAGE_LATE, 'voice': 'now'}
+    rid = project(studio, 'blocked', resume_state='correcting')                # a failed change request: honest reason
+    assert set(studio.cast_windows(studio.get(rid)).values()) == {BLOCKED_FIRST}
     rid = project(studio, 'planning')
     assert 'entstehen gerade' in studio.cast_window(studio.get(rid), 'voice')
 
@@ -147,3 +151,21 @@ def test_an_own_picture_enters_the_library_with_its_mode_never_as_a_frozen_face(
         fig = studio.figure_from_project(LibraryFromProject(project=rid, name='Patrick', label='Patrick Foto'))
         assert fig['image'] == upload and fig['image_mode'] == expected      # the upload itself, not a copy marked 'exact'
         assert fig['voice'] == 'f' * 32 and fig['voice_text'] == 'Hallo' and fig['appearance'] == 'a pink starfish in shorts'
+
+
+def test_while_the_worker_only_cleans_up_a_review_state_applies_at_once():
+    """The worker stays 'busy' for a moment after saving a review state (cache release); a choice
+    in that moment must not be kept for later, or 'Bilder übernehmen' could skip it."""
+    studio = Studio(); rid = project(studio, 'image_review'); studio.busy = rid
+    view = studio.apply_profile(rid, CastProfile(name='Patrick', library_id=PATRICK))
+    assert view['pending_cast'] == [] and entry(view)['library_image'] == PATRICK and view['state'] == 'pictures'
+    rid = project(studio, 'pictures'); studio.busy = rid
+    assert studio.cast_windows(studio.get(rid)) == {'image': 'later', 'voice': 'later'}
+
+
+def test_voice_line_count_reads_both_dialogue_formats():
+    studio = Studio(); rid = project(studio, 'voice_review')
+    d = studio.get(rid); old = d['episodes'][0]['scenes'][2]
+    old.update(dialogues=[], dialogue='Wo ist mein Stein?', speaker='Patrick'); studio.save(d)
+    view = studio.apply_profile(rid, CastProfile(name='Patrick', library_id=PATRICK, image=False))
+    assert '2 Sätze' in view['phase']
