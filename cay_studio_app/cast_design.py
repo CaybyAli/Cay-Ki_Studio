@@ -188,6 +188,9 @@ def invalidate(document, name):
         for scene in episode['scenes']:
             if name in scene.get('cast', []):
                 regenerate(scene, [0, 1]); count += 1
+    # 0.18 title card: the key art shows the main figures; one of them changed, so it is drawn again.
+    cover = document.get('cover')
+    if isinstance(cover, dict) and name in cover.get('cast', []): regenerate(cover, [0, 1])
     return count
 
 

@@ -166,6 +166,13 @@ def finish(spec):
     """Complete cached parts and mux the approved audio without resampling video."""
     prepared=prepare(spec)
     folder=Path(spec['folder']);fps=spec['fps'];parts=prepared['parts'];cursor=prepared['seconds'];timings=prepared['performance']
+    card=None
+    if spec.get('cover'):
+        # 0.18 title card: one more part at a scene boundary (start or after the first shot);
+        # its sound is spliced in sample-exact below. Specs without 'cover' run exactly as before.
+        import cover;started=time.monotonic()
+        card=cover.build(folder,spec['cover'],spec['scenes'],fps);parts=parts[:card['index']]+[card['part']]+parts[card['index']:]
+        timings['encode_seconds']+=time.monotonic()-started
     (folder/'Clips.txt').write_text(''.join("file '"+p+"'\n" for p in parts))
     preview=spec.get('audio_mix')
     if preview:
@@ -175,11 +182,13 @@ def finish(spec):
         from factory_audio import mix
         audio=Path(mix(folder/'Ton',spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix')))
     if abs(float(probe(audio)['format']['duration'])-cursor)>.05:raise RuntimeError('Ton und Bild haben unterschiedliche Laufzeiten.')
-    args=['-f','concat','-safe','1','-i','Clips.txt','-i',str(audio)]
+    total=cursor;sound=audio
+    if card:total=cursor+card['seconds'];sound=cover.splice(audio,folder/'Ton_mit_Titelkarte.wav',card['at'],card['seconds'])
+    args=['-f','concat','-safe','1','-i','Clips.txt','-i',str(sound)]
     out=Path(spec['output']);out.parent.mkdir(parents=True,exist_ok=True);tmp=folder/('Export.'+uuid.uuid4().hex+'.partial.mp4');mux_start=time.monotonic()
-    ff([*args,'-map','0:v','-map','1:a','-t',cursor,'-c:v','copy','-c:a','aac','-ar','48000','-b:a','256k','-movflags','+faststart',tmp],folder)
+    ff([*args,'-map','0:v','-map','1:a','-t',total,'-c:v','copy','-c:a','aac','-ar','48000','-b:a','256k','-movflags','+faststart',tmp],folder)
     info=probe(tmp);video=next(x for x in info['streams'] if x['codec_type']=='video')
-    if video['width']!=1080 or video['height']!=1920 or abs(float(info['format']['duration'])-cursor)>.12 or int(video.get('nb_frames',0))!=round(cursor*fps):raise RuntimeError('Exportprüfung fehlgeschlagen: Bildlänge oder Bildgröße stimmt nicht.')
+    if video['width']!=1080 or video['height']!=1920 or abs(float(info['format']['duration'])-total)>.12 or int(video.get('nb_frames',0))!=round(total*fps):raise RuntimeError('Exportprüfung fehlgeschlagen: Bildlänge oder Bildgröße stimmt nicht.')
     if not any(x['codec_type']=='audio' for x in info['streams']):raise RuntimeError('Export hat keine Tonspur.')
     if float(video.get('duration',info['format']['duration']))+1e-6<spec.get('minimum_seconds',0):raise RuntimeError('Export ist kürzer als die gewählte Mindestdauer. Tonvorschau neu erzeugen.')
     # The exported film must contain every line of the approved mix; a muxed
@@ -188,6 +197,8 @@ def finish(spec):
     if placed:
         try:
             exported=speech_check.decode(tmp);approved=speech_check.decode(audio)
+            # With a title card every line after it sits one card later; compared against the approved mix itself.
+            if card:placed,approved=cover.shift_check(placed,approved,card)
             report=speech_check.summary(speech_check.compare_export(exported,approved,24000,placed),'export')
             speech_check.write_report(folder/'Exportpruefung.json',report)
             if report['blocking']:raise speech_check.SpeechCheckError(speech_check.message(report,'„Fehlerbericht speichern“ und mitschicken. Die freigegebene Tonvorschau und alle Animationen bleiben erhalten.'),report)
@@ -202,4 +213,6 @@ def finish(spec):
         if file_hash(transfer)!=file_hash(tmp):raise RuntimeError('Exportkopie konnte nicht bestätigt werden.')
         os.replace(transfer,out)
     finally:transfer.unlink(missing_ok=True);tmp.unlink(missing_ok=True)
-    return {'file':str(out),'sha256':file_hash(out),'seconds':cursor,'fps':fps,'performance':timings}
+    result={'file':str(out),'sha256':file_hash(out),'seconds':total,'fps':fps,'performance':timings}
+    if card:result['cover']=cover.publish(card,out)
+    return result

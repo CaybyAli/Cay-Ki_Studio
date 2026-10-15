@@ -13,6 +13,8 @@ from factory_post import PostProduction
 from autopilot import Autopilot
 from figure_library import Library
 import cast_design
+import cover
+from cover import TitleCard
 import screenplay
 import turbo
 from factory_audio import turns
@@ -47,7 +49,7 @@ def scene_limits(duration):
 class Wait(Exception):pass
 class Uncertain(Exception):pass
 
-class Factory(Quality,Editor,PostProduction,Autopilot,Library):
+class Factory(Quality,Editor,PostProduction,Autopilot,Library,TitleCard):
     def __init__(self,g):
         self.g=g;self.base=g['RUNTIME'].parent;self.busy=None;self.proc=None
         self.comfy=self.base/'apps/ComfyUI';self.init_quality()
@@ -80,6 +82,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         d=self.merge_posts(self.controlled(json.loads(rows[0]['document'])))
         for ep in d.get('episodes',[]):
             for scene in ep['scenes']:scene['active_variants']=active_variants(scene)
+        if isinstance(d.get('cover'),dict):d['cover']['active_variants']=active_variants(d['cover'])
         d['revision']=digest(d);return d
     def save(self,d):
         d=self.merge_posts(dict(d));d.pop('revision',None);d.pop('cpu_jobs',None);d['updated']=self.g['now']()
@@ -737,6 +740,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         if cast_design.needs_review(d):
             # One short look before ~2 min of scene images and ~1 h of animation.
             d['state']='cast_review';d['phase']='Prüf deine Figuren. So sehen sie in jeder Szene aus.';self.save(d);return
+        # 0.18 title card: two key-art variants with the approved figures, before the scene images.
+        if cover.wanted(d) and not await self.cover_pictures(d,refs,models):return
         for ei,ep in enumerate(d['episodes']):
             for si,scene in enumerate(ep['scenes']):
                 for variant in range(2):
@@ -856,6 +861,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                   'audio_mix':next((p for p in d.get('previews',[]) if p['episode']==ei),None),
                   'mix':d.get('mix'),'mood':d['plan']['mood'],
                   'music':{'file':music['path'],'sha256':music['sha256']} if music else None}
+            if cover.wanted(d):spec['cover']=self.cover_spec(d,ei)
             self.queue_post(d,'export',ei,spec)
             return
         d['state']='finishing';d['phase']='CPU: Schnitt, Ton und Export · GPU für andere Aufträge frei';self.save(d)
@@ -896,6 +902,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         self.editor_routes(app)
         self.quality_routes(app)
         self.library_routes(app)
+        self.cover_routes(app)
         from render_routes import add_routes
         add_routes(self,app)
         @app.get('/api/factory')
@@ -1024,10 +1031,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             a=self.asset(aid);return FileResponse(a['path'],media_type='image/png' if a['kind']=='image' else 'audio/wav')
         @app.post('/api/factory')
         def create(body:Idea):
-            existing=self.rows('SELECT id FROM factory_runs WHERE request_key=?',(body.request_key,))
+            existing=self.rows('SELECT id FROM factory_runs WHERE request_key=?',(body.request_key,));idea=cover.idea_document(body)
             if existing:
                 previous=self.get(existing[0]['id'])
-                if previous['idea']!=body.model_dump():raise HTTPException(409,'Diese Anfrage gehört zu einer anderen Idee. Bitte das bereits angelegte Projekt öffnen.')
+                if previous['idea']!=idea:raise HTTPException(409,'Diese Anfrage gehört zu einer anderen Idee. Bitte das bereits angelegte Projekt öffnen.')
                 return previous
             # Named characters may also be specified directly in the original script.
             if body.characters=='none' and body.participants:raise HTTPException(400,'„Ohne Figuren“ und eine Figurenliste passen nicht zusammen.')
@@ -1040,7 +1047,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             source=manifest(body.idea)
             try:validate_count(source,body.episodes)
             except ValueError as error:raise HTTPException(409,str(error))
-            rid=uid();now=self.g['now']();d={'id':rid,'title':body.title or body.idea[:55],'source':source,'idea':body.model_dump(),'state':'planning','phase':'Idee gespeichert · Planung wartet','episodes':[],'exports':[],'mix':{'music_mode':'uploaded' if body.music else 'off','music_level':.7,'effects_level':.65,'ambience_level':.6},'paused':False,'created':now,'updated':now}
+            rid=uid();now=self.g['now']();d={'id':rid,'title':body.title or body.idea[:55],'source':source,'idea':idea,'state':'planning','phase':'Idee gespeichert · Planung wartet','episodes':[],'exports':[],'mix':{'music_mode':'uploaded' if body.music else 'off','music_level':.7,'effects_level':.65,'ambience_level':.6},'paused':False,'created':now,'updated':now}
+            # Pinned once per project: 0.18 editing (title card). Projects without it keep their exact old export.
+            d['edit_policy']=cover.POLICY
             with self.g['conn']() as db:
                 db.execute('INSERT OR IGNORE INTO factory_runs VALUES(?,?,?,?,?,?)',(rid,body.request_key,d['state'],packed(d),now,now))
                 found=db.execute('SELECT id FROM factory_runs WHERE request_key=?',(body.request_key,)).fetchone()[0]
@@ -1224,6 +1233,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             for ep in d['episodes']:
                 for s in ep['scenes']:
                     if not s['selected']:raise HTTPException(409,'Wähle zuerst in jeder Szene ein Bild.')
+            if cover.wanted(d) and not cover.chosen(d):raise HTTPException(409,'Wähle zuerst ein Titelbild.')
             d['image_approval']=body.revision;d['state']='voicing';d['phase']='Sprachvorschau wartet';self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/approve-voices')
         async def voices(rid:str,body:Review):
