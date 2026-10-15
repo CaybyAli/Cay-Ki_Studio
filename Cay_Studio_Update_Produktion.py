@@ -271,7 +271,7 @@ def main():
         if not tool.exists(): shutil.copy2(Path(__file__).resolve(), tool)
     subprocess.run([str(python), str(release / 'launcher.py'), '--open-browser'], check=True)
     print('\n=== CAY STUDIO 0.17.0 INSTALLIERT ===', flush=True)
-    print('Kein PC-Neustart nötig. Cay_Studio_Starten.cmd öffnen, falls der Browser nicht aufgeht.', flush=True)
+    print('Jetzt einmal den PC neu starten: Erst dann lädt ComfyUI die schnellere Lippen-Animation. Danach Cay_Studio_Starten.cmd öffnen.', flush=True)
     print('Keine neuen Modelle nötig. Das neue Studio öffnet sich unter http://127.0.0.1:8787, das bisherige unter /classic.', flush=True)
     print('Danach im Browser Strg+F5 drücken: unten muss 0.17.0 stehen.', flush=True)
     print('Neue Filme starten mit Qualität Standard und Autopilot. Laufende Projekte laufen weiter.', flush=True)

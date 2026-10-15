@@ -2,15 +2,15 @@
 from array import array
 from pathlib import Path
 import hashlib,json,math,os,random,subprocess,wave
-from factory_timing import audio_layout
+from factory_timing import audio_layout,audio_layout_v16
 import speech_check
 from speech_quality import level_db
 RATE=24000
 TARGET_LUFS=-14  # TikTok/Shorts: phones play quiet mixes thin; measured film before: -23.9 dB mean
 def turns(s):
     return s.get('dialogues') or ([{'speaker':s['speaker'],'text':s['dialogue'],'emotion':s.get('emotion','Natürlich'),'pause_after':.18}] if s.get('dialogue') else [])
-def layout(episodes,lines,minimum_seconds=None,fps=25):
-    return audio_layout(episodes,lines,minimum_seconds,fps)
+def layout(episodes,lines,minimum_seconds=None,fps=25,version=17):
+    return (audio_layout if version>=17 else audio_layout_v16)(episodes,lines,minimum_seconds,fps)
 def write_wav(path,data):
     if not isinstance(data,array):data=array('f',data)
     Path(path).parent.mkdir(parents=True,exist_ok=True);peak=max((abs(x) for x in data),default=1);scale=min(1,.96/max(peak,1e-9));pcm=array('h',(round(max(-.99,min(.99,x*scale))*32767) for x in data))
@@ -106,7 +106,8 @@ def mix(folder,scenes,mood,music=None,settings=None):
             padded.append(padded_label)
         filters.append(''.join(padded)+f'amix=inputs={len(padded)}:normalize=0:duration=longest[voice]')
     else:args+=['-f','lavfi','-i',f'anullsrc=r=24000:cl=mono:d={duration}'];filters.append(f'[{index}:a]anull[voice]')
-    ff([*args,'-filter_complex',';'.join(filters),'-map','[voice]','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',dialogue],folder)
+    # Float until loudnorm: +2.5 dB on a shouted line must not clip in 16 bit.
+    ff([*args,'-filter_complex',';'.join(filters),'-map','[voice]','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_f32le' if labels else 'pcm_s16le',dialogue],folder)
     if labels:
         # Normalize the complete performance, retaining differences between
         # whispering and emphatic lines. A separate pass avoids amix buffering.

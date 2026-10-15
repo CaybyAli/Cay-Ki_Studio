@@ -121,8 +121,9 @@ def parse(text, cast):
     """Return (title, beats, lines, problems). Never guesses an unknown speaker."""
     title = ''; beats = []; lines = []; problems = []
     for number, raw in enumerate(str(text).replace('\r', '').split('\n'), 1):
+        if raw.strip().startswith('```'): continue
         row = re.sub(r'\*\*|__|`', '', raw).strip().strip('*').strip()
-        if not row or row.startswith('```'): continue
+        if not row: continue
         upper = row.upper()
         if upper.startswith('TITEL:'): title = row.split(':', 1)[1].strip()[:100]; continue
         if row.startswith('#'):
@@ -194,7 +195,7 @@ def shots(title, beats, lines, cast):
     for line in lines:
         beat = beats[line['beat']] if line['beat'] < len(beats) else {'place': 'Ort', 'what': ''}
         if line['kind'] == 'action':
-            visible = [c for c in cast if _mentions(line['text'], [c])][:2]
+            visible = [c for c in cast if _mentions(line['text'], [c], [o for o in cast if o != c])][:2]
             result.append({'kind': 'action', 'beat': line['beat'], 'place': beat['place'], 'what': line['text'],
                            'visible': visible or ([result[-1]['visible'][0]] if result and result[-1]['visible'] else cast[:1]), 'lines': []})
             continue
@@ -208,40 +209,79 @@ def shots(title, beats, lines, cast):
     return result
 
 
+def _variants(word):
+    return {word, word.upper(), word.capitalize(), word[:1].upper() + word[1:]}
+
+
 def name_patterns(names, protected=()):
-    """Regexes for figure names: the full name as written or in capitals (with possessive 's / German
-    genitive s); name parts of 4+ letters only capitalised as written, so 'sandy seabed'
-    or 'stars' stay, and never a part that also belongs to a visible figure
-    ('Captain' of Captain Smee stays when only Captain Hook is off-screen)."""
+    """Regexes for figure names: the full name and its parts of 4+ letters, as written,
+    capitalised or in capitals (with possessive 's / German genitive s). Never lower
+    case, so 'sandy seabed' or 'stars' stay; never a part that also belongs to a
+    protected (visible) figure ('Captain' when only Captain Hook is off-screen)."""
     keep = {q.lower() for v in protected for q in re.split(r'[\s.]+', v) if q}
     out = []
     for name in names:
-        # As written or in capitals; 'Sandy' must not catch 'sandy seabed'.
-        out.append(re.compile(r"(?<!\w)(?:" + re.escape(name) + '|' + re.escape(name.upper()) + r")(?:'s|s)?(?!\w)"))
-        for part in {q for q in re.split(r'[\s.]+', name) if len(q) >= 4 and q != name and q.lower() not in keep}:
-            out.append(re.compile(r"(?<!\w)" + re.escape(part) + r"(?:'s|s)?(?!\w)"))
+        words = {name} | {q for q in re.split(r'[\s.]+', name) if len(q) >= 4 and q.lower() not in keep}
+        for word in words:
+            alternatives = '|'.join(re.escape(v) for v in sorted(_variants(word), key=len, reverse=True))
+            out.append(re.compile(r"(?<!\w)(?:" + alternatives + r")(?:'s|s)?(?!\w)"))
     return out
 
 
+def _blank(text, protected):
+    """Hide full names of protected figures before matching others ('Tims Mama' is not 'Tim')."""
+    for name in sorted(protected, key=len, reverse=True):
+        for variant in _variants(name):
+            text = re.sub(r'(?<!\w)' + re.escape(variant) + r"(?:'s|s)?(?!\w)", lambda m: ' ' * len(m.group(0)), text)
+    return text
+
+
 def _mentions(text, names, protected=()):
-    return any(p.search(str(text)) for p in name_patterns(names, protected))
+    text = _blank(str(text), protected)
+    return any(p.search(text) for p in name_patterns(names, protected))
+
+
+# Sentence ends split clauses, but not after a title ('Mr. Krabs' stays one name).
+DELIMS = re.compile(r'(,|;|\bwhile\b|\bwhereas\b|\bwährend\b|\s-\s|'
+                    r'(?<=[.!?])(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bJr\.)(?<!\bHr\.)(?<!\bFr\.)(?<!\bProf\.)\s+)')
+
+
+def _strip(text, names, protected):
+    """Remove mentions of names, never inside a protected full name: the spans are
+    found on a copy with the protected names blanked ('Captain Hook' goes, 'Captain
+    Smee' stays; 'Tim' does not cut into 'Tims Mama')."""
+    masked = _blank(text, protected)
+    spans = sorted({m.span() for p in name_patterns(names, protected) for m in p.finditer(masked)}, key=lambda s: (s[0], -s[1]))
+    out, last = '', 0
+    for a, b in spans:
+        if a < last: continue
+        out += text[last:a]; last = b
+    return out + text[last:]
 
 
 def sanitize(text, visible, cast):
     """Image and motion text may only describe figures in the frame.
 
-    A clause naming someone off-screen is dropped ("SpongeBob at the table,
+    A clause about someone off-screen is dropped ("SpongeBob at the table,
     Mr. Krabs looming over him" -> "SpongeBob at the table"): the image model
     draws every figure it reads about, without a reference, so as a wrong or
-    blended figure. Leftover names are removed as a last resort."""
+    blended figure. A clause that also names a visible figure keeps its subject;
+    only the off-screen name goes ("SpongeBob waves at Squidward" -> "SpongeBob waves")."""
     hidden = [n for n in cast if n not in visible]
-    clauses = re.split(r'(?:,|;|\bwhile\b|\bas\b|\bwhereas\b|\bwährend\b|\s-\s)', str(text or ''))
-    kept = [c.strip() for c in clauses if c.strip() and not _mentions(c, hidden, visible)]
-    out = ', '.join(kept)
-    for pattern in name_patterns(hidden, visible):
-        out = pattern.sub('', out)
+    parts = DELIMS.split(str(text or ''))
+    clauses, delims = parts[0::2], parts[1::2] + ['']
+    out = ''
+    for clause, delim in zip(clauses, delims):
+        if not clause.strip(): continue
+        if _mentions(clause, hidden, visible):
+            # A visible figure must be named outside the hidden names: 'Captain Hook
+            # shouting' does not count as 'Captain Smee' just because of 'Captain'.
+            if not (visible and _mentions(_blank(clause, hidden), visible, [])): continue
+            masked = _strip(clause, hidden, visible)
+            clause = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu|an|auf)\s*(?=[,.!?]|$)', '', masked).rstrip()
+        out += clause + (delim if delim.strip() in (',', ';', '') or delim.isspace() else ' ' + delim.strip() + ' ')
     out = re.sub(r'\b(?:at|to|with|and|towards|behind|next to|und|mit|zu)\s*(?=[,.]|$)', '', out)
-    return re.sub(r'\s{2,}', ' ', re.sub(r'\s+,', ',', out)).strip(' ,')
+    return re.sub(r'\s{2,}', ' ', re.sub(r'\s+([,.;])', r'\1', out)).strip(' ,;')
 
 
 def ensure_action(cut, duration):
@@ -279,7 +319,8 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity):
         if len(motion) < 5: motion = 'talks with expressive face and natural gestures' if speaker else 'moves quickly with a clear physical action'
         scenes.append({
             'title': (shot['what'] if shot['kind'] == 'action' else f'{speaker}: {shot["lines"][0]["text"]}')[:100] or f'Einstellung {i + 1}',
-            'action': (shot['what'] or shot['place'])[:800] if shot['kind'] == 'action' else (shot['what'] or f'{speaker} spricht.')[:800],
+            # At least 5 characters: the text editor validates action with min_length 5.
+            'action': (shot['what'] if len(shot['what'].strip()) >= 5 else (f'{speaker} spricht in {shot["place"]}.' if speaker else f'Stumme Szene in {shot["place"]}.'))[:800],
             'location': shot['place'][:250] or 'Ort',
             'camera': (v.get('camera') or ('medium shot' if speaker else 'wide shot'))[:250],
             'cast': visible,
@@ -367,19 +408,21 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
             answer = await factory.llm(ShotVisuals, VISUAL_INSTRUCTION + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.',
                                        {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': listing})
             # Partial answers are usable: assemble() falls back per missing shot.
-            seen = {}
-            for v in answer['shots']:
-                if 1 <= v['shot'] <= len(cut) and v['shot'] not in seen: seen[v['shot']] = v
-            missing = [n for n in range(1, len(cut) + 1) if n not in seen]
+            numbers = [v['shot'] for v in answer['shots']]
+            # Gaps are fine (fallback per shot); duplicates or numbers out of range mean the
+            # numbering is shifted, and shifted motions would land on the wrong shots.
+            if len(set(numbers)) != len(numbers) or any(not 1 <= n <= len(cut) for n in numbers):
+                raise ValueError('Einstellungsnummern verschoben: ' + ', '.join(map(str, numbers))[:200])
+            missing = [n for n in range(1, len(cut) + 1) if n not in numbers]
             if missing: store['visual_error'] = 'Ohne eigene Bildbeschreibung: Einstellung ' + ', '.join(map(str, missing))
-            store['visuals'] = {'shots': list(seen.values())}; factory.save(d)
+            store['visuals'] = answer; factory.save(d)
         except (RuntimeError, ValueError) as error:
-            # Not stored: a resume asks again; this run uses the per-shot fallbacks.
-            store['visual_error'] = str(error)[:500]
+            store['visual_error'] = 'Bildbeschreibungen fehlen, einfache Beschreibungen verwendet: ' + str(error)[:400]
     episode = assemble(title, spine, outline, cut, store.get('visuals') or {'shots': []}, d['plan']['cast'], continuity)
     episode['screenplay'] = store['final']
     stats = {'words': sum(words(l['text']) for l in lines if l['kind'] == 'line'), 'lines': sum(l['kind'] == 'line' for l in lines),
              'actions': sum(l['kind'] == 'action' for l in lines), 'shots': len(cut), 'budget': b}
     episode['screenplay_stats'] = stats
     if remaining: episode['warnings'] = ['Drehbuch prüfen: ' + '; '.join(remaining)[:900]]
+    if store.get('visual_error'): episode.setdefault('warnings', []).append(store['visual_error'][:400])
     return episode

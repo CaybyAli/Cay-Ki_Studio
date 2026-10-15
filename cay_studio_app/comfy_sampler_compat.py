@@ -7,7 +7,10 @@ Normalize only those documented disabled options, for this invocation only.
 import copy
 import inspect
 
-COMPAT_VERSION = '17.0'
+# Stays '13.0': it is a required graph input, and a new value would change the
+# render key of every lip-sync window of projects already in progress. New
+# abilities show up as optional inputs (cay_audio_cfg_steps) instead.
+COMPAT_VERSION = '13.0'
 COUNTS = {'longcat_num_ref_latents', 'longcat_num_cond_latents',
           'num_memory_frames', 'rope_negative_offset'}
 

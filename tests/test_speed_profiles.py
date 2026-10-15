@@ -14,7 +14,7 @@ def talk_graph(monkeypatch, quality):
     monkeypatch.setattr(render_studio, 'node', lambda info, kind, **kw: {'class_type': kind, 'inputs': kw})
     monkeypatch.setattr(render_studio, 'talk_models', lambda info, fast=False: {k: k for k in ('model', 'talk', 'wav', 'vae', 'text', 'vision', 'lora')})
     monkeypatch.setattr(render_studio, 'validate_graph', lambda info, graph: None)
-    return render_studio.audio_graph({'CayWanVideoSampler': {}}, 'a.png', 'a.wav', 'p', 1, 6.87, quality)
+    return render_studio.audio_graph({'CayWanVideoSampler': {'input': {'optional': {'cay_audio_cfg_steps': ('INT', {'default': 0})}}}}, 'a.png', 'a.wav', 'p', 1, 6.87, quality)
 
 
 def test_lip_sync_profiles(monkeypatch):
@@ -56,7 +56,7 @@ def test_audio_guidance_only_in_first_step(monkeypatch):
     fast = talk_graph(monkeypatch, 'fast')['12']['inputs']
     assert fast['cay_audio_cfg_steps'] == 1
     assert 'cay_audio_cfg_steps' not in talk_graph(monkeypatch, 'high')['12']['inputs']
-    legacy = render_studio.audio_graph({'CayWanVideoSampler': {}}, 'a.png', 'a.wav', 'p', 1, 6.87, 'fast', legacy_text=True)
+    legacy = render_studio.audio_graph({'CayWanVideoSampler': {'input': {'optional': {'cay_audio_cfg_steps': ('INT', {'default': 0})}}}}, 'a.png', 'a.wav', 'p', 1, 6.87, 'fast', legacy_text=True)
     assert 'cay_audio_cfg_steps' not in legacy['12']['inputs'] and 'body keeps moving' in legacy['9']['inputs']['positive_prompt']
 
 

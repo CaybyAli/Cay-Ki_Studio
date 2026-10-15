@@ -462,7 +462,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     'Serie: Ist continuity.pick_up gesetzt, greift Szene 1 diesen offenen Punkt in den ersten zwei Sekunden sichtbar und hörbar auf. '
                     'Ist continuity.end_with gesetzt, wird die Hauptfrage dieser Folge vorher aufgelöst (beat=payoff) und die letzte Szene zeigt genau diesen Cliffhanger (beat=cliffhanger) mit einer kurzen, spannenden Schlusszeile. '
                     'WICHTIG: Die einzige erlaubte Besetzung dieser Folge steht in series.cast. Übernimm die Namen in jeder scenes.cast- und dialogues.speaker-Angabe exakt aus dieser Liste. Keine Rollenbezeichnungen, Spitznamen, Klammerzusätze oder neu erfundene Namen in diesen Feldern.',
-                    {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,'series_total':idea['episodes'],'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],'seconds_per_scene':idea['duration']/n,'previous':[{'title':x['title'],'resolution':x.get('resolution','')} for x in d['episodes']],'continuity':continuity,'spine':spine})
+                    {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,'series_total':idea['episodes'],'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio') if speech_requested(idea) else 'off','duration':idea['duration'],'seconds_per_scene':idea['duration']/n,'previous':[{'title':x['title'],'resolution':x.get('resolution','')} for x in d['episodes']],'continuity':continuity,'spine':spine})
                 ep['story_policy']=12
                 ep['scene_budget']=n
                 # A critic is advisory. Keep the valid draft if criticism or the
@@ -473,9 +473,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if review['problems']:
                         d['phase']=f'Folge {i+1}: Handlung gezielt verbessern';self.save(d)
                         improved=await self.llm(EpisodePlan,
-                            'Überarbeite dieses vollständige Drehbuch anhand der konkreten Kritik. Exakt shots Szenen. Namen, Nutzerereignisse und verbindliche Dialoge erhalten. '+DIRECTION,
+                            ('' if speech_requested(idea) else 'STUMMFILM: Keine Dialoge. ')+'Überarbeite dieses vollständige Drehbuch anhand der konkreten Kritik. Exakt shots Szenen. Namen, Nutzerereignisse und verbindliche Dialoge erhalten. '+DIRECTION,
                             {'series':{k:v for k,v in d['plan'].items() if k!='episodes'},'source':original,'episode':i+1,
-                             'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio'),'duration':idea['duration'],
+                             'outline':outline,'shots':n,'story_policy':12,'lip_sync':idea.get('lip_sync','audio') if speech_requested(idea) else 'off','duration':idea['duration'],
                              'series_total':idea['episodes'],'continuity':continuity,'spine':spine,'draft':ep,'criticism':review['problems']})
                         improved.update(story_policy=12,scene_budget=n)
                         ep=improved
@@ -710,7 +710,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         legacy=d['prompt_policy']<17
         if options['quality'] in ('fast','draft') and not models.get('fast_loras'):raise RuntimeError('Schnellmodus unter Animation einrichten ergänzen.')
         if options['lip_sync']=='audio' and d.get('lines'):
-            audio_graph(info,'probe.png','probe.wav','check',1,1,options['quality'])
+            audio_graph(info,'probe.png','probe.wav','check',1,1,options['quality'],legacy_text=legacy)
             for ei,ep in enumerate(d['episodes']):
                 for si,scene in enumerate(ep['scenes']):
                     speakers={l['speaker'] for l in d['lines'] if l['episode']==ei and l['scene']==si}
@@ -1076,8 +1076,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             try:s=d['episodes'][body.episode]['scenes'][body.scene]
             except IndexError:raise HTTPException(404,'Szene fehlt.')
             if body.note:
-                s['action']=(s['action']+' Änderungswunsch: '+body.note)[-1600:];s['animation_prompt']='';s['motion']=[s['action']]
-                # 0.17 shots draw from 'still'; the wish has to reach the image prompt itself.
+                if not s.get('still'):
+                    # Older plans: the wish goes into the action, which feeds image and motion.
+                    s['action']=(s['action']+' Änderungswunsch: '+body.note)[-1600:];s['animation_prompt']='';s['motion']=[s['action']]
+                # 0.17 shots draw from 'still' and keep their motion; the wish goes to the image prompt.
                 s['image_note']=((s.get('image_note') or '')+' '+body.note).strip()[-1800:]
             regenerate(s,[0,1]);d['state']='pictures';d['phase']='Zwei neue Varianten angefordert';self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/cast/approve')

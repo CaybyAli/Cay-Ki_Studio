@@ -63,9 +63,14 @@ def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',at
     if 'CayWanVideoSampler' not in info:
         raise ValueError('Die Sampler-Reparatur ist noch nicht in ComfyUI geladen. Nach dem Update laufende Arbeit pausieren, den PC neu starten und Cay Studio öffnen. Keine neuen Modelle nötig.')
     lite=quality in ('fast','draft')
+    if lite and not legacy_text and 'cay_audio_cfg_steps' not in fields(info,'CayWanVideoSampler')[1]:
+        # Without the new sampler node the speed-up would be dropped silently and the
+        # windows rendered again after the next restart (different graph).
+        raise ValueError('Die schnellere Lippen-Animation ist installiert, aber ComfyUI hat sie noch nicht geladen. Einmal den PC neu starten, dann Cay Studio öffnen und „Fortsetzen“. Keine neuen Modelle nötig.')
     m=talk_models(info,lite);n=lambda kind,**kw:node(info,kind,**kw)
     size={'high':(720,1280),'draft':(480,832)}.get(quality,(576,1024))
-    frames=4*math.ceil(seconds*25/4)+1
+    # 0.17 graphs: epsilon so 8.96 s (224 frames) stays 225 frames, not 229 (one window more).
+    frames=4*math.ceil(seconds*25/4-(0 if legacy_text else 1e-9))+1
     g={'1':n('LoadImage',image=image),'2':n('LoadAudio',audio=audio),
        '3':n('WanVideoVAELoader',model_name=m['vae'],precision='bf16'),
        '4':n('MultiTalkModelLoader',model=m['talk']),

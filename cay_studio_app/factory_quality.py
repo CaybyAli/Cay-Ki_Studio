@@ -80,7 +80,9 @@ class Quality:
             if len(d['lines'])!=len(lines):raise RuntimeError('Sprachvorschau unvollständig.')
         elif not lines:d['lines']=[];d['voice_profiles']={}
         if self.paused(d['id']):return
-        d['timing']=layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps']);d['timing_policy']=POLICY;d['timing_fps']=options['fps'];d['audio_revision']=d.get('audio_revision',0)+1;d['previews']=[];music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
+        # Pinned once: a 0.16 sound version keeps the 0.16 layout (same shot lengths, cached windows).
+        d.setdefault('timing_layout',16 if d.get('timing') and not any(t.get('layout') or 'silent_shots' in t for t in d['timing']) else 17)
+        d['timing']=layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],d['timing_layout']);d['timing_policy']=POLICY;d['timing_fps']=options['fps'];d['audio_revision']=d.get('audio_revision',0)+1;d['previews']=[];music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
         for ei,ep in enumerate(d['episodes']):
             if self.paused(d['id']):return
             d['phase']=f'Folge {ei+1}: Dialog, Musik und Geräusche mischen';self.save(d);scenes=[{'seconds':s['render_seconds'],'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],'ambience':s.get('ambience','room'),'sound_cues':s.get('sound_cues',[])} for si,s in enumerate(ep['scenes'])];folder=self.folder(d)/'03_Stimmen'/f'Mischung_{d["audio_revision"]:03}'/f'Folge_{ei+1:02}'

@@ -62,6 +62,6 @@ def test_lip_sync_graph_uses_requested_attention(monkeypatch):
     monkeypatch.setattr(render_studio, 'node', lambda info, kind, **kw: {'class_type': kind, 'inputs': kw})
     monkeypatch.setattr(render_studio, 'talk_models', lambda info, fast=False: {k: k for k in ('model', 'talk', 'wav', 'vae', 'text', 'vision', 'lora')})
     monkeypatch.setattr(render_studio, 'validate_graph', lambda info, graph: None)
-    graph = render_studio.audio_graph({'CayWanVideoSampler': {}}, 'a.png', 'a.wav', 'p', 1, 5, 'fast', attention='sageattn')
+    graph = render_studio.audio_graph({'CayWanVideoSampler': {'input': {'optional': {'cay_audio_cfg_steps': ('INT', {'default': 0})}}}}, 'a.png', 'a.wav', 'p', 1, 5, 'fast', attention='sageattn')
     assert graph['10']['inputs']['attention_mode'] == 'sageattn'
-    assert render_studio.audio_graph({'CayWanVideoSampler': {}}, 'a.png', 'a.wav', 'p', 1, 5, 'fast')['10']['inputs']['attention_mode'] == 'sdpa'
+    assert render_studio.audio_graph({'CayWanVideoSampler': {'input': {'optional': {'cay_audio_cfg_steps': ('INT', {'default': 0})}}}}, 'a.png', 'a.wav', 'p', 1, 5, 'fast')['10']['inputs']['attention_mode'] == 'sdpa'

@@ -33,10 +33,8 @@ def name_parts(name):
 def strip_names(text, names, protected=()):
     """Remove figure names from free text (same matching as screenplay.sanitize:
     full name in any case, capitalised name parts, never a part of a visible figure)."""
-    from screenplay import name_patterns
-    out = str(text or '')
-    for pattern in name_patterns(names, protected):
-        out = pattern.sub('', out)
+    from screenplay import _strip
+    out = _strip(str(text or ''), names, protected)
     return re.sub(r'\s{2,}', ' ', re.sub(r'\s+([,.;])', r'\1', out)).strip()
 
 

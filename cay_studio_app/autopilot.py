@@ -20,7 +20,8 @@ class Autopilot:
         """16 if lip-sync windows of this project were already rendered (they stay cached:
         the render key is the graph digest), else 17 (0.17 prompts and audio guidance)."""
         rows = getattr(self, 'rows', None)
-        done = rows and rows("SELECT 1 FROM factory_steps WHERE run_id=? AND status='done' AND step_key LIKE 'video09:%' LIMIT 1", (d.get('id'),))
+        # Any attempt counts: a window still submitted or uncertain must be found again by its key.
+        done = rows and rows("SELECT 1 FROM factory_steps WHERE run_id=? AND step_key LIKE 'video09:%' AND status IN ('done','new','submitting','submitted') LIMIT 1", (d.get('id'),))
         return 16 if done else 17
 
     def autopilot_on(self, d):

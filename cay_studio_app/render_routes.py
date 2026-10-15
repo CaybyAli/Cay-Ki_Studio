@@ -24,7 +24,8 @@ def add_routes(factory,app):
         if path.exists():
             with path.open('rb') as stream:stream.seek(max(0,path.stat().st_size-4000));log=stream.read().decode(errors='replace')
         result=dict(f.animation_setup_status)
-        if 'WanVideoSampler' in info and 'CayWanVideoSampler' not in info and (f.comfy/'custom_nodes/cay_studio_sampler/__init__.py').is_file():
+        stale='CayWanVideoSampler' in info and 'cay_audio_cfg_steps' not in info['CayWanVideoSampler'].get('input',{}).get('optional',{})
+        if 'WanVideoSampler' in info and ('CayWanVideoSampler' not in info or stale) and (f.comfy/'custom_nodes/cay_studio_sampler/__init__.py').is_file():
             result.update(state='restart_required',message='Sampler-Reparatur ist installiert. PC nach Ende des laufenden Schritts neu starten und Cay Studio öffnen. Keine erneute Einrichtung nötig.')
         return {**result,'checks':checks,'running':bool(f.animation_setup and not f.animation_setup.done()),'log':log}
     async def install():
