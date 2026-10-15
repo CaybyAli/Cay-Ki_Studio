@@ -74,6 +74,7 @@ try:
     for si, who in enumerate((['Lena'], ['Markus'], ['Lena'])):
         v = [picture(rid, next(ids), si * 2), picture(rid, next(ids), si * 2 + 1)]
         eps.append(scene(f'Szene {si + 1}', who, [(who[0], 'Hallo.')], v, v[0]))
+    eps[0]['dialogues'][0].update(emotion='schreiend', pause_after=.3)   # the line editor must keep the delivery
     project(rid, 'image_review', 'Neue Gesichter', {'cast_refs': {'Lena': str(figure), 'Markus': str(figure)}}, episodes=[{'title': 'Neue Gesichter', 'scenes': eps}])
     # figure check stop (0.17): designs ready, no scene images yet
     rid = '1' * 32
@@ -152,6 +153,14 @@ try:
         page.click('.dock button'); page.wait_for_timeout(1500)
         r.check('Bilder übernommen: Zustand Stimmen', json.loads(page.evaluate("fetch('/api/factory/" + 'a' * 32 + "').then(r=>r.text())"))['state'] in ('voicing', 'blocked'))
         shot('04c_figur_neu', '#p=' + 'f' * 32)
+        page.click('[data-action="edit-lines"][data-scene="0"]'); page.wait_for_timeout(500)
+        page.fill('#lines-form [data-line="0"][data-key="text"]', 'Hallo, Markus!')
+        page.click('#lines-form [data-action="add-line"]'); page.wait_for_timeout(300)
+        page.fill('#lines-form [data-line="1"][data-key="text"]', 'Wo ist der Keks?')
+        page.click('#lines-form button[type="submit"]'); page.wait_for_timeout(1200)
+        said = json.loads(page.evaluate("fetch('/api/factory/" + 'f' * 32 + "').then(r=>r.text())"))['episodes'][0]['scenes'][0]['dialogues']
+        r.check('Text ändern: Sprechhaltung und Pause bleiben, neuer Satz natürlich',
+                [(x['text'], x['emotion'], x['pause_after']) for x in said] == [('Hallo, Markus!', 'schreiend', .3), ('Wo ist der Keks?', 'Natürlich', .18)]); print('     ', [(x['text'], x['emotion'], x['pause_after']) for x in said])
         page.once('dialog', lambda dlg: dlg.accept())
         page.click('.cast [data-action="cast-redo"][data-name="Lena"]'); page.wait_for_timeout(1500)
         f = json.loads(page.evaluate("fetch('/api/factory/" + 'f' * 32 + "').then(r=>r.text())"))
@@ -170,6 +179,9 @@ try:
         r.check('Eigenes Figurenbild: übernommen, Figur wird neu aufgebaut', bool(markus.get('image')) and 'Markus' not in g.get('cast_refs', {})
                 and (g['state'] == 'pictures' or g.get('resume_state') == 'pictures'))
         db.execute("UPDATE factory_runs SET state='cast_review', document=json_set(document,'$.state','cast_review','$.cast_refs',json(?)) WHERE id=?", (json.dumps({'Lena': str(figure), 'Markus': str(figure)}), '1' * 32)); db.commit()
+        page.goto('http://127.0.0.1:8787/classic#project=' + '1' * 32); page.wait_for_timeout(2500)
+        r.check('Klassische Ansicht: Figurencheck mit Weiter-Knopf und Link', page.locator('[data-action="cast-approve-classic"]').count() == 1
+                and page.locator('a[href="/#p=' + '1' * 32 + '"]').count() == 1)
         page.goto('http://127.0.0.1:8787/#p=' + '1' * 32); page.wait_for_timeout(2000)
         page.click('[data-action="cast-approve"]'); page.wait_for_timeout(1500)
         g = json.loads(page.evaluate("fetch('/api/factory/" + '1' * 32 + "').then(r=>r.text())"))

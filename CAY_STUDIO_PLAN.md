@@ -1,4 +1,4 @@
-# Cay Studio – Plan (Stand 0.17.0, 14.10.2026)
+# Cay Studio – Plan (Stand 0.17.0, 15.10.2026)
 
 Ziel: mehrere 1-Minuten-Videos pro Tag, Einzelfilme und Serien bis 12 Folgen, lokal und ohne laufende Kosten.
 
@@ -69,6 +69,7 @@ Grundlage: dein Video (Einzelbilder und Tonpausen gemessen), Diagnose 0.16.1, f�
 2. Ob das 4B-Bildmodell Mr. Krabs und Plankton ohne Bild trifft, bleibt offen. Mit deinem eigenen Bild ist es sicher.
 3. Die Drehbuchqualität hängt am lokalen Planungsmodell. Der Denkmodus kostet etwa 2 bis 5 min Planung mehr **[Hochrechnung]**.
 4. Stumme Aktionsszenen nutzen Wan 2.2 mit Lightning. Das wirkt laut Berichten oft wie Zeitlupe **[Vermutung]**.
+5. Laufende Projekte aus 0.16 behalten ihre Stimmen, Szenenlängen und Bewegungstexte. So wird nichts doppelt gerechnet. Die Verbesserungen siehst du deshalb nur in **neuen** Filmen oder mit „Neue Fassung“.
 
 ## 4b. Nächste Zeithebel nach deinem Test (alle kostenlos)
 

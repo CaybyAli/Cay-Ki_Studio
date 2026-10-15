@@ -6,6 +6,8 @@
 - „Figuren vorher zeigen“: ein kurzer Stopp vor den Szenenbildern, auch mit Autopilot. Dort: neu gestalten oder eigenes Bild.
 - Stimmen: Gefühls-Sprechproben mit passendem Text, 16 Sprechhaltungen, bei Knete/Cartoon eine Cartoon-Sprechweise, bei Gefühlszeilen zwei Aufnahmen und die lebendigere gewinnt.
 - Schneller: Die Lippen-Animation rechnet nur noch im ersten von vier Schritten doppelt (vorher in allen vier).
+- Nach dem Update einmal den PC neu starten: Erst dann lädt ComfyUI die schnellere Lippen-Animation. Ohne Neustart hält ein neuer Film mit genau diesem Hinweis an.
+- Projekte, die schon in 0.16 Stimmen oder Animation hatten, behalten Stimmen, Szenenlängen und Bewegungstexte. So wird nichts doppelt gerechnet. Die Neuerungen gibt es für neue Filme und mit „Neue Fassung“.
 
 ---
 

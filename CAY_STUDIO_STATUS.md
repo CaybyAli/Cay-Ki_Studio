@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 14.10.2026 (0.17.0) · Branch `claude/new-session-s0p05c`
+Stand: 15.10.2026 (0.17.0) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -116,10 +116,18 @@ Analyse: Video (Einzelbilder, silencedetect: 2,2–4,5 s Stille nach jeder Zeile
 - `screenplay.py` (neu): Drehbuch als Klartext-Gespräch (`Factory.write`, think mit Rückfall, Prüfung + Rückgabe der Fehler, Script Doctor, Rückfall auf Entwurf), deterministischer Schnitt pro Sprecherwechsel, AKTION-Zeilen als stumme Szenen, `ShotVisuals`-JSON für Bild/Bewegung, `sanitize` streicht Satzteile über Figuren außerhalb des Bilds. Alter Szenenplaner nur noch für Filme ohne Sprache.
 - `cast_design.py`: eigener Name statt Serie, keine Stilübertragung für bekannte Figuren, Körperbau zuerst, `scene_text`, `strip_names` auch im Stiltext; Zustand `cast_review` (Idea.cast_check), Endpunkte `cast/approve`, `cast/image`, `cast/redo` (auch in cast_review).
 - `factory_timing.py`: `talk_plan` (keine Pause nach letzter Zeile, Einpassen knapp über Fenstergrenze), `fill_target` (Sprechszene max. +0,35 s, Rest stumme Szenen), Bericht mit `silent_shots`.
-- Animation: `motion_direction` neu (nur sichtbare Figur, Mund zu in Pausen), alter Text als `motion_direction_v16`/`V16_SUFFIX` für Projekte, die schon rendern (`prompt_policy`); `cay_audio_cfg_steps=1` über `comfy_sampler_compat.py` 17.0 (Audio-CFG nur Schritt 1: 8→5 Durchläufe/Fenster).
+- Animation: `motion_direction` neu (nur sichtbare Figur, Mund zu in Pausen), alter Text als `motion_direction_v16`/`V16_SUFFIX` für Projekte, die schon rendern (`prompt_policy`); `cay_audio_cfg_steps=1` über `comfy_sampler_compat.py` (Audio-CFG nur Schritt 1: 8→5 Durchläufe/Fenster; Versionskennung bleibt 13.0, sonst würden alte Fenster neu gerechnet).
 - Stimmen: `EMOTION_TEXTS`, `performance_key` 16 Kategorien, Cartoon-Beschreibung, Clone temp 0.9/top_p 1/top_k 50, Best-of-2 nach `prosody_score`, Chatterbox-Rezept, `level_db` in der Mischung, sanfterer Kompressor.
 - UI: Figurenprüfung, eigenes Figurenbild, Prüfzeile (Wörter, Sprachanteil, Pause, Rechenblöcke), Status „Wartet auf dich“ bei Autopilot-Stopp. Diagnose: Drehbuch, Aufmerksamkeit/Audio-Führung, Knotenzeiten.
 - Nicht geprüft: alles auf der GPU (Bild, Lippen, Stimmen, Zeitgewinn).
+
+### 0.17.0 – zwei unabhängige Prüfrunden (15.10.2026), alle echten Funde behoben
+- Alte Projekte rechnen nichts doppelt: je Projekt festgehalten `prompt_policy` (Bewegungstext), `timing_layout` (Szenenlängen 0.16), `voice_policy` (Stimmen/Sampling/Signaturen 0.16). Beleg: `tests/test_compat_016.py` vergleicht mit Referenz aus 0.16.1 (git `9fbc214`, `tests/fixtures/v16_reference.json`): Layout, Lippen-Graph vor/nach Neustart, Sampler-Version, Stimmdateinamen und Modellaufrufe. Gegenprobe: 5 absichtlich eingebaute Fehler werden erkannt.
+- Neue schnelle Lippen-Animation ohne ComfyUI-Neustart: klare Meldung „PC neu starten“ statt stiller Doppelrechnung; Installer sagt das am Ende.
+- Namen: „Mr. Krabs“ bleibt ein Name (kein Satzende), „Captain Hook“ wird entfernt, „Captain Smee“ bleibt; Groß-/Kleinschreibung (Spongebob, oma).
+- Stimmen: „neugierig/beschreibend/flach/gescheitert“ nicht mehr als Triumph/Schrei/Freude; misslungene Gefühlsprobe → Grundstimme statt Abbruch; Tonhöhenmessung bis 1000 Hz ohne Oktavsprünge; Flüstern −2 dB.
+- Neue App „Text ändern“ behält Sprechhaltung und Pause; klassische Ansicht zeigt „Figuren prüfen“.
+- Prüfungen: `pytest` 91 bestanden; Browser `ui_check.py` 29/29, `autopilot_check.py` 5/5, `abort_step_check.py` 11/11, `queue_check.py` bestanden; Update gebaut (Payload `68dce484`, 78 Dateien) und Trockeninstallation bytegleich, neuer Release-Ordner.
 
 ## Nächster konkreter Schritt
 Cay: 0.17.0 installieren, PC neu starten, SpongeBob-Film 60 s Standard mit Autopilot und Figurenprüfung, Video + Diagnose schicken.
