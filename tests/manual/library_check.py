@@ -28,7 +28,7 @@ def wav(path, seconds=3):
 
 def upload(kind, path):
     import urllib.request
-    req = urllib.request.Request(f'http://127.0.0.1:8787/api/factory/assets?kind={kind}&name={path.name}', data=path.read_bytes(),
+    req = urllib.request.Request(f'{studio.url}/api/factory/assets?kind={kind}&name={path.name}', data=path.read_bytes(),
                                  headers={'X-Cay-Token': studio.token}, method='POST')
     with studio.opener.open(req, timeout=20) as resp: return json.load(resp)['id']
 

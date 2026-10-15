@@ -3,6 +3,11 @@ import http.server, json, os, sqlite3, subprocess, sys, threading, time, urllib.
 from pathlib import Path
 
 APP = Path(__file__).resolve().parents[2] / 'cay_studio_app'
+# Ports are overridable so several checks (e.g. in parallel worktrees) can run at once:
+# CAY_TEST_STUDIO_PORT (default 8787) and CAY_TEST_COMFY_PORT (default 8188).
+PORT = int(os.environ.get('CAY_TEST_STUDIO_PORT', '8787'))
+COMFY_PORT = int(os.environ.get('CAY_TEST_COMFY_PORT', '8188'))
+BASE = f'http://127.0.0.1:{PORT}'
 COMFY = {'running': [], 'pending': [], 'history': {}, 'calls': []}
 
 
@@ -27,20 +32,21 @@ class Studio:
         work = Path(work); self.runtime = work / 'studio'; self.root = work / 'ablage'
         (self.runtime / 'config').mkdir(parents=True, exist_ok=True); self.root.mkdir(exist_ok=True)
         (self.runtime / 'config/ablage.json').write_text(json.dumps({'wsl_root': str(self.root), 'windows_root': 'D:\\Cay_Studio',
-            'local_services': {'comfyui': 'http://127.0.0.1:8188', 'ollama': 'http://127.0.0.1:11434'}}))
-        self.comfy = http.server.ThreadingHTTPServer(('127.0.0.1', 8188), FakeComfy)
+            'local_services': {'comfyui': f'http://127.0.0.1:{COMFY_PORT}', 'ollama': 'http://127.0.0.1:11434'}}))
+        self.comfy = http.server.ThreadingHTTPServer(('127.0.0.1', COMFY_PORT), FakeComfy)
+        self.url = BASE
         threading.Thread(target=self.comfy.serve_forever, daemon=True).start()
-        env = {**os.environ, 'CAY_STUDIO_RUNTIME': str(self.runtime), **(env_extra or {})}
+        env = {**os.environ, 'CAY_STUDIO_RUNTIME': str(self.runtime), 'CAY_STUDIO_PORT': str(PORT), **(env_extra or {})}
         self.server = subprocess.Popen([sys.executable, 'server.py'], cwd=APP, env=env, stdout=open(work / 'server.log', 'w'), stderr=subprocess.STDOUT)
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         self.token = None
         for _ in range(80):
-            try: self.token = json.load(self.opener.open('http://127.0.0.1:8787/api/bootstrap', timeout=2))['csrf']; break
+            try: self.token = json.load(self.opener.open(BASE + '/api/bootstrap', timeout=2))['csrf']; break
             except OSError: time.sleep(.5)
         self.db = sqlite3.connect(self.runtime / 'data/cay_studio.sqlite3')
 
     def call(self, path, body=None, method=None):
-        request = urllib.request.Request('http://127.0.0.1:8787' + path, data=json.dumps(body).encode() if body is not None else None,
+        request = urllib.request.Request(BASE + path, data=json.dumps(body).encode() if body is not None else None,
                                          headers={'Content-Type': 'application/json', 'X-Cay-Token': self.token}, method=method or ('POST' if body is not None else 'GET'))
         try:
             with self.opener.open(request, timeout=20) as r: return r.status, json.load(r)

@@ -26,7 +26,7 @@ def wav(path, seconds=3, freq=180):
 
 def upload(kind, path):
     import urllib.request
-    req = urllib.request.Request(f'http://127.0.0.1:8787/api/factory/assets?kind={kind}&name={path.name}', data=path.read_bytes(), headers={'X-Cay-Token': studio.token}, method='POST')
+    req = urllib.request.Request(f'{studio.url}/api/factory/assets?kind={kind}&name={path.name}', data=path.read_bytes(), headers={'X-Cay-Token': studio.token}, method='POST')
     with studio.opener.open(req, timeout=20) as resp: return json.load(resp)['id']
 
 
@@ -64,7 +64,7 @@ try:
         browser = p.chromium.launch(executable_path='/opt/pw-browsers/chromium')
         page = browser.new_page(viewport={'width': 1280, 'height': 900}); errors = []
         page.on('pageerror', lambda e: errors.append(str(e))); page.on('console', lambda m: m.type == 'error' and errors.append(m.text))
-        base = 'http://127.0.0.1:8787/'
+        base = studio.url + '/'
         page.goto(base + '#library'); page.wait_for_selector('.card'); page.wait_for_timeout(600)
         page.screenshot(path=str(shots / '01_figuren.png'), full_page=True)
         r.check('Figuren-Seite: 3 Karten, Reiter aktiv', page.locator('.card').count() == 3 and page.locator('[data-nav="library"][aria-current="page"]').count() == 1)

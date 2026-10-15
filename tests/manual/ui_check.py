@@ -124,7 +124,7 @@ try:
         page = browser.new_page(viewport={'width': 1280, 'height': 900}); errors = []
         page.on('pageerror', lambda e: errors.append(str(e))); page.on('console', lambda m: m.type == 'error' and errors.append(m.text))
         def shot(name, url, full=True, wait=2200):
-            page.goto('http://127.0.0.1:8787/' + url); page.wait_for_timeout(wait); page.screenshot(path=str(shots / f'{name}.png'), full_page=full)
+            page.goto(studio.url + '/' + url); page.wait_for_timeout(wait); page.screenshot(path=str(shots / f'{name}.png'), full_page=full)
         shot('01_neu', '#new', full=False)
         jpg = work / 'vorlage.jpg'
         subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'gradients=s=1200x800:c0=0xe0a060:c1=0x603020:d=1', '-frames:v', '1', str(jpg)], check=True)
@@ -192,10 +192,10 @@ try:
         r.check('Eigenes Figurenbild: übernommen, Figur wird neu aufgebaut', bool(markus.get('image')) and 'Markus' not in g.get('cast_refs', {})
                 and (g['state'] == 'pictures' or g.get('resume_state') == 'pictures'))
         db.execute("UPDATE factory_runs SET state='cast_review', document=json_set(document,'$.state','cast_review','$.cast_refs',json(?)) WHERE id=?", (json.dumps({'Lena': str(figure), 'Markus': str(figure)}), '1' * 32)); db.commit()
-        page.goto('http://127.0.0.1:8787/classic#project=' + '1' * 32); page.wait_for_timeout(2500)
+        page.goto(studio.url + '/classic#project=' + '1' * 32); page.wait_for_timeout(2500)
         r.check('Klassische Ansicht: Figurencheck mit Weiter-Knopf und Link', page.locator('[data-action="cast-approve-classic"]').count() == 1
                 and page.locator('a[href="/#p=' + '1' * 32 + '"]').count() == 1)
-        page.goto('http://127.0.0.1:8787/#p=' + '1' * 32); page.wait_for_timeout(2000)
+        page.goto(studio.url + '/#p=' + '1' * 32); page.wait_for_timeout(2000)
         page.click('[data-action="cast-approve"]'); page.wait_for_timeout(1500)
         g = json.loads(page.evaluate("fetch('/api/factory/" + '1' * 32 + "').then(r=>r.text())"))
         r.check('Figuren freigegeben: Szenenbilder sind dran', g['state'] in ('pictures', 'blocked') and bool(g.get('cast_approval')))
@@ -210,7 +210,7 @@ try:
         shot('08_angehalten', '#p=' + 'e' * 32)
         r.check('Angehalten: klare Überschrift und Fortsetzen', 'nicht hörbar' in page.locator('.next h2').inner_text() and page.locator('.next [data-action="resume"]').count() == 1)
         r.check('Kein Reiter „Filme“ mehr', page.locator('[data-nav="films"]').count() == 0)
-        page.goto('http://127.0.0.1:8787/#p=' + 'd' * 32); page.wait_for_selector('.film video', timeout=15000)
+        page.goto(studio.url + '/#p=' + 'd' * 32); page.wait_for_selector('.film video', timeout=15000)
         for _ in range(60):
             if page.evaluate("[...document.querySelectorAll('.film video')].every(v => v.readyState >= 1)"): break
             page.wait_for_timeout(250)
