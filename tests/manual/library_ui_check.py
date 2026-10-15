@@ -55,6 +55,9 @@ try:
     studio.call('/api/library', {'name': 'Oma', 'label': 'Oma Erna', 'look': 'film', 'image': upload('image', png(work / 'o.png', '0x9ad0ec', '0x1f4e79'))})
     studio.project('b' * 32, 'cast_review', {'plan': {'cast': [dict(c) for c in CAST], 'style': 'clay', 'mood': 'playful'}, 'episodes': episodes,
                    'cast_refs': {'Patrick': str(sheet), 'SpongeBob': str(sb)}}, {'look': 'clay', 'cast_check': True}, paused=1)
+    studio.project('c' * 32, 'audio_mixing', {'plan': {'cast': [dict(c) for c in CAST], 'style': 'clay', 'mood': 'playful'}, 'episodes': episodes,
+                   'cast_refs': {'Patrick': str(sheet), 'SpongeBob': str(sb)}, 'voice_profiles': {'Patrick': {'file': str(voice), 'sha256': 'x', 'source': 'designed'}}},
+                   {'look': 'clay'}, paused=1)
 
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
@@ -92,33 +95,68 @@ try:
         page.click('[data-action="lib-pick-compose"]'); page.wait_for_selector('#pick-grid .pick')
         page.click('#pick-grid .pick >> text=Patrick Knete Strand'); page.click('#pick-grid .pick >> text=Mr. Krabs Cartoon'); page.wait_for_timeout(200)
         page.screenshot(path=str(shots / '04_auswahl_neuer_film.png'))
-        r.check('Auswahl: 2 gewählt, anderer Look markiert', '2 gewählt' in page.locator('#pick-foot').inner_text() and 'anderer Look' in page.locator('#pick-grid').inner_text())
+        r.check('Auswahl: 2 gewählt, anderer Look wird nachgezeichnet', '2 gewählt' in page.locator('#pick-foot').inner_text() and 'wird im Look deines Films nachgezeichnet' in page.locator('#pick-grid').inner_text())
         page.click('[data-action="lib-add-compose"]'); page.wait_for_timeout(400)
         draft = page.evaluate("JSON.parse(localStorage.getItem('cay-draft'))")
         names = [x['name'] for x in draft['participants']]
         r.check('Neuer Film: Figuren mit Bild, Stimme und Profil übernommen', names == ['Patrick', 'Mr. Krabs'] and all(x['library_id'] and x['image'] for x in draft['participants'])
-                and draft['participants'][0]['voice_design']['seed'] == 7 and page.locator('.person .chip.accent').count() == 2)
+                and draft['participants'][0]['voice_design']['seed'] == 7 and page.locator('.person .chip.accent').count() == 2
+                and draft['participants'][1]['image_look'] == 'cartoon' and draft['participants'][1]['library_voice'] == krabs['id'])
         page.screenshot(path=str(shots / '05_neuer_film_figuren.png'), full_page=True)
 
-        # Running project: give SpongeBob the Krabs profile? -> Patrick gets Patrick Knete Strand
-        page.goto(base + '#p=' + 'b' * 32); page.wait_for_selector('.cast .figure')
-        page.screenshot(path=str(shots / '06_figurenpruefung.png'), full_page=True)
-        page.click('.figure:has-text("Patrick") [data-action="figure-menu"]'); page.wait_for_selector('.menu-row'); page.wait_for_timeout(300)
-        page.screenshot(path=str(shots / '06b_figur_aendern.png'))
-        r.check('Ändern-Menü: vier Möglichkeiten mit Folgen', page.locator('.menu-row').count() == 4 and 'zeichnet 2 Szenen neu' in page.locator('#sheet').inner_text())
+        # Running project in the figure check: tap a figure, suggestion by name, picker, apply now
+        page.goto(base + '#p=' + 'b' * 32); page.wait_for_selector('.cast .role')
+        page.screenshot(path=str(shots / '06_besetzung.png'), full_page=True)
+        r.check('Besetzung: 2 Figuren, Quelle von Bild und Stimme sichtbar', page.locator('.cast .role').count() == 2
+                and 'Vom Studio gestaltet' in page.locator('.role', has_text='Patrick').inner_text() and 'Stimme' in page.locator('.role-src').first.inner_text())
+        r.check('Vorschlag nach Namen: nur bei Patrick', page.locator('.role-suggest').count() == 1 and 'Patrick Knete Strand verwenden' in page.locator('.role', has_text='Patrick').inner_text())
+        page.click('.role-hit[data-name="Patrick"]'); page.wait_for_selector('.menu-section'); page.wait_for_timeout(300)
+        page.screenshot(path=str(shots / '06b_figur_menue.png'))
+        sheet = page.locator('#sheet').inner_text()
+        r.check('Figur-Menü: Bibliothek, Bild, Stimme, Aufnehmen', page.locator('#sheet .menu-section').count() == 4 and 'Patrick Knete Strand verwenden' in sheet
+                and 'Neu gestalten' in sheet and 'Eigene Aufnahme hochladen' in sheet and 'In 2 Szenen zu sehen' in sheet)
         page.click('.menu-row[data-action="lib-pick-project"]'); page.wait_for_selector('#pick-grid .pick')
+        r.check('Auswahl im Projekt: passende Figur zuerst', 'Patrick Knete Strand' in page.locator('#pick-grid .pick-title').first.inner_text()
+                and 'Passt zu Patrick' in page.locator('#pick-grid .pick').first.inner_text())
         page.click('#pick-grid .pick >> text=Patrick Knete Strand'); page.wait_for_timeout(200)
         page.screenshot(path=str(shots / '07_auswahl_projekt.png'))
         foot = page.locator('#pick-foot').inner_text()
-        r.check('Projekt-Auswahl: Folgen klar benannt (2 Szenen, 2 Sätze)', '2 Szenen werden neu gezeichnet' in foot and '2 Sätze werden neu eingesprochen' in foot)
+        r.check('Projekt-Auswahl: Folgen klar benannt (2 Szenen, 2 Sätze)', '2 Szenen werden neu gezeichnet' in foot and '2 Sätze werden neu eingesprochen' in foot
+                and 'übernehmen' in page.locator('[data-action="lib-apply"]').inner_text())
         page.click('[data-action="lib-apply"]'); page.wait_for_timeout(900)
         d = json.loads(page.evaluate("fetch('/api/factory/" + 'b' * 32 + "').then(r=>r.text())"))
         part = next(x for x in d['idea']['participants'] if x['name'] == 'Patrick')
-        r.check('Projekt: Patrick hat Bild und Stimme des Profils, Szenen werden neu gezeichnet', part['library_id'] == patrick['id'] and d['state'] == 'pictures'
-                and 'Patrick' not in d.get('cast_refs', {}))
+        r.check('Projekt: Patrick hat Bild und Stimme des Profils, Szenen werden neu gezeichnet', part['library_image'] == patrick['id'] and part['library_voice'] == patrick['id']
+                and d['state'] == 'pictures' and 'Patrick' not in d.get('cast_refs', {}))
+        page.wait_for_timeout(600)
+        r.check('Karte zeigt das Profil als Quelle, kein Vorschlag mehr', page.locator('.role-suggest').count() == 0
+                and page.locator('.role', has_text='Patrick').inner_text().count('Patrick Knete Strand') == 2)
+
+        # Project mixing its sound: the voice is kept for later, the image is closed with the reason
+        page.goto(base + '#p=' + 'c' * 32); page.wait_for_selector('.cast .role')
+        page.click('.role-hit[data-name="SpongeBob"]'); page.wait_for_selector('.menu-section'); page.wait_for_timeout(200)
+        sheet = page.locator('#sheet').inner_text()
+        r.check('Beim Mischen: Bild geschlossen mit Grund, Stimme vormerkbar', 'Szenenbilder sind schon gewählt' in sheet and 'sobald der Ton gemischt ist' in sheet)
+        page.click('.menu-row[data-action="lib-pick-project"]'); page.wait_for_selector('#pick-grid .pick')
+        page.click('#pick-grid .pick >> text=Mr. Krabs Cartoon'); page.wait_for_timeout(200)
+        page.screenshot(path=str(shots / '07b_vormerken.png'))
+        r.check('Vormerken: Bild gesperrt, Stimme vorgemerkt, Knopf sagt es', page.locator('#pick-image').is_disabled() and page.locator('#pick-voice').is_checked()
+                and 'vormerken' in page.locator('[data-action="lib-apply"]').inner_text())
+        page.click('[data-action="lib-apply"]'); page.wait_for_timeout(900)
+        r.check('Vorgemerkt auf der Karte und als Meldung', 'Vorgemerkt: Stimme von „Mr. Krabs Cartoon“' in page.locator('.role', has_text='SpongeBob').inner_text()
+                and 'Vorgemerkt' in page.locator('#toast').inner_text())
+        page.screenshot(path=str(shots / '07c_vorgemerkt.png'), full_page=True)
+        page.click('.role-hit[data-name="SpongeBob"]'); page.wait_for_selector('.notice'); page.click('[data-action="cast-cancel"]'); page.wait_for_timeout(700)
+        r.check('Vormerkung aufheben', page.locator('.role-pending').count() == 0 and not json.loads(page.evaluate("fetch('/api/factory/" + 'c' * 32 + "').then(r=>r.text())"))['pending_cast'])
+        page.set_viewport_size({'width': 390, 'height': 844}); page.goto(base + '#p=' + 'c' * 32); page.wait_for_selector('.cast .role'); page.wait_for_timeout(400)
+        page.screenshot(path=str(shots / '07d_besetzung_handy.png'), full_page=True)
+        r.check('Handy: Besetzung ohne waagerechte Scrollleiste', page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+        page.click('.role-hit[data-name="SpongeBob"]'); page.wait_for_selector('.menu-section'); page.wait_for_timeout(300)
+        page.screenshot(path=str(shots / '07e_figur_menue_handy.png'))
+        page.keyboard.press('Escape'); page.set_viewport_size({'width': 1280, 'height': 900})
         # Save SpongeBob from the first project
-        page.goto(base + '#p=' + 'a' * 32); page.wait_for_selector('.cast .figure')
-        page.click('.figure:has-text("SpongeBob") [data-action="figure-menu"]'); page.wait_for_selector('.menu-row'); page.click('.menu-row[data-action="lib-save"]'); page.wait_for_timeout(300)
+        page.goto(base + '#p=' + 'a' * 32); page.wait_for_selector('.cast .role')
+        page.click('.role-hit[data-name="SpongeBob"]'); page.wait_for_selector('.menu-row'); page.click('.menu-row[data-action="lib-save"]'); page.wait_for_timeout(300)
         r.check('Aufnehmen: Profilname vorgeschlagen', page.locator('#lib-save-form [name="label"]').input_value() == 'SpongeBob Knete')
         page.click('#lib-save-form [type="submit"]'); page.wait_for_timeout(700)
         lib = json.loads(page.evaluate("fetch('/api/library').then(r=>r.text())"))

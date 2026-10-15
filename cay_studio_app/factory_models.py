@@ -22,6 +22,11 @@ class Participant(Strict):
     image_mode:Literal['neutral','exact']='neutral'
     library_id:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     voice_design:VoiceRecipe|None=None
+    # Which library profile the image and the voice come from (shown on the figure card),
+    # and the look of that image: a figure from another look is redrawn in the film's look.
+    library_image:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
+    library_voice:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
+    image_look:Literal['auto','film','cartoon','clay','paper']|None=None
 
 class LibraryFigure(Strict):
     name:str=Field(min_length=1,max_length=60)

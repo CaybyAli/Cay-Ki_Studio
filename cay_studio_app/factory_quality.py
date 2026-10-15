@@ -57,6 +57,7 @@ class Quality:
             # Older plans could reach this point without any line; never mix a silent film by accident.
             raise RuntimeError(MISSING_MARK+': Dieses Drehbuch enthält kein einziges gesprochenes Wort, obwohl Figuren sprechen sollen. '
                 'Der Film wäre stumm. „Neue Fassung planen“ übernimmt Idee und Einstellungen; dieses Projekt bleibt erhalten.')
+        if self.apply_pending(d):return            # kept library voices: plan the lines again with them
         audio_only=d.pop('audio_only',False) and bool(d.get('lines') or not lines)
         if self.paused(d['id']):return
         # Pinned once: a project voiced before 0.17 keeps its approved voices and cached
@@ -83,6 +84,7 @@ class Quality:
             async with self.measured(d,'Sprache · '+engine):await self.command([python,Path(__file__).with_name('factory_speech.py' if engine=='qwen' else 'factory_tts.py'),'--base',self.base,'--job',job],14400)
             d['lines']=json.loads((folder/'Ergebnis.json').read_text())['lines']
             if len(d['lines'])!=len(lines):raise RuntimeError('Sprachvorschau unvollständig.')
+            if self.apply_pending(d):return        # a voice chosen meanwhile: speak its lines again, then mix
         elif not lines:d['lines']=[];d['voice_profiles']={}
         if self.paused(d['id']):return
         # Pinned once: a 0.16 sound version keeps the 0.16 layout (same shot lengths, cached windows).
@@ -95,6 +97,19 @@ class Quality:
                 'music':{'file':music['path'],'sha256':music['sha256']} if music else None,
                 'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds']})
         d['state']='audio_mixing';d['phase']='CPU: Dialog, Musik und Geräusche mischen · GPU wieder frei';self.save(d)
+    def voice_open(self,d):
+        """Voices change until the animation starts; refuse with the reason otherwise."""
+        window=self.cast_window(d,'voice')
+        if window=='later':
+            raise HTTPException(409,'Der Ton wird gerade gemischt. Danach kannst du die Stimme ändern.' if d['state']=='audio_mixing'
+                                else 'Das Studio rechnet gerade an diesem Projekt. In ein paar Sekunden noch einmal versuchen.')
+        if window!='now':raise HTTPException(409,window)
+    def voice_changed(self,d):
+        """A figure got another voice: its lines are spoken again (cache by voice), the approval goes."""
+        d.pop('voice_approval',None);d.pop('audio_only',None);d['previews']=[]
+        if d['state']=='voice_review':d['state']='voicing'
+        # A failed mix would otherwise resume with the old lines.
+        elif d['state']=='blocked' and d.get('resume_state')=='audio_mixing':d['resume_state']='voicing'
     def measured(self,d,stage):
         """Voice generation runs outside ComfyUI; record its time like every other stage."""
         resources=self.g.get('resources')
@@ -182,16 +197,17 @@ class Quality:
             return FileResponse(self.path(p['file']),media_type='audio/wav')
         @app.post('/api/factory/{rid}/voice-settings')
         async def voices(rid:str,body:VoiceSettings):
-            d=self.get(rid)
-            if d['state'] not in ('image_review','voice_review','blocked') or (d['state']=='blocked' and d.get('resume_state')=='rendering'):raise HTTPException(409,'Stimmen während der Vorschau ändern.')
+            d=self.get(rid);self.voice_open(d)
             p=next((p for p in d.get('plan',{}).get('cast',[]) if p['name']==body.name),None)
             if not p:raise HTTPException(400,'Figur gehört nicht zum Projekt.')
             p.update(voice_preset=body.voice_preset,voice_description=body.voice_description)
             if body.new_variant:p['voice_variant']=p.get('voice_variant',0)+1
             for participant in d['idea']['participants']:
-                if participant['name']==body.name:participant['voice']=None
-            d.pop('voice_approval',None);d['previews']=[]
-            if d['state']=='voice_review':d['state']='voicing'
+                if participant['name']==body.name:
+                    # A designed voice from the studio: the library voice and its recipe no longer apply.
+                    participant['voice']=None;participant['voice_text']='';participant.pop('voice_design',None);participant.pop('library_voice',None)
+                    if not participant.get('library_image'):participant.pop('library_id',None)
+            self.voice_changed(d)
             self.save(d);return self.get(rid)
         @app.put('/api/factory/{rid}/dialogues')
         async def edit(rid:str,body:SceneDialogueEdit):

@@ -210,6 +210,7 @@ def test_pictures_step_end_to_end_without_templates_in_scenes():
         def asset(self, aid, kind=None): return {'path': f'/assets/{aid}.png'}
         def save(self, d): self.saved += 1
         def paused(self, rid): return False
+        def apply_pending(self, d): return False
 
     original = factory.validate_nodes
     factory.validate_nodes = lambda info: {}
@@ -241,6 +242,7 @@ def test_cast_check_stops_once_before_scene_images():
         def asset(self, aid, kind=None): return {'path': f'/assets/{aid}.png'}
         def save(self, d): pass
         def paused(self, rid): return False
+        def apply_pending(self, d): return False
 
     original = factory.validate_nodes
     factory.validate_nodes = lambda info: {}

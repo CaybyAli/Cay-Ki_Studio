@@ -71,15 +71,35 @@ def neutral_prompt(person, style, cast_names=()):
             'Keep the rendering style of reference image 1. ' + strip_names(style, others, [name]).strip())
 
 
-def upload_key(person, upload_sha):
-    return 'castup:' + person['name'] + ':' + digest([upload_sha, person.get('design_round', 0), POLICY])[:12]
+def restyle_prompt(person, style, cast_names=()):
+    """A library figure from another look (a clay profile in a cartoon film): same character,
+    the film's look. Mixed looks in one frame read as a mistake."""
+    name = person['name']; others = [n for n in cast_names if n != name]
+    return (f'Character sheet of {name}, the same character as in reference image 1: keep the head shape, face shape, '
+            'body shape, proportions, colours, clothing and accessories, so that everyone recognises the character. '
+            'Redraw it completely in the visual style below: change material, surface texture and rendering to that style. '
+            'Neutral relaxed expression, mouth closed, eyes open looking forward, standing upright, arms relaxed, full body, front view. '
+            'Plain light grey background, soft even light, a single character, nothing else, no text. Visual style: '
+            + strip_names(style, others, [name]).strip())
 
 
-async def from_upload(factory, document, person, upload, upload_sha, models):
-    """Design from Cay's own image: one image prompt with the upload as reference."""
-    names = [p['name'] for p in document['plan'].get('cast', [])]
-    sheet = await factory.render(document, upload_key(person, upload_sha),
-                                 build_graph(neutral_prompt(person, document['plan']['style'], names), [factory.stage(upload)],
+def other_look(image_look, film_look):
+    """True if a figure's image comes from another look than the film (never for 'auto')."""
+    return bool(image_look and film_look and 'auto' not in (image_look, film_look) and image_look != film_look)
+
+
+def upload_key(person, upload_sha, restyle=False, style=''):
+    parts = [upload_sha, person.get('design_round', 0), POLICY] + (['restyle', style] if restyle else [])
+    return 'castup:' + person['name'] + ':' + digest(parts)[:12]
+
+
+async def from_upload(factory, document, person, upload, upload_sha, models, restyle=False):
+    """Design from Cay's own image (or a library image of another look): one image prompt with
+    the upload as reference."""
+    names = [p['name'] for p in document['plan'].get('cast', [])]; style = document['plan']['style']
+    prompt = (restyle_prompt if restyle else neutral_prompt)(person, style, names)
+    sheet = await factory.render(document, upload_key(person, upload_sha, restyle, style),
+                                 build_graph(prompt, [factory.stage(upload)],
                                              seed(person['name'], person.get('design_round', 0) + 2000), '', models))
     return sheet['output']
 
@@ -133,7 +153,20 @@ def scene_text(scene, cast):
     picture = sanitize(scene.get('still') or scene.get('action', ''), visible, names, aliases)
     place = strip_names(scene.get('location', ''), [n for n in names if n not in visible], visible, aliases)
     framing = sanitize(scene.get('camera', ''), visible, names, aliases)
-    return ' '.join(x for x in (f'Scene: {picture}.' if picture else '', f'Location: {place}.' if place else '', f'Framing: {framing}.' if framing else ''))
+    return ' '.join(x for x in (f'Scene: {picture}.' if picture else '', f'Location: {place}.' if place else '', f'Framing: {framing}.' if framing else '',
+                                faces(scene)))
+
+
+def faces(scene):
+    """Each speaking figure's face from its line's delivery, in English: the planner's still may
+    leave it out, and the design sheet must not decide it (a laughing upload laughed in every
+    afraid line). Image keys carry no prompt digest, so finished images stay as they are."""
+    from screenplay import expression
+    seen = {}
+    for line in scene.get('dialogues') or ([{'speaker': scene.get('speaker'), 'emotion': scene.get('emotion')}] if scene.get('dialogue') else []):
+        name = line.get('speaker')
+        if name in scene.get('cast', []) and name not in seen: seen[name] = expression(line.get('emotion') or '')
+    return ' '.join(f"{name}'s facial expression: {face}." for name, face in seen.items())
 
 
 def scene_references(refs, names):
@@ -168,7 +201,9 @@ def needs_review(document):
     if not document['idea'].get('cast_check', False): return False
     # Uploads used exactly as they are need no look; a neutral redraw of an upload does.
     # (projects from before 0.18 carry no image_mode: their uploads were always used as they are).
-    own = {p['name'] for p in document['idea'].get('participants', []) if p.get('image') and p.get('image_mode', 'exact') == 'exact'}
+    look = document['idea'].get('look', 'auto')
+    own = {p['name'] for p in document['idea'].get('participants', [])
+           if p.get('image') and p.get('image_mode', 'exact') == 'exact' and not other_look(p.get('image_look'), look)}
     designed = [p['name'] for p in document['plan']['cast'] if p['name'] not in own]
     return bool(designed) and document.get('cast_approval') != signature(document)
 

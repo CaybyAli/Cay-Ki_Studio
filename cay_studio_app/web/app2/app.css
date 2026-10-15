@@ -206,9 +206,35 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .spine dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 15px; }
 .spine dt { color: var(--muted); }
 .spine dd { margin: 0; }
-.cast-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+/* Casting: each figure is one tap target (its portrait and name); sources sit underneath. */
+.cast-head { display: grid; gap: 2px; margin-bottom: 16px; }
+.cast-head p { margin: 0; max-width: 46em; }
+.cast-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 24px 18px; }
+.role { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.role-hit { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.role-hit:focus-visible { outline: none; }
+.role-hit:focus-visible .figure-pic { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 3px; }
+.role-hit .figure-pic img { transition: transform .3s ease; }
+.role-hit:hover .figure-pic img { transform: scale(1.03); }
+.role-edit { position: absolute; left: 8px; bottom: 8px; padding: 4px 11px; border-radius: 980px; font-size: 13px; color: #fff;
+  background: rgba(20,20,22,.55); backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%); opacity: 0; transition: opacity .15s; }
+.role-hit:hover .role-edit, .role-hit:focus-visible .role-edit { opacity: 1; }
+@media (hover: none) { .role-edit { opacity: 1; } }
+.role-name { font-weight: 600; font-size: 17px; line-height: 1.2; overflow-wrap: anywhere; }
+.role-src { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; font-size: 13px; line-height: 1.35; }
+.role-src dt { color: var(--muted); font-size: 12px; }
+.role-src dt:not(:first-child) { margin-top: 6px; }
+.role-src dd { margin: 0; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.role-src dd span { overflow-wrap: anywhere; }
+.role-src .play { width: 26px; height: 26px; flex: none; }
+.role-pending { margin: 0; font-size: 13px; line-height: 1.35; color: var(--wait); }
+.role-suggest { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 5px 10px 5px 5px; border: 0; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent); font: inherit; font-size: 13px; line-height: 1.3; text-align: left; cursor: pointer; }
+.role-suggest b { font-weight: 600; }
+.mini { flex: none; display: grid; place-items: center; width: 30px; height: 40px; border-radius: 8px; overflow: hidden; background: #1d1d1f; color: rgba(255,255,255,.7); font-size: 11px; font-weight: 600; }
+.mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .figure { margin: 0; width: 132px; display: grid; gap: 8px; }
-.figure-pic { aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #1d1d1f; position: relative; }
+.figure-pic { display: block; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #1d1d1f; position: relative; }
 .figure-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .figure-pic .frame-empty { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.72); font-size: 13px; }
 .figure figcaption { display: grid; gap: 4px; justify-items: start; font-size: 15px; }
@@ -379,13 +405,32 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 }
 
 /* Figure menu in a project: one entry point per figure, every option says what follows */
-.figure-sheet { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 22px; align-items: start; }
+.figure-sheet { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 26px; align-items: start; }
+.figure-side { display: grid; gap: 12px; }
+.figure-side p { margin: 0; }
 .menu { display: grid; gap: 4px; }
+.menu-section { display: grid; gap: 2px; }
+.menu-section + .menu-section { border-top: 1px solid var(--hairline); padding-top: 12px; margin-top: 10px; }
+.menu-title { margin: 0 14px 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.menu-note { margin: 0 14px 4px; font-size: 14px; line-height: 1.45; color: var(--muted); }
 .menu-row { display: grid; gap: 3px; text-align: left; border: 0; background: none; padding: 12px 14px; border-radius: 14px; cursor: pointer; color: var(--ink); font: inherit; }
 .menu-row:hover { background: var(--canvas); }
+.menu-row:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 0; }
+.menu-row:disabled { cursor: default; opacity: .5; }
+.menu-row.with-pic { grid-template-columns: 30px minmax(0, 1fr); column-gap: 12px; align-items: center; }
+.menu-row.with-pic .mini { grid-row: span 2; }
+.notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 0 0 18px; padding: 12px 14px 12px 16px;
+  border-radius: 14px; background: color-mix(in srgb, var(--wait) 12%, var(--surface)); font-size: 15px; line-height: 1.4; }
 .menu-row b { font-weight: 600; font-size: 16px; }
 .menu-row span { font-size: 14px; color: var(--muted); line-height: 1.4; }
 .menu-row input { display: none; }
 .voice-note { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
 .voice-note .play { width: 28px; height: 28px; }
-@media (max-width: 560px) { .figure-sheet { grid-template-columns: 1fr; } .figure-sheet .figure-pic { width: 110px; } }
+@media (max-width: 560px) {
+  .figure-sheet { grid-template-columns: 1fr; gap: 18px; }
+  .figure-side { grid-template-columns: 96px minmax(0, 1fr); align-items: start; gap: 8px 16px; }
+  .figure-side .figure-pic { grid-row: span 2; }
+  .figure-side .role-src { grid-template-columns: max-content minmax(0, 1fr); gap: 4px 10px; align-items: center; }
+  .figure-side .role-src dt:not(:first-child) { margin-top: 0; }
+  .cast-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; }
+}

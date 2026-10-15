@@ -111,9 +111,9 @@ try:
     project(rid, 'done', 'Butterblitz', {'exports': exports}, {'episodes': 2},
             episodes=[{'title': t, 'social': SOCIAL, 'scenes': [scene('S', ['Lena'], [('Lena', 'Hallo')], [p], p)]} for t, p in zip(['Der Löffel', 'Das Müsli'], pics)])
     # measured compute time (timer on tiles and project page); notes are written when a step ends
-    for proj, stage, sec in (('c' * 32, 'Animation', 700.4), ('c' * 32, 'Bilder', 54), ('d' * 32, 'Animation', 3725)):
+    for proj, stage, end, sec in (('c' * 32, 'Bilder', '00:00', 54), ('c' * 32, 'Animation', '01:00', 700.4), ('d' * 32, 'Animation', '00:00', 3725)):
         db.execute('INSERT INTO performance_stages(project,stage,resource,started,seconds,status,detail) VALUES(?,?,?,?,?,?,?)',
-                   (proj, stage, 'GPU', '2026-01-01T00:00:00+00:00', sec, 'done', '{}'))
+                   (proj, stage, 'GPU', f'2026-01-01T{end}:00+00:00', sec, 'done', '{}'))
     # blocked: speech check
     project('e' * 32, 'blocked', 'Funkstille', {'resume_state': 'audio_mixing', 'error': 'Nachbearbeitung: SPRACHPRÜFUNG: 1 von 6 Dialogbeiträgen nicht hörbar. Ohne hörbare Stimme: Markus. Folge 1, Szene 3, Figur Markus: „Lass mich los!“ – keine hörbare Sprache an dieser Stelle.'})
     db.commit()
@@ -182,7 +182,7 @@ try:
                 and scenes[0]['selected'] is None and scenes[2]['selected'] is None and scenes[1]['selected'] is not None)
         shot('04d_figurencheck', '#p=' + '1' * 32)
         r.check('Figurencheck: Überschrift, 2 Figuren, Prüfzeile', 'Prüf deine Figuren' in page.locator('.next h2').inner_text()
-                and page.locator('.cast .figure').count() == 2 and '118 Wörter' in page.locator('.check-line').inner_text())
+                and page.locator('.cast .role').count() == 2 and '118 Wörter' in page.locator('.check-line').inner_text())
         own = work / 'eigenes_bild.jpg'
         subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=0xff6b6b:s=600x900:d=1', '-frames:v', '1', str(own)], check=True)
         page.click('.cast [data-action="figure-menu"][data-name="Markus"]'); page.wait_for_selector('.menu-row')

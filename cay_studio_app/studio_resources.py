@@ -48,6 +48,7 @@ class Resources:
     def __init__(self,g):
         self.g=g;self.options=cpu_options();self.slots=asyncio.Semaphore(self.options['workers'])
         self.active={};self.waiting={};self.previous=None;self.latest={};self.host_memory={};self.host_read_at=0
+        self.running={};self.tokens=0
 
     def init(self):
         self.g['execute']('CREATE TABLE IF NOT EXISTS performance_stages(id INTEGER PRIMARY KEY AUTOINCREMENT,project TEXT,stage TEXT,resource TEXT,started TEXT,seconds REAL,status TEXT,detail TEXT)')
@@ -56,12 +57,24 @@ class Resources:
         self.g['execute']('INSERT INTO performance_stages(project,stage,resource,started,seconds,status,detail) VALUES(?,?,?,?,?,?,?)',
             (project,stage,resource,self.g['now'](),seconds,status,json.dumps(detail or {},ensure_ascii=False)))
 
+    def begin(self,project):
+        """Mark a measured step as running (live compute timer); end() with the returned token."""
+        self.tokens+=1;self.running[self.tokens]={'project':project,'since':self.g['now']()}
+        return self.tokens
+
+    def end(self,token):self.running.pop(token,None)
+
+    def running_since(self,project):
+        times=[r['since'] for r in self.running.values() if r['project']==project]
+        return min(times) if times else None
+
     @asynccontextmanager
     async def measure(self,project,stage,resource):
-        start=time.monotonic();status='done'
+        start=time.monotonic();status='done';token=self.begin(project)
         try:yield
         except BaseException:status='interrupted';raise
-        finally:self.note(project,stage,resource,time.monotonic()-start,status)
+        finally:
+            self.end(token);self.note(project,stage,resource,time.monotonic()-start,status)
 
     async def cpu(self,project,stage,fn,*args):
         task_id=f'{project}:{stage}:{time.monotonic_ns()}'

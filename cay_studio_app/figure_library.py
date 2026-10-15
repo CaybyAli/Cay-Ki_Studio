@@ -17,6 +17,10 @@ from fastapi import HTTPException
 from factory_models import LibraryFigure, LibraryFromProject, CastProfile
 
 LOOKS = {'auto': 'Jeder Look', 'clay': 'Knete', 'cartoon': 'Cartoon', 'film': 'Film', 'paper': 'Papier'}
+IMAGE_STATES = ('cast_review', 'pictures', 'image_review')
+VOICE_STATES = ('cast_review', 'pictures', 'image_review', 'voicing', 'audio_mixing', 'voice_review')
+IMAGE_LATE = 'Die Szenenbilder sind schon gewählt. Bilder lassen sich bis zur Bildauswahl tauschen.'
+VOICE_LATE = 'Die Animation hat begonnen. Bild und Stimme lassen sich jetzt nur in einer neuen Fassung tauschen.'
 
 
 def file_sha(path):
@@ -48,6 +52,8 @@ def voice_peaks(path, bars=36):
 class Library:
     def init_library(self):
         self.sql('CREATE TABLE IF NOT EXISTS figure_library(id TEXT PRIMARY KEY,document TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL)')
+        # Library choices made while the project computes; applied by the worker at a safe point.
+        self.sql('CREATE TABLE IF NOT EXISTS factory_cast_pending(run_id TEXT NOT NULL,name TEXT NOT NULL,part TEXT NOT NULL,library_id TEXT NOT NULL,created TEXT NOT NULL,PRIMARY KEY(run_id,name,part))')
 
     # ---------- storage ----------
     def library_figure(self, fid, deleted=False):
@@ -76,11 +82,16 @@ class Library:
     def library_uses(self):
         """How many projects use each library figure (shown on the cards; deleting stays safe)."""
         counts = {}
-        for r in self.rows('SELECT document FROM factory_runs'):
+        try: trash = {r['id'] for r in self.rows('SELECT id FROM studio_trash')}
+        except Exception: trash = set()
+        for r in self.rows('SELECT id,document FROM factory_runs'):
+            if r['id'] in trash: continue
             try: d = json.loads(r['document'])
             except ValueError: continue
-            for fid in {p.get('library_id') for p in d.get('idea', {}).get('participants', []) if p.get('library_id')}:
-                counts[fid] = counts.get(fid, 0) + 1
+            used = set()
+            for p in d.get('idea', {}).get('participants', []):
+                used |= {p.get(k) for k in ('library_id', 'library_image', 'library_voice') if p.get(k)}
+            for fid in used: counts[fid] = counts.get(fid, 0) + 1
         return counts
 
     def register_file(self, kind, source, name):
@@ -109,14 +120,18 @@ class Library:
         provided = next((p for p in d['idea'].get('participants', []) if p['name'] == body.name), {}) or {}
         image = mode = voice = None; voice_text = ''; recipe = None
         ref = (d.get('cast_refs') or {}).get(body.name)
-        if ref:
-            # The approved design sheet is the identity; it is used exactly as it is.
+        upload = self.asset(provided['image'], 'image')['path'] if provided.get('image') else None
+        if ref and not (upload and Path(ref) == Path(upload)):
+            # The approved design sheet (studio design or neutral redraw) is the identity; used as it is.
             image = self.register_file('image', ref, f'{body.label} (Bild)'); mode = 'exact'
         elif provided.get('image'):
-            image = provided['image']; mode = provided.get('image_mode', 'neutral')
+            # Cay's own picture keeps its mode; projects before 0.18 had no choice, so their
+            # uploads enter the library as 'neutral' (a laughing photo must not freeze the face).
+            image = provided['image']; mode = provided.get('image_mode') or 'neutral'
         profile = (d.get('voice_profiles') or {}).get(body.name)
         if profile and profile.get('file'):
-            voice = self.register_file('voice', profile['file'], f'{body.label} (Stimme)'); voice_text = profile.get('voice_text', '')
+            voice = self.register_file('voice', profile['file'], f'{body.label} (Stimme)')
+            voice_text = profile.get('voice_text') or provided.get('voice_text', '')
             meta = Path(profile['file']).with_suffix('.json')
             if profile.get('source') == 'designed':
                 try:
@@ -133,54 +148,136 @@ class Library:
                'traits': (provided.get('traits') or traits)[:1500], 'image': image, 'image_mode': mode or 'exact',
                'voice': voice, 'voice_text': voice_text[:2500], 'voice_design': recipe,
                'voice_preset': person.get('voice_preset', ''), 'original': person.get('original', ''),
+               # English look description from the planner: replaces the planner's text when this
+               # figure is cast into another film (Cay's own German notes never enter image prompts).
+               'appearance': person.get('appearance', '')[:1000],
                'source': {'project': d['id'], 'title': d.get('title', '')}}
         return self.library_save(doc)
 
     # ---------- library -> running project ----------
-    def apply_profile(self, rid, body):
-        """Give a figure of a running project the image and/or voice of a library figure.
+    def cast_window(self, d, part, owner=False):
+        """When a figure of this project may get a new image or voice.
 
-        Image: allowed while figures or scene images are being reviewed; that figure's design
-        and every scene showing it are redone. Voice: allowed until the animation starts; its
-        lines are spoken again. Nothing that is already animated is touched."""
-        d = self.get(rid)
-        if self.busy == rid: raise HTTPException(409, 'Der laufende Schritt wird gerade abgeschlossen. Kurz warten.')
-        cast = d.get('plan', {}).get('cast', [])
-        person = next((p for p in cast if p['name'] == body.name), None)
-        if person is None: raise HTTPException(404, 'Figur gehört nicht zu diesem Projekt.')
-        fig = self.library_figure(body.library_id)
-        use_image = body.image and bool(fig.get('image')); use_voice = body.voice and bool(fig.get('voice'))
-        if not use_image and not use_voice: raise HTTPException(400, 'Diese Bibliotheksfigur hat dafür kein Bild oder keine Stimme.')
-        state = d['state']; resume = d.get('resume_state')
-        if use_image and state not in ('cast_review', 'image_review'):
-            raise HTTPException(409, 'Bilder lassen sich bei der Figuren- oder Bildprüfung tauschen.')
-        if use_voice and not (state in ('cast_review', 'image_review', 'voice_review', 'pictures', 'planning')
-                              or (state == 'blocked' and resume not in ('rendering', 'finishing'))):
-            raise HTTPException(409, 'Stimmen lassen sich nur vor der Animation tauschen.')
-        if use_image: self.asset(fig['image'], 'image')
-        if use_voice: self.asset(fig['voice'], 'voice')
+        'now': applied at once. 'later': the project is computing (or mixing its sound); the
+        choice is kept and applied at the next safe point, before any review stop moves on.
+        Any other value is the reason why not (shown as it is). owner: the caller is the worker
+        that computes this project, so it may apply at once."""
+        state = d['state']
+        if state == 'blocked':
+            resume = d.get('resume_state')
+            if part == 'image': return 'now' if resume == 'pictures' else IMAGE_LATE
+            return 'now' if resume in ('pictures', 'voicing', 'audio_mixing') else VOICE_LATE
+        if state == 'planning': return 'Die Figuren entstehen gerade. Sobald sie zu sehen sind, kannst du sie tauschen.'
+        if part == 'image':
+            if state not in IMAGE_STATES: return IMAGE_LATE if state in VOICE_STATES else VOICE_LATE
+        elif state not in VOICE_STATES: return VOICE_LATE
+        if (self.busy == d['id'] and not owner) or (part == 'voice' and state == 'audio_mixing'): return 'later'
+        return 'now'
+
+    def cast_windows(self, d):
+        return {part: self.cast_window(d, part) for part in ('image', 'voice')}
+
+    def assign_profile(self, d, name, fig, use_image, use_voice):
+        """Give one figure the image and/or voice of a library figure (in place, no save).
+        Returns (scenes drawn again, lines spoken again)."""
+        person = next(p for p in d['plan']['cast'] if p['name'] == name)
         participants = d['idea'].setdefault('participants', [])
-        entry = next((p for p in participants if p['name'] == body.name), None)
+        entry = next((p for p in participants if p['name'] == name), None)
         if entry is None:
-            entry = {'name': body.name, 'traits': '', 'image': None, 'voice': None, 'voice_text': ''}; participants.append(entry)
-        entry['library_id'] = fig['id']
-        scenes = 0
+            entry = {'name': name, 'traits': '', 'image': None, 'voice': None, 'voice_text': ''}; participants.append(entry)
+        entry['library_id'] = fig['id']; scenes = lines = 0
         if use_image:
             import cast_design
-            entry['image'] = fig['image']; entry['image_mode'] = fig.get('image_mode', 'exact')
-            if fig.get('traits'): person['appearance'] = fig['traits'][:800]
-            scenes = cast_design.invalidate(d, body.name)
-            d['state'] = 'pictures'
+            entry.update(image=fig['image'], image_mode=fig.get('image_mode', 'exact'), library_image=fig['id'], image_look=fig.get('look', 'auto'))
+            if fig.get('appearance'): person['appearance'] = fig['appearance'][:1000]
+            scenes = cast_design.invalidate(d, name)
+            if d['state'] != 'blocked': d['state'] = 'pictures'
         if use_voice:
-            entry['voice'] = fig['voice']; entry['voice_text'] = fig.get('voice_text', '')
-            entry['voice_design'] = fig.get('voice_design')
-            d.pop('voice_approval', None); d['previews'] = []
-            if d['state'] == 'voice_review': d['state'] = 'voicing'
-        lines = sum(1 for ep in d.get('episodes', []) for sc in ep['scenes'] for l in (sc.get('dialogues') or []) if l.get('speaker') == body.name)
-        what = ' und '.join(x for x, on in (('Bild', use_image), ('Stimme', use_voice)) if on)
-        d['phase'] = f'{what} von „{fig["label"]}“ für {body.name}' + (f' · {scenes} Szenen werden neu gezeichnet' if use_image else '') + (f' · {lines} Sätze neu eingesprochen' if use_voice else '')
-        self.save(d)
-        return self.get(rid)
+            entry.update(voice=fig['voice'], voice_text=fig.get('voice_text', ''), voice_design=fig.get('voice_design'), library_voice=fig['id'])
+            self.voice_changed(d)
+            lines = sum(1 for ep in d.get('episodes', []) for sc in ep['scenes'] for l in (sc.get('dialogues') or []) if l.get('speaker') == name)
+        return scenes, lines
+
+    def pending_cast(self, rid):
+        rows = self.rows('SELECT name,part,library_id,created FROM factory_cast_pending WHERE run_id=? ORDER BY created', (rid,))
+        out = []
+        for r in rows:
+            try: label = self.library_figure(r['library_id'], deleted=True)['label']
+            except HTTPException: label = ''
+            out.append({'name': r['name'], 'part': r['part'], 'library_id': r['library_id'], 'label': label})
+        return out
+
+    def apply_pending(self, d):
+        """Apply kept library choices at a safe point (called by the worker, which owns d).
+        Returns True if d changed (and was saved)."""
+        rows = self.rows('SELECT name,part,library_id FROM factory_cast_pending WHERE run_id=?', (d['id'],))
+        if not rows: return False
+        changed = False; notes = []
+        for r in rows:
+            window = self.cast_window(d, r['part'], owner=True)
+            if window == 'later': continue
+            self.sql('DELETE FROM factory_cast_pending WHERE run_id=? AND name=? AND part=?', (d['id'], r['name'], r['part']))
+            try: fig = self.library_figure(r['library_id'])
+            except HTTPException: fig = None
+            person = next((p for p in d.get('plan', {}).get('cast', []) if p['name'] == r['name']), None)
+            what = 'Bild' if r['part'] == 'image' else 'Stimme'
+            if window != 'now' or not fig or not fig.get(r['part']) or person is None:
+                notes.append(f'{what} für {r["name"]} nicht übernommen: ' + (window if window != 'now' else 'Bibliotheksfigur fehlt.'))
+                continue
+            self.assign_profile(d, r['name'], fig, r['part'] == 'image', r['part'] == 'voice'); changed = True
+            notes.append(f'{what} von „{fig["label"]}“ für {r["name"]} übernommen')
+        if notes: d['phase'] = ' · '.join(notes)[:600]
+        if changed or notes: self.save(d)
+        return changed
+
+    def sweep_pending(self):
+        """Worker: projects that are not computing get their kept choices now."""
+        for row in self.rows('SELECT DISTINCT run_id FROM factory_cast_pending'):
+            if self.busy == row['run_id']: continue
+            try: d = self.get(row['run_id'])
+            except HTTPException:
+                self.sql('DELETE FROM factory_cast_pending WHERE run_id=?', (row['run_id'],)); continue
+            self.apply_pending(d)
+
+    def apply_profile(self, rid, body):
+        """Library figure -> figure of a running project: now, or kept until the next safe point.
+        Image: until the scene images are chosen; that figure's design and its scenes are drawn
+        again. Voice: until the animation starts; its lines are spoken again."""
+        d = self.get(rid)
+        if not any(p['name'] == body.name for p in d.get('plan', {}).get('cast', [])):
+            raise HTTPException(404, 'Figur gehört nicht zu diesem Projekt.')
+        fig = self.library_figure(body.library_id)
+        parts = [part for part, wanted in (('image', body.image), ('voice', body.voice)) if wanted and fig.get(part)]
+        if not parts: raise HTTPException(400, 'Diese Bibliotheksfigur hat dafür kein Bild und keine Stimme.')
+        windows = {part: self.cast_window(d, part) for part in parts}
+        refused = [w for w in windows.values() if w not in ('now', 'later')]
+        if refused: raise HTTPException(409, refused[0])
+        for part in parts: self.asset(fig[part], part)
+        now = [p for p in parts if windows[p] == 'now']; later = [p for p in parts if windows[p] == 'later']
+        for part in parts:
+            self.sql('DELETE FROM factory_cast_pending WHERE run_id=? AND name=? AND part=?', (rid, body.name, part))
+        for part in later:
+            self.sql('INSERT INTO factory_cast_pending(run_id,name,part,library_id,created) VALUES(?,?,?,?,?)',
+                     (rid, body.name, part, fig['id'], self.g['now']()))
+        if now:
+            scenes, lines = self.assign_profile(d, body.name, fig, 'image' in now, 'voice' in now)
+            what = ' und '.join(x for x, on in (('Bild', 'image' in now), ('Stimme', 'voice' in now)) if on)
+            d['phase'] = (f'{what} von „{fig["label"]}“ für {body.name}' + (f' · {scenes} Szenen werden neu gezeichnet' if 'image' in now else '')
+                          + (f' · {lines} Sätze werden neu eingesprochen' if 'voice' in now else ''))
+            self.save(d)
+        return self.view(rid)
+
+    def cancel_pending(self, rid, name):
+        self.get(rid)
+        self.sql('DELETE FROM factory_cast_pending WHERE run_id=? AND name=?', (rid, name))
+        return self.view(rid)
+
+    def view(self, rid):
+        """A project as the app shows it: the document plus what may change right now."""
+        d = self.get(rid)
+        if d.get('plan', {}).get('cast'):
+            d['cast_windows'] = self.cast_windows(d); d['pending_cast'] = self.pending_cast(rid)
+        return d
 
     def library_routes(self, app):
         @app.get('/api/library')
@@ -197,6 +294,7 @@ class Library:
         def update(fid: str, body: LibraryFigure):
             doc = self.library_figure(fid); self.check_figure(body)
             if body.voice != doc.get('voice'): doc['voice_design'] = None      # a new recording has no design recipe
+            if body.image != doc.get('image'): doc.pop('appearance', None)    # the planner's description was of the old image
             doc.update({k: v for k, v in body.model_dump().items() if k != 'voice_design' or v})
             return self.library_save(doc)
 
@@ -214,6 +312,11 @@ class Library:
         def from_project(body: LibraryFromProject):
             return self.figure_from_project(body)
 
+        # async: runs on the event loop like the worker, so no save can interleave with it.
         @app.post('/api/factory/{rid}/cast/profile')
-        def cast_profile(rid: str, body: CastProfile):
+        async def cast_profile(rid: str, body: CastProfile):
             return self.apply_profile(rid, body)
+
+        @app.delete('/api/factory/{rid}/cast/pending/{name}')
+        async def cast_pending_cancel(rid: str, name: str):
+            return self.cancel_pending(rid, name)

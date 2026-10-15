@@ -216,7 +216,9 @@ async function createFilm() {
   const body = { ...d, idea: d.idea.trim(), title: d.title.trim(),
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => ({ name: p.name.trim(), traits: p.traits || '', image: p.image || null,
       voice: p.voice || null, voice_text: p.voice_text || '', image_mode: p.image_mode === 'exact' ? 'exact' : 'neutral',
-      library_id: p.library_id || null, voice_design: p.voice_from_library && p.voice_design ? p.voice_design : null })) };
+      library_id: p.library_id || null, voice_design: p.voice_from_library && p.voice_design ? p.voice_design : null,
+      library_image: p.library_image || null, library_voice: p.voice_from_library ? p.library_voice || p.library_id || null : null,
+      image_look: p.library_image ? p.image_look || null : null })) };
   if (d.characters === 'provided' && !body.participants.length) { toast('Für „Nur meine Figuren“ mindestens eine Figur mit Namen eintragen.'); return; }
   const run = await post('/api/factory', body);
   S.draft = defaults(); saveDraft();
@@ -326,7 +328,7 @@ function nextView(d) {
       <div class="actions"><button class="button quiet" data-action="reopen-output">Ton noch einmal bearbeiten</button><button class="button quiet" data-action="new-edition">Neue Fassung planen</button></div></section>`;
   if (d.state === 'cast_review') {
     return `<section class="next wait"><h2 class="headline">Prüf deine Figuren.</h2>
-      <p>So sieht jede Figur in allen Szenen aus. Passt eine nicht: unter „Ändern“ eine aus deinen Figuren wählen, neu gestalten oder ein eigenes Bild hochladen. Danach entstehen die Szenen${d.idea.autopilot ? ' und der Autopilot macht ohne weitere Stopps fertig' : ''}.</p>
+      <p>So sieht jede Figur in allen Szenen aus. Passt eine nicht, tippe auf sie: eine aus deinen Figuren nehmen, neu gestalten oder ein eigenes Bild hochladen. Danach entstehen die Szenen${d.idea.autopilot ? ' und der Autopilot macht ohne weitere Stopps fertig' : ''}.</p>
       <div class="actions"><button class="button" data-action="cast-approve">Figuren passen, weiter</button></div></section>`;
   }
   if (d.state === 'image_review') {
@@ -374,26 +376,86 @@ function linesOf(scene) {
 function sectionsView(d) {
   if (!d.episodes || !d.episodes.length) return '';
   if (d.state === 'done') return filmsSection(d);
-  if (['image_review', 'pictures', 'cast_review'].includes(d.state)) return scenesSection(d, d.state !== 'cast_review');
-  if (d.state === 'voice_review') return soundSection(d) + scenesSection(d, false);
-  return scenesSection(d, false);
+  const cast = showsCast(d) ? castPanel(d) : '';
+  if (['image_review', 'pictures', 'cast_review'].includes(d.state)) return cast + scenesSection(d, d.state !== 'cast_review');
+  if (d.state === 'voice_review') return cast + soundSection(d) + scenesSection(d, false);
+  return cast + scenesSection(d, false);
 }
-function castStrip(d) {
-  const cast = (d.plan && d.plan.cast) || [], refs = d.cast_refs || {};
-  if (!cast.length) return '';
-  const own = new Set((d.idea.participants || []).filter(p => p.image).map(p => p.name));
-  const items = cast.map((p, i) => {
-    // Cache key from the reference itself: an own upload changes the file, not design_round.
-    const pic = refs[p.name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[p.name]).slice(-48))}-${p.design_round || 0}" alt="" loading="lazy">` : '<div class="frame-empty">entsteht</div>';
-    const entry = (d.idea.participants || []).find(x => x.name === p.name) || {};
-    const fromLibrary = entry.library_id && (S.library || []).find(f => f.id === entry.library_id);
-    const note = fromLibrary ? `Aus deinen Figuren: ${fromLibrary.label}` : own.has(p.name) ? 'Dein Bild' : p.original ? 'Original' : 'Erfunden';
-    const open = ['cast_review', 'image_review'].includes(d.state);
-    const change = open ? `<button class="button quiet small" data-action="figure-menu" data-name="${esc(p.name)}" aria-label="${esc(p.name)} ändern">Ändern</button>`
-      : refs[p.name] ? `<button class="link small" data-action="lib-save" data-name="${esc(p.name)}">In deine Figuren aufnehmen</button>` : '';
-    return `<figure class="figure"><div class="figure-pic">${pic}</div><figcaption><b>${esc(p.name)}</b><span class="muted small">${esc(note)}</span>${change}</figcaption></figure>`;
+/* Casting in a running project: who plays whom, where image and voice come from, and what
+   may change right now. One tap on a figure opens everything that is possible for it. */
+const CAST_STATES = new Set(['cast_review', 'pictures', 'image_review', 'voicing', 'audio_mixing', 'voice_review']);
+function showsCast(d) {
+  return !!(d.plan && (d.plan.cast || []).length) && (CAST_STATES.has(d.state) || (d.state === 'blocked' && ['pictures', 'voicing', 'audio_mixing'].includes(d.resume_state)));
+}
+function participantOf(d, name) { return (d.idea.participants || []).find(x => x.name === name) || {}; }
+function libraryFigure(id) { return id ? (S.library || []).find(f => f.id === id) : null; }
+function nameKey(s) { return String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+function lookRank(f, look) { return f.look === look ? 2 : (f.look === 'auto' || look === 'auto') ? 1 : 0; }
+/* Library figures whose film name is this figure's name, best look first; none once a figure is cast from the library. */
+function suggestionsFor(d, name) {
+  const e = participantOf(d, name);
+  if (e.library_id || e.library_image || e.library_voice) return [];
+  return (S.library || []).filter(f => nameKey(f.name) === nameKey(name)).sort((a, b) => lookRank(b, d.idea.look) - lookRank(a, d.idea.look));
+}
+/* Parts of a library figure this project can take now or later (kept until the next safe point). */
+function usableParts(d, f) { const w = d.cast_windows || {}; return ['image', 'voice'].filter(part => f[part] && ['now', 'later'].includes(w[part])); }
+function laterText(d) {
+  return { pictures: 'sobald das aktuelle Bild fertig ist', voicing: 'sobald die laufenden Stimmen fertig sind', audio_mixing: 'sobald der Ton gemischt ist' }[d.state] || 'in wenigen Sekunden';
+}
+function scenesWith(d, name) { return d.episodes.flatMap(e => e.scenes).filter(s => (s.cast || []).includes(name)).length; }
+function linesOfFigure(d, name) { return d.episodes.flatMap(e => e.scenes).flatMap(s => linesOf(s)).filter(l => l.speaker === name).length; }
+function partsText(parts) { return parts.length === 2 ? 'Bild und Stimme' : parts[0] === 'image' ? 'Bild' : 'Stimme'; }
+function imageSource(d, p) {
+  const e = participantOf(d, p.name), lib = libraryFigure(e.library_image);
+  if (e.library_image) return lib ? lib.label : 'Aus deinen Figuren';
+  if (e.image) return e.image_mode === 'exact' ? 'Dein Bild, genau so' : 'Dein Bild, neutral nachgezeichnet';
+  return p.original ? 'Original' : 'Vom Studio gestaltet';
+}
+function voiceSource(d, p) {
+  const e = participantOf(d, p.name), lib = libraryFigure(e.library_voice);
+  if (e.library_voice) return lib ? lib.label : 'Aus deinen Figuren';
+  if (e.voice) return 'Deine Aufnahme';
+  return (d.voice_profiles || {})[p.name] ? 'Vom Studio gestaltet' : 'Entsteht mit dem Ton';
+}
+/* The reference voice itself: a chosen recording first (a designed profile may be outdated after a change). */
+function voiceUrl(d, p) {
+  const e = participantOf(d, p.name);
+  if (e.voice) return `/api/factory/assets/${encodeURIComponent(e.voice)}`;
+  return (d.voice_profiles || {})[p.name] ? `/api/factory/${encodeURIComponent(d.id)}/voice-profile/${encodeURIComponent(p.name)}` : '';
+}
+function castPicture(d, name) {
+  const cast = d.plan.cast, i = cast.findIndex(p => p.name === name), refs = d.cast_refs || {};
+  // Cache key from the reference itself: an own upload changes the file, not design_round.
+  return refs[name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[name]).slice(-48))}-${cast[i].design_round || 0}" alt="" loading="lazy">`
+    : `<div class="frame-empty">${['pictures', 'cast_review'].includes(d.state) ? 'entsteht' : ''}</div>`;
+}
+function pendingFor(d, name) {
+  const mine = (d.pending_cast || []).filter(x => x.name === name);
+  return mine.length ? { label: mine[0].label || 'deine Figur', parts: mine.map(x => x.part).sort() } : null;
+}
+function castIntro(d) {
+  const w = d.cast_windows || {};
+  if (w.image === 'now') return 'Tippe auf eine Figur, um Bild oder Stimme zu tauschen. Ein neues Bild zeichnet nur die Szenen dieser Figur neu.';
+  if (w.image === 'later') return 'Die Figuren entstehen gerade. Tippe auf eine, um ihr ein Profil aus deinen Figuren zu geben. Es wird übernommen, sobald das aktuelle Bild fertig ist.';
+  if (['now', 'later'].includes(w.voice)) return 'Die Bilder stehen fest. Stimmen lassen sich bis zur Animation tauschen: tippe auf eine Figur.';
+  return 'So spielen deine Figuren in diesem Film.';
+}
+function castPanel(d) {
+  const items = d.plan.cast.map(p => {
+    const pend = pendingFor(d, p.name), sug = !pend && suggestionsFor(d, p.name)[0], parts = sug ? usableParts(d, sug) : [];
+    const url = voiceUrl(d, p);
+    const suggestion = sug && parts.length ? `<button class="role-suggest" data-action="lib-suggest" data-name="${esc(p.name)}" data-id="${esc(sug.id)}">
+        <span class="mini">${sug.image ? `<img src="/api/factory/assets/${esc(sug.image)}" alt="">` : initials(sug)}</span><span>${parts.length === 2 ? `<b>${esc(sug.label)}</b> verwenden` : `${parts[0] === 'image' ? 'Bild' : 'Stimme'} von <b>${esc(sug.label)}</b>`}</span></button>` : '';
+    return `<article class="role">
+      <button class="role-hit" data-action="figure-menu" data-name="${esc(p.name)}" aria-label="${esc(p.name)}: Bild und Stimme ändern">
+        <span class="figure-pic">${castPicture(d, p.name)}<span class="role-edit" aria-hidden="true">Ändern</span></span>
+        <span class="role-name">${esc(p.name)}</span></button>
+      <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd>
+        <dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
+      ${pend ? `<p class="role-pending">Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“</p>` : ''}${suggestion}</article>`;
   }).join('');
-  return `<div class="cast"><h3 class="label">Deine Figuren</h3><p class="muted small">So sieht jede Figur in allen Szenen aus. Passt eine nicht, nimm eine aus deinen Figuren oder gestalte sie neu: Alle Szenen mit ihr werden dann neu gezeichnet.</p><div class="cast-row">${items}</div></div>`;
+  return `<section class="cast" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>
+    <div class="cast-row">${items}</div></section>`;
 }
 function checkLine(d, ep, ei) {
   // Automatic checks in one line: script size, speech share, lip-sync windows.
@@ -414,7 +476,7 @@ function scenesSection(d, choose) {
   const ep = d.episodes[S.episode] || d.episodes[0], ei = d.episodes.indexOf(ep);
   const editable = ['image_review', 'voice_review'].includes(d.state);
   return `<section class="section"><h2 class="title">${d.episodes.length > 1 ? esc(ep.title) : 'Drehbuch'}</h2>${episodeTabs(d)}
-    ${checkLine(d, ep, ei)}${spineCard(ep)}${choose || d.state === 'cast_review' ? castStrip(d) : ''}
+    ${checkLine(d, ep, ei)}${spineCard(ep)}
     <div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
       const variants = sc.active_variants || [];
       const pickable = d.state === 'image_review';
@@ -441,8 +503,7 @@ function soundSection(d) {
     <h3 class="headline section">Stimmen</h3>
     <div class="voices">${cast.map(p => `<div class="voice"><div class="actions"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/voice-profile/${encodeURIComponent(p.name)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button><span class="speaker">${esc(p.name)}</span></div>
         <select class="input" data-voice="${esc(p.name)}" aria-label="Stimmtyp von ${esc(p.name)}">${PRESETS.map(([v, l]) => `<option value="${v}" ${p.voice_preset === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-        <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Andere Stimme</button><button class="button quiet small" data-action="lib-pick-project" data-name="${esc(p.name)}">Aus deinen Figuren</button></div>
-        <button class="link small" data-action="lib-save" data-name="${esc(p.name)}">In deine Figuren aufnehmen</button></div>`).join('')}</div>
+        <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Andere Stimme</button></div></div>`).join('')}</div>
     <h3 class="headline section">Sätze</h3>
     <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${(l.duration || 0).toFixed(1)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
   </section>`;
@@ -468,8 +529,9 @@ async function refreshRun(force) {
   d.autopilot = d.idea && d.idea.autopilot;
   S.clock = await api(`/api/factory/${S.rid}/clock`).catch(() => S.clock);
   const slot = $('#clock-slot'); if (slot) slot.innerHTML = clockTag(S.clock, d.state === 'done');
-  const changed = d.revision !== S.sig;
-  S.run = d; S.sig = d.revision;
+  const sig = d.revision + JSON.stringify([d.pending_cast || [], d.cast_windows || {}]);
+  const changed = sig !== S.sig;
+  S.run = d; S.sig = sig;
   if (force || ((changed || S.deferred) && !busyUI())) render(); else if (changed) S.deferred = true;
   if (['rendering', 'finishing'].includes(d.state)) await refreshProgress();
 }
@@ -603,11 +665,14 @@ function pickerSheet() {
 function pickItems() {
   const p = S.pick, d = S.run;
   const look = p.mode === 'project' ? d.idea.look : S.draft.look;
-  return (S.library || []).filter(libraryMatches).map(f => {
+  const fits = f => p.mode === 'project' && nameKey(f.name) === nameKey(p.name);
+  // A figure with the same film name comes first: "Patrick" in the film, "Patrick Knete" in the library.
+  const list = (S.library || []).filter(libraryMatches).sort((a, b) => (fits(b) - fits(a)) || (lookRank(b, look) - lookRank(a, look)));
+  return list.map(f => {
     const chosen = p.mode === 'project' ? p.selected === f.id : p.selected.has(f.id);
     const other = look && look !== 'auto' && f.look !== 'auto' && f.look !== look;
     return `<div class="pick-item"><button type="button" class="pick" data-action="lib-choose" data-id="${esc(f.id)}" aria-pressed="${chosen}">
-        ${portrait(f, false)}<span class="pick-title">${esc(f.label)}</span><span class="small muted">${esc(LOOK_NAMES[f.look] || '')}${other ? ', anderer Look' : ''}</span></button>
+        ${portrait(f, false)}<span class="pick-title">${esc(f.label)}</span><span class="small muted">${fits(f) ? `Passt zu ${esc(p.name)}. ` : ''}${esc(LOOK_NAMES[f.look] || '')}${other && f.image ? `, wird im Look ${p.mode === 'project' ? 'dieses' : 'deines'} Films nachgezeichnet` : ''}</span></button>
         ${f.voice ? `<button type="button" class="play pick-play" data-action="play" data-src="/api/factory/assets/${esc(f.voice)}" aria-label="Stimme von ${esc(f.label)} anhören">${PLAY}</button>` : ''}</div>`;
   }).join('') || '<p class="muted">Keine Figur passt zu dieser Suche.</p>';
 }
@@ -617,34 +682,51 @@ function pickFoot() {
     const n = p.selected.size;
     return `<span class="small muted">${n ? `${n} gewählt` : 'Tippe auf Figuren, um sie zu wählen.'}</span><button class="button" data-action="lib-add-compose" ${n ? '' : 'disabled'}>${n === 1 ? 'Figur übernehmen' : `${n || ''} Figuren übernehmen`.trim()}</button>`;
   }
-  const d = S.run, f = (S.library || []).find(x => x.id === p.selected);
+  const d = S.run, f = (S.library || []).find(x => x.id === p.selected), w = d.cast_windows || {};
   if (!f) return '<span class="small muted">Wähle eine Figur.</span><button class="button" disabled>Übernehmen</button>';
-  const blockedEarly = d.state === 'blocked' && !['rendering', 'finishing'].includes(d.resume_state);
-  const imageOk = !!f.image && ['cast_review', 'image_review'].includes(d.state);
-  const voiceOk = !!f.voice && (['cast_review', 'image_review', 'voice_review', 'pictures', 'planning'].includes(d.state) || blockedEarly);
-  const scenes = d.episodes.flatMap(e => e.scenes).filter(s => (s.cast || []).includes(p.name)).length;
-  const lines = d.episodes.flatMap(e => e.scenes).flatMap(s => linesOf(s)).filter(l => l.speaker === p.name).length;
-  const imageWhy = !f.image ? 'Diese Figur hat kein Bild.' : imageOk ? `${scenes} ${scenes === 1 ? 'Szene wird' : 'Szenen werden'} neu gezeichnet.` : 'Bilder lassen sich bei der Figuren- oder Bildprüfung tauschen.';
-  const voiceWhy = !f.voice ? 'Diese Figur hat keine Stimme.' : voiceOk ? `${lines} ${lines === 1 ? 'Satz wird' : 'Sätze werden'} neu eingesprochen.` : 'Stimmen lassen sich nur vor der Animation tauschen.';
+  const scenes = scenesWith(d, p.name), lines = linesOfFigure(d, p.name);
+  const option = (part, title, has, effect) => {
+    const win = w[part], ok = has && ['now', 'later'].includes(win);
+    const why = !has ? `Diese Figur hat ${part === 'image' ? 'kein Bild' : 'keine Stimme'}.` : !ok ? win || '' : win === 'later' ? `Wird vorgemerkt und übernommen, ${laterText(d)}. ${effect}` : effect;
+    return `<label class="check"><input type="checkbox" id="pick-${part}" ${ok ? 'checked' : 'disabled'}><span><b>${title}</b><span class="small muted">${esc(why)}</span></span></label>`;
+  };
+  const later = ['image', 'voice'].some(part => f[part] && w[part] === 'later');
+  const ok = ['image', 'voice'].some(part => f[part] && ['now', 'later'].includes(w[part]));
   return `<div class="pick-options">
-      <label class="check"><input type="checkbox" id="pick-image" ${imageOk ? 'checked' : 'disabled'}><span><b>Bild übernehmen</b><span class="small muted">${imageWhy}</span></span></label>
-      <label class="check"><input type="checkbox" id="pick-voice" ${voiceOk ? 'checked' : 'disabled'}><span><b>Stimme übernehmen</b><span class="small muted">${voiceWhy}</span></span></label>
-    </div><button class="button" data-action="lib-apply" ${imageOk || voiceOk ? '' : 'disabled'}>Für ${esc(p.name)} übernehmen</button>`;
+      ${option('image', 'Bild übernehmen', !!f.image, `${scenes} ${scenes === 1 ? 'Szene wird' : 'Szenen werden'} neu gezeichnet.`)}
+      ${option('voice', 'Stimme übernehmen', !!f.voice, `${lines} ${lines === 1 ? 'Satz wird' : 'Sätze werden'} neu eingesprochen.`)}
+    </div><button class="button" data-action="lib-apply" ${ok ? '' : 'disabled'}>Für ${esc(p.name)} ${later ? 'vormerken' : 'übernehmen'}</button>`;
 }
 function figureSheet(name) {
-  const d = S.run, cast = d.plan.cast, i = cast.findIndex(p => p.name === name), refs = d.cast_refs || {};
-  const entry = (d.idea.participants || []).find(x => x.name === name) || {};
-  const scenes = d.episodes.flatMap(e => e.scenes).filter(s => (s.cast || []).includes(name)).length;
-  const pic = refs[name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[name]).slice(-48))}-${cast[i].design_round || 0}" alt="">` : '<div class="frame-empty">entsteht</div>';
-  const rows = [
-    `<button class="menu-row" data-action="lib-pick-project" data-name="${esc(name)}"><b>Aus deinen Figuren wählen</b><span>Bild und Stimme aus deiner Bibliothek übernehmen.</span></button>`,
-    entry.image ? '' : `<button class="menu-row" data-action="cast-redo" data-name="${esc(name)}"><b>Neu gestalten</b><span>Das Studio zeichnet ${esc(name)} noch einmal.</span></button>`,
-    `<label class="menu-row"><b>Eigenes Bild hochladen</b><span>Mit neutralem Gesicht übernommen, jede Szene bestimmt den Ausdruck.</span><input type="file" accept="image/*" data-upload="cast" data-name="${esc(name)}"></label>`,
-    refs[name] ? `<button class="menu-row" data-action="lib-save" data-name="${esc(name)}"><b>In deine Figuren aufnehmen</b><span>Bild und Stimme für andere Filme sichern. An diesem Film ändert sich nichts.</span></button>` : '',
-  ].join('');
-  openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)} ändern</h2><button class="button quiet small" data-action="close">Fertig</button></div>
-    <p class="muted small">Ein neues Bild für ${esc(name)} zeichnet ${scenes} ${scenes === 1 ? 'Szene' : 'Szenen'} neu. Alle anderen bleiben.</p>
-    <div class="figure-sheet"><div class="figure-pic">${pic}</div><div class="menu">${rows}</div></div>`);
+  const d = S.run, p = d.plan.cast.find(x => x.name === name), e = participantOf(d, name), w = d.cast_windows || {};
+  const refs = d.cast_refs || {}, scenes = scenesWith(d, name), pend = pendingFor(d, name), url = voiceUrl(d, p);
+  const usable = ['image', 'voice'].filter(part => ['now', 'later'].includes(w[part]));
+  const row = (attrs, title, text, disabled) => `<button class="menu-row" ${attrs} ${disabled ? 'disabled' : ''}><b>${title}</b><span>${text}</span></button>`;
+  const library = usable.length ? `<div class="menu-section"><p class="menu-title">Aus deinen Figuren</p>
+      ${suggestionsFor(d, name).slice(0, 3).filter(f => usableParts(d, f).length).map(f => `<button class="menu-row with-pic" data-action="lib-suggest" data-name="${esc(name)}" data-id="${esc(f.id)}">
+        <span class="mini">${f.image ? `<img src="/api/factory/assets/${esc(f.image)}" alt="">` : initials(f)}</span><b>${esc(f.label)} verwenden</b>
+        <span>${esc(partsText(usableParts(d, f)))}${usableParts(d, f).some(part => w[part] === 'later') ? `, wird übernommen, ${esc(laterText(d))}` : ''}.</span></button>`).join('')}
+      ${row(`data-action="lib-pick-project" data-name="${esc(name)}"`, 'Aus deinen Figuren wählen', `Bild und Stimme aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(name)}.`)}</div>` : '';
+  const ownImage = e.image && !e.library_image;
+  const image = w.image === 'now' ? `<div class="menu-section"><p class="menu-title">Bild</p>
+      ${!e.image || e.image_mode !== 'exact' ? row(`data-action="cast-redo" data-name="${esc(name)}"`, 'Neu gestalten', `Das Studio zeichnet ${esc(name)} noch einmal.`) : ''}
+      <label class="menu-row"><b>Eigenes Bild hochladen</b><span>Mit neutralem Gesicht übernommen, jede Szene bestimmt den Ausdruck.</span><input type="file" accept="image/*" data-upload="cast" data-name="${esc(name)}"></label>
+      ${e.image ? (e.image_mode === 'exact'
+        ? row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="neutral"`, 'Gesicht neutral nachzeichnen', `${ownImage ? 'Dein Bild' : 'Das Bild'} wird einmal mit neutralem Gesicht gezeichnet, damit ${esc(name)} in jeder Szene passend schaut.`)
+        : row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="exact"`, 'Bild genau so verwenden', 'Richtig für fertige Figurenblätter. Der Gesichtsausdruck aus dem Bild bleibt dann in allen Szenen.')) : ''}</div>`
+    : `<div class="menu-section"><p class="menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Neu gestalten und eigene Bilder gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.image || '')}</p></div>`;
+  const voice = w.voice === 'now' ? `<div class="menu-section"><p class="menu-title">Stimme</p>
+      ${row(`data-action="figure-voice-new" data-name="${esc(name)}"`, 'Andere Stimme gestalten', `Das Studio gestaltet eine neue Stimme für ${esc(name)}. Die Sätze werden neu eingesprochen.`)}
+      <label class="menu-row"><b>Eigene Aufnahme hochladen</b><span>Eine Sprachaufnahme dieser Figur, 5 bis 20 Sekunden.</span><input type="file" accept="audio/*" data-upload="cast-voice" data-name="${esc(name)}"></label></div>`
+    : `<div class="menu-section"><p class="menu-title">Stimme</p><p class="menu-note">${esc(w.voice === 'later' ? `Eigene Aufnahmen und neue Stimmen gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.voice || '')}</p></div>`;
+  const keep = refs[name] || e.voice || (d.voice_profiles || {})[name]
+    ? `<div class="menu-section">${row(`data-action="lib-save" data-name="${esc(name)}"`, 'In deine Figuren aufnehmen', 'Bild und Stimme für andere Filme sichern. An diesem Film ändert sich nichts.')}</div>` : '';
+  openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)}</h2><button class="button quiet small" data-action="close">Fertig</button></div>
+    ${pend ? `<div class="notice"><span>Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“. Wird übernommen, ${esc(laterText(d))}.</span><button class="button quiet small" data-action="cast-cancel" data-name="${esc(name)}">Vormerkung aufheben</button></div>` : ''}
+    <div class="figure-sheet"><div class="figure-side"><div class="figure-pic">${castPicture(d, name)}</div>
+        <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd><dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
+        <p class="small muted">In ${scenes} ${scenes === 1 ? 'Szene' : 'Szenen'} zu sehen.</p></div>
+      <div class="menu">${library}${image}${voice}${keep}</div></div>`);
 }
 function saveToLibrarySheet(name) {
   const d = S.run, look = LOOK_NAMES[d.idea.look];
@@ -698,6 +780,14 @@ function readLines(form) {
   return Object.values(rows).filter(l => l.text).map(l => ({ speaker: l.speaker, text: l.text, emotion: l.emotion || 'Natürlich', pause_after: pause(l.pause_after) }));
 }
 
+/* Library figure -> figure of this project; the answer says whether it is applied or kept for later. */
+async function castProfile(name, f, image, voice) {
+  const d = await post(`/api/factory/${S.rid}/cast/profile`, { name, library_id: f.id, image, voice });
+  const kept = (d.pending_cast || []).some(x => x.name === name && x.library_id === f.id);
+  closeSheet(); await refreshRun(true);
+  const what = image && voice ? 'Bild und Stimme' : image ? 'das Bild' : 'die Stimme';
+  toast(kept ? `Vorgemerkt: ${name} bekommt ${what} von „${f.label}“, ${laterText(S.run)}.` : `${name} bekommt ${what} von „${f.label}“.`);
+}
 /* ---------- actions ---------- */
 const audioPlayer = new Audio();
 const actions = {
@@ -782,7 +872,8 @@ const actions = {
     const chosen = (S.library || []).filter(f => S.pick.selected.has(f.id));
     for (const f of chosen) {
       const entry = { name: f.name, traits: f.traits || '', image: f.image || null, image_mode: f.image_mode || 'neutral', voice: f.voice || null,
-        voice_text: f.voice_text || '', voice_design: f.voice_design || null, voice_from_library: !!f.voice, library_id: f.id, library_label: f.label };
+        voice_text: f.voice_text || '', voice_design: f.voice_design || null, voice_from_library: !!f.voice, library_id: f.id, library_label: f.label,
+        library_image: f.image ? f.id : null, library_voice: f.voice ? f.id : null, image_look: f.image ? f.look : null };
       const at = S.draft.participants.findIndex(x => x.name.trim().toLowerCase() === f.name.toLowerCase());
       if (at >= 0) S.draft.participants[at] = entry; else S.draft.participants.push(entry);
     }
@@ -794,12 +885,34 @@ const actions = {
     const p = S.pick, f = (S.library || []).find(x => x.id === p.selected);
     const image = !!($('#pick-image') && $('#pick-image').checked), voice = !!($('#pick-voice') && $('#pick-voice').checked);
     if (!image && !voice) { toast('Wähle Bild, Stimme oder beides.'); return; }
-    await post(`/api/factory/${S.rid}/cast/profile`, { name: p.name, library_id: f.id, image, voice });
-    closeSheet(); await refreshRun(true);
-    toast(`${p.name} bekommt ${image && voice ? 'Bild und Stimme' : image ? 'das Bild' : 'die Stimme'} von „${f.label}“.`);
+    await castProfile(p.name, f, image, voice);
   },
   async 'lib-save'(b) { saveToLibrarySheet(b.dataset.name); },
   'figure-menu'(b) { figureSheet(b.dataset.name); },
+  async 'lib-suggest'(b) {
+    const d = S.run, f = (S.library || []).find(x => x.id === b.dataset.id), name = b.dataset.name;
+    if (!f) return;
+    const parts = usableParts(d, f), scenes = scenesWith(d, name);
+    if (parts.includes('image') && d.state === 'image_review' && d.cast_windows.image === 'now'
+        && !confirm(`„${f.label}“ für ${name} verwenden? ${scenes} ${scenes === 1 ? 'Szene wird' : 'Szenen werden'} neu gezeichnet, deine Bildwahl dort entfällt.`)) return;
+    await castProfile(name, f, parts.includes('image'), parts.includes('voice'));
+  },
+  async 'cast-cancel'(b) {
+    await api(`/api/factory/${S.rid}/cast/pending/${encodeURIComponent(b.dataset.name)}`, { method: 'DELETE' });
+    closeSheet(); await refreshRun(true); toast('Vormerkung aufgehoben.');
+  },
+  async 'cast-mode'(b) {
+    const e = participantOf(S.run, b.dataset.name), scenes = scenesWith(S.run, b.dataset.name);
+    if (S.run.state === 'image_review' && !confirm(`${scenes} ${scenes === 1 ? 'Szene wird' : 'Szenen werden'} mit ${b.dataset.name} neu gezeichnet. Weiter?`)) return;
+    await post(`/api/factory/${S.rid}/cast/image`, { name: b.dataset.name, asset_id: e.image, image_mode: b.dataset.mode });
+    closeSheet(); await refreshRun(true);
+    toast(b.dataset.mode === 'exact' ? `${b.dataset.name} nutzt das Bild jetzt genau so.` : `${b.dataset.name} wird mit neutralem Gesicht nachgezeichnet.`);
+  },
+  async 'figure-voice-new'(b) {
+    const p = S.run.plan.cast.find(x => x.name === b.dataset.name);
+    await post(`/api/factory/${S.rid}/voice-settings`, { name: p.name, voice_preset: p.voice_preset || 'man', voice_description: p.voice_description || '', new_variant: true });
+    closeSheet(); await refreshRun(true); toast(`Neue Stimme für ${p.name} wird gestaltet.`);
+  },
   play(b) {
     const same = audioPlayer.dataset.src === b.dataset.src && !audioPlayer.paused;
     document.querySelectorAll('.play').forEach(x => { x.innerHTML = PLAY; });
@@ -869,6 +982,11 @@ document.addEventListener('change', async event => {
   if (el.matches('[data-upload]')) {
     const kind = el.dataset.upload, files = [...el.files];
     await guarded(el, async () => {
+      if (kind === 'cast-voice') {
+        const id = await upload('voice', files[0]);
+        await post(`/api/factory/${S.rid}/voice-reference`, { name: el.dataset.name, asset_id: id, voice_text: '' });
+        closeSheet(); toast(`Deine Aufnahme für ${el.dataset.name} wird verwendet. Die Sätze werden neu eingesprochen.`); await refreshRun(true); return;
+      }
       if (kind === 'cast') {
         const png = await upload('image', files[0]);
         await post(`/api/factory/${S.rid}/cast/image`, { name: el.dataset.name, asset_id: png });
@@ -879,7 +997,14 @@ document.addEventListener('change', async event => {
         toast(files.length > 1 ? 'Vorlagen übernommen.' : 'Vorlage übernommen.');
       } else {
         const id = await upload(kind, files[0]);
-        if (kind === 'music') S.draft.music = id; else S.draft.participants[+el.dataset.index][kind] = id;
+        if (kind === 'music') S.draft.music = id;
+        else {
+          // Cay's own file replaces the library's for this part; the profile chip stays for the other part.
+          const person = S.draft.participants[+el.dataset.index]; person[kind] = id;
+          if (kind === 'image') { person.library_image = null; person.image_look = null; }
+          if (kind === 'voice') { person.library_voice = null; person.voice_from_library = false; person.voice_design = null; person.voice_text = ''; }
+          if (!person.library_image && !person.voice_from_library) { person.library_id = null; person.library_label = ''; }
+        }
         toast('Datei übernommen.');
       }
       saveDraft(); refreshExtras();

@@ -205,7 +205,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 if cached:
                     body={'done':True,'done_reason':'stop','message':{'content':draft_path.read_text(encoding='utf-8')}}
                 else:
-                    r=await c.post(self.g['OLLAMA']+'/api/chat',json=payload);r.raise_for_status();body=r.json()
+                    resources=self.g.get('resources');token=resources.begin(self.busy) if resources and self.busy else None
+                    try:r=await c.post(self.g['OLLAMA']+'/api/chat',json=payload);r.raise_for_status();body=r.json()
+                    finally:
+                        if token:resources.end(token)
                 resources=self.g.get('resources')
                 if resources:resources.note(self.busy or 'chat',schema.__name__,'cache' if cached else 'GPU',time.monotonic()-started,
                     'partial' if body.get('done_reason')=='length' else 'done',
@@ -315,8 +318,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 payload={'model':self.g['MODEL'],'stream':False,'think':think,'keep_alive':'10m','messages':messages,
                          # One context size for all creative calls: a changing num_ctx reloads the model.
                          'options':{'temperature':.8,'top_p':.95,'top_k':40,'repeat_penalty':1.05,'num_ctx':24576,'num_predict':16000 if think else 5000}}
-                started=time.monotonic()
-                r=await c.post(self.g['OLLAMA']+'/api/chat',json=payload)
+                started=time.monotonic();resources=self.g.get('resources');token=resources.begin(self.busy) if resources and self.busy else None
+                try:r=await c.post(self.g['OLLAMA']+'/api/chat',json=payload)
+                finally:
+                    if token:resources.end(token)
                 if r.status_code==400 and think and 'think' in r.text.lower():
                     self._think=think=False;continue
                 r.raise_for_status();body=r.json();tries+=1
@@ -336,16 +341,38 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             raise RuntimeError(label+': Die KI hat keinen verwertbaren Text geliefert. '+last[:600])
     def paused(self,rid):return self.get(rid).get('paused',False)
     def clocks(self,rid=None):
-        """Measured compute time per project (planning, images, voices, animation, export).
-        'since' = end of the last measured step while the project is on the GPU: the UI counts
-        on from there, so the timer runs live during a long animation window."""
+        """Measured compute time per project: planning, images, voices, animation, export.
+        Steps that overlap (a CPU export next to a GPU window) count once, waits for Cay never.
+        'since' is set while a step is running: the UI counts on from there, so the timer runs
+        live during a long animation window and stops as soon as the project waits."""
+        from datetime import datetime,timedelta
         try:
-            rows=self.rows('SELECT project,SUM(seconds) AS s,MAX(started) AS last FROM performance_stages'+(' WHERE project=?' if rid else '')+' GROUP BY project',(rid,) if rid else ())
+            heads=self.rows('SELECT project,MAX(id) AS last FROM performance_stages'+(' WHERE project=?' if rid else '')+' GROUP BY project',(rid,) if rid else ())
         except Exception:return {}            # no measurements table (fresh start)
-        out={r['project']:{'seconds':round(r['s'] or 0),'since':None} for r in rows}
-        if self.busy and (rid is None or rid==self.busy):
-            last=next((r['last'] for r in rows if r['project']==self.busy),None)
-            out.setdefault(self.busy,{'seconds':0,'since':None})['since']=last or self.get(self.busy).get('updated')
+        cache=self.__dict__.setdefault('_clock_cache',{});out={}
+        for head in heads:
+            project=head['project'];known=cache.get(project)
+            if not known or known[0]!=head['last']:
+                spans=[]
+                for r in self.rows('SELECT started,seconds FROM performance_stages WHERE project=? AND seconds>0',(project,)):
+                    try:end=datetime.fromisoformat(r['started'])
+                    except (TypeError,ValueError):continue
+                    spans.append((end-timedelta(seconds=r['seconds']),end))
+                total=0.;last=None
+                for start,end in sorted(spans):
+                    if last and start<last:start=last
+                    if end>start:total+=(end-start).total_seconds()
+                    last=max(last,end) if last else end
+                known=cache[project]=(head['last'],total,last)
+            out[project]={'seconds':round(known[1]),'since':None,'_last':known[2]}
+        resources=self.g.get('resources')
+        for project in ({rid} if rid else {r['project'] for r in resources.running.values()} if resources else set()):
+            since=resources.running_since(project) if resources else None
+            if not since:continue
+            entry=out.setdefault(project,{'seconds':0,'since':None,'_last':None})
+            last=entry['_last'].isoformat() if entry['_last'] else None
+            entry['since']=max(since,last) if last and datetime.fromisoformat(last)>datetime.fromisoformat(since) else since
+        for entry in out.values():entry.pop('_last',None)
         return out
     async def plan(self,d):
         idea=d['idea']
@@ -547,6 +574,11 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         if len(ids)!=1:raise Uncertain('Der Renderauftrag ist nicht eindeutig auffindbar. Er wird nicht erneut abgeschickt. ComfyUI-Verlauf prüfen und „Status erneut prüfen“ wählen.')
         return next(iter(ids))
     async def render(self,d,key,graph,video=False):
+        resources=self.g.get('resources');token=resources.begin(d['id']) if resources else None
+        try:return await self.render_step(d,key,graph,video)
+        finally:
+            if token:resources.end(token)
+    async def render_step(self,d,key,graph,video=False):
         found=self.rows('SELECT * FROM factory_steps WHERE run_id=? AND step_key=?',(d['id'],key))
         if not found and video and key.startswith('video09:'):
             def signature(value):
@@ -685,26 +717,30 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         refs=d.setdefault('cast_refs',{})
         examples=[self.stage(self.asset(a,'image')['path']) for a in d['idea']['examples']]
         for person in d['plan']['cast']:
-            if self.paused(d['id']):return
+            if self.paused(d['id']) or self.apply_pending(d):return
             name=person['name']
             if name in refs:continue
             if provided.get(name,{}).get('image'):
-                upload=self.asset(provided[name]['image'],'image')
-                if provided[name].get('image_mode')=='exact':refs[name]=upload['path']
+                entry=provided[name];upload=self.asset(entry['image'],'image')
+                # A figure from another look (clay profile in a cartoon film) is redrawn in this film's look.
+                restyle=cast_design.other_look(entry.get('image_look'),d['idea'].get('look','auto'))
+                # Projects from before 0.18 carry no image_mode: their uploads were used as they are.
+                if entry.get('image_mode','exact')=='exact' and not restyle:refs[name]=upload['path']
                 else:
-                    d['phase']='Figur aus deinem Bild vorbereiten: '+name;self.save(d)
-                    refs[name]=await cast_design.from_upload(self,d,person,upload['path'],upload['sha256'],models)
+                    d['phase']=('Figur im Look dieses Films nachzeichnen: ' if restyle else 'Figur aus deinem Bild vorbereiten: ')+name;self.save(d)
+                    refs[name]=await cast_design.from_upload(self,d,person,upload['path'],upload['sha256'],models,restyle)
             else:
                 d['phase']='Figur gestalten: '+name;self.save(d)
                 refs[name]=await cast_design.design(self,d,person,examples,models)
             self.save(d)
+        if self.apply_pending(d):return
         if cast_design.needs_review(d):
             # One short look before ~2 min of scene images and ~1 h of animation.
             d['state']='cast_review';d['phase']='Prüf deine Figuren. So sehen sie in jeder Szene aus.';self.save(d);return
         for ei,ep in enumerate(d['episodes']):
             for si,scene in enumerate(ep['scenes']):
                 for variant in range(2):
-                    if self.paused(d['id']):return
+                    if self.paused(d['id']) or self.apply_pending(d):return
                     key=f'image:{ei}:{si}:{image_rounds(scene)[variant]}:{variant}'
                     if any(x.get('key')==key for x in scene['variants']):continue
                     d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild {variant+1}/2';self.save(d)
@@ -713,6 +749,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if scene.get('image_note'):prompt+=' Specific correction: '+cast_design.strip_names(scene['image_note'],[p['name'] for p in d['plan']['cast'] if p['name'] not in names],names,screenplay.figure_aliases(d['plan']['cast']))
                     s=await self.render(d,key,build_graph(prompt,references,int(digest(d['id']+key)[:12],16),'',models))
                     scene['variants'].append({'id':s['id'],'key':key});self.save(d)
+        if self.apply_pending(d):return
         d['state']='image_review';d['phase']='Deine Szenen sind bereit. Wähle pro Szene ein Bild.';self.save(d)
     async def voices(self,d):
         await self.quality_voices(d)
@@ -828,6 +865,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 for post_run in self.rows("SELECT id FROM factory_runs WHERE state IN ('audio_mixing','finishing')"):
                     current=self.get(post_run['id'])
                     if not current.get('paused'):self.collect_posts(current)
+                # Kept library choices first: no review stop may move on without them.
+                self.sweep_pending()
                 self.autopilot_tick()
                 runs=self.rows("SELECT id FROM factory_runs WHERE state IN ('planning','pictures','voicing','rendering','correcting') ORDER BY created")
                 for row in runs:
@@ -1020,7 +1059,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if not path.exists():self.atomic(path,d['idea']['idea'].encode('utf-8'))
             return FileResponse(path,media_type='text/plain',filename='Originalgeschichte.txt')
         @app.get('/api/factory/{rid}')
-        def get(rid:str):return self.get(rid)
+        def get(rid:str):return self.view(rid)
         @app.post('/api/factory/{rid}/pause')
         async def pause(rid:str):
             self.get(rid);self.sql('INSERT INTO factory_control VALUES(?,1) ON CONFLICT(id) DO UPDATE SET paused=1',(rid,));return self.get(rid)
@@ -1123,6 +1162,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             person=next((p for p in d['idea']['participants'] if p['name']==body.name),None)
             if person is None:
                 person={'name':body.name,'traits':'','image':None,'voice':None};d['idea']['participants'].append(person)
+            if person.get('image')!=body.asset_id:
+                # A new picture replaces a library image; the same picture in another mode keeps its source.
+                person.pop('library_image',None);person.pop('image_look',None)
+                if not person.get('library_voice'):person.pop('library_id',None)
             person['image']=body.asset_id;person['image_mode']=body.image_mode
             count=cast_design.invalidate(d,body.name)
             d['state']='pictures';d['phase']=f'Dein Bild für {body.name} wird verwendet · {count} Szenen folgen';self.save(d);return self.get(rid)
@@ -1133,8 +1176,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if self.busy==rid:raise HTTPException(409,'Der laufende Schritt wird gerade abgeschlossen. Kurz warten.')
             person=next((p for p in d.get('plan',{}).get('cast',[]) if p['name']==body.name),None)
             if person is None:raise HTTPException(404,'Figur gehört nicht zu diesem Projekt.')
-            if any(p['name']==body.name and p.get('image') for p in d['idea']['participants']):
-                raise HTTPException(400,'Diese Figur nutzt dein eigenes Bild. Für ein anderes Aussehen dort ein neues Bild wählen.')
+            # A neutral redraw of Cay's picture may be drawn again; a picture used exactly as it is may not.
+            if any(p['name']==body.name and p.get('image') and p.get('image_mode','exact')=='exact' and not cast_design.other_look(p.get('image_look'),d['idea'].get('look','auto'))
+                   for p in d['idea']['participants']):
+                raise HTTPException(400,'Diese Figur nutzt dein Bild genau so. Für ein anderes Aussehen ein neues Bild wählen oder das Gesicht neutral nachzeichnen lassen.')
             person['design_round']=person.get('design_round',0)+1
             count=cast_design.invalidate(d,body.name)
             d['state']='pictures';d['phase']=f'{body.name} wird neu gestaltet · {count} Szenen folgen';self.save(d);return self.get(rid)
@@ -1160,16 +1205,17 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/voice-reference')
         async def voice_reference(rid:str,body:VoiceReference):
-            d=self.get(rid)
-            if d['state'] not in ('image_review','voice_review','blocked'):raise HTTPException(409,'Stimmen während der Vorschau ändern.')
-            if d['state']=='blocked' and d.get('resume_state')=='rendering':raise HTTPException(409,'Produktion abschließen und danach neue Fassung anlegen.')
+            d=self.get(rid);self.voice_open(d)
             if body.name not in [p['name'] for p in d.get('plan',{}).get('cast',[])]:raise HTTPException(400,'Figur gehört nicht zu diesem Projekt.')
             self.asset(body.asset_id,'voice')
             person=next((p for p in d['idea']['participants'] if p['name']==body.name),None)
             if person is None:
                 person={'name':body.name,'traits':'','image':None,'voice':None};d['idea']['participants'].append(person)
-            person['voice']=body.asset_id;person['voice_text']=body.voice_text;d.pop('voice_approval',None);d['previews']=[]
-            if d['state']=='voice_review':d['state']='voicing';d['phase']='Neue Stimmprobe wird verwendet'
+            person['voice']=body.asset_id;person['voice_text']=body.voice_text
+            # Cay's own recording: no library source and no design recipe any more.
+            person.pop('voice_design',None);person.pop('library_voice',None)
+            if not person.get('library_image'):person.pop('library_id',None)
+            self.voice_changed(d);d['phase']='Neue Stimmprobe wird verwendet'
             self.save(d);return self.get(rid)
 
         @app.post('/api/factory/{rid}/approve-images')
