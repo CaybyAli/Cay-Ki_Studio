@@ -110,6 +110,10 @@ try:
     exports = [{**media(folder / f'Folge_0{i + 1}.mp4', 'mp4', 3), 'episode': i, 'seconds': 3, 'fps': 25} for i in range(2)]
     project(rid, 'done', 'Butterblitz', {'exports': exports}, {'episodes': 2},
             episodes=[{'title': t, 'social': SOCIAL, 'scenes': [scene('S', ['Lena'], [('Lena', 'Hallo')], [p], p)]} for t, p in zip(['Der Löffel', 'Das Müsli'], pics)])
+    # measured compute time (timer on tiles and project page); notes are written when a step ends
+    for proj, stage, sec in (('c' * 32, 'Animation', 700.4), ('c' * 32, 'Bilder', 54), ('d' * 32, 'Animation', 3725)):
+        db.execute('INSERT INTO performance_stages(project,stage,resource,started,seconds,status,detail) VALUES(?,?,?,?,?,?,?)',
+                   (proj, stage, 'GPU', '2026-01-01T00:00:00+00:00', sec, 'done', '{}'))
     # blocked: speech check
     project('e' * 32, 'blocked', 'Funkstille', {'resume_state': 'audio_mixing', 'error': 'Nachbearbeitung: SPRACHPRÜFUNG: 1 von 6 Dialogbeiträgen nicht hörbar. Ohne hörbare Stimme: Markus. Folge 1, Szene 3, Figur Markus: „Lass mich los!“ – keine hörbare Sprache an dieser Stelle.'})
     db.commit()
@@ -144,6 +148,8 @@ try:
         r.check('Projektliste: 7 Projekte als Hochkantkacheln', page.locator('.tile').count() == 7)
         r.check('Figurencheck wartet auf Cay (auch mit Autopilot)', 'Wartet auf dich' in page.locator('.tile', has_text='Figurencheck').inner_text())
         r.check('Wartende Projekte stehen vorn', 'Wartet auf dich' in page.locator('.tile').first.inner_text())
+        r.check('Timer: Rechenzeit auf den Kacheln', '12:34' in page.locator('.tile', has_text='Der Tresor').inner_text()
+                and 'Rechenzeit 1:02:05' in ' '.join(page.locator('.tile', has_text='Butterblitz').inner_text().split()))
         shot('04_bilder_waehlen', '#p=' + 'a' * 32)
         r.check('Bildwahl: Figurenleiste mit 2 geladenen Figurenbildern', page.evaluate("[...document.querySelectorAll('.cast .figure-pic img')].filter(i => i.naturalWidth > 0).length") == 2)
         r.check('Bildwahl: Ziel des Films sichtbar', 'Lena will den letzten Keks retten' in page.locator('.spine').inner_text())
@@ -198,6 +204,7 @@ try:
         r.check('Ton: Satz abspielbar (Knopf zeigt Pause)', 'path' in page.locator('.line-row .play >> nth=0').inner_html())
         shot('06_animation', '#p=' + 'c' * 32, wait=3500)
         r.check('Animation: Fortschritt 2 von 12 und Hänger-Hinweis', '2 von 12' in page.locator('#progress-slot').inner_text() and page.locator('.stall').count() == 1)
+        r.check('Timer: Projektseite zeigt die Rechenzeit', '12:34' in page.locator('#clock-slot').inner_text())
         shot('07_fertig', '#p=' + 'd' * 32)
         r.check('Fertig: 2 Folgen mit Beschreibung', page.locator('.film video').count() == 2 and page.locator('.caption-box').count() >= 2)
         shot('08_angehalten', '#p=' + 'e' * 32)
