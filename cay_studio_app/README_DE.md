@@ -1,3 +1,20 @@
+# Cay Studio 0.18.0 – Figuren-Bibliothek, Titelbild, lebendiger Schnitt, Nachrichten aufs Handy (16.10.2026)
+
+- **Figuren-Bibliothek** (Reiter „Figuren“): Bild und Stimme einmal festlegen, in jedem Film wiederverwenden. Auch in einem laufenden Projekt zuweisbar. Rechnet das Studio gerade, wird die Figur vorgemerkt und an der nächsten sicheren Stelle übernommen.
+- **Bis zu 30 Figuren** pro Film (vorher 8).
+- **Eigenes Bild:** Der Gesichtsausdruck aus dem Bild friert nicht mehr ein. Neu hochgeladene Bilder werden einmal mit neutralem Gesicht nachgezeichnet, jede Szene bestimmt den Ausdruck. Für fertige Figurenblätter: „Bild genau so verwenden“.
+- **Titelbild:** am Anfang (Standard), nach dem Einstieg oder aus. Zwei Vorschläge zur Wahl. Zusätzlich liegt `Cover_<Film>.png` neben dem Film.
+- **Schnitt:** Gespräche in Blöcken statt Ping-Pong, dazu Reaktions-Einstellungen (Zuhörer im Bild, Sprecher aus dem Off) und Orts-Einstellungen. Weniger Lippen-Animation spart Rechenzeit (geschätzt, auf deinem PC noch nicht gemessen).
+- **Fertiger Film:** Untertitel in kurzen Wortgruppen, leichte Kamerafahrt, durchgehende Raumatmosphäre, ein „Wusch“ bei stummen Action-Einstellungen.
+- **Lautstärke:** Musik, Geräusche und Umgebung per Regler. Bei einem fertigen Film: „Lautstärke und Ton ändern“. Der Autopilot wartet dann, bis du den Ton selbst freigibst. Fertige Animationen werden wiederverwendet.
+- **Render-Uhr:** echte Rechenzeit pro Projekt. Restzeit getrennt für Sprech- und Bewegungsabschnitte; vor den ersten fertigen Abschnitten aus früheren Filmen geschätzt.
+- **Bild neu machen:** Jede neue Runde sieht anders aus, deine Notiz steht im Bildtext ganz vorn.
+- **Benachrichtigungen** (Zahnrad → Benachrichtigungen): Telegram, ntfy oder Browser. Freiwillig und kostenlos. Spricht dich mit „Sir Cay“ an (änderbar), mit Titelbild, wenn der Film fertig ist.
+- **Autopilot:** Aus- und wieder Einschalten mitten im Film läuft wieder durchgehend (vorher nur noch schrittweise).
+- Laufende Projekte behalten Schnitt, Stimmen und Bildtexte von 0.17. Die Neuerungen gibt es für neue Filme und mit „Neue Fassung“. Kein PC-Neustart nötig.
+
+---
+
 # Cay Studio 0.17.0 – Drehbuch als Gespräch, feste Figuren, kürzere Rechenzeit (14.10.2026)
 
 - Drehbuch: Die KI schreibt den ganzen Film zuerst als durchgehendes Gespräch (mit Denkmodus), prüft Wortzahl, Sprecherwechsel und Telegrammstil, überarbeitet ihn einmal als „Script Doctor“ und schneidet erst dann in Einstellungen.

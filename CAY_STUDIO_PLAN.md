@@ -1,4 +1,4 @@
-# Cay Studio – Plan (Stand 0.17.0, 15.10.2026)
+# Cay Studio – Plan (Stand 0.18.0, 16.10.2026)
 
 Ziel: mehrere 1-Minuten-Videos pro Tag, Einzelfilme und Serien bis 12 Folgen, lokal und ohne laufende Kosten.
 
@@ -71,6 +71,31 @@ Grundlage: dein Video (Einzelbilder und Tonpausen gemessen), Diagnose 0.16.1, f�
 4. Stumme Aktionsszenen nutzen Wan 2.2 mit Lightning. Das wirkt laut Berichten oft wie Zeitlupe **[Vermutung]**.
 5. Laufende Projekte aus 0.16 behalten ihre Stimmen, Szenenlängen und Bewegungstexte. So wird nichts doppelt gerechnet. Die Verbesserungen siehst du deshalb nur in **neuen** Filmen oder mit „Neue Fassung“.
 
+## 3d. Was 0.18.0 nach deinen Wünschen und deinem Feedback ändert
+
+| Dein Punkt | Ursache | Änderung |
+| --- | --- | --- |
+| „höchstens 8 Einträge, nicht 13“ | **[Sicher]** Feste Grenze von 8 Figuren an drei Stellen im Code. | Grenze 30 an einer Stelle. Test mit 13 Figuren. |
+| Restzeit fehlt („nach drei fertigen Abschnitten“) | **[Sicher]** Die Schätzung wartete auf drei fertige Abschnitte derselben Art. Sprech- und Bewegungsabschnitte wurden gemischt. | Getrennte Schätzung pro Art. Vorher Schätzung aus früheren Filmen, so beschriftet. |
+| 5-mal bearbeitet, 5-mal dasselbe Bild | **[Sicher]** Neue Runden änderten den Bildtext kaum, deine Notiz stand ganz hinten. **[Vermutung]** Das 4-Schritt-Bildmodell ändert sich mit dem Zufallswert wenig. | Notiz steht ganz vorn. Jede Runde bekommt eine andere Bildgestaltung (Blickwinkel, Licht, Ausschnitt). |
+| Musik nicht regelbar | **[Sicher]** Kein Regler in der neuen Oberfläche. Mit Autopilot gab es keinen Ton-Stopp. | Regler für Musik, Geräusche, Umgebung. Fertiger Film: „Lautstärke und Ton ändern“, der Autopilot wartet auf dich. |
+| Autopilot nur noch schrittweise | **[Sicher]** Ein laufender Schritt speicherte seine alte Kopie des Projekts und schaltete den Autopilot zurück. Test zeigt den Fehler im alten Code. | Schalter liegt neben dem Projekt (wie Pause). |
+| Benachrichtigung, „Sir Cay“ | – | Telegram, ntfy oder Browser. Lebendige Texte mit Emojis, Titelbild als Vorschau, Anrede änderbar. |
+| Ausdruck aus dem Upload friert ein | **[Sicher]** Das Bild wurde 1:1 als Figur benutzt. | Einmal mit neutralem Gesicht nachgezeichnet. „Bild genau so verwenden“ bleibt wählbar. |
+| Ping-Pong-Schnitt | **[Sicher]** Jede Zeile war eine eigene Einstellung. | Gesprächsblöcke, Reaktions- und Orts-Einstellungen. **[Hochrechnung]** Bei deinem Film ~58 → ~42 GPU-Minuten. |
+| Figuren-Bibliothek, Titelbild, Render-Uhr | – | Gebaut, siehe README. |
+
+**Ehrliche Grenzen:**
+1. Nichts davon lief auf deiner Grafikkarte. Ob Wan bei Reaktions-Einstellungen den Mund des Zuhörers geschlossen hält, zeigt erst dein Film **[Vermutung]**.
+2. Ob die neuen Bildrunden mit dem echten FLUX-Modell deutlich anders aussehen, ist nicht gemessen.
+3. Telegram und ntfy sind nur gegen einen Testserver geprüft, nicht gegen die echten Dienste.
+4. Laufende Projekte behalten den 0.17-Schnitt. Neuerungen gibt es in neuen Filmen und mit „Neue Fassung“.
+
+## 3e. Geplant für 0.19
+
+1. **Figuren-Looks pro Folge:** Grunddesign bleibt (Gesicht, Körper), pro Folge ein eigenes Outfit, z. B. Folge 1 zerrissene Kleidung, Folge 6 Millionär. Planung und Bildauswahl pro Folge.
+2. **Arbeiten von unterwegs:** Wartet auf deine Entscheidung (Datenübertragung nach außen). Empfehlung: Tailscale (kostenlos, privat, nur deine Geräte). Nicht über GitHub: Projekte lägen dann auf fremden Servern.
+
 ## 4b. Nächste Zeithebel nach deinem Test (alle kostenlos)
 
 | Hebel | Erwartung [Hochrechnung] | Risiko |
@@ -95,7 +120,8 @@ Figuren wie Phineas und Ferb gehören Disney. Fan-Videos damit können auf TikTo
 
 ## 6. Nächste Schritte
 
-1. 0.17.0 installieren, PC neu starten.
-2. SpongeBob-Idee neu: 60 s, Standard, Autopilot an, „Figuren vorher zeigen“ an, für Mr. Krabs und Plankton eigene Bilder.
-3. Video und Diagnose schicken. Daraus: Minuten pro Rechenblock (Ziel ≤ 2,5 min), Sprachanteil (Ziel ≥ 80 %), längste Pause (Ziel ≤ 1 s).
-4. Danach der nächste Zeithebel aus 4b, einzeln und gemessen.
+1. 0.18.0 installieren (kein Neustart nötig).
+2. Kurzer Test: 60 s, Standard, Autopilot an, Titelbild am Anfang. Achten auf Titelbild, Gesprächsblöcke, Untertitel, Lautstärke.
+3. Danach der große Testlauf (6 Folgen, 13 Figuren).
+4. Video (Original aus 03_Fertige_Videos) und Diagnose schicken. Daraus: GPU-Minuten pro Film, Sprachanteil, ob Zuhörer den Mund zu halten.
+5. Entscheidung zum Arbeiten von unterwegs, dann 0.19.

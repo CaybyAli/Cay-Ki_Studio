@@ -1,21 +1,22 @@
-CAY STUDIO 0.17.0 - NUR DIESE SCHRITTE
+CAY STUDIO 0.18.0 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
 2. Laeuft ein Film: fertig werden lassen oder Pausieren.
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
-4. PC einmal neu starten (die schnellere Lippen-Animation
-   wird erst nach dem Neustart von ComfyUI aktiv).
-5. Cay_Studio_Starten.cmd. Im Browser Strg+F5.
-   Unten muss 0.17.0 stehen.
-6. "Neu": dieselbe SpongeBob-Idee, 60 s, Qualitaet "Standard",
-   Autopilot AN, "Figuren vorher zeigen" AN.
-   Fuer exaktes Aussehen: unter "Figuren" bei Mr. Krabs und
-   Plankton je ein Bild hochladen.
-7. Wenn "Pruef deine Figuren" kommt: Figuren ansehen.
-   Passt eine nicht: "Neu gestalten" oder "Eigenes Bild".
-   Dann "Figuren passen, weiter". Der Rest laeuft allein.
-8. Wenn der Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
+   Kein PC-Neustart noetig.
+4. Im Browser Strg+F5. Unten muss 0.18.0 stehen.
+5. Freiwillig: Zahnrad oben rechts > Benachrichtigungen >
+   Telegram einrichten. Die Schritte stehen im Fenster.
+6. Erst ein kurzer Test: "Neu", eine SpongeBob-Idee, 60 s,
+   Qualitaet "Standard", Autopilot AN, Titelbild "Am Anfang".
+   Achte auf: Titelbild, Gespraeche in Bloecken, Untertitel,
+   Musik-Lautstaerke.
+7. Danach dein grosser Testlauf (6 Folgen, 13 Figuren).
+   Figuren aus dem Reiter "Figuren" kannst du direkt zuweisen.
+8. Wenn ein Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
    und Cay_Studio_Diagnose.txt plus das Video schicken.
+   Das Video direkt aus D:\Cay_Studio\03_Fertige_Videos nehmen,
+   nicht ueber eine Webseite umwandeln (Wasserzeichen).
 
 Haengt ein Abschnitt: erst PC neu starten, dann Update.
 Nichts loeschen.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cay Studio 0.17.0 – Drehbuch zuerst, Figurencheck, keine stummen Mundbewegungen, schnellere Lippen-Animation, lebendige Stimmen."""
+"""Cay Studio 0.18.0 – Figuren-Bibliothek, Titelbild, Schnitt mit Reaktionen, Untertitel und Kamera, Benachrichtigungen, Render-Uhr."""
 from pathlib import Path
 import ast
 import base64
@@ -245,7 +245,7 @@ def activate(runtime, root, release, url):
 
 
 def main():
-    print('CAY STUDIO 0.17.0 — DREHBUCH, FIGURENCHECK, LEBENDIGE STIMMEN', flush=True)
+    print('CAY STUDIO 0.18.0 — FIGUREN-BIBLIOTHEK, TITELBILD, SCHNITT, BENACHRICHTIGUNGEN', flush=True)
     if sys.platform != 'linux' or not os.path.ismount('/mnt/d'):
         raise RuntimeError('Im Ubuntu-/WSL-Terminal starten. D: muss unter /mnt/d erreichbar sein.')
     config = json.loads((RUNTIME / 'config/ablage.json').read_text(encoding='utf-8'))
@@ -271,10 +271,11 @@ def main():
         if not tool.exists(): shutil.copy2(Path(__file__).resolve(), tool)
     subprocess.run([str(python), str(release / 'launcher.py'), '--open-browser'], check=True)
     print('\n=== CAY STUDIO 0.17.0 INSTALLIERT ===', flush=True)
-    print('Jetzt einmal den PC neu starten: Erst dann lädt ComfyUI die schnellere Lippen-Animation. Danach Cay_Studio_Starten.cmd öffnen.', flush=True)
+    print('Kein PC-Neustart nötig. ComfyUI und Ollama laufen weiter.', flush=True)
     print('Keine neuen Modelle nötig. Das neue Studio öffnet sich unter http://127.0.0.1:8787, das bisherige unter /classic.', flush=True)
     print('Danach im Browser Strg+F5 drücken: unten muss 0.17.0 stehen.', flush=True)
-    print('Neue Filme starten mit Qualität Standard und Autopilot. Laufende Projekte laufen weiter.', flush=True)
+    print('Neue Filme starten mit Qualität Standard und Autopilot. Laufende Projekte laufen weiter und behalten ihren Schnitt.', flush=True)
+    print('Benachrichtigungen aufs Handy: Zahnrad oben rechts, Benachrichtigungen (freiwillig, kostenlos).', flush=True)
     print('Für mehr Tempo: Zahnrad oben rechts, Turbo einrichten, danach PC einmal neu starten.', flush=True)
     print('Projekte, Bilder, Stimmen und fertige Abschnitte bleiben erhalten.', flush=True)
     print('Dashboard: http://localhost:8787', flush=True)
