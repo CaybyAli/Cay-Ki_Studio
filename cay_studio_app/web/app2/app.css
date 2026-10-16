@@ -302,9 +302,12 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .check-row:last-child { border-bottom: 0; }
 .check-row .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; background: var(--done); }
 .check-row .dot.bad { background: var(--stop); }
-.toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 140%); opacity: 0; visibility: hidden; background: var(--ink); color: var(--canvas); padding: 12px 20px; border-radius: 980px; font-size: 15px; transition: transform .3s ease; z-index: 50; max-width: calc(100vw - 32px); }
-.toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
-.toast { transition: transform .3s ease, opacity .3s ease, visibility .3s; }
+/* Toast: centred by its own width (left/right + auto margins), so it may use the whole width and stays one line
+   wherever it can. A rounded box, not a pill: a pill only works while the text stays on one line. */
+.toast { position: fixed; left: 16px; right: 16px; bottom: 28px; margin-inline: auto; width: fit-content; max-width: min(560px, calc(100vw - 32px));
+  transform: translateY(140%); opacity: 0; visibility: hidden; background: var(--ink); color: var(--canvas); padding: 12px 20px; border-radius: 22px;
+  font-size: 15px; line-height: 1.4; text-align: center; z-index: 50; transition: transform .3s ease, opacity .3s ease, visibility .3s; }
+.toast.show { transform: none; opacity: 1; visibility: visible; }
 .toast-action { margin-left: 14px; padding: 2px 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
 
 @media (max-width: 860px) {
