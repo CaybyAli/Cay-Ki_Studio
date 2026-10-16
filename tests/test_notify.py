@@ -401,6 +401,17 @@ def test_ntfy_sends_umlauts_as_url_encoded_parameters_and_a_small_preview(tmp_pa
     assert all(ord(c) < 128 for k, v in request.headers.items() for c in k + v)   # nothing non-ASCII in headers
 
 
+def test_consent_text_matches_what_is_sent_by_default(tmp_path):
+    """The text Cay agrees to must say that the preview picture goes out unless he switches it off."""
+    _, n, _, _ = studio(tmp_path); state = n.public()
+    assert state['telegram']['preview'] and state['ntfy']['preview'] and not state['telegram']['film']
+    app = (ROOT / 'cay_studio_app/web/app2/app.js').read_text(encoding='utf-8')
+    for channel in ('Telegram', 'ntfy.sh'):
+        disclosure = app.split(f'<b>Was an {channel} geht</b>')[1].split('</ul>')[0]
+        assert 'Vorschaubild' in disclosure and 'von Anfang an eingeschaltet' in disclosure and 'auf Wunsch ein Vorschaubild' not in disclosure
+    assert 'Den fertigen Film nur, wenn du das einschaltest' in app.split('<b>Was an Telegram geht</b>')[1].split('</ul>')[0]
+
+
 # ---------- secrets ----------
 
 def test_token_is_masked_and_the_settings_file_is_private(tmp_path):

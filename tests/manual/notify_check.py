@@ -114,6 +114,8 @@ try:
         r.check('Hinweise vor dem Einschalten: was wohin geht, nicht Ende-zu-Ende, Schlüssel bleibt am PC',
                 'Was an Telegram geht' in text and 'nicht Ende-zu-Ende verschlüsselt' in text and 'Der Bot-Schlüssel bleibt auf deinem PC' in text
                 and 'Was an ntfy.sh geht' in text and 'kann mitlesen' in text and 'keine Daten den PC' in text)
+        r.check('Hinweise: Vorschaubild ist von Anfang an eingeschaltet (so wie es auch gesendet wird)',
+                text.count('Das ist von Anfang an eingeschaltet, du kannst es danach ausschalten.') == 2 and 'auf Wunsch ein Vorschaubild' not in text)
         page.screenshot(path=str(shots / '02_benachrichtigungen_1280.png'))
         flat = [shoot(page, '03_aus_1280_hell.png')]
         page.emulate_media(color_scheme='dark'); page.wait_for_timeout(200); flat.append(shoot(page, '04_aus_1280_dunkel.png')); page.emulate_media(color_scheme='light')

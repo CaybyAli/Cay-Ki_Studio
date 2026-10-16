@@ -912,7 +912,7 @@ function telegramBlock(t) {
   let body;
   if (t.state === 'off') {
     body = `<div class="notify-disclosure"><b>Was an Telegram geht</b><ul>
-        <li>Projekttitel, Status und eine kurze Fehlermeldung, auf Wunsch ein Vorschaubild und der fertige Film.</li>
+        <li>Projekttitel, Status und eine kurze Fehlermeldung. Bei fertigen Filmen ein Vorschaubild (Titelbild oder ein Bild aus dem Film). Das ist von Anfang an eingeschaltet, du kannst es danach ausschalten. Den fertigen Film nur, wenn du das einschaltest.</li>
         <li>Telegram speichert die Nachrichten auf seinen Servern. Sie sind nicht Ende-zu-Ende verschlüsselt.</li>
         <li>Der Bot-Schlüssel bleibt auf deinem PC. Wer ihn hat, kann deinen Bot steuern. @BotFather stellt dir jederzeit einen neuen aus.</li></ul></div>
       <ol class="notify-steps"><li>In Telegram <b>@BotFather</b> öffnen, <b>/newbot</b> senden und einen Namen wählen. Er schickt dir einen Schlüssel.</li>
@@ -939,7 +939,7 @@ function ntfyBlock(n) {
   let body;
   if (n.state === 'off') {
     body = `<div class="notify-disclosure"><b>Was an ntfy.sh geht</b><ul>
-        <li>Projekttitel, Status und eine kurze Fehlermeldung, auf Wunsch ein Vorschaubild.</li>
+        <li>Projekttitel, Status und eine kurze Fehlermeldung. Bei fertigen Filmen ein Vorschaubild (Titelbild oder ein Bild aus dem Film). Das ist von Anfang an eingeschaltet, du kannst es danach ausschalten.</li>
         <li>Wer den Namen deines Themas kennt, kann mitlesen. Das Studio wählt einen langen Zufallsnamen. Gib ihn nicht weiter.</li>
         <li>Nicht Ende-zu-Ende verschlüsselt. Kostenlos bis 250 Nachrichten am Tag.</li></ul></div>
       <label class="check"><input type="checkbox" id="ntfy-consent" ${NOTE.consent.ntfy ? 'checked' : ''}><span>Einverstanden: Diese Angaben dürfen an ntfy.sh gehen.</span></label>
