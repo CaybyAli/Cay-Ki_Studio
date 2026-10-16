@@ -82,6 +82,10 @@ class Idea(Strict):
     # channel grid shows that frame), after the first shot, or none. Only projects with
     # edit_policy 18 use it; a client that does not send it gets 'off' (see create).
     cover:Literal['start','after_hook','off']='start'
+    # Looks per episode (0.18, series only): face and body stay, clothing and condition follow each
+    # episode (Cay: SpongeBob in rags at the start, in a suit at the end). Stored only when chosen
+    # (episode_looks.stored), so every other idea document stays exactly as before.
+    looks:Literal['same','per_episode']='same'
 
 class CastPlan(Strict):
     name:str=Field(min_length=1,max_length=60)
@@ -177,6 +181,22 @@ class Shot(Strict):
 
 class CastRedo(Strict):
     name:str=Field(min_length=1,max_length=60)
+
+# Looks per episode (0.18): what one figure wears in one episode. 'look' goes to the image model
+# (English preferred), 'label' is the short German line Cay reads ("Folge 3: teurer Anzug").
+LOOK_MAX=300
+class FigureLook(Strict):
+    name:str=Field(min_length=1,max_length=60)
+    label:str=Field(default='',max_length=80)
+    look:str=Field(default='',max_length=LOOK_MAX)
+
+class EpisodeLooks(Strict):
+    looks:list[FigureLook]=Field(default_factory=list,max_length=MAX_CAST)
+
+class LookRedo(Strict):
+    episode:int=Field(ge=0,le=11)
+    name:str=Field(min_length=1,max_length=60)
+    note:str=Field(default='',max_length=LOOK_MAX)
 
 class CastImage(Strict):
     name:str=Field(min_length=1,max_length=60)
