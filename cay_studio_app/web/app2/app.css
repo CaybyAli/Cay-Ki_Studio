@@ -263,8 +263,11 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .variant .frame { border-radius: calc(var(--frame-radius) * .7); outline: 3px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
 .variant[aria-pressed="true"] .frame { outline-color: var(--accent); }
 .variant[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
+/* The dock belongs to the scene list (.scene-list is its sticky containing block), so it never covers the film goal above.
+   A solid surface with a hairline edge: on the black dark canvas a shadow alone would vanish. */
 .dock { position: sticky; bottom: 18px; z-index: 10; margin-top: 46px; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 12px 12px 24px; border-radius: 980px;
-  background: var(--bar); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); box-shadow: 0 10px 30px -10px rgba(0,0,0,.3); flex-wrap: wrap; }
+  background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid color-mix(in srgb, var(--hairline) 60%, transparent);
+  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); box-shadow: 0 10px 30px -10px rgba(0,0,0,.3); }
 
 /* Sound */
 .mix { display: grid; gap: 16px; background: var(--surface); border-radius: var(--radius); padding: 24px 28px; }
@@ -323,7 +326,10 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .preview-length strong { font-size: 44px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
   .next { padding: 22px 20px; }
-  .dock { border-radius: 22px; }
+  /* One row on the phone: count on the left (two short lines at most), button on the right. */
+  .dock { gap: 12px; padding: 8px 8px 8px 16px; border-radius: 22px; }
+  .dock span { font-size: 14px; line-height: 1.3; }
+  .dock .button { min-height: 38px; padding: 0 16px; font-size: 15px; white-space: nowrap; }
 }
 
 /* Compute timer (0.18) */

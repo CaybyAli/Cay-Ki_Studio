@@ -522,7 +522,7 @@ function scenesSection(d, choose) {
   const editable = ['image_review', 'voice_review'].includes(d.state);
   return `<section class="section"><h2 class="title">${d.episodes.length > 1 ? esc(ep.title) : 'Drehbuch'}</h2>${episodeTabs(d)}
     ${checkLine(d, ep, ei)}${spineCard(ep)}
-    <div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
+    <div class="scene-list"><div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
       const variants = sc.active_variants || [];
       const pickable = d.state === 'image_review';
       const pictures = choose && variants.length ? `<div class="variants">${variants.map(v => `<button class="variant" data-action="choose" data-episode="${ei}" data-scene="${si}" data-step="${esc(v.id)}" aria-pressed="${sc.selected === v.id}" aria-label="Bild wählen" ${pickable ? '' : 'disabled'}><div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(v.id)}" alt="" loading="lazy"></div></button>`).join('')}</div>`
@@ -532,7 +532,7 @@ function scenesSection(d, choose) {
       const tools = editable ? `<div class="actions">${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
       return `<article class="scene">${pictures}<div class="scene-text"><h3>${si + 1}. ${esc(sc.title)}</h3>${sceneRole(sc)}<p>${esc(sc.action)}</p>${lines}${tools}</div></article>`;
     }).join('')}</div>
-    ${choose && d.state === 'image_review' ? dock(d) : ''}
+    ${choose && d.state === 'image_review' ? dock(d) : ''}</div>
   </section>`;
 }
 /* Scenes and title card chosen? The title card counts only where the project has one. */
