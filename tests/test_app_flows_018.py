@@ -17,7 +17,7 @@ from factory_models import Review  # noqa: E402
 
 
 def studio(tmp_path):
-    db = sqlite3.connect(':memory:'); db.row_factory = sqlite3.Row
+    db = sqlite3.connect(':memory:', check_same_thread=False); db.row_factory = sqlite3.Row
     db.executescript('''CREATE TABLE factory_runs(id TEXT PRIMARY KEY,request_key TEXT,state TEXT,document TEXT,created TEXT,updated TEXT);
 CREATE TABLE factory_control(id TEXT PRIMARY KEY,paused INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS factory_switches(id TEXT PRIMARY KEY,autopilot INTEGER NOT NULL);
@@ -113,3 +113,24 @@ def test_form_errors_are_german_name_the_field_and_never_echo_the_input(tmp_path
     secret = '7712345678:AAHk3xQ9vYfZpL2mN8rT5wB1cD4eF6gH7iJ' * 9                   # too long, still a secret
     answer = client.post('/api/notify/telegram/token', json={'token': secret, 'consent': True}, headers=head)
     assert answer.status_code == 422 and answer.json()['detail'] == '„Bot-Schlüssel“ ist zu lang: höchstens 400 Zeichen.' and 'AAHk3x' not in answer.text
+
+
+def test_a_damaged_audio_file_gets_a_german_message_without_paths(tmp_path, capsys):
+    """Cay saw "Command '['ffprobe', ... /ablage/00_Eingang/...source.mp3']' returned non-zero exit status 1." and "'duration'"."""
+    import subprocess
+    from fastapi.testclient import TestClient
+    f, db, _ = studio(tmp_path)
+    db.execute('CREATE TABLE factory_assets(id TEXT PRIMARY KEY,kind TEXT NOT NULL,path TEXT NOT NULL,sha256 TEXT NOT NULL,name TEXT NOT NULL)')
+    app = FastAPI(); f.routes(app); client = TestClient(app)
+    flac = subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=3', '-f', 'flac', 'pipe:'], capture_output=True, check=True).stdout
+    for name, data in (('kaputt.mp3', bytes(range(256)) * 40), ('ohne_dauer.flac', flac)):
+        answer = client.post(f'/api/factory/assets?kind=voice&name={name}', content=data)
+        assert answer.status_code == 400 and answer.json()['detail'] == 'Diese Audiodatei lässt sich nicht lesen. Bitte als WAV oder MP3 neu speichern und erneut wählen.', answer.text
+    assert 'Audio-Upload nicht lesbar' in capsys.readouterr().out                     # the detail stays in the server log
+    assert not list((tmp_path / '00_Eingang/Studio_Referenzen').glob('*'))           # nothing left behind
+    wav = tmp_path / 'kurz.wav'
+    subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=1', str(wav)], check=True)
+    answer = client.post('/api/factory/assets?kind=voice&name=kurz.wav', content=wav.read_bytes())
+    assert answer.json()['detail'] == 'Stimmprobe: 2–90 Sekunden; Musik: höchstens 15 Minuten.'   # the real reason stays
+    subprocess.run(['ffmpeg', '-nostdin', '-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=3', str(wav)], check=True)
+    assert client.post('/api/factory/assets?kind=voice&name=gut.wav', content=wav.read_bytes()).status_code == 200

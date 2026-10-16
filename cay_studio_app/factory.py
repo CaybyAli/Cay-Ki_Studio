@@ -1030,15 +1030,22 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 if ext not in ('.wav','.mp3','.m4a','.ogg','.flac'):raise HTTPException(400,'Audio als WAV, MP3, M4A, OGG oder FLAC auswählen.')
                 source=folder/(aid+'.source'+ext);self.atomic(source,bytes(data))
                 try:
-                    info=await asyncio.to_thread(probe,source);duration=float(info['format']['duration'])
+                    # Cay sees German without paths; the technical detail goes to the server log only.
+                    try:info=await asyncio.to_thread(probe,source);duration=float(info['format']['duration'])
+                    except (subprocess.CalledProcessError,subprocess.TimeoutExpired,KeyError,TypeError,ValueError) as error:
+                        print('Audio-Upload nicht lesbar:',type(error).__name__,flush=True)
+                        raise ValueError('Diese Audiodatei lässt sich nicht lesen. Bitte als WAV oder MP3 neu speichern und erneut wählen.') from None
                     if not (2<=duration<=90 if kind=='voice' else 2<=duration<=900):raise ValueError('Stimmprobe: 2–90 Sekunden; Musik: höchstens 15 Minuten.')
                     # No shell; media demuxers cannot fetch network protocols.
                     p=await asyncio.create_subprocess_exec('ffmpeg','-nostdin','-y','-v','error','-protocol_whitelist','file,pipe','-i',str(source),'-vn','-ac','1' if kind=='voice' else '2','-ar','24000' if kind=='voice' else '48000',str(dest),stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.PIPE)
                     try:_,err=await asyncio.wait_for(p.communicate(),90)
-                    except BaseException:
+                    except BaseException as error:
                         if p.returncode is None:p.kill();await p.wait()
+                        if isinstance(error,asyncio.TimeoutError):raise ValueError('Die Audiodatei braucht zu lange zum Umwandeln. Bitte kürzer oder als WAV speichern.') from None
                         raise
-                    if p.returncode:raise ValueError('Audiodatei nicht lesbar: '+err.decode(errors='replace')[-300:])
+                    if p.returncode:
+                        print('Audio-Upload FFmpeg:',err.decode(errors='replace')[-300:],flush=True)
+                        raise ValueError('Diese Audiodatei lässt sich nicht umwandeln. Bitte als WAV oder MP3 neu speichern und erneut wählen.')
                 except Exception as e:dest.unlink(missing_ok=True);raise HTTPException(400,str(e))
                 finally:source.unlink(missing_ok=True)
             self.sql('INSERT INTO factory_assets VALUES(?,?,?,?,?)',(aid,kind,str(dest),file_hash(dest),name[:200]))
