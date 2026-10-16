@@ -329,6 +329,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .idea-input { font-size: 24px; }
   .line-row { grid-template-columns: 36px minmax(0, 1fr) auto; }
   .line-row .speaker { grid-column: 2; }
+  .line-row > .small { grid-column: 3; grid-row: 1; }
   .line-row .line-text { grid-column: 2 / -1; }
 }
 @media (max-width: 560px) {
@@ -343,6 +344,13 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .preview-length strong { font-size: 44px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
   .next { padding: 22px 20px; }
+  /* Steps in one row: done and later steps as circles only, the current step with its name (names stay for screen readers). */
+  .steps { flex-wrap: nowrap; }
+  .steps li:not(.now):not(.done:last-child) { font-size: 0; gap: 0; padding-right: 10px; }
+  /* A segmented control that cannot fit one row becomes an even grid of three instead of leaving one option alone. */
+  .segmented:has(> :nth-child(5)), .segmented.long { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); justify-self: stretch; }
+  .segmented:has(> :nth-child(5)) button, .segmented.long button, .segmented:has(> :nth-child(5)) label span { padding: 7px 6px; line-height: 1.25; text-align: center; }
+  .segmented:has(> :nth-child(5)) label span { flex: 1; }
   /* One row on the phone: count on the left (two short lines at most), button on the right. */
   .dock { gap: 12px; padding: 8px 8px 8px 16px; border-radius: 22px; }
   .dock span { font-size: 14px; line-height: 1.3; }
