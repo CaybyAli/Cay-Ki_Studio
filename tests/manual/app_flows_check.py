@@ -61,6 +61,10 @@ try:
     lines = 'e' * 32
     old = scene('Alt', ['Lena'], []); old.update(dialogue='Alter Satz.', speaker='Lena', emotion='flüsternd')
     project(lines, 'image_review', 'Textprobe', episodes=[{'title': 'Textprobe', 'scenes': [scene('Zwei', ['Lena', 'Markus'], [('Lena', 'Hallo.')]), old]}])
+    # voice review: Markus has a planned voice description ('Neue Stimme')
+    voices = 'b' * 32
+    project(voices, 'voice_review', 'Stimmprobe', {'mix': {'music_mode': 'off'}, 'previews': [], 'timing': [{'seconds': 15}]},
+            episodes=[{'title': 'Stimmprobe', 'scenes': [scene('S', ['Markus'], [('Markus', 'Nein.')])]}])
     db.commit()
 
     from playwright.sync_api import sync_playwright
@@ -131,6 +135,21 @@ try:
         r.check(f'Figur mit Bild ohne Namen: Hinweis, Fokus aufs Namensfeld, kein Film ({page.locator("#toast").inner_text()})',
                 page.locator('#toast').inner_text() == 'Gib jeder Figur einen Namen oder entferne sie.' and len(studio.call('/api/factory')[1]['runs']) == before
                 and page.evaluate("document.activeElement.matches('input[data-person=\"0\"][data-key=\"name\"]')"))
+
+        # 5. Sound step 'Neue Stimme': same type keeps the planned description, another type drops it.
+        def markus(): return next(x for x in doc(voices)['plan']['cast'] if x['name'] == 'Markus')
+        page.goto(studio.url + '/#p=' + voices); page.wait_for_selector('[data-action="new-voice"][data-name="Markus"]')
+        r.check('Ton: Knopf „Neue Stimme“ und Hinweis zum Stimmtyp', page.locator('[data-action="new-voice"][data-name="Markus"]').inner_text() == 'Neue Stimme'
+                and 'Stimmtyp wählen und „Neue Stimme“ antippen' in page.locator('.section').first.inner_text())
+        page.click('[data-action="new-voice"][data-name="Markus"]'); page.wait_for_timeout(1200)
+        m = markus()
+        r.check(f'Neue Stimme, gleicher Typ: Beschreibung bleibt ({m.get("voice_description")!r})', m['voice_preset'] == 'man' and m.get('voice_variant') == 1
+                and m.get('voice_description') == 'Tiefe, raue Stimme, spricht langsam und trocken.')
+        db.execute("UPDATE factory_runs SET state='voice_review', document=json_set(document,'$.state','voice_review') WHERE id=?", (voices,)); db.commit()
+        page.goto(studio.url + '/#p=' + voices); page.wait_for_selector('[data-voice="Markus"]')
+        page.select_option('[data-voice="Markus"]', 'grandpa'); page.click('[data-action="new-voice"][data-name="Markus"]'); page.wait_for_timeout(1200)
+        m = markus()
+        r.check('Neue Stimme, anderer Typ: Typ übernommen, alte Beschreibung weg', m['voice_preset'] == 'grandpa' and m.get('voice_description') == '' and m.get('voice_variant') == 2)
 
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()

@@ -571,9 +571,10 @@ function soundSection(d) {
         <button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button><button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
       ${levelsView(d, music)}</div>
     <h3 class="headline section">Stimmen</h3>
+    <p class="small muted">Stimmtyp wählen und „Neue Stimme“ antippen. Danach werden die Sätze neu eingesprochen.</p>
     <div class="voices">${cast.map(p => `<div class="voice"><div class="actions"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/voice-profile/${encodeURIComponent(p.name)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button><span class="speaker">${esc(p.name)}</span></div>
         <select class="input" data-voice="${esc(p.name)}" aria-label="Stimmtyp von ${esc(p.name)}">${PRESETS.map(([v, l]) => `<option value="${v}" ${p.voice_preset === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-        <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Andere Stimme</button></div></div>`).join('')}</div>
+        <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Neue Stimme</button></div></div>`).join('')}</div>
     <h3 class="headline section">Sätze</h3>
     <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${(l.duration || 0).toFixed(1)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
   </section>`;
@@ -1130,9 +1131,11 @@ const actions = {
     toast('Dialoge werden ergänzt. Danach entsteht neuer Ton.');
   },
   async 'new-voice'(b) {
-    const select = document.querySelector(`[data-voice="${CSS.escape(b.dataset.name)}"]`);
-    await post(`/api/factory/${S.rid}/voice-settings`, { name: b.dataset.name, voice_preset: select.value, voice_description: '', new_variant: true });
-    toast(`Neue Stimme für ${b.dataset.name} wird gestaltet.`);
+    const select = document.querySelector(`[data-voice="${CSS.escape(b.dataset.name)}"]`), p = S.run.plan.cast.find(x => x.name === b.dataset.name);
+    // Same type: a new take of the planned voice keeps its description; another type drops it (it would contradict the type).
+    const same = select.value === (p.voice_preset || 'man');
+    await post(`/api/factory/${S.rid}/voice-settings`, { name: p.name, voice_preset: select.value, voice_description: same ? (p.voice_description || '') : '', new_variant: true });
+    toast(`Neue Stimme für ${p.name} wird gestaltet.`);
   },
   async 'reopen-voices'() { await post(`/api/factory/${S.rid}/reopen-voices`, { revision: S.run.revision }); },
   async 'reopen-output'() {
