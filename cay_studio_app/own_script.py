@@ -370,14 +370,26 @@ def _seconds(cut):
     return total
 
 
+# screenplay.check speaks to the planner ("nötig", "umschreiben"); for Cay the same findings are advice.
+ADVICE = ((r'^Zu wenig Sprecherwechsel: (\d+), nötig mindestens (\d+)\..*$', r'Wenig Sprecherwechsel: \1, empfohlen sind mindestens \2.'),
+          (r'^Zu wenig AKTION-Zeilen: (\d+), nötig mindestens (\d+)\.$',
+           r'Wenig AKTION-Zeilen: \1, empfohlen sind mindestens \2. Eine stumme Handlung bringt Bewegung in den Film.'),
+          (r'^Zu lange Zeilen \(mehr als (\d+) Wörter\) aufteilen: ', r'Sätze mit mehr als \1 Wörtern wirken geteilt lebendiger: '),
+          (r'^Telegrammstil umschreiben in natürliche Sätze: ', 'Sehr knappe Sätze im Telegrammstil: '),
+          (r'^(\d+) Zeilen haben höchstens zwei Wörter\..*$', r'\1 Sätze haben höchstens zwei Wörter. Viele sehr kurze Sätze wirken abgehackt.'),
+          (r'^Mindestens zwei Figuren müssen miteinander sprechen\.$', 'Hier spricht nur eine Figur.'))
+
+
 def advice(title, beats, lines, cast):
     """screenplay.check as advisory notes for Cay's own script, never a rewrite. Left out: the word
     budget and the upper limits of turns and AKTION lines (the planner's budget; Cay's script sets its
     own length), and the shot limit, which is a blocking problem of its own."""
     seconds = max(MIN_SECONDS, round(_seconds(screenplay.shots(title, beats, lines, cast))))
     speakers = list(dict.fromkeys(l['speaker'] for l in lines if l['kind'] == 'line')) or cast
-    return [n for n in screenplay.check(title, beats, lines, [], speakers, seconds)
-            if not n.startswith(('Zu wenig Dialog', 'Zu viel Dialog', 'Zu viele Einstellungen', 'Zu viele AKTION', 'Zu viele Sprecherwechsel'))]
+    notes = [n for n in screenplay.check(title, beats, lines, [], speakers, seconds)
+             if not n.startswith(('Zu wenig Dialog', 'Zu viel Dialog', 'Zu viele Einstellungen', 'Zu viele AKTION', 'Zu viele Sprecherwechsel'))]
+    for pattern, wording in ADVICE: notes = [re.sub(pattern, wording, n) for n in notes]
+    return notes
 
 
 def read(text):

@@ -185,6 +185,10 @@ def test_problems_carry_line_numbers_and_block_the_film():
     hints = ' '.join(p['text'] for p in r['problems'] if not p['blocking'])
     assert 'Zeile 2: Überschrift „Küche“ ist keine Folge und keine Szene' in hints
     assert '„Krabs“ und „Mr. Krabs“ sind zwei Figuren' in hints and 'Kein Ort angegeben' in hints
+    # The check's findings read as advice, never as orders to rewrite.
+    short = ' '.join(p['text'] for p in own_script.read('### Szene 1 – Küche\nLENA: Hallo Markus, schön dich zu sehen heute Morgen.\n'
+                                                        'MARKUS: Hallo Lena, gleichfalls, wie war denn dein Wochenende so?')['problems'])
+    assert 'Hinweis: Wenig Sprecherwechsel: 2, empfohlen sind mindestens 3.' in short and 'nötig' not in short and 'schreiben.' not in short
     # Blocking problems come first in the list the app shows.
     problems = own_script.read(long + '\nMUSIK: laut')['problems']
     assert problems[0]['blocking'] and not problems[-1]['blocking']
@@ -261,7 +265,7 @@ def test_a_long_script_film_without_aktion_gets_no_invented_action(tmp_path, mon
     scenes = d['episodes'][0]['scenes']
     assert not any(s['kind'] == 'action' for s in scenes) and not any('reagiert stumm' in s['action'] for s in scenes)
     assert [t for _, t, _ in planned_lines(d)[0]] == [line.split(': ', 1)[1] for line in dialogue.strip().split('\n')]
-    assert any(w.startswith('Hinweis zu deinem Drehbuch: Zu wenig AKTION-Zeilen') for w in d['episodes'][0].get('warnings', []))
+    assert any(w.startswith('Hinweis zu deinem Drehbuch: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 2.') for w in d['episodes'][0].get('warnings', []))
 
 
 def test_an_idea_without_the_new_field_plans_exactly_as_before(tmp_path, monkeypatch):

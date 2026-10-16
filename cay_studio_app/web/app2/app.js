@@ -327,8 +327,8 @@ function updateCompose() {
       : eps.length > 1 ? `Länge nach Drehbuch: ${eps.map(e => `Folge ${e.number} etwa ${e.seconds} s`).join(', ')}` : `Länge nach Drehbuch: etwa ${first.seconds} s`;
     $('#script-episodes').textContent = eps.length > 1 ? `${eps.length} Folgen aus deinem Drehbuch` : 'Einzelfilm';
     $('#series-hint').textContent = eps.length > 1 ? 'Die Folgen stehen in deinem Drehbuch, jede mit ihrem eigenen Titel.' : 'Für eine Serie schreib „## Folge 1: Titel“, „## Folge 2: Titel“ in dein Drehbuch.';
-    $('#preview-seconds').textContent = first ? `${first.seconds} s` : '– s';
-    $('#preview-scenes').textContent = !first ? 'nach deinem Drehbuch' : eps.length > 1 ? `Folge 1 von ${eps.length}, ${first.scenes} ${first.scenes === 1 ? 'Szene' : 'Szenen'}` : `${first.scenes} ${first.scenes === 1 ? 'Szene' : 'Szenen'}`;
+    $('#preview-seconds').textContent = first ? `${first.seconds} s` : '–';
+    $('#preview-scenes').textContent = !first ? 'nach deinem Drehbuch' : eps.length > 1 ? `Folge 1 von ${eps.length}` : `${first.scenes} ${first.scenes === 1 ? 'Szene' : 'Szenen'}`;
     $('#preview-part').textContent = eps.length > 1 ? `Teil 1/${eps.length}` : '';
     $('#preview-part').hidden = eps.length < 2;
     $('#estimate').textContent = c ? estimate(d, c.seconds) + '.' : 'Die Rechenzeit steht hier, sobald dein Drehbuch geprüft ist.';
