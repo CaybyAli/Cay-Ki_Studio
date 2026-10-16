@@ -242,6 +242,8 @@ class SceneDialogueEdit(Strict):
     scene:int=Field(ge=0,le=44)
     action:str=Field(min_length=5,max_length=1600)
     dialogues:list[DialogLine]=Field(max_length=6)
+class EditionWish(Strict):
+    note:str=Field(default='',max_length=700)
 class MixSettings(Strict):
     music_mode:Literal['auto','off','uploaded']='auto'
     music_level:float=Field(default=1,ge=0,le=2)

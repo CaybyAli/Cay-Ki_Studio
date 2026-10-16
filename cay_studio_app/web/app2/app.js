@@ -35,7 +35,8 @@ async function api(path, { method = 'GET', body, raw } = {}) {
   try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
   if (!response.ok) {
     const detail = data && data.detail;
-    throw new Error(typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map(x => x.msg).join('; ') : `Anfrage fehlgeschlagen (${response.status}).`);
+    // The server words form errors in German; a raw list (pydantic's English) is never shown.
+    throw new Error(typeof detail === 'string' ? detail : Array.isArray(detail) ? 'Die Eingabe passt nicht. Bitte prüfen.' : `Anfrage fehlgeschlagen (${response.status}).`);
   }
   return data;
 }
@@ -178,7 +179,7 @@ function extrasView() {
     <section class="group"><h3 class="group-title">Titel und Musik</h3>
       <label class="field"><span>Titel (optional)</span><input class="input" data-field="title" value="${esc(d.title)}" maxlength="100" placeholder="Wird sonst aus der Idee gebildet"></label>
       <div class="field cover-choice"><span>Titelbild</span>${seg('cover', COVER_CHOICES, d.cover || 'start')}<p class="hint" id="cover-hint">${esc(coverHint(d.cover))}</p></div>
-      <label class="file-pill ${d.music ? 'set' : ''}">${d.music ? 'Eigene Musik gewählt' : 'Eigene Musik hochladen'}<input type="file" accept="audio/*" data-upload="music"></label>
+      <div class="actions">${d.music ? `<span class="voice-note"><button type="button" class="play" data-action="play" data-src="/api/factory/assets/${esc(d.music)}" aria-label="Eigene Musik anhören">${PLAY}</button>Eigene Musik</span>` : ''}<label class="file-pill">${d.music ? 'Andere Musik' : 'Eigene Musik hochladen'}<input type="file" accept="audio/*" data-upload="music"></label>${d.music ? '<button type="button" class="button quiet small" data-action="remove-music">Musik entfernen</button>' : ''}</div>
       <p class="hint">Ohne eigene Musik bleibt die Musik aus.</p></section>`;
 }
 /* Title card (0.18): key art with the film's title as one second of the film. */
@@ -228,6 +229,14 @@ function updateCompose() {
 async function createFilm() {
   const d = S.draft;
   if (d.idea.trim().length < 12) { toast('Beschreib deine Idee in mindestens einem kurzen Satz.'); $('#idea').focus(); return; }
+  // A figure with a picture, voice, look or profile but no name would be dropped silently; only empty rows are.
+  const nameless = d.characters === 'none' ? -1 : d.participants.findIndex(p => !p.name.trim() && (p.image || p.voice || (p.traits || '').trim() || p.library_id));
+  if (nameless >= 0) {
+    const box = $('details.more'); if (box) box.open = true;
+    toast('Gib jeder Figur einen Namen oder entferne sie.');
+    const field = $(`input[data-person="${nameless}"][data-key="name"]`); if (field) field.focus();
+    return;
+  }
   const body = { ...d, idea: d.idea.trim(), title: d.title.trim(),
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => ({ name: p.name.trim(), traits: p.traits || '', image: p.image || null,
       voice: p.voice || null, voice_text: p.voice_text || '', image_mode: p.image_mode === 'exact' ? 'exact' : 'neutral',
@@ -283,7 +292,9 @@ function tickClocks() {
 function projectsView() {
   if (!S.runs) return '<p class="muted">Projekte werden geladen …</p>';
   const head = `<div class="page-head"><h1 class="title">Projekte</h1><a class="button" href="#new">Neuer Film</a></div>`;
-  if (!S.runs.length) return head + `<div class="empty"><h2 class="headline">Noch kein Projekt.</h2><p class="muted">Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.</p><a class="button" href="#new">Ersten Film starten</a></div>`;
+  // Projects in the trash stay reachable: their page has 'Wiederherstellen'.
+  const trash = (S.trash || []).length ? `<p class="small muted project-foot">Im Papierkorb: ${S.trash.map(t => `<a href="#p=${esc(t.id)}">${esc(t.title)}</a>`).join(', ')}</p>` : '';
+  if (!S.runs.length) return head + `<div class="empty"><h2 class="headline">Noch kein Projekt.</h2><p class="muted">Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.</p><a class="button" href="#new">Ersten Film starten</a></div>` + trash;
   const order = { you: 0, stop: 1, run: 2, '': 3, done: 4 };
   const runs = [...S.runs].sort((a, b) => order[status(a)[0]] - order[status(b)[0]] || String(b.updated).localeCompare(String(a.updated)));
   return head + `<div class="grid">${runs.map(r => {
@@ -291,7 +302,7 @@ function projectsView() {
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     const badge = r.episodes > 1 ? `<span class="frame-badge">${r.finished}/${r.episodes} Folgen</span>` : '';
     return `<a class="tile" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span><span class="status ${cls}">${esc(label)}</span>${clockTag(r.clock, r.state === 'done')}</a>`;
-  }).join('')}</div>`;
+  }).join('')}</div>` + trash;
 }
 async function refreshRuns() {
   const list = await api('/api/factory');
@@ -305,8 +316,9 @@ async function refreshRuns() {
     r.waiting = !!(doc && ((doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state) || (doc.sound_edit && doc.state === 'voice_review')));
     r.deleted = false;
   }));
-  const changed = JSON.stringify(list.runs) !== JSON.stringify(S.runs);
-  S.runs = list.runs;
+  const trash = (await api('/api/factory/trash').catch(() => ({ runs: S.trash || [] }))).runs.map(t => ({ id: t.id, title: t.title }));
+  const changed = JSON.stringify([list.runs, trash]) !== JSON.stringify([S.runs, S.trash]);
+  S.runs = list.runs; S.trash = trash;
   if (changed && S.page === 'projects' && !busyUI()) render();
 }
 
@@ -330,7 +342,8 @@ function projectView() {
       ${stepsView(d)}
     </div>
     ${nextView(d)}
-    ${sectionsView(d)}`;
+    ${sectionsView(d)}
+    ${!d.deleted && (!WORKING.has(d.state) || d.paused) ? '<div class="project-foot"><button class="link" data-action="delete-project">In den Papierkorb</button></div>' : ''}`;
 }
 function autopilotSwitch(d) {
   return `<label class="switch"><input type="checkbox" data-action="autopilot" ${d.idea.autopilot ? 'checked' : ''}><span>Autopilot${d.idea.autopilot ? ': ohne Zwischenstopps' : ''}</span></label>`;
@@ -353,10 +366,14 @@ function nextView(d) {
       <p>${c.chosen} von ${c.total} Szenen gewählt.${cover} Mit dem Autopilot nimmt das Studio überall das erste Bild und macht ohne weitere Stopps fertig.</p>
       <div class="actions"><button class="button" data-action="approve-images" ${c.ready ? '' : 'disabled'}>Bilder übernehmen</button>${autopilotSwitch(d)}</div></section>`;
   }
-  if (d.state === 'voice_review') return `<section class="next wait"><h2 class="headline">Hör dir den Ton an.</h2>
+  if (d.state === 'voice_review') {
+    // Back to the finished film while nothing was re-voiced or re-mixed (the server checks the rest).
+    const undo = d.sound_edit_undo && (d.sound_edit_undo.audio_revision ?? null) === (d.audio_revision ?? null);
+    return `<section class="next wait"><h2 class="headline">Hör dir den Ton an.</h2>
       <p>${d.sound_edit ? `Stell unten Musik, Geräusche und Umgebung ein und hör rein.${d.idea.autopilot ? ' Der Autopilot wartet, bis du freigibst.' : ''} Fertige Animationen werden wiederverwendet, solange die Sätze gleich bleiben.`
         : 'Jede Zeile wurde einzeln auf hörbare Sprache geprüft. Passt alles, startet die Animation.'}</p>
-      <div class="actions"><button class="button" data-action="approve-voices">Ton freigeben und animieren</button>${autopilotSwitch(d)}</div></section>`;
+      <div class="actions"><button class="button" data-action="approve-voices">Ton freigeben und animieren</button>${undo ? '<button class="button quiet" data-action="cancel-sound-edit">Abbrechen, fertigen Film behalten</button>' : ''}${autopilotSwitch(d)}</div></section>`;
+  }
   if (d.state === 'sample_review') return `<section class="next wait"><h2 class="headline">Prüf die kurze Probe.</h2>
       <p>Mundbewegung, Stimme und Figur. Danach rechnet das Studio den Rest ohne Unterbrechung.</p>
       <div class="sample"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/sample#t=0.1"></video></div>
@@ -559,9 +576,10 @@ function soundSection(d) {
         <button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button><button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
       ${levelsView(d, music)}</div>
     <h3 class="headline section">Stimmen</h3>
+    <p class="small muted">Stimmtyp wählen und „Neue Stimme“ antippen. Danach werden die Sätze neu eingesprochen.</p>
     <div class="voices">${cast.map(p => `<div class="voice"><div class="actions"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/voice-profile/${encodeURIComponent(p.name)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button><span class="speaker">${esc(p.name)}</span></div>
         <select class="input" data-voice="${esc(p.name)}" aria-label="Stimmtyp von ${esc(p.name)}">${PRESETS.map(([v, l]) => `<option value="${v}" ${p.voice_preset === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-        <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Andere Stimme</button></div></div>`).join('')}</div>
+        <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Neue Stimme</button></div></div>`).join('')}</div>
     <h3 class="headline section">Sätze</h3>
     <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${(l.duration || 0).toFixed(1)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
   </section>`;
@@ -989,6 +1007,7 @@ async function notifyStep(channel, fn, focus) {
     NOTE.error = { channel, text: e.message }; notifyRender(S.notify || await api('/api/notify').catch(() => S.notify)); return false;
   }
 }
+const MAX_LINES = 6;   // same limit as the server (SceneDialogueEdit)
 function linesSheet(ei, si) {
   const sc = S.run.episodes[ei].scenes[si], lines = linesOf(sc), speakers = sceneSpeakers(sc);
   const row = (l, i) => `<div class="person"><select class="input" data-line="${i}" data-key="speaker" aria-label="Sprecher">${speakers.map(n => `<option ${n === l.speaker ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
@@ -998,17 +1017,18 @@ function linesSheet(ei, si) {
   openSheet(`<div class="sheet-head"><h2 class="headline">Szene ${si + 1}: Text</h2><button class="button quiet small" data-action="close">${editable ? 'Abbrechen' : 'Schließen'}</button></div>
     <form id="lines-form" data-episode="${ei}" data-scene="${si}">${lines.map(row).join('')}
     ${sc.kind === 'reaction' ? `<p class="muted">${esc(sc.cast.join(' und '))} hört hier nur zu. Die Stimme kommt von ${esc(speakers[0] || 'einer Figur')} aus dem Off.</p>` : ''}
-    ${speakers.length ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>'
+    ${speakers.length ? lines.length < MAX_LINES ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>' : `<p class="small muted">Höchstens ${MAX_LINES} Sätze pro Szene.</p>`
       : `<p class="muted">${sc.kind === 'establish' ? 'Diese Totale zeigt den neuen Ort. Hier spricht niemand.' : 'In dieser Szene ist niemand im Bild.'}</p>`}
     ${editable ? `<p class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</p>
     <div class="actions"><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
 }
-function readLines(form) {
+function readLines(form, keepEmpty) {
   const rows = {};
   form.querySelectorAll('[data-line]').forEach(el => { (rows[el.dataset.line] ||= {})[el.dataset.key] = el.value.trim(); });
   // Delivery and pause travel with each line: saving must not turn 'schreiend' into 'Natürlich'.
   const pause = v => (v === undefined || v === '' || !isFinite(+v)) ? 0.18 : +v;
-  return Object.values(rows).filter(l => l.text).map(l => ({ speaker: l.speaker, text: l.text, emotion: l.emotion || 'Natürlich', pause_after: pause(l.pause_after) }));
+  // keepEmpty: the editor itself keeps every row in place, so 'Entfernen' hits the row it sits in; saving drops empty ones.
+  return Object.values(rows).filter(l => keepEmpty || l.text).map(l => ({ speaker: l.speaker, text: l.text || '', emotion: l.emotion || 'Natürlich', pause_after: pause(l.pause_after) }));
 }
 
 /* Library figure -> figure of this project; the answer says whether it is applied or kept for later. */
@@ -1026,6 +1046,7 @@ const actions = {
   'add-person'() { S.draft.participants.push({ name: '', traits: '', image: null, voice: null }); saveDraft(); refreshExtras(); },
   'remove-person'(b) { S.draft.participants.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
   'remove-example'(b) { S.draft.examples.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
+  'remove-music'() { S.draft.music = null; saveDraft(); refreshExtras(); },
   theme() {
     const root = document.documentElement, dark = (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
     root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cay-theme', root.dataset.theme); } catch (e) { /* ignore */ }
@@ -1082,6 +1103,10 @@ const actions = {
   async pause() { await post(`/api/factory/${S.rid}/pause`); toast('Pausiert, sobald der aktuelle Schritt fertig ist.'); },
   async resume() { await post(`/api/factory/${S.rid}/resume`); toast('Geht weiter.'); },
   async restore() { await post(`/api/factory/${S.rid}/restore`); toast('Wiederhergestellt. Mit „Fortsetzen“ geht es weiter.'); },
+  async 'delete-project'() {
+    if (!confirm(`„${S.run.title}“ in den Papierkorb legen? Die Dateien bleiben erhalten. Unter „Projekte“ kannst du es wiederherstellen.`)) return;
+    await post(`/api/factory/${S.rid}/delete`); toast('In den Papierkorb gelegt.'); location.hash = 'projects';
+  },
   async autopilot(b) { await post(`/api/factory/${S.rid}/autopilot`, { enabled: b.checked }); toast(b.checked ? 'Autopilot an: der Rest läuft ohne Zwischenstopps.' : 'Autopilot aus.'); },
   async 'abort-step'() { if (confirm('Aktuellen Abschnitt abbrechen und pausieren? Fertige Abschnitte bleiben erhalten.')) { await post(`/api/factory/${S.rid}/abort-step`, { fast: false }); toast('Abgebrochen und pausiert.'); } },
   async 'abort-fast'() { if (confirm(keepsQuality(S.run) ? 'Abschnitt neu starten? Fertige Bilder, Stimmen und Abschnitte bleiben erhalten.'
@@ -1106,8 +1131,8 @@ const actions = {
     closeSheet(); toast(`${b.dataset.name} wird neu gestaltet.`);
   },
   'edit-lines'(b) { linesSheet(+b.dataset.episode, +b.dataset.scene); },
-  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form); lines.push({ speaker: sceneSpeakers(sc)[0], text: '' }); linesSheetFrom(form, lines); },
-  'drop-line'(b) { const form = $('#lines-form'), lines = readLines(form); lines.splice(+b.dataset.index, 1); linesSheetFrom(form, lines); },
+  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form, true); if (lines.length >= MAX_LINES) return; lines.push({ speaker: sceneSpeakers(sc)[0], text: '' }); linesSheetFrom(form, lines); },
+  'drop-line'(b) { const form = $('#lines-form'), lines = readLines(form, true); lines.splice(+b.dataset.index, 1); linesSheetFrom(form, lines); },
   async 'approve-images'() { await post(`/api/factory/${S.rid}/approve-images`, { revision: S.run.revision }); toast('Bilder übernommen. Die Stimmen entstehen.'); },
   async 'approve-voices'() { await post(`/api/factory/${S.rid}/approve-voices`, { revision: S.run.revision }); toast('Ton freigegeben. Die Animation beginnt.'); },
   async 'approve-sample'() { await post(`/api/factory/${S.rid}/approve-sample`, { revision: S.run.revision }); toast('Probe übernommen.'); },
@@ -1119,13 +1144,24 @@ const actions = {
     toast('Dialoge werden ergänzt. Danach entsteht neuer Ton.');
   },
   async 'new-voice'(b) {
-    const select = document.querySelector(`[data-voice="${CSS.escape(b.dataset.name)}"]`);
-    await post(`/api/factory/${S.rid}/voice-settings`, { name: b.dataset.name, voice_preset: select.value, voice_description: '', new_variant: true });
-    toast(`Neue Stimme für ${b.dataset.name} wird gestaltet.`);
+    const select = document.querySelector(`[data-voice="${CSS.escape(b.dataset.name)}"]`), p = S.run.plan.cast.find(x => x.name === b.dataset.name);
+    // Same type: a new take of the planned voice keeps its description; another type drops it (it would contradict the type).
+    const same = select.value === (p.voice_preset || 'man');
+    await post(`/api/factory/${S.rid}/voice-settings`, { name: p.name, voice_preset: select.value, voice_description: same ? (p.voice_description || '') : '', new_variant: true });
+    toast(`Neue Stimme für ${p.name} wird gestaltet.`);
   },
   async 'reopen-voices'() { await post(`/api/factory/${S.rid}/reopen-voices`, { revision: S.run.revision }); },
-  async 'reopen-output'() { await post(`/api/factory/${S.rid}/reopen-output`, { revision: S.run.revision }); },
-  async 'new-edition'() { const run = await post(`/api/factory/${S.rid}/new-edition`); toast('Neue Fassung angelegt.'); location.hash = 'p=' + run.id; },
+  async 'reopen-output'() {
+    if (!confirm('Lautstärke und Ton ändern? Bis der neue Film fertig ist, sind die Downloads hier weg. Solange du noch nichts geändert hast, holt „Abbrechen, fertigen Film behalten“ ihn zurück. Die Dateien bleiben im Ordner 03_Fertige_Videos.')) return;
+    await post(`/api/factory/${S.rid}/reopen-output`, { revision: S.run.revision });
+  },
+  async 'cancel-sound-edit'() { await post(`/api/factory/${S.rid}/cancel-sound-edit`, { revision: S.run.revision }); toast('Dein fertiger Film ist wieder da.'); },
+  'new-edition'() {
+    openSheet(`<div class="sheet-head"><h2 class="headline">Neue Fassung planen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+      <p class="muted">Das Studio plant mit derselben Idee neu: Drehbuch, Dialoge und Stimmen. Dieses Projekt bleibt, wie es ist.</p>
+      <form id="edition-form"><label class="field"><span>Was soll in der neuen Fassung anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: mehr Streit zwischen den beiden, die Pointe schon nach der Hälfte"></textarea></label>
+      <div class="actions"><button class="button" type="submit">Neue Fassung planen</button></div></form>`);
+  },
   episode(b) { S.episode = +b.dataset.index; render(); },
   async copy(b) { try { await navigator.clipboard.writeText(b.dataset.text); toast('Beschreibung kopiert.'); } catch (e) { toast('Kopieren nicht möglich. Text bitte markieren.'); } },
   'lib-new'() { libraryEditor(null); },
@@ -1210,9 +1246,10 @@ const actions = {
 };
 function linesSheetFrom(form, lines) {
   const ei = +form.dataset.episode, si = +form.dataset.scene, sc = S.run.episodes[ei].scenes[si];
-  const original = sc.dialogues; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); linesSheet(ei, si); sc.dialogues = original;
+  // An old single-line scene keeps its text in 'dialogue': blank it while drawing, or removing its last line brings it back.
+  const keep = [sc.dialogues, sc.dialogue]; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); sc.dialogue = ''; linesSheet(ei, si); [sc.dialogues, sc.dialogue] = keep;
 }
-const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'cover-choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
+const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'cover-choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output', 'cancel-sound-edit']);
 
 document.addEventListener('click', async event => {
   const nav = event.target.closest('[data-nav]');
@@ -1287,6 +1324,7 @@ document.addEventListener('change', async event => {
   }
   if (el.matches('[data-upload]')) {
     const kind = el.dataset.upload, files = [...el.files];
+    if (!files.length) return;   // a change without a file must not clear the choice
     await guarded(el, async () => {
       if (kind === 'cast-voice') {
         const id = await upload('voice', files[0]);
@@ -1331,11 +1369,13 @@ document.addEventListener('submit', async event => {
     await guarded(form.querySelector('[type=submit]'), async () => {
       if (form.id === 'lib-form') {
         const body = readLibraryForm(form);
+        if (!body.label || !body.name) { toast('Bitte Profilname und Namen im Film ausfüllen.'); return; }
         if (!body.image && !body.voice) { toast('Wähle ein Bild, eine Aufnahme oder beides.'); return; }
         await (form.dataset.id ? put(`/api/library/${form.dataset.id}`, body) : post('/api/library', body));
         toast(form.dataset.id ? 'Änderungen gesichert.' : `„${body.label}“ ist jetzt in deinen Figuren.`);
       } else {
         const label = form.elements.label.value.trim();
+        if (!label) { toast('Bitte einen Profilnamen eingeben.'); return; }
         await post('/api/library/from-project', { project: S.rid, name: form.dataset.name, label });
         toast(`„${label}“ ist jetzt in deinen Figuren.`);
       }
@@ -1351,6 +1391,9 @@ document.addEventListener('submit', async event => {
     } else if (form.id === 'cover-revise-form') {
       await post(`/api/factory/${S.rid}/cover/revise`, { note: form.note.value.trim() });
       toast('Zwei neue Titelbilder werden erzeugt.');
+    } else if (form.id === 'edition-form') {
+      const run = await post(`/api/factory/${S.rid}/new-edition`, { note: form.note.value.trim() });
+      closeSheet(); toast('Neue Fassung angelegt. Das Drehbuch entsteht.'); location.hash = 'p=' + run.id; return;
     } else if (form.id === 'lines-form') {
       const sc = S.run.episodes[ei].scenes[si];
       await put(`/api/factory/${S.rid}/dialogues`, { episode: ei, scene: si, action: sc.action, dialogues: readLines(form) });
