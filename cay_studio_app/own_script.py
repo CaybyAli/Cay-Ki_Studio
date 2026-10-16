@@ -545,7 +545,7 @@ def _seconds(cut):
 ADVICE = ((r'^Zu wenig Sprecherwechsel: (\d+), nötig mindestens (\d+)\..*$', r'Wenig Sprecherwechsel: \1, empfohlen sind mindestens \2.'),
           (r'^Zu wenig AKTION-Zeilen: (\d+), nötig mindestens (\d+)\.$',
            r'Wenig AKTION-Zeilen: \1, empfohlen sind mindestens \2. Eine stumme Handlung bringt Bewegung in den Film.'),
-          (r'^Zu lange Zeilen \(mehr als (\d+) Wörter\) aufteilen: ', r'Sätze mit mehr als \1 Wörtern wirken geteilt lebendiger: '),
+          (r'^Zu lange Zeilen \(mehr als (\d+) Wörter\) aufteilen: ', r'Sätze mit mehr als \1 Wörtern: in zwei kürzere Sätze geteilt klingen sie lebendiger. '),
           (r'^Telegrammstil umschreiben in natürliche Sätze: ', 'Sehr knappe Sätze im Telegrammstil: '),
           (r'^(\d+) Zeilen haben höchstens zwei Wörter\..*$', r'\1 Sätze haben höchstens zwei Wörter. Viele sehr kurze Sätze wirken abgehackt.'),
           (r'^Mindestens zwei Figuren müssen miteinander sprechen\.$', 'Hier spricht nur eine Figur.'))

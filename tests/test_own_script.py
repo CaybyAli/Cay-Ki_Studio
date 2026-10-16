@@ -529,3 +529,11 @@ def test_deep_brackets_and_many_speakers_stay_fast_and_the_check_runs_beside_the
         return real(text)
     monkeypatch.setattr(own_script, 'read', spy)
     assert client.post('/api/factory/script/check', json={'text': SCRIPT}).json()['ok'] and seen == ['thread']
+
+
+def test_the_long_sentence_hint_reads_as_plain_german():
+    long = 'Das ist mein Satz, und ich sage ihn mit großer Freude und sehr viel Gefühl, weil heute ein ganz besonderer Tag für uns alle ist.'
+    r = own_script.read(f'### Szene 1 – Küche\nANNA: {long}\nBERND: Ja, das stimmt, heute ist wirklich ein schöner Tag.\nANNA: {long}')
+    assert any(t.startswith('Hinweis: Sätze mit mehr als 22 Wörtern: in zwei kürzere Sätze geteilt klingen sie lebendiger. Das ist mein Satz')
+               for t in notes(r)), notes(r)
+    assert not any('wirken geteilt' in t for t in notes(r))
