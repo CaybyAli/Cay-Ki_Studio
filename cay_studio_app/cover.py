@@ -67,6 +67,15 @@ FONTS = (('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'DejaVu Sans')
          ('/usr/share/fonts/truetype/freefont/FreeSansBold.ttf', 'FreeSans'))
 COMPOSITION = ('Eye-level medium-wide shot, the figures fill the lower two thirds. ',
                'Low camera angle, slightly wider shot, heroic and bold. ')
+# Each new round takes another look, so "Neue Titelbilder" without a wish really differs (the 4-step
+# model barely changes with the seed alone). Not cast_design.VARIATIONS: a close-up on the faces or
+# another camera would fight COMPOSITION and the empty upper third kept for the title.
+VARIATIONS = ('Fresh take: different poses, gestures and expressions.',
+              'Fresh take: a different lighting mood, strong rim light from behind.',
+              'Fresh take: a different time of day and colour mood.',
+              'Fresh take: more depth, a clear foreground element and a distant background.',
+              'Fresh take: a dynamic moment, different arm and head positions.',
+              'Fresh take: different signature props of the setting in the background.')
 
 
 # ---------- project ----------
@@ -128,7 +137,7 @@ def main_location(d, names):
     return min(counts, key=lambda p: (-counts[p], first[p])) if counts else ''
 
 
-def prompt(d, names, variant, note=''):
+def prompt(d, names, variant, note='', round_=0, policy=0):
     """Poster key art in the film's style: main cast side by side at the main location,
     an empty upper third for the title, and no lettering of any kind (FLUX writes gibberish)."""
     from screenplay import figure_aliases
@@ -156,7 +165,9 @@ def prompt(d, names, variant, note=''):
              + 'The upper third of the image is calm and empty, plain sky, wall or soft out-of-focus background, kept free for a title added later. '
              'Dramatic cinematic lighting, strong silhouettes, rich contrast. '
              'Absolutely no text, letters, words, numbers, logos, captions, signs with writing, watermarks, panels or frames.')
-    if note: text += ' Specific correction: ' + clean(note)
+    if note and policy >= 18: text = f'Most important, requested by the director: {clean(note).rstrip(".")}. ' + text
+    elif note: text += ' Specific correction: ' + clean(note)
+    if round_ > 0: text += ' ' + VARIATIONS[(round_ * 2 + variant) % len(VARIATIONS)]
     return text
 
 
@@ -425,7 +436,7 @@ class TitleCard:
             if any(v.get('key') == key for v in box['variants']): continue
             d['phase'] = f'Titelbild {variant + 1}/2'; self.save(d)
             references = [self.stage(path) for path in cast_design.scene_references(refs, names)]
-            graph = build_graph(prompt(d, names, variant, box.get('note', '')), references, int(cast_design.digest(d['id'] + key)[:12], 16), '', models)
+            graph = build_graph(prompt(d, names, variant, box.get('note', ''), image_rounds(box)[variant], box.get('note_policy', 0)), references, int(cast_design.digest(d['id'] + key)[:12], 16), '', models)
             step = await self.render(d, key, graph)
             # The figures on it: a new design of one of them draws the key art again (cast_design.invalidate).
             box['variants'].append({'id': step['id'], 'key': key}); box['cast'] = names; self.save(d)
@@ -456,7 +467,8 @@ class TitleCard:
             d = self.get(rid)
             if d['state'] != 'image_review' or not wanted(d): raise HTTPException(409, 'Neue Titelbilder nur während der Bildauswahl.')
             box = d.setdefault('cover', {'variants': [], 'selected': None, 'round': 0})
-            if body.note: box['note'] = ((box.get('note') or '') + ' ' + body.note).strip()[-1200:]
+            # Only the newest wish counts and leads the prompt, as for scene images.
+            if body.note: box['note'] = body.note.strip()[-1200:]; box['note_policy'] = 18
             regenerate(box, [0, 1]); d['state'] = 'pictures'; d['phase'] = 'Zwei neue Titelbilder angefordert'
             self.save(d); return self.get(rid)
 

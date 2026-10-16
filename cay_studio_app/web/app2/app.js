@@ -42,9 +42,11 @@ async function api(path, { method = 'GET', body, raw } = {}) {
 const post = (path, body = {}) => api(path, { method: 'POST', body });
 const put = (path, body) => api(path, { method: 'PUT', body });
 
-function toast(text) {
+function toast(text, action) {
   const el = $('#toast'); el.textContent = text; el.classList.add('show');
-  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 4200);
+  // Optional button (e.g. Rückgängig): its data-action runs through the normal click handler; stays longer.
+  if (action) { const b = document.createElement('button'); b.type = 'button'; b.className = 'toast-action'; b.textContent = action.label; Object.assign(b.dataset, action.data); el.append(b); }
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), action ? 8000 : 4200);
 }
 
 /* ---------- vocabulary ---------- */
@@ -913,7 +915,7 @@ function telegramBlock(t) {
   let body;
   if (t.state === 'off') {
     body = `<div class="notify-disclosure"><b>Was an Telegram geht</b><ul>
-        <li>Projekttitel, Status und eine kurze Fehlermeldung, auf Wunsch ein Vorschaubild und der fertige Film.</li>
+        <li>Projekttitel, Status und eine kurze Fehlermeldung. Bei fertigen Filmen ein Vorschaubild (Titelbild oder ein Bild aus dem Film). Das ist von Anfang an eingeschaltet, du kannst es danach ausschalten. Den fertigen Film nur, wenn du das einschaltest.</li>
         <li>Telegram speichert die Nachrichten auf seinen Servern. Sie sind nicht Ende-zu-Ende verschlüsselt.</li>
         <li>Der Bot-Schlüssel bleibt auf deinem PC. Wer ihn hat, kann deinen Bot steuern. @BotFather stellt dir jederzeit einen neuen aus.</li></ul></div>
       <ol class="notify-steps"><li>In Telegram <b>@BotFather</b> öffnen, <b>/newbot</b> senden und einen Namen wählen. Er schickt dir einen Schlüssel.</li>
@@ -940,7 +942,7 @@ function ntfyBlock(n) {
   let body;
   if (n.state === 'off') {
     body = `<div class="notify-disclosure"><b>Was an ntfy.sh geht</b><ul>
-        <li>Projekttitel, Status und eine kurze Fehlermeldung, auf Wunsch ein Vorschaubild.</li>
+        <li>Projekttitel, Status und eine kurze Fehlermeldung. Bei fertigen Filmen ein Vorschaubild (Titelbild oder ein Bild aus dem Film). Das ist von Anfang an eingeschaltet, du kannst es danach ausschalten.</li>
         <li>Wer den Namen deines Themas kennt, kann mitlesen. Das Studio wählt einen langen Zufallsnamen. Gib ihn nicht weiter.</li>
         <li>Nicht Ende-zu-Ende verschlüsselt. Kostenlos bis 250 Nachrichten am Tag.</li></ul></div>
       <label class="check"><input type="checkbox" id="ntfy-consent" ${NOTE.consent.ntfy ? 'checked' : ''}><span>Einverstanden: Diese Angaben dürfen an ntfy.sh gehen.</span></label>
@@ -1132,7 +1134,12 @@ const actions = {
     const f = (S.library || []).find(x => x.id === b.dataset.id);
     if (!f || !confirm(`„${f.label}“ aus deinen Figuren entfernen? Filme, die die Figur schon nutzen, bleiben unverändert.`)) return;
     await api(`/api/library/${f.id}`, { method: 'DELETE' });
-    await refreshLibrary(); closeSheet(); render(); toast(`„${f.label}“ entfernt.`);
+    await refreshLibrary(); closeSheet(); render(); toast(`„${f.label}“ entfernt.`, { label: 'Rückgängig', data: { action: 'lib-restore', id: f.id, label: f.label } });
+  },
+  async 'lib-restore'(b) {
+    // The server only marks a removed figure; image, voice and design come back unchanged.
+    await post(`/api/library/${b.dataset.id}/restore`);
+    await refreshLibrary(); render(); toast(`„${b.dataset.label}“ ist wieder da.`);
   },
   'lib-voice-clear'() {
     const form = $('#lib-form'); form.elements.voice.value = '';

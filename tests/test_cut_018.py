@@ -561,6 +561,29 @@ def test_existing_sound_versions_keep_their_layout(tmp_path):
     assert d['timing'][0]['layout'] == 18
 
 
+def test_volume_only_remix_keeps_the_approved_sample(tmp_path):
+    """'Lautstärke und Ton ändern' on a finished film: same lines and timing, so movies() must not stop
+    at the production sample again. A changed timing or a sample never approved still asks."""
+    import hashlib
+    from factory_quality import Quality
+    from studio_quality_policy import settings
+    def key(d):   # the formula movies() has always used: projects rendering now keep their keys
+        return hashlib.sha256(json.dumps([settings(d['idea']), d.get('audio_revision'), [[s.get('selected') for s in ep['scenes']] for ep in d['episodes']]],
+                                         ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    _, episode = blocks_episode(); plan_seconds(episode, 60, 25)
+    for s in episode['scenes']: s['selected'] = 's' * 32
+    d = voiced(episode, cs.timed_lines(episode)); asyncio.run(Quality.quality_voices(Voicing(tmp_path), d))
+    d['sample_approval'] = key(d); unapproved = copy.deepcopy(d); unapproved.pop('sample_approval'); moved = copy.deepcopy(d)
+    for doc in (d, unapproved, moved): doc['audio_only'] = True; doc['mix'] = {'music_volume': .3}
+    asyncio.run(Quality.quality_voices(Voicing(tmp_path), d))
+    assert d['audio_revision'] == 2 and d['sample_approval'] == key(d)
+    asyncio.run(Quality.quality_voices(Voicing(tmp_path), unapproved))
+    assert 'sample_approval' not in unapproved
+    moved['timing'] = [dict(moved['timing'][0], seconds=moved['timing'][0]['seconds'] + 1)]
+    asyncio.run(Quality.quality_voices(Voicing(tmp_path), moved))
+    assert moved['sample_approval'] != key(moved)
+
+
 # --- Part 5: downstream ---------------------------------------------------------------------
 
 def test_render_order_and_lip_sync_lock_skip_reactions():

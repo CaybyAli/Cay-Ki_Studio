@@ -294,6 +294,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 140%); opacity: 0; visibility: hidden; background: var(--ink); color: var(--canvas); padding: 12px 20px; border-radius: 980px; font-size: 15px; transition: transform .3s ease; z-index: 50; max-width: calc(100vw - 32px); }
 .toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
 .toast { transition: transform .3s ease, opacity .3s ease, visibility .3s; }
+.toast-action { margin-left: 14px; padding: 2px 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
 
 @media (max-width: 860px) {
   .compose { grid-template-columns: 1fr; gap: 40px; }
