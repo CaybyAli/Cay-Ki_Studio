@@ -1139,7 +1139,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             # Stored beside the document like the pause flag: a step that is running saves its own copy
             # of the document and used to switch the autopilot back (Cay: "nur noch schrittweise").
             self.sql('INSERT INTO factory_switches(id,autopilot) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET autopilot=excluded.autopilot',(rid,int(body.enabled)))
-            d=self.get(rid);d['idea']['autopilot']=body.enabled;d.pop('autopilot_stopped',None)
+            d=self.get(rid);d['idea']['autopilot']=body.enabled;d.pop('autopilot_stopped',None);d.pop('sound_edit',None)
             d['phase']='Autopilot an: der Rest läuft ohne Zwischenfreigaben.' if body.enabled else 'Autopilot aus: du gibst jeden Schritt frei.'
             self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/resume')
@@ -1264,6 +1264,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             for preview in d['previews']:
                 if file_hash(self.path(preview['file']))!=preview['sha256']:raise HTTPException(409,'Tonmischung verändert.')
             d['render_tracking_version']=10;d['render_segments']={};d.setdefault('prompt_policy',self.prompt_policy_for(d))
+            d.pop('sound_edit',None)
             d['voice_approval']=body.revision;d['state']='rendering';d['phase']='In der Produktionswarteschlange';self.save(d);return self.get(rid)
         @app.get('/api/factory/{rid}/picture/{sid}')
         def picture(rid:str,sid:str):

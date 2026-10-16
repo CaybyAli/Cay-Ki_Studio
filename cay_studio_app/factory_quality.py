@@ -170,7 +170,7 @@ class Quality:
             d=self.get(rid);self.revision(d,body,{'done'})
             d.setdefault('export_history',[]).append({'generation':d.get('export_generation',0),'exports':d.get('exports',[])})
             d['export_generation']=d.get('export_generation',0)+1;d['exports']=[];d.pop('voice_approval',None)
-            d['render_segments']={};d['render_tracking_version']=10
+            d['render_segments']={};d['render_tracking_version']=10;d['sound_edit']=True
             d['state']='voice_review';d['phase']='Ton und Export bearbeiten. Fertige Animationen werden bei passenden Vorgaben weiterverwendet.'
             self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/reopen-voices')
@@ -185,7 +185,7 @@ class Quality:
             d.setdefault('export_history',[]).append({'generation':d.get('export_generation',0),'exports':d.get('exports',[])})
             d['export_generation']=d.get('export_generation',0)+1;d['exports']=[]
             for key in ('voice_approval','sample_approval','error','resume_state','uncertain'):d.pop(key,None)
-            d['render_segments']={};d['render_tracking_version']=10
+            d['render_segments']={};d['render_tracking_version']=10;d['sound_edit']=True
             d.update(state='voice_review',phase='Dialoge und Ton prüfen. Danach die Produktion erneut freigeben.')
             self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/production-settings')

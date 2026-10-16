@@ -34,6 +34,9 @@ class Autopilot:
         d['autopilot_stopped'] = {'state': d['state'], 'audio_revision': d.get('audio_revision'), 'reason': reason}
 
     def autopilot_waits(self, d):
+        # Cay reopened the sound himself ("Ton noch einmal bearbeiten"): the sound stop stays his
+        # until he approves it. Every volume change remixes and must not export on its own.
+        if d.get('sound_edit') and d.get('state') == 'voice_review': return True
         stop = d.get('autopilot_stopped')
         return isinstance(stop, dict) and stop.get('state') == d['state'] and stop.get('audio_revision') == d.get('audio_revision')
 

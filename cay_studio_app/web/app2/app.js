@@ -298,7 +298,7 @@ async function refreshRuns() {
     }
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     r.autopilot = !!(doc && doc.idea && doc.idea.autopilot);
-    r.waiting = !!(doc && doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state);
+    r.waiting = !!(doc && ((doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state) || (doc.sound_edit && doc.state === 'voice_review')));
     r.deleted = false;
   }));
   const changed = JSON.stringify(list.runs) !== JSON.stringify(S.runs);
@@ -337,7 +337,7 @@ function nextView(d) {
   if (d.state === 'blocked') return blockedView(d);
   if (d.state === 'done') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie ist fertig.' : 'Dein Film ist fertig.'}</h2>
       <p>Unten ansehen, herunterladen und mit der fertigen Beschreibung hochladen.</p>
-      <div class="actions"><button class="button quiet" data-action="reopen-output">Ton noch einmal bearbeiten</button><button class="button quiet" data-action="new-edition">Neue Fassung planen</button></div></section>`;
+      <div class="actions"><button class="button quiet" data-action="reopen-output">Lautstärke und Ton ändern</button><button class="button quiet" data-action="new-edition">Neue Fassung planen</button></div></section>`;
   if (d.state === 'cast_review') {
     return `<section class="next wait"><h2 class="headline">Prüf deine Figuren.</h2>
       <p>So sieht jede Figur in allen Szenen aus. Passt eine nicht, tippe auf sie: eine aus deinen Figuren nehmen, neu gestalten oder ein eigenes Bild hochladen. Danach entstehen die Szenen${d.idea.autopilot ? ' und der Autopilot macht ohne weitere Stopps fertig' : ''}.</p>
@@ -350,7 +350,8 @@ function nextView(d) {
       <div class="actions"><button class="button" data-action="approve-images" ${c.ready ? '' : 'disabled'}>Bilder übernehmen</button>${autopilotSwitch(d)}</div></section>`;
   }
   if (d.state === 'voice_review') return `<section class="next wait"><h2 class="headline">Hör dir den Ton an.</h2>
-      <p>Jede Zeile wurde einzeln auf hörbare Sprache geprüft. Passt alles, startet die Animation.</p>
+      <p>${d.sound_edit ? `Stell unten Musik, Geräusche und Umgebung ein und hör rein.${d.idea.autopilot ? ' Der Autopilot wartet, bis du freigibst.' : ''} Fertige Animationen werden wiederverwendet, solange die Sätze gleich bleiben.`
+        : 'Jede Zeile wurde einzeln auf hörbare Sprache geprüft. Passt alles, startet die Animation.'}</p>
       <div class="actions"><button class="button" data-action="approve-voices">Ton freigeben und animieren</button>${autopilotSwitch(d)}</div></section>`;
   if (d.state === 'sample_review') return `<section class="next wait"><h2 class="headline">Prüf die kurze Probe.</h2>
       <p>Mundbewegung, Stimme und Figur. Danach rechnet das Studio den Rest ohne Unterbrechung.</p>
