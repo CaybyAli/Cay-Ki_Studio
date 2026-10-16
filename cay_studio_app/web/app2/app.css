@@ -133,6 +133,7 @@ details.more summary::-webkit-details-marker { display: none; }
 .icon-remove { position: static; background: var(--fill); color: var(--muted); width: 32px; height: 32px; }
 .people { display: grid; gap: 14px; }
 .person { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px; align-items: start; }
+.person > .icon-remove { margin-top: 8px; }                  /* centred on the 48 px name field */
 /* Line editor: the speaker's whole name stays readable ("Mr. Krabs", not "M"). */
 #lines-form .person { grid-template-columns: minmax(6.5em, max-content) minmax(0, 1fr) auto; align-items: center; }
 .line-rows { display: grid; gap: 10px; }
@@ -376,6 +377,8 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 }
 @media (max-width: 560px) {
   main { padding: 32px 16px 100px; }
+  .footer { padding: 0 16px 32px; }
+  .mix { padding: 20px; }
   .bar { grid-template-columns: auto 1fr auto; padding: 0 10px; gap: 6px; }
   .tabs { justify-self: center; }
   .tabs button { padding: 5px 8px; font-size: 13px; }
@@ -411,6 +414,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .page-intro { display: grid; gap: 8px; }
 .page-intro p { margin: 0; max-width: 36em; }
 .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: -12px 0 30px; }
+.sheet-body .filters { margin: 0; }                          /* in a sheet the sheet's own gap spaces it */
 .filters .search { max-width: 300px; min-height: 40px; padding: 8px 14px; border-radius: 980px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 34px 22px; }
 .cards-empty { grid-column: 1 / -1; }
@@ -492,6 +496,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .lib-photo { width: 150px; }
   .pick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filters .search { max-width: none; flex: 1 1 100%; }
+  .filters .segmented { flex: 1 1 100%; }
   .voice-strip { left: 8px; right: 8px; bottom: 8px; }
 }
 

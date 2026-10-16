@@ -658,7 +658,8 @@ function checkLine(d, ep, ei) {
   // Automatic checks in one line: script size, speech share, lip-sync windows.
   const parts = [], st = ep.screenplay_stats, t = (d.timing || [])[ei];
   if (st) parts.push(`${st.words} Wörter`, `${st.shots} Einstellungen`, `${st.actions} stumme Aktionen`);
-  if (t) parts.push(`Sprachanteil ${Math.round((t.speech_share || 0) * 100)} %`, `längste Pause ${String(t.longest_speech_gap ?? '–').replace('.', ',')} s`, `${t.talk_windows ?? '–'} Rechenblöcke`);
+  if (t) parts.push(`Sprachanteil ${Math.round((t.speech_share || 0) * 100)} %`, `längste Pause ${String(t.longest_speech_gap ?? '–').replace('.', ',')} s`);
+  if (t && t.talk_windows != null) parts.push(`${t.talk_windows} Rechenblöcke`);
   const warn = (ep.warnings || []).filter(w => !w.startsWith('Wenig Dialog')).slice(0, 2);
   if (!parts.length && !warn.length) return '';
   return `<p class="muted small check-line">${esc(parts.join(' · '))}</p>${warn.map(w => `<p class="small warn-line">${esc(w)}</p>`).join('')}`;
@@ -1186,7 +1187,7 @@ async function notifyStep(channel, fn, focus) {
 const MAX_LINES = 6;   // same limit as the server (SceneDialogueEdit)
 function linesSheet(ei, si) {
   const sc = S.run.episodes[ei].scenes[si], lines = linesOf(sc), speakers = sceneSpeakers(sc);
-  const row = (l, i) => `<div class="person"><select class="input" data-line="${i}" data-key="speaker" aria-label="Sprecher">${speakers.map(n => `<option ${n === l.speaker ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+  const row = (l, i) => `<div class="person"><select class="input" data-line="${i}" data-key="speaker" aria-label="Sprecher">${[...new Set([l.speaker, ...speakers].filter(Boolean))].map(n => `<option ${n === l.speaker ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
     <input class="input" data-line="${i}" data-key="text" value="${esc(l.text)}" maxlength="240" aria-label="Satz">
     <input type="hidden" data-line="${i}" data-key="emotion" value="${esc(l.emotion || 'Natürlich')}"><input type="hidden" data-line="${i}" data-key="pause_after" value="${l.pause_after ?? 0.18}"><button class="button danger small" data-action="drop-line" data-index="${i}">Entfernen</button></div>`;
   const editable = speakers.length || lines.length;   // nothing to save in a wide shot without text
