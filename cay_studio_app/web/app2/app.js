@@ -744,7 +744,7 @@ function libraryEditor(f) {
       </div>
       <label class="field"><span>Was wird in der Aufnahme gesagt? (optional, macht die Stimme genauer)</span><input class="input" name="voice_text" maxlength="2500" value="${esc(x.voice_text || '')}"></label>
       ${source}
-      <div class="sheet-foot">${f ? `<button type="button" class="button danger" data-action="lib-delete" data-id="${esc(f.id)}">Aus deinen Figuren entfernen</button>` : '<span></span>'}<button class="button" type="submit">${f ? 'Änderungen sichern' : 'Figur sichern'}</button></div>
+      <div class="sheet-foot">${f ? `<button type="button" class="button danger" data-action="lib-delete" data-id="${esc(f.id)}">Aus deinen Figuren entfernen</button>` : ''}<button class="button" type="submit">${f ? 'Änderungen sichern' : 'Figur sichern'}</button></div>
     </form>`);
 }
 function readLibraryForm(form) {
@@ -839,8 +839,8 @@ function saveToLibrarySheet(name) {
   const d = S.run, look = LOOK_NAMES[d.idea.look];
   openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)} aufnehmen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
     <p class="muted">Bild und Stimme aus diesem Projekt kommen in deine Figuren und lassen sich in jedem Film wiederverwenden.</p>
-    <form id="lib-save-form" data-name="${esc(name)}"><label class="field"><span>Profilname</span><input class="input" name="label" required maxlength="80" value="${esc(look && d.idea.look !== 'auto' ? `${name} ${look}` : name)}"></label>
-      <div class="sheet-foot"><span></span><button class="button" type="submit">In deine Figuren aufnehmen</button></div></form>`);
+    <form id="lib-save-form" class="sheet-form" data-name="${esc(name)}"><label class="field"><span>Profilname</span><input class="input" name="label" required maxlength="80" value="${esc(look && d.idea.look !== 'auto' ? `${name} ${look}` : name)}"></label>
+      <div class="sheet-foot"><button class="button" type="submit">In deine Figuren aufnehmen</button></div></form>`);
 }
 
 /* ---------- sheets ---------- */
@@ -1030,12 +1030,11 @@ function linesSheet(ei, si) {
     <input type="hidden" data-line="${i}" data-key="emotion" value="${esc(l.emotion || 'Natürlich')}"><input type="hidden" data-line="${i}" data-key="pause_after" value="${l.pause_after ?? 0.18}"><button class="button danger small" data-action="drop-line" data-index="${i}">Entfernen</button></div>`;
   const editable = speakers.length || lines.length;   // nothing to save in a wide shot without text
   openSheet(`<div class="sheet-head"><h2 class="headline">Szene ${si + 1}: Text</h2><button class="button quiet small" data-action="close">${editable ? 'Abbrechen' : 'Schließen'}</button></div>
-    <form id="lines-form" data-episode="${ei}" data-scene="${si}">${lines.map(row).join('')}
+    <form id="lines-form" class="sheet-form" data-episode="${ei}" data-scene="${si}">${lines.length ? `<div class="line-rows">${lines.map(row).join('')}</div>` : ''}
     ${sc.kind === 'reaction' ? `<p class="muted">${esc(sc.cast.join(' und '))} hört hier nur zu. Die Stimme kommt von ${esc(speakers[0] || 'einer Figur')} aus dem Off.</p>` : ''}
     ${speakers.length ? lines.length < MAX_LINES ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>' : `<p class="small muted">Höchstens ${MAX_LINES} Sätze pro Szene.</p>`
       : `<p class="muted">${sc.kind === 'establish' ? 'Diese Totale zeigt den neuen Ort. Hier spricht niemand.' : 'In dieser Szene ist niemand im Bild.'}</p>`}
-    ${editable ? `<p class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</p>
-    <div class="actions"><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
+    ${editable ? `<div class="sheet-foot"><span class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</span><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
 }
 function readLines(form, keepEmpty) {
   const rows = {};
@@ -1129,15 +1128,14 @@ const actions = {
   async choose(b) { await post(`/api/factory/${S.rid}/choose`, { episode: +b.dataset.episode, scene: +b.dataset.scene, step_id: b.dataset.step }); },
   async revise(b) {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Bilder für Szene ${+b.dataset.scene + 1}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
-      <form id="revise-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
-      <div class="actions"><button class="button" type="submit">Zwei neue Bilder erzeugen</button></div></form>`);
+      <form id="revise-form" class="sheet-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
+      <div class="sheet-foot"><button class="button" type="submit">Zwei neue Bilder erzeugen</button></div></form>`);
   },
   async 'cover-choose'(b) { await post(`/api/factory/${S.rid}/cover/choose`, { step_id: b.dataset.step }); },
   'cover-revise'() {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Titelbilder</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
-      <form id="cover-revise-form"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: alle drei näher zusammen, mehr vom Hafen im Hintergrund"></textarea></label>
-      <p class="muted small">Der Titel wird danach eingesetzt, er steht nie im Bild selbst.</p>
-      <div class="actions"><button class="button" type="submit">Zwei neue Titelbilder erzeugen</button></div></form>`);
+      <form id="cover-revise-form" class="sheet-form"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: alle drei näher zusammen, mehr vom Hafen im Hintergrund"></textarea></label>
+      <div class="sheet-foot"><span class="small muted">Der Titel wird danach eingesetzt, er steht nie im Bild selbst.</span><button class="button" type="submit">Zwei neue Titelbilder erzeugen</button></div></form>`);
   },
   async 'cast-approve'() { await post(`/api/factory/${S.rid}/cast/approve`); toast('Figuren übernommen. Die Szenenbilder entstehen.'); },
   async 'cast-redo'(b) {
@@ -1174,8 +1172,8 @@ const actions = {
   'new-edition'() {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Fassung planen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
       <p class="muted">Das Studio plant mit derselben Idee neu: Drehbuch, Dialoge und Stimmen. Dieses Projekt bleibt, wie es ist.</p>
-      <form id="edition-form"><label class="field"><span>Was soll in der neuen Fassung anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: mehr Streit zwischen den beiden, die Pointe schon nach der Hälfte"></textarea></label>
-      <div class="actions"><button class="button" type="submit">Neue Fassung planen</button></div></form>`);
+      <form id="edition-form" class="sheet-form"><label class="field"><span>Was soll in der neuen Fassung anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: mehr Streit zwischen den beiden, die Pointe schon nach der Hälfte"></textarea></label>
+      <div class="sheet-foot"><button class="button" type="submit">Neue Fassung planen</button></div></form>`);
   },
   episode(b) { S.episode = +b.dataset.index; render(); },
   async copy(b) { try { await navigator.clipboard.writeText(b.dataset.text); toast('Beschreibung kopiert.'); } catch (e) { toast('Kopieren nicht möglich. Text bitte markieren.'); } },

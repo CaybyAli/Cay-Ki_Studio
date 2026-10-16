@@ -130,10 +130,10 @@ details.more summary::-webkit-details-marker { display: none; }
 .person { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px; align-items: start; }
 /* Line editor: the speaker's whole name stays readable ("Mr. Krabs", not "M"). */
 #lines-form .person { grid-template-columns: minmax(6.5em, max-content) minmax(0, 1fr) auto; align-items: center; }
-#lines-form .person + .person { margin-top: 10px; }
+.line-rows { display: grid; gap: 10px; }
 @media (max-width: 560px) {
   #lines-form .person { grid-template-columns: minmax(0, max-content) auto; justify-content: space-between; gap: 8px 14px; }
-  #lines-form .person + .person { margin-top: 18px; }
+  .line-rows { gap: 18px; }
   #lines-form .person [data-key="text"] { grid-column: 1 / -1; grid-row: 2; }
 }
 .person-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 10px; justify-items: start; }
@@ -407,7 +407,14 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .segmented label span { padding: 7px 15px; border-radius: 8px; font-size: 15px; }
 .segmented label input:checked + span { background: var(--seg-on); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-weight: 500; }
 .segmented label input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 1px; }
-.sheet-foot { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--hairline); }
+/* Every sheet form ends the same way: a hairline, a short note or a quiet action on the left, the main button on the right.
+   It sticks to the bottom of the sheet (-30px = the sheet's own padding), so the save button never falls off-screen. */
+.sheet-form { display: grid; gap: 16px; }
+.sheet-form > .field { margin-top: 0; }
+.sheet-foot { position: sticky; bottom: -30px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 10px 14px; flex-wrap: wrap;
+  padding: 14px 0 6px; margin-bottom: -6px; border-top: 1px solid var(--hairline); background: var(--surface); }
+.sheet-foot > :only-child, .sheet-foot > .button:last-child { margin-left: auto; }
+.sheet-foot > span { flex: 1 1 16em; }
 
 /* Picker (new film and running project) */
 .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 18px 14px; }
@@ -418,7 +425,6 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .pick[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
 .pick-title { font-weight: 600; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
 .pick-play { position: absolute; left: 8px; top: 8px; background: rgba(255,255,255,.94); color: #1d1d1f; }
-.pick-foot { position: sticky; bottom: -30px; background: var(--surface); padding: 14px 0 6px; margin-bottom: -6px; }
 .pick-options { display: grid; gap: 10px; flex: 1 1 260px; }
 .check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; cursor: pointer; }
 .check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
