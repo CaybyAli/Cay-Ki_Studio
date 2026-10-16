@@ -235,7 +235,7 @@ async function createFilm() {
     const field = $(`input[data-person="${nameless}"][data-key="name"]`); if (field) field.focus();
     return;
   }
-  const body ={ ...d, idea: d.idea.trim(), title: d.title.trim(),
+  const body = { ...d, idea: d.idea.trim(), title: d.title.trim(),
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => ({ name: p.name.trim(), traits: p.traits || '', image: p.image || null,
       voice: p.voice || null, voice_text: p.voice_text || '', image_mode: p.image_mode === 'exact' ? 'exact' : 'neutral',
       library_id: p.library_id || null, voice_design: p.voice_from_library && p.voice_design ? p.voice_design : null,
