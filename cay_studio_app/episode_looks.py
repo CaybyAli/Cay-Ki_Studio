@@ -182,7 +182,7 @@ class Wardrobe:
             rounds = ep.setdefault('look_rounds', {}); rounds[body.name] = rounds.get(body.name, 0) + 1
             count = invalidate(d, body.episode, body.name)
             if d['state'] != 'blocked': d['state'] = 'pictures'
-            d['phase'] = f'{body.name} in Folge {n} wird neu gestaltet' + (f' · {count} Szenen folgen' if count else ''); self.save(d)
+            d['phase'] = f'{body.name} in Folge {n} wird neu gestaltet' + (f' · {count} Szenen folgen' if count > 1 else ' · 1 Szene folgt' if count else ''); self.save(d)
             return self.get(rid)
 
         @app.get('/api/factory/{rid}/look-image/{episode}/{index}')
