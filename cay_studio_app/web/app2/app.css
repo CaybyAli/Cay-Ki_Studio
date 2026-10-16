@@ -159,11 +159,11 @@ details.more summary::-webkit-details-marker { display: none; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 34px 22px; }
 .grid > *, .film > * { min-width: 0; }
 video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
-.tile { display: grid; gap: 12px; color: var(--ink); cursor: pointer; border: 0; background: none; padding: 0; text-align: left; }
+.tile { display: grid; gap: 6px; align-content: start; color: var(--ink); cursor: pointer; border: 0; background: none; padding: 0; text-align: left; }
 .tile:hover { text-decoration: none; }
 .tile:hover .frame { transform: scale(1.015); }
-.tile .frame { transition: transform .25s ease; }
-.tile-title { font-weight: 600; font-size: 17px; line-height: 1.25; overflow-wrap: anywhere; }
+.tile .frame { margin-bottom: 8px; transition: transform .25s ease; }
+.tile-title { font-weight: 600; font-size: 17px; line-height: 1.25; overflow-wrap: break-word; }
 .status { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--muted); }
 .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
 .status.run::before { background: var(--accent); animation: pulse 1.6s ease-in-out infinite; }
@@ -347,7 +347,6 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .clock { display: inline-flex; gap: 4px; align-items: baseline; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .clock b { font-weight: 600; color: var(--ink); }
 .clock.live b { color: var(--accent); }
-.tile .clock { margin-top: 2px; }
 
 /* Figure library (0.18): Cay's casting archive. One idea carries it: the portrait card
    with its real voice outline. Everything else stays in the studio's quiet system. */

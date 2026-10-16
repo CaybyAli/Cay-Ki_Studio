@@ -258,9 +258,13 @@ async function upload(kind, file) {
 }
 
 /* ---------- projects ---------- */
+/* Tile picture: a scene picture, else the first figure design (figure check), else the title as a title card. */
 function frameFor(rid, doc, extra = '') {
   const pic = doc && thumbnail(doc);
-  return `<div class="frame">${pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">` : `<span class="frame-title">${esc(doc ? doc.title : '')}</span>`}${extra}</div>`;
+  const figure = !pic && doc && ((doc.plan && doc.plan.cast) || []).map(p => castImageUrl(doc, p.name)).find(Boolean);
+  const inner = pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">`
+    : figure ? `<img src="${esc(figure)}" alt="" loading="lazy">` : `<span class="frame-title">${esc(doc ? doc.title : '')}</span>`;
+  return `<div class="frame">${inner}${extra}</div>`;
 }
 function thumbnail(doc) {
   for (const ep of doc.episodes || []) for (const sc of ep.scenes || []) {
@@ -459,10 +463,14 @@ function voiceUrl(d, p) {
   if (e.voice) return `/api/factory/assets/${encodeURIComponent(e.voice)}`;
   return (d.voice_profiles || {})[p.name] ? `/api/factory/${encodeURIComponent(d.id)}/voice-profile/${encodeURIComponent(p.name)}` : '';
 }
-function castPicture(d, name) {
-  const cast = d.plan.cast, i = cast.findIndex(p => p.name === name), refs = d.cast_refs || {};
+function castImageUrl(d, name) {
+  const cast = (d.plan && d.plan.cast) || [], i = cast.findIndex(p => p.name === name), refs = d.cast_refs || {};
   // Cache key from the reference itself: an own upload changes the file, not design_round.
-  return refs[name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[name]).slice(-48))}-${cast[i].design_round || 0}" alt="" loading="lazy">`
+  return i >= 0 && refs[name] ? `/api/factory/${encodeURIComponent(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[name]).slice(-48))}-${cast[i].design_round || 0}` : '';
+}
+function castPicture(d, name) {
+  const url = castImageUrl(d, name);
+  return url ? `<img src="${esc(url)}" alt="" loading="lazy">`
     : `<div class="frame-empty">${['pictures', 'cast_review'].includes(d.state) ? 'entsteht' : ''}</div>`;
 }
 function pendingFor(d, name) {
