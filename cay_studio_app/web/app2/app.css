@@ -519,10 +519,12 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .look-item:hover { background: var(--fill); }
 .look-item > span:last-child { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .look-item b { font-weight: 600; }
+.cast:not(.compact) .look-item { grid-template-columns: 40px minmax(0, 1fr); gap: 10px; }
+.cast:not(.compact) .look-item .mini { width: 40px; height: 71px; }   /* 9:16 like the portrait: the clothes are the point */
 .look-detail { display: grid; gap: 16px; min-width: 0; }
 .look-now { margin: 0; display: grid; gap: 4px; font-size: 17px; }
 .look-now span { overflow-wrap: anywhere; }
-.look-detail .hint { margin: 0; max-width: 34em; }
+.look-detail .hint { grid-column: auto; margin: 0; max-width: 34em; }
 @media (max-width: 560px) {
   .segmented.long:not(:has(> :nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

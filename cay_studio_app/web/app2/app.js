@@ -855,9 +855,10 @@ function figureSheet(name) {
       <label class="menu-row"><b>Eigene Aufnahme hochladen</b><span>Eine Sprachaufnahme dieser Figur, 5 bis 20 Sekunden.</span><input type="file" accept="audio/*" data-upload="cast-voice" data-name="${esc(name)}"></label></div>`
     : `<div class="menu-section"><p class="label menu-title">Stimme</p><p class="menu-note">${esc(w.voice === 'later' ? `Eigene Aufnahmen und neue Stimmen gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.voice || '')}</p></div>`;
   const seen = looksWanted(d) ? d.episodes.map((ep, ei) => ({ ei, ep })).filter(x => x.ep.scenes.some(s => (s.cast || []).includes(name))) : [];
+  const base = castImageUrl(d, name);
   const looks = seen.length ? `<div class="menu-section"><p class="label menu-title">Aussehen pro Folge</p>
-      ${seen.map(({ ei, ep }) => row(`data-action="look-menu" data-name="${esc(name)}" data-episode="${ei}"`, `Folge ${ei + 1}`,
-        esc((ep.look_labels || {})[name] || (ep.looks || {})[name] || 'Wie im Grunddesign'))).join('')}</div>` : '';
+      ${seen.map(({ ei, ep }) => `<button class="menu-row with-pic" data-action="look-menu" data-name="${esc(name)}" data-episode="${ei}">${(ep.looks || {})[name] ? lookMini(d, ei, name)
+        : `<span class="mini">${base ? `<img src="${esc(base)}" alt="" loading="lazy">` : ''}</span>`}<b>Folge ${ei + 1}</b><span>${esc((ep.look_labels || {})[name] || (ep.looks || {})[name] || 'Wie im Grunddesign')}</span></button>`).join('')}</div>` : '';
   const keep = refs[name] || e.voice || (d.voice_profiles || {})[name]
     ? `<div class="menu-section">${row(`data-action="lib-save" data-name="${esc(name)}"`, 'In deine Figuren aufnehmen', 'Bild und Stimme für andere Filme sichern. An diesem Film ändert sich nichts.')}</div>` : '';
   openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)}</h2><button class="button quiet small" data-action="close">Fertig</button></div>
