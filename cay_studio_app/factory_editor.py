@@ -199,7 +199,7 @@ class Editor:
                     person['appearance'] = changes[person['name']]
                     # Every scene with this figure, not only this one: no face drift.
                     invalidate(d, person['name'])
-            scene['image_note'] = answer['image_note']
+            scene['image_note'] = answer['image_note']; scene['note_policy'] = 18   # the wish leads the image prompt
             if not changes: regenerate(scene, [0, 1] if req['variant'] == 'both' else [int(req['variant'])])
             d['state'] = 'pictures'
         elif kind == 'voice':

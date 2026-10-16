@@ -176,6 +176,24 @@ def faces(scene):
     return ' '.join(f"{name}'s facial expression: {face}." for name, face in seen.items())
 
 
+# Each new round of a scene image takes another camera and pose, so "Neue Bilder" really differs.
+VARIATIONS = ('Fresh take: a different camera angle (slightly low angle) and a different body pose.',
+              'Fresh take: closer framing on the faces and a different gesture.',
+              'Fresh take: wider framing that shows more of the location, different pose.',
+              'Fresh take: a different moment of the same action, different arm and head positions.',
+              'Fresh take: camera from a three-quarter side angle, the figure placed off-centre.',
+              'Fresh take: a different composition with clear foreground and background depth.')
+
+
+def revision_prompt(prompt, note, round_, variant, policy=0):
+    """Prompt for one image round. Round 0 is the plan as written. Later rounds vary camera and pose;
+    a wish from Cay (policy 18) leads the prompt as the main instruction. Older notes keep their place."""
+    if note and policy >= 18: prompt = f'Most important, requested by the director: {note.strip().rstrip(".")}. ' + prompt
+    elif note: prompt += ' Specific correction: ' + note
+    if round_ > 0: prompt += ' ' + VARIATIONS[(round_ * 2 + variant) % len(VARIATIONS)]
+    return prompt
+
+
 def scene_references(refs, names):
     """Approved figure designs only. Look templates never enter a scene."""
     return [refs[name] for name in names]

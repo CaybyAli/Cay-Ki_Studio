@@ -157,6 +157,54 @@ class RenderProgress:
                         self.close_node(item,time.time());item['detail']['coverage']='partial';self.flush(item,True)
             await asyncio.sleep(3)
 
+    def history(self,limit=400):
+        """Seconds per frame of recently finished animation sections of all projects, by profile key."""
+        out=defaultdict(list)
+        for r in self.f.rows('SELECT started,ended,detail FROM factory_metrics WHERE started IS NOT NULL AND ended IS NOT NULL ORDER BY ended DESC LIMIT ?',(limit,)):
+            try:detail=json.loads(r['detail'])
+            except ValueError:continue
+            profile=detail.get('profile') or {};frames=profile.get('frames');seconds=r['ended']-r['started']
+            if detail.get('status')=='done' and frames and seconds>0:out[profile_key(profile)].append(seconds/frames)
+        return out
+
+    def estimate(self,d,remaining,samples,rows,metrics,active,selected_profile):
+        """Remaining animation time, per kind of section (lip-sync and silent motion are timed apart,
+        a film mixes both). Measurements of this project first; with fewer than three of a kind, the
+        same kind of section in earlier films on this PC. Returns (eta, note): eta None with a note
+        that says what is still missing."""
+        if not remaining or d.get('paused') or d['state']!='rendering':return None,None
+        # The profile each kind renders with: the running section, else the latest finished one.
+        latest={}
+        for row in rows:
+            m=metrics.get(row['id'])
+            if not m:continue
+            profile=m['detail'].get('profile') or {}
+            if row['status']=='done' or (active and row['id']==active['step_id']):latest[bool(profile.get('audio_conditioned'))]=profile
+        if active and active['detail'].get('profile'):latest[bool(active['detail']['profile'].get('audio_conditioned'))]=active['detail']['profile']
+        history=None;low=high=0.;sources=set();missing=[]
+        for talk in (True,False):
+            frames=sum(f for _,f,t in remaining if t==talk)
+            if not frames:continue
+            profile=latest.get(talk);values=list(samples.get(profile_key(profile),[])) if profile else []
+            if len(values)<3:
+                history=history if history is not None else self.history()
+                if profile:values=values+history.get(profile_key(profile),[])
+                else:
+                    # Nothing of this kind rendered yet here: same kind and size from earlier films.
+                    fits=[k for k in history if json.loads(k).get('audio_conditioned')==talk and json.loads(k).get('width')==selected_profile.get('width')]
+                    values=[v for k in fits for v in history[k]]
+                if len(values)>=3:sources.add('history')
+            else:sources.add('project')
+            if len(values)<3:missing.append('Sprechabschnitten' if talk else 'Bewegungsabschnitten');continue
+            values=sorted(values)
+            q=lambda x:values[min(len(values)-1,max(0,round(x*(len(values)-1))))]
+            low+=q(.2)*frames*.9;high+=q(.8)*frames*1.15
+        if missing:
+            return None,'Restzeit folgt nach drei fertigen '+' und drei '.join(missing)
+        elapsed=max(0,time.time()-active['started']) if active and active.get('started') else 0
+        eta={'low':max(0,low-elapsed),'high':max(0,high-elapsed),'source':'project' if sources=={'project'} else 'history'}
+        return (eta if eta['high']>0 else None),None
+
     def snapshot(self,d):
         rows=self.f.rows('SELECT * FROM factory_steps WHERE run_id=? AND step_key LIKE \'video%\'',(d['id'],))
         metrics={r['step_id']:{**r,'detail':json.loads(r['detail'])} for r in self.f.rows('SELECT * FROM factory_metrics WHERE run_id=?',(d['id'],))}
@@ -209,18 +257,7 @@ class RenderProgress:
                     'rendering' if current else 'clips_ready' if completed==count and count else 'waiting')
             episodes.append({'episode':ei,'title':episode['title'],'done':completed,'total':count,'status':status,'export_index':export_index})
             done+=completed;total+=count
-        eta=None
-        # Require three completed, comparable measurements for every remaining
-        # profile. Range is empirical, excludes CPU export and unknown pauses.
-        if remaining and not d.get('paused') and d['state']=='rendering':
-            anchor=active and active['detail'].get('profile')
-            if anchor and anchor.get('steps')==selected_profile['steps'] and all(talk==bool(anchor.get('audio_conditioned')) for _,_,talk in remaining):
-                values=samples.get(profile_key(anchor),[])
-                if len(values)>=3:
-                    frames=sum(frames for _,frames,_ in remaining)
-                    elapsed=max(0,time.time()-active['started']) if active.get('started') else 0
-                    eta={'low':max(0,min(values)*frames*.85-elapsed),'high':max(0,max(values)*frames*1.2-elapsed),'samples':len(values)}
-                    if eta['high']<=0:eta=None
+        eta,eta_note=self.estimate(d,remaining,samples,rows,metrics,active,selected_profile)
         if active:
             timestamp=active.get('started') or active.get('submitted')
             active['elapsed']=max(0,time.time()-timestamp) if timestamp else None
@@ -228,5 +265,5 @@ class RenderProgress:
         first=min((m['submitted'] for m in metrics.values() if m.get('submitted')),default=None)
         return {'project':d['id'],'state':d['state'],'paused':bool(d.get('paused')),'done':done,'total':total,
                 'episodes':episodes,'active':active,'last_progress':last,'latest_clip':latest,
-                'elapsed':time.time()-first if first else None,'eta':eta,'socket_connected':self.connected.is_set(),
+                'elapsed':time.time()-first if first else None,'eta':eta,'eta_note':eta_note,'socket_connected':self.connected.is_set(),
                 'note':'Restzeit betrifft Animation, ohne CPU-Export. Grundlage: vergleichbare abgeschlossene Abschnitte dieses Projekts.'}

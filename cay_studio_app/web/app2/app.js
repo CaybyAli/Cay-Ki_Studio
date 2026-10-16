@@ -552,7 +552,8 @@ function soundSection(d) {
     <div class="mix"><audio controls preload="metadata" src="/api/factory/${esc(d.id)}/mix/${ei}"></audio>
       <p class="small muted">${t.seconds ? `${t.seconds.toFixed(1)} s, davon ${(t.speech_seconds || 0).toFixed(1)} s Sprache. Längste Pause ${(t.longest_speech_gap || 0).toFixed(1)} s.` : ''}</p>
       <div class="actions"><span class="small muted">Musik</span>${seg('music', [['off', 'Aus'], ['auto', 'Einfach'], ...(d.idea.music ? [['uploaded', 'Eigene']] : [])], music).replaceAll('data-set=', 'data-mix=')}
-        <button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button><button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div></div>
+        <button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button><button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
+      ${levelsView(d, music)}</div>
     <h3 class="headline section">Stimmen</h3>
     <div class="voices">${cast.map(p => `<div class="voice"><div class="actions"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/voice-profile/${encodeURIComponent(p.name)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button><span class="speaker">${esc(p.name)}</span></div>
         <select class="input" data-voice="${esc(p.name)}" aria-label="Stimmtyp von ${esc(p.name)}">${PRESETS.map(([v, l]) => `<option value="${v}" ${p.voice_preset === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
@@ -560,6 +561,18 @@ function soundSection(d) {
     <h3 class="headline section">Sätze</h3>
     <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${(l.duration || 0).toFixed(1)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
   </section>`;
+}
+/* Volume of music, effects and ambience, shown relative to the studio's balance (100 %);
+   the dialogue stays on top. Stored levels are the mixer's own values (defaults below). */
+const LEVEL_DEFAULTS = { music_level: 0.7, effects_level: 0.65, ambience_level: 0.6 };
+function levelPercent(mix, key) { return Math.round((mix[key] ?? LEVEL_DEFAULTS[key]) / LEVEL_DEFAULTS[key] * 100); }
+function levelsView(d, music) {
+  const mix = d.mix || {};
+  const row = (key, label, off) => `<label class="level${off ? ' off' : ''}"><span>${label}</span>
+      <input type="range" min="0" max="200" step="5" value="${levelPercent(mix, key)}" data-level="${key}" aria-label="${label} Lautstärke" ${off ? 'disabled' : ''}>
+      <output>${off ? 'aus' : levelPercent(mix, key) + ' %'}</output></label>`;
+  return `<div class="levels"><p class="small muted">Lautstärke. Die Sprache bleibt immer vorn; nach dem Loslassen wird neu gemischt (etwa eine Minute).</p>
+    ${row('music_level', 'Musik', music === 'off')}${row('effects_level', 'Geräusche')}${row('ambience_level', 'Umgebung')}</div>`;
 }
 function captionBox(d, ep, ei) {
   const total = d.idea.episodes, s = ep.social;
@@ -601,7 +614,7 @@ function paintProgress() {
   const eta = p.eta ? `${duration(p.eta.low)} bis ${duration(p.eta.high)}` : '–';
   slot.innerHTML = `<div class="facts">
       <div class="fact"><strong>${p.done} von ${p.total}</strong><span>Abschnitte animiert</span></div>
-      <div class="fact"><strong>${esc(eta)}</strong><span>${p.eta ? 'Restzeit Animation' : 'Restzeit nach drei fertigen Abschnitten'}</span></div>
+      <div class="fact"><strong>${esc(eta)}</strong><span>${p.eta ? (p.eta.source === 'history' ? 'Restzeit Animation, geschätzt aus früheren Filmen' : 'Restzeit Animation') : esc(p.eta_note || 'Restzeit folgt nach den ersten fertigen Abschnitten')}</span></div>
       <div class="fact"><strong>${g.utilization == null ? '–' : esc(g.utilization) + ' %'}</strong><span>Grafikkarte ausgelastet</span></div>
     </div>
     <progress class="meter" max="${Math.max(1, p.total)}" value="${p.done}" aria-label="Gesamtfortschritt"></progress>
@@ -1219,6 +1232,16 @@ document.addEventListener('click', async event => {
 document.addEventListener('change', async event => {
   const el = event.target;
   if (el.matches('input[data-action="autopilot"]')) { await guarded(el, async () => { await actions.autopilot(el); await refreshRun(true); }); return; }
+  if (el.dataset.level) {
+    const mix = S.run.mix || {};
+    await guarded(el, async () => {
+      const level = key => mix[key] ?? LEVEL_DEFAULTS[key];
+      await post(`/api/factory/${S.rid}/mix-settings`, { music_mode: mix.music_mode || 'off', music_level: level('music_level'), effects_level: level('effects_level'),
+        ambience_level: level('ambience_level'), [el.dataset.level]: Math.round(+el.value / 100 * LEVEL_DEFAULTS[el.dataset.level] * 1000) / 1000 });
+      toast('Lautstärke geändert. Der Ton wird neu gemischt.'); await refreshRun(true);
+    });
+    return;
+  }
   if (el.matches('[data-notify-text]')) {
     await guarded(el, async () => { S.notify = await put('/api/notify', { [el.dataset.notifyText]: el.value.trim() || 'Sir Cay' }); notifyRender(S.notify); });
     return;
@@ -1281,6 +1304,7 @@ document.addEventListener('change', async event => {
 });
 document.addEventListener('input', event => {
   const el = event.target;
+  if (el.dataset.level) { const out = el.parentElement.querySelector('output'); if (out) out.textContent = el.value + ' %'; return; }
   if (el.dataset.libq) { S.libQuery = el.value; const grid = $('#' + el.dataset.libq); if (grid) grid.innerHTML = el.dataset.libq === 'pick-grid' ? pickItems() : libraryCards(); return; }
   if (el.dataset.field && !['autopilot', 'cast_check'].includes(el.dataset.field)) { S.draft[el.dataset.field] = el.value; saveDraft(); }
   if (el.dataset.person) { S.draft.participants[+el.dataset.person][el.dataset.key] = el.value; saveDraft(); }

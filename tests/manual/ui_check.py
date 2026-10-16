@@ -202,6 +202,12 @@ try:
         shot('05_ton', '#p=' + 'b' * 32)
         page.click('.line-row .play >> nth=0'); page.wait_for_timeout(600)
         r.check('Ton: Satz abspielbar (Knopf zeigt Pause)', 'path' in page.locator('.line-row .play >> nth=0').inner_html())
+        r.check('Ton: drei Lautstärkeregler, Musik aus = gesperrt', page.locator('.levels input[type=range]').count() == 3
+                and page.locator('[data-level="music_level"]').is_disabled() and page.locator('[data-level="effects_level"]').input_value() == '100')
+        page.evaluate("(() => { const el = document.querySelector('[data-level=\"effects_level\"]'); el.value = 150; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); })()")
+        page.wait_for_timeout(1200)
+        g = json.loads(page.evaluate("fetch('/api/factory/" + 'b' * 32 + "').then(r=>r.text())"))
+        r.check('Lautstärke Geräusche 150 %: neu gemischt, Sprache bleibt', g['state'] in ('voicing', 'blocked') and abs(g['mix']['effects_level'] - .975) < 1e-6 and g['mix']['music_mode'] == 'off')
         shot('06_animation', '#p=' + 'c' * 32, wait=3500)
         r.check('Animation: Fortschritt 2 von 12 und Hänger-Hinweis', '2 von 12' in page.locator('#progress-slot').inner_text() and page.locator('.stall').count() == 1)
         r.check('Timer: Projektseite zeigt die Rechenzeit', '12:34' in page.locator('#clock-slot').inner_text())

@@ -5,7 +5,7 @@ from pathlib import Path
 import httpx
 from fastapi import HTTPException,Request
 from fastapi.responses import FileResponse
-from factory_models import Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,SocialPost,CastRedo,CastImage,repair_episode_overview
+from factory_models import MAX_CAST,Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,SocialPost,CastRedo,CastImage,repair_episode_overview
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality
@@ -418,8 +418,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         name=resolve_name(raw_name,[p['name'] for p in required])
                         if name not in [p['name'] for p in required]:
                             required.append({'name':name,'traits':'Figur aus dem Originalskript; dortige Eigenschaften bewahren.','image':None,'voice':None})
-                if len(required)>8:
-                    raise RuntimeError('Im Original und in deiner Liste stehen mehr als acht Figuren: '+', '.join(p['name'] for p in required)+'. Bitte Besetzung auf höchstens acht Figuren begrenzen; niemand wurde stillschweigend entfernt.')
+                if len(required)>MAX_CAST:
+                    raise RuntimeError(f'Im Original und in deiner Liste stehen mehr als {MAX_CAST} Figuren: '+', '.join(p['name'] for p in required)+f'. Bitte Besetzung auf höchstens {MAX_CAST} Figuren begrenzen; niemand wurde stillschweigend entfernt.')
                 if idea['characters']=='provided' and not required:
                     raise RuntimeError('Keine benannten Figuren erkannt. Unter „Wer spielt mit?“ Namen ergänzen.')
             planning_idea={**idea,'participants':required}
@@ -756,7 +756,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild {variant+1}/2';self.save(d)
                     names=scene['cast'];references=[self.stage(path) for path in cast_design.scene_references(refs,names)]
                     prompt=cast_design.scene_prompt(scene,d['plan']['cast'],names,d['plan']['style'])+cast_design.scene_text(scene,d['plan']['cast'])
-                    if scene.get('image_note'):prompt+=' Specific correction: '+cast_design.strip_names(scene['image_note'],[p['name'] for p in d['plan']['cast'] if p['name'] not in names],names,screenplay.figure_aliases(d['plan']['cast']))
+                    note=cast_design.strip_names(scene.get('image_note',''),[p['name'] for p in d['plan']['cast'] if p['name'] not in names],names,screenplay.figure_aliases(d['plan']['cast'])) if scene.get('image_note') else ''
+                    # A new round must look new (the 4-step model barely changes with the seed alone) and
+                    # Cay's newest wish leads the prompt. Image keys carry no prompt: finished images stay.
+                    prompt=cast_design.revision_prompt(prompt,note,image_rounds(scene)[variant],variant,scene.get('note_policy',0))
                     s=await self.render(d,key,build_graph(prompt,references,int(digest(d['id']+key)[:12],16),'',models))
                     scene['variants'].append({'id':s['id'],'key':key});self.save(d)
         if self.apply_pending(d):return
@@ -1166,7 +1169,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     # Older plans: the wish goes into the action, which feeds image and motion.
                     s['action']=(s['action']+' Änderungswunsch: '+body.note)[-1600:];s['animation_prompt']='';s['motion']=[s['action']]
                 # 0.17 shots draw from 'still' and keep their motion; the wish goes to the image prompt.
-                s['image_note']=((s.get('image_note') or '')+' '+body.note).strip()[-1800:]
+                # 0.18: only the newest wish counts (five piled-up wishes contradicted each other).
+                s['image_note']=body.note.strip()[-1800:];s['note_policy']=18
             regenerate(s,[0,1]);d['state']='pictures';d['phase']='Zwei neue Varianten angefordert';self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/cast/approve')
         async def cast_approve(rid:str):

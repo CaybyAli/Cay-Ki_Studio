@@ -3,7 +3,7 @@ import hashlib
 import json
 import re
 from pydantic import Field
-from factory_models import Strict, SeriesPlan
+from factory_models import Strict, SeriesPlan, MAX_CAST
 
 MAX_TEXT = 100_000
 CHUNK = 6000
@@ -70,7 +70,7 @@ class SeriesHeader(Strict):
     style: str = SeriesPlan.model_fields['style']
     visual: SeriesPlan.model_fields['visual'].annotation
     mood: SeriesPlan.model_fields['mood'].annotation
-    cast: SeriesPlan.model_fields['cast'].annotation = Field(max_length=8)
+    cast: SeriesPlan.model_fields['cast'].annotation = Field(max_length=MAX_CAST)
 
 
 NOTE_INSTRUCTION=('Lies den gesamten gelieferten Originalabschnitt. Sichere die verbindlichen Namen, '

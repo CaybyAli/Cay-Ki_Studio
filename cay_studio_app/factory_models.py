@@ -11,6 +11,10 @@ class VoiceRecipe(Strict):
     instruction:str=Field(min_length=10,max_length=2000)
     seed:int=Field(ge=0)
 
+# Figures per project. Was 8; Cay's 6-episode test has 13. Every figure gets its own design and
+# voice and the planner writes all of them into each prompt, so 30 is a safety bound, not a goal.
+MAX_CAST=30
+
 class Participant(Strict):
     name:str=Field(min_length=1,max_length=60)
     traits:str=Field(default='',max_length=1500)
@@ -62,7 +66,7 @@ class Idea(Strict):
     duration:int=Field(default=60,ge=15,le=90)
     look:Literal['auto','film','cartoon','clay','paper']='auto'
     characters:Literal['invent','provided','none']='invent'
-    participants:list[Participant]=Field(default_factory=list,max_length=8)
+    participants:list[Participant]=Field(default_factory=list,max_length=MAX_CAST)
     examples:list[str]=Field(default_factory=list,max_length=4)
     music:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     fps:Literal[25,30]=25
@@ -106,7 +110,7 @@ class SeriesPlan(Strict):
     style:str=Field(min_length=10,max_length=1800)
     visual:Literal['film','cartoon','clay','paper']
     mood:Literal['suspense','playful','gentle','energetic']
-    cast:list[CastPlan]=Field(max_length=8)
+    cast:list[CastPlan]=Field(max_length=MAX_CAST)
     episodes:list[Outline]=Field(min_length=1,max_length=12)
 
 class Choice(Strict):
