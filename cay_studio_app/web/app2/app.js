@@ -200,10 +200,12 @@ async function readScriptFile(file) {
   if (/\.(docx?|odt|rtf|pages)$/i.test(file.name)) return fail('Word-Dateien kann das Studio nicht lesen. Speichere dein Drehbuch dort als .txt („Nur Text“) oder kopiere den Text hier hinein.');
   if (file.size > 400000) return fail('Die Datei ist zu groß. Ein Drehbuch hat bis zu 100.000 Zeichen.');
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (bytes.includes(0)) return fail('Diese Datei ist kein Text. Speichere dein Drehbuch als .txt oder .md und wähle es noch einmal.');
-  let text = new TextDecoder('utf-8').decode(bytes);
+  // Windows Editor saves 'Unicode' as UTF-16 with a byte order mark: zero bytes are normal there.
+  const utf16 = bytes[0] === 0xFF && bytes[1] === 0xFE ? 'utf-16le' : bytes[0] === 0xFE && bytes[1] === 0xFF ? 'utf-16be' : '';
+  if (!utf16 && bytes.includes(0)) return fail('Diese Datei ist kein Text. Speichere dein Drehbuch als .txt oder .md und wähle es noch einmal.');
+  let text = new TextDecoder(utf16 || 'utf-8').decode(bytes);
   // Older Windows editors save ANSI: umlauts would turn into replacement characters.
-  if (text.includes('�')) text = new TextDecoder('windows-1252').decode(bytes);
+  if (!utf16 && text.includes('�')) text = new TextDecoder('windows-1252').decode(bytes);
   text = text.replace(/^﻿/, '');
   if (text.length > 100000) return fail('Das Drehbuch ist zu lang. Bis zu 100.000 Zeichen gehen.');
   S.draft.script = text; saveDraft();

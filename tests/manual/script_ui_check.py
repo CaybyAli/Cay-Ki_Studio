@@ -32,6 +32,9 @@ try:
     ansi.write_bytes('# Die Wüste\n### Szene 1 – Düne – Jörg und Bärbel im Sand\nJÖRG (wütend): Wo ist das Wasser, Bärbel? Ich hab so großen Durst!\n'
                      'BÄRBEL (spöttisch): Im Kühlschrank, Jörg. Der steht leider zu Hause.\nAKTION: Jörg lässt sich rückwärts in den Sand fallen.\n'
                      'JÖRG (flehend): Dann lass uns sofort umdrehen, bitte, bitte, bitte!\n'.encode('cp1252'))
+    utf16 = work / 'Drehbuch_Unicode.txt'                     # Windows Editor 'Unicode': UTF-16 with a byte order mark
+    utf16.write_bytes('# Die Oase\n### Szene 1 – Oase – Jörg am Brunnen\nJÖRG (fröhlich): Wasser, Bärbel! Endlich wieder Wasser für uns beide!\n'
+                      'BÄRBEL (überrascht): Das glaub ich nicht. Ist das wirklich echt, Jörg?\n'.encode('utf-16'))
     pdf = work / 'Drehbuch.pdf'; pdf.write_bytes(b'%PDF-1.4\n%\xe2\xe3\xcf\xd3\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n')
 
     from playwright.sync_api import sync_playwright
@@ -91,6 +94,12 @@ try:
         page.set_input_files('input[data-upload="script"]', str(ansi)); page.wait_for_timeout(1200)
         r.check('Datei (ANSI, Umlaute) übernommen und geprüft', page.input_value('#script').startswith('# Die Wüste') and 'JÖRG (wütend)' in page.input_value('#script')
                 and 'Es spielen Jörg, Bärbel.' in page.locator('#script-check').inner_text() and 'PDF' not in page.locator('#script-check').inner_text())
+
+        page.set_input_files('input[data-upload="script"]', str(utf16)); page.wait_for_timeout(1200)
+        r.check('Datei (UTF-16 „Unicode“ aus dem Windows-Editor) übernommen und geprüft', page.input_value('#script').startswith('# Die Oase')
+                and 'JÖRG (fröhlich): Wasser, Bärbel!' in page.input_value('#script') and 'Es spielen Jörg, Bärbel.' in page.locator('#script-check').inner_text()
+                and 'kein Text' not in page.locator('#script-check').inner_text())
+        page.screenshot(path=str(shots / '03b_utf16_datei_1280_hell.png'))
 
         page.fill('#script', SHORT); page.wait_for_timeout(1200)
         r.check('Zu kurz: blockierender Hinweis', 'mindestens 15 s' in page.locator('#script-check .problems.block').inner_text())
