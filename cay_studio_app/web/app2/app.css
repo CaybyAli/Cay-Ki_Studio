@@ -459,6 +459,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 @media (max-width: 860px) {
   .cover { grid-template-columns: 1fr; gap: 18px; padding: 18px; }
   .cover-variants { max-width: 360px; }
+}
 /* Notifications (0.18): one quiet sheet. "Wann" first, then one block per channel; every block that
    sends data off the PC shows what goes where before anything is switched on. */
 .notify-head { display: grid; gap: 2px; justify-items: start; }

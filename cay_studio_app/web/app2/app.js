@@ -158,10 +158,10 @@ function extrasView() {
         <input class="input" aria-label="Name" placeholder="Name" data-person="${i}" data-key="name" value="${esc(p.name)}" maxlength="60">
         <input class="input" aria-label="Aussehen und Art" placeholder="Aussehen, Alter, Art" data-person="${i}" data-key="traits" value="${esc(p.traits)}" maxlength="1500">
         <div class="person-tools">
-          ${p.library_label ? `<span class="chip accent" title="Bild und Stimme aus deiner Bibliothek">${esc(p.library_label)}</span>` : ''}
+          ${p.library_label ? `<span class="chip accent" title="${p.library_image && p.voice_from_library ? 'Bild und Stimme' : p.library_image ? 'Bild' : 'Stimme'} aus deiner Bibliothek">${esc(p.library_label)}</span>` : ''}
           ${p.voice ? `<span class="voice-note"><button type="button" class="play" data-action="play" data-src="/api/factory/assets/${esc(p.voice)}" aria-label="Stimme von ${esc(p.name || 'Figur')} anhören">${PLAY}</button>${p.library_id && p.voice_from_library ? 'Stimme aus deinen Figuren' : 'Eigene Stimme'}</span>` : ''}
           <label class="file-pill">${p.voice ? 'Andere Aufnahme' : 'Eigene Stimme (optional)'}<input type="file" accept="audio/*" data-upload="voice" data-index="${i}"></label>
-          ${p.image && !(p.library_id && p.image_mode === 'exact') ? `<label class="switch compact"><input type="checkbox" data-person-exact="${i}" ${p.image_mode === 'exact' ? 'checked' : ''}><span>Gesichtsausdruck aus dem Bild übernehmen</span></label>` : ''}
+          ${p.image && !(p.library_image && p.image_mode === 'exact') ? `<label class="switch compact"><input type="checkbox" data-person-exact="${i}" ${p.image_mode === 'exact' ? 'checked' : ''}><span>Gesichtsausdruck aus dem Bild übernehmen</span></label>` : ''}
         </div>
       </div>
       <button class="icon-remove" data-action="remove-person" data-index="${i}" aria-label="Figur entfernen">×</button></div>`).join('');
@@ -613,9 +613,12 @@ function paintProgress() {
   const stuck = a && p.last_progress && Date.now() / 1000 - p.last_progress > 600 && d.state === 'rendering';
   const g = p.gpu || {};
   const eta = p.eta ? `${duration(p.eta.low)} bis ${duration(p.eta.high)}` : '–';
+  // Without an estimate say why: paused, animation finished (export running) or too few sections yet.
+  const why = d.paused ? 'Pausiert, Restzeit nach dem Fortsetzen' : d.state === 'finishing' || (p.total && p.done >= p.total)
+    ? 'Animation fertig, der Film wird zusammengesetzt' : p.eta_note || 'Restzeit folgt nach den ersten fertigen Abschnitten';
   slot.innerHTML = `<div class="facts">
       <div class="fact"><strong>${p.done} von ${p.total}</strong><span>Abschnitte animiert</span></div>
-      <div class="fact"><strong>${esc(eta)}</strong><span>${p.eta ? (p.eta.source === 'history' ? 'Restzeit Animation, geschätzt aus früheren Filmen' : 'Restzeit Animation') : esc(p.eta_note || 'Restzeit folgt nach den ersten fertigen Abschnitten')}</span></div>
+      <div class="fact"><strong>${esc(eta)}</strong><span>${p.eta ? (p.eta.source === 'history' ? 'Restzeit Animation, geschätzt aus früheren Filmen' : 'Restzeit Animation') : esc(why)}</span></div>
       <div class="fact"><strong>${g.utilization == null ? '–' : esc(g.utilization) + ' %'}</strong><span>Grafikkarte ausgelastet</span></div>
     </div>
     <progress class="meter" max="${Math.max(1, p.total)}" value="${p.done}" aria-label="Gesamtfortschritt"></progress>
@@ -1293,7 +1296,8 @@ document.addEventListener('change', async event => {
         else {
           // Cay's own file replaces the library's for this part; the profile chip stays for the other part.
           const person = S.draft.participants[+el.dataset.index]; person[kind] = id;
-          if (kind === 'image') { person.library_image = null; person.image_look = null; }
+          // A new own picture starts like every upload: drawn once with a neutral face (switch below).
+          if (kind === 'image') { person.library_image = null; person.image_look = null; person.image_mode = 'neutral'; }
           if (kind === 'voice') { person.library_voice = null; person.voice_from_library = false; person.voice_design = null; person.voice_text = ''; }
           if (!person.library_image && !person.voice_from_library) { person.library_id = null; person.library_label = ''; }
         }
