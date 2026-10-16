@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from factory_models import MAX_CAST,Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,SocialPost,CastRedo,CastImage,repair_episode_overview
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
-from factory_quality import Quality
+from factory_quality import Quality,sample_signature
 from figure_library import drop_library_voice
 from factory_post import PostProduction
 from autopilot import Autopilot
@@ -791,7 +791,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if speakers and (len(scene['cast'])!=1 or len(speakers)!=1):raise RuntimeError(f'Folge {ei+1}, Szene {si+1}: Mehrere sichtbare Figuren brauchen eine eindeutige Sprecherzuordnung. Für diese ältere Fassung Gegenansichten planen oder unter Qualität bewusst Off-Kommentar wählen. Keine falsche Mundzuordnung gerendert.')
         from wan_text_encoder import validate_selected
         validate_selected(self.comfy,models['clip'])
-        sample_key=digest([options,d.get('audio_revision'),[[sc.get('selected') for sc in ep['scenes']] for ep in d['episodes']]])
+        sample_key=sample_signature(d,options)
         if self.autopilot_on(d):d['sample_approval']=sample_key
         episode_order=list(enumerate(d['episodes']))
         if d.get('sample_approval')!=sample_key:

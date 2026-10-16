@@ -13,6 +13,9 @@ from factory_speech import ready as speech_ready
 from factory_timing import POLICY,audio_layout,off_screen,allowed_speakers
 from studio_quality_policy import settings
 from lipsync_shots import silent_by_accident,MISSING_MARK
+def sample_signature(d,options):
+    # Key of the production sample Cay approves: quality options, sound version and chosen images.
+    return hashlib.sha256(json.dumps([options,d.get('audio_revision'),[[sc.get('selected') for sc in ep['scenes']] for ep in d['episodes']]],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
 class Quality:
     def init_quality(self):self.setup_task=None;self.setup_process=None;self.setup_status={'state':'missing','message':'Stimmenstudio noch nicht eingerichtet.'}
     def voice_ready(self):return all(p.is_file() for p in [self.base/'envs/studio-voices/bereit.json',self.base/'envs/studio-voices/bin/python',self.base/'models/studio-voices/VoiceDesign/config.json'])
@@ -94,7 +97,11 @@ class Quality:
         # a 0.17 one keeps 17. Only a project without any sound version gets the 0.18 cut (layout 18:
         # reaction and establishing shots, longer silent action); factory_audio.layout knows 16/17 only.
         version=d.setdefault('timing_layout',18 if not d.get('timing') else 16 if not any(t.get('layout') or 'silent_shots' in t for t in d['timing']) else 17)
+        # Only the volume or the music changed (same lines): an approved production sample still holds
+        # if the timing is the same, so a remix of a finished film does not stop at the sample again.
+        carry=audio_only and d.get('sample_approval') and d['sample_approval']==sample_signature(d,options);before=d.get('timing')
         d['timing']=(audio_layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version=version) if version>=18 else layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version));d['timing_policy']=POLICY;d['timing_fps']=options['fps'];d['audio_revision']=d.get('audio_revision',0)+1;d['previews']=[];music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
+        if carry and d['timing']==before:d['sample_approval']=sample_signature(d,options)
         for ei,ep in enumerate(d['episodes']):
             if self.paused(d['id']):return
             d['phase']=f'Folge {ei+1}: Dialog, Musik und Geräusche mischen';self.save(d);scenes=[{'seconds':s['render_seconds'],'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],'ambience':s.get('ambience','room'),'sound_cues':s.get('sound_cues',[]),**kind} for si,(s,kind) in enumerate(zip(ep['scenes'],scene_kinds(d,ep['scenes'])))];folder=self.folder(d)/'03_Stimmen'/f'Mischung_{d["audio_revision"]:03}'/f'Folge_{ei+1:02}'
