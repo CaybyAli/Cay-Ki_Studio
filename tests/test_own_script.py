@@ -327,3 +327,187 @@ def test_the_template_is_a_valid_script():
     assert all(15 <= e['seconds'] <= 90 for e in r['episodes'])
     # The hints at the top are not filmed.
     assert 'Sprechhaltung' not in r['preview'] and 'NAME' not in r['preview']
+
+
+# Real-world spellings (Markdown, ChatGPT, Word paste): every spoken word stays, or a hint with the line says why not.
+def said(r):
+    names = [f['name'] for f in r['figures']]
+    return [(l['speaker'], l['text']) for ep in r['episodes'] for l in parsed(ep['text'], names)[2] if l['kind'] == 'line']
+
+
+def notes(r): return [p['text'] for p in r['problems']]
+
+
+def test_emphasis_and_list_marks_around_names_and_directions_keep_the_line():
+    r = own_script.read('''# Der Kuchenklau
+### Szene 1 – Küche – Oma vor dem leeren Teller
+OMA *(schreit)*: Wer hat meinen Kuchen gegessen? Ich zähle jetzt bis drei!
+TIM _(zuckt zusammen)_: Ich war's nicht, Oma!
+*OMA*: Ach ja? Und was ist das da an deinem Mund?
+_TIM_: Das ist Zahnpasta!
+*OMA:* Zahnpasta mit Schokostreuseln.
+1. TIM: Okay… vielleicht ein kleines Stück.
+**Opa:** *(lachend)* Lass ihn, Hilde. Ich hab die Hälfte gegessen.
+*OMA: Du auch?!*
+''')
+    assert said(r) == [('Oma', 'Wer hat meinen Kuchen gegessen? Ich zähle jetzt bis drei!'), ('Tim', "Ich war's nicht, Oma!"),
+                       ('Oma', 'Ach ja? Und was ist das da an deinem Mund?'), ('Tim', 'Das ist Zahnpasta!'), ('Oma', 'Zahnpasta mit Schokostreuseln.'),
+                       ('Tim', 'Okay… vielleicht ein kleines Stück.'), ('Opa', 'Lass ihn, Hilde. Ich hab die Hälfte gegessen.'), ('Oma', 'Du auch?!')]
+    text = r['episodes'][0]['text']
+    assert '*' not in text and '_' not in text and 'AKTION' not in text
+    assert 'Oma [schreiend]: Wer hat' in text and 'Opa [fröhlich]: Lass ihn' in text
+
+
+def test_role_names_speak_and_group_or_prose_labels_are_reported():
+    r = own_script.read('''# Das Paket
+### Szene 1 – Haustür – Oma öffnet die Tür
+Oma: Wer klingelt denn um diese Uhrzeit noch an meiner Tür, bitte schön?
+Der Postbote: Ein Paket für Sie, Frau Berger! Bitte hier unterschreiben.
+Oma: Ein Paket? Ich habe doch gar nichts bestellt, junger Mann.
+Die Nachbarin: Das ist meins! Das hab ich zu Ihnen liefern lassen.
+Alle: Schönen Abend noch!
+Ein Kind: Ist da Schokolade drin?
+Tim & Opa: Sorry, Oma!
+Plötzlich: Das Licht geht aus.
+''')
+    assert said(r) == [('Oma', 'Wer klingelt denn um diese Uhrzeit noch an meiner Tür, bitte schön?'),
+                       ('Der Postbote', 'Ein Paket für Sie, Frau Berger! Bitte hier unterschreiben.'),
+                       ('Oma', 'Ein Paket? Ich habe doch gar nichts bestellt, junger Mann.'),
+                       ('Die Nachbarin', 'Das ist meins! Das hab ich zu Ihnen liefern lassen.'), ('Ein Kind', 'Ist da Schokolade drin?')]
+    assert [f['name'] for f in r['figures']] == ['Oma', 'Der Postbote', 'Die Nachbarin', 'Ein Kind']
+    found = notes(r)
+    assert 'Zeile 7: „Alle: Schönen Abend noch!“ wird nicht gesprochen, sondern als stumme Handlung gezeigt. Im Film sagt jeden Satz genau eine Figur: ' \
+           'schreib einen Namen davor, zum Beispiel „NAME: …“.' in found
+    assert any(t.startswith('Zeile 9: „Tim & Opa: Sorry, Oma!“ wird nicht gesprochen') and '„TIM: …“' in t for t in found)
+    assert any(t.startswith('Zeile 10: „Plötzlich: Das Licht geht aus.“ wird nicht gesprochen') and '„PLÖTZLICH: …“' in t for t in found)
+    assert 'Zeile 4: „Der Postbote“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.' in found
+
+
+def test_a_notes_heading_inside_a_scene_ends_at_the_next_spoken_line():
+    r = own_script.read('''# Der Kuchenklau
+### Szene 1 – Küche – Oma vor dem leeren Teller
+OMA (wütend): Wer hat meinen Kuchen gegessen? Ich zähle jetzt bis drei!
+TIM (ängstlich): Ich war's nicht, Oma! Ehrlich nicht, ich schwöre es dir!
+
+#### Hinweis
+Ab hier soll es richtig lustig werden.
+
+OMA: Dein Mund ist voller Krümel, und du lügst mich einfach so an!
+TIM: Okay, okay. Es war vielleicht ein ganz kleines Stück vom Kuchen.
+''')
+    assert [t for _, t in said(r)][2:] == ['Dein Mund ist voller Krümel, und du lügst mich einfach so an!',
+                                           'Okay, okay. Es war vielleicht ein ganz kleines Stück vom Kuchen.']
+    assert 'Zeile 6–7: Abschnitt „Hinweis“ wird nicht verfilmt. Danach geht das Drehbuch weiter.' in notes(r)
+    assert 'lustig' not in r['preview']
+
+
+def test_metadata_lines_are_no_figures():
+    r = own_script.read('''# 🎬 Der Kuchenklau
+Genre: Komödie
+Dauer: ca. 40 Sekunden
+Stil: Knetanimation
+**Länge:** ca. 45 Sekunden
+**Figuren:** Oma Hilde, Tim (9)
+Produktion: Cay
+
+### Szene 1 – Küche – Oma vor dem leeren Teller
+OMA HILDE (wütend): Wer hat meinen Kuchen gegessen? Ich zähle jetzt bis drei!
+TIM (ängstlich): Ich war's nicht, Oma! Ehrlich nicht, ich schwöre es dir!
+OMA HILDE: Dein Mund ist voller Krümel, und du lügst mich einfach so an!
+TIM: Okay, okay. Es war vielleicht ein ganz kleines Stück vom Kuchen.
+''')
+    assert [(f['name'], f['description']) for f in r['figures']] == [('Oma Hilde', ''), ('Tim', '9'), ('Produktion', '')]
+    found = notes(r)
+    assert 'Zeile 2: „Genre: Komödie“ wird nicht verfilmt.' in found and 'Zeile 5: „Länge: ca. 45 Sekunden“ wird nicht verfilmt.' in found
+    assert 'Zeile 7: „Produktion“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.' in found
+    assert 'Komödie' not in r['preview'] and 'Sekunden' not in r['preview']
+
+
+def test_a_screenplay_pasted_from_word_without_blank_lines_keeps_each_speaker():
+    r = own_script.read('''Titel: Der Tresor
+
+INNEN. BÄCKEREI – NACHT
+MAX
+(flüsternd)
+Pssst! Hier drüben ist der Tresor.
+LENA
+Ich mach doch gar nichts!
+Lena stolpert über einen Mehlsack.
+MAX
+Lena! Das ganze Mehl! Jetzt sieht uns jeder, wenn wir hier rausgehen.
+LENA
+Dann putzen wir eben alles weg, bevor der Bäcker morgen früh kommt.
+''')
+    assert said(r) == [('Max', 'Pssst! Hier drüben ist der Tresor.'), ('Lena', 'Ich mach doch gar nichts!'),
+                       ('Max', 'Lena! Das ganze Mehl! Jetzt sieht uns jeder, wenn wir hier rausgehen.'),
+                       ('Lena', 'Dann putzen wir eben alles weg, bevor der Bäcker morgen früh kommt.')]
+    lines = parsed(r['episodes'][0]['text'], ['Max', 'Lena'])[2]
+    assert [l['text'] for l in lines if l['kind'] == 'action'] == ['Lena stolpert über einen Mehlsack.'] and lines[0]['emotion'] == 'flüsternd'
+    assert any(t.startswith('Zeile 9: „Lena stolpert über einen Mehlsack.“ ist eine stumme Handlung, kein Satz von Lena.') for t in notes(r))
+    # With blank lines a speech may run over several rows; the studio says which rows it joins.
+    joined = own_script.read('### Szene 1 – Küche\nTIM\nHallo Oma.\nTim versteckt die Hände.\n\nOMA\nZeig mal her, mein Freund!')
+    assert said(joined)[0] == ('Tim', 'Hallo Oma. Tim versteckt die Hände.')
+    assert any(t.startswith('Zeile 3–4: Tim spricht diese Zeilen in einem Stück.') for t in notes(joined))
+
+
+def test_rules_time_marks_and_emoji_headings_invent_no_shots():
+    r = own_script.read('''**Titel: Der Kuchenklau**
+
+---
+
+## 🎥 Szene 1: Küche
+**[0:00–0:05] Hook**
+OMA HILDE *(schreit)*: WER HAT MEINEN KUCHEN GEGESSEN?!
+**[0:05–0:12]**
+TIM: Ich war's nicht, Oma! Ehrlich nicht, ich schwöre es dir, wirklich!
+(0:12) OMA HILDE: Ach ja? Und was ist das da an deinem Mund, hm?
+
+* * *
+
+## 🎥 Szene 2: Flur
+TIM: Das ist Zahnpasta! Ganz normale Zahnpasta, Oma, ganz ehrlich!
+**Outro / CTA:** Folgt für Teil 2!
+''')
+    title, beats, lines = parsed(r['episodes'][0]['text'], ['Oma Hilde', 'Tim'])
+    assert [b['place'] for b in beats] == ['Küche', 'Flur'] and not [l for l in lines if l['kind'] == 'action']
+    assert [t for _, t in said(r)] == ['WER HAT MEINEN KUCHEN GEGESSEN?!', "Ich war's nicht, Oma! Ehrlich nicht, ich schwöre es dir, wirklich!",
+                                       'Ach ja? Und was ist das da an deinem Mund, hm?', 'Das ist Zahnpasta! Ganz normale Zahnpasta, Oma, ganz ehrlich!']
+    found = notes(r)
+    assert 'Zeile 6: Zeitangaben wie „[0:00–0:05]“ setzt das Studio selbst, sie werden übersprungen.' in found
+    assert 'Zeile 16: „Outro / CTA: Folgt für Teil 2!“ wird nicht verfilmt.' in found and not any('Kein Ort' in t or 'Überschrift' in t for t in found)
+
+
+def test_a_figure_list_ends_where_the_dialogue_starts():
+    r = own_script.read('''# Der Kuchenklau
+
+## Figuren
+- Oma: 72 Jahre, Schürze, streng
+- Tim: 9 Jahre, rote Kappe, frech
+
+Küche, Oma steht vor dem leeren Teller.
+
+OMA (wütend): Wer hat meinen Kuchen gegessen? Ich zähle jetzt bis drei!
+TIM (ängstlich): Ich war's nicht, Oma! Ehrlich nicht, ich schwöre es dir!
+MAMA (genervt): Was ist denn hier schon wieder los? Man hört euch bis in den Keller!
+OMA: Dein Sohn hat meinen ganzen Kuchen aufgegessen, und er lügt mich an!
+''')
+    assert [(f['name'], f['description'], f['lines']) for f in r['figures']] == [
+        ('Oma', '72 Jahre, Schürze, streng', 2), ('Tim', '9 Jahre, rote Kappe, frech', 1), ('Mama', '', 1)]
+    assert r['ok'] and len(said(r)) == 4 and 'Küche, Oma steht' in r['episodes'][0]['plot']
+    # Without a blank line, a spoken line with a mood or a question still ends the list.
+    tight = own_script.read('## Figuren\nOma: 72 Jahre, streng\nTim: 9 Jahre, frech\nOMA: Wer hat meinen Kuchen gegessen?\nTIM (ängstlich): Ich nicht!')
+    assert said(tight) == [('Oma', 'Wer hat meinen Kuchen gegessen?'), ('Tim', 'Ich nicht!')] and tight['figures'][0]['description'] == '72 Jahre, streng'
+
+
+def test_quotes_around_part_of_a_line_go_in_pairs():
+    r = own_script.read('''### Szene 1 – Küche – Oma vor dem leeren Teller
+OMA (wütend): „Wer hat meinen Kuchen gegessen?“ Ich zähl bis drei!
+TIM: Okay… vielleicht ein kleines Stück. Er sagte „Nein“
+TIM: (leise) „Opa war es.“ Er hatte Hunger!
+OMA: »Im Bad. Mit Sahne an der Nase?«
+''')
+    assert [t for _, t in said(r)] == ['Wer hat meinen Kuchen gegessen? Ich zähl bis drei!', 'Okay… vielleicht ein kleines Stück. Er sagte Nein',
+                                       'Opa war es. Er hatte Hunger!', 'Im Bad. Mit Sahne an der Nase?']
+    # Prose with words in quotes is shown, not spoken: the studio says so.
+    prose = own_script.read('### Szene 1 – Küche\nOMA: Hallo Tim, schön dich zu sehen heute.\n„Wo ist der Kuchen?“, fragt Tim leise.')
+    assert any(t.startswith('Zeile 3: „„Wo ist der Kuchen?“, fragt Tim leise.“ wird nicht gesprochen') for t in notes(prose))
