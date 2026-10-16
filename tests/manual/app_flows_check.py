@@ -182,6 +182,24 @@ try:
         r.check(f'Tastatur: Bild und Aufnahme einer neuen Figur erreichbar ({found})', {'lib-image', 'lib-voice'} <= set(found) and all(x == 'solid' for x in ring))
         page.click('#sheet [data-action="close"]')
 
+        # 8. Delete a project: asks first, goes to the trash, stays findable and can be restored.
+        page.goto(studio.url + '/#p=' + voices); page.wait_for_selector('[data-action="delete-project"]')
+        asked = []
+        page.once('dialog', lambda dlg: (asked.append(dlg.message), dlg.accept()))
+        page.click('[data-action="delete-project"]'); page.wait_for_selector('.tile', timeout=10000); page.wait_for_timeout(600)
+        r.check('Löschen fragt zuerst und legt das Projekt in den Papierkorb', asked and 'Papierkorb' in asked[0] and doc(voices)['deleted']
+                and page.locator('.tile', has_text='Stimmprobe').count() == 0)
+        page.screenshot(path=str(shots / '08_papierkorb.png'), full_page=True)
+        page.click(f'.project-foot a[href="#p={voices}"]'); page.wait_for_selector('[data-action="restore"]', timeout=10000)
+        r.check('Papierkorb: Projekt über „Projekte“ erreichbar, ohne Löschlink', page.locator('[data-action="delete-project"]').count() == 0)
+        page.click('[data-action="restore"]'); page.wait_for_timeout(1200)
+        r.check('Wiederherstellen: Projekt wieder da', not doc(voices)['deleted'])
+        page.goto(studio.url + '/#p=' + lines); page.wait_for_selector('.steps')
+        db.execute("UPDATE factory_control SET paused=0 WHERE id=?", (lines,)); db.execute("UPDATE factory_runs SET state='rendering', document=json_set(document,'$.state','rendering') WHERE id=?", (lines,)); db.commit()
+        page.reload(); page.wait_for_selector('.steps'); page.wait_for_timeout(500)
+        r.check('Während gerechnet wird, kein Löschlink', page.locator('[data-action="delete-project"]').count() == 0)
+        db.execute("UPDATE factory_control SET paused=1 WHERE id=?", (lines,)); db.commit()
+
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
 finally:

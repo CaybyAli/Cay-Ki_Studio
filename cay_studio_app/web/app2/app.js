@@ -290,7 +290,9 @@ function tickClocks() {
 function projectsView() {
   if (!S.runs) return '<p class="muted">Projekte werden geladen …</p>';
   const head = `<div class="page-head"><h1 class="title">Projekte</h1><a class="button" href="#new">Neuer Film</a></div>`;
-  if (!S.runs.length) return head + `<div class="empty"><h2 class="headline">Noch kein Projekt.</h2><p class="muted">Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.</p><a class="button" href="#new">Ersten Film starten</a></div>`;
+  // Projects in the trash stay reachable: their page has 'Wiederherstellen'.
+  const trash = (S.trash || []).length ? `<p class="small muted project-foot">Im Papierkorb: ${S.trash.map(t => `<a href="#p=${esc(t.id)}">${esc(t.title)}</a>`).join(', ')}</p>` : '';
+  if (!S.runs.length) return head + `<div class="empty"><h2 class="headline">Noch kein Projekt.</h2><p class="muted">Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.</p><a class="button" href="#new">Ersten Film starten</a></div>` + trash;
   const order = { you: 0, stop: 1, run: 2, '': 3, done: 4 };
   const runs = [...S.runs].sort((a, b) => order[status(a)[0]] - order[status(b)[0]] || String(b.updated).localeCompare(String(a.updated)));
   return head + `<div class="grid">${runs.map(r => {
@@ -298,7 +300,7 @@ function projectsView() {
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     const badge = r.episodes > 1 ? `<span class="frame-badge">${r.finished}/${r.episodes} Folgen</span>` : '';
     return `<a class="tile" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span><span class="status ${cls}">${esc(label)}</span>${clockTag(r.clock, r.state === 'done')}</a>`;
-  }).join('')}</div>`;
+  }).join('')}</div>` + trash;
 }
 async function refreshRuns() {
   const list = await api('/api/factory');
@@ -312,8 +314,9 @@ async function refreshRuns() {
     r.waiting = !!(doc && ((doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state) || (doc.sound_edit && doc.state === 'voice_review')));
     r.deleted = false;
   }));
-  const changed = JSON.stringify(list.runs) !== JSON.stringify(S.runs);
-  S.runs = list.runs;
+  const trash = (await api('/api/factory/trash').catch(() => ({ runs: S.trash || [] }))).runs.map(t => ({ id: t.id, title: t.title }));
+  const changed = JSON.stringify([list.runs, trash]) !== JSON.stringify([S.runs, S.trash]);
+  S.runs = list.runs; S.trash = trash;
   if (changed && S.page === 'projects' && !busyUI()) render();
 }
 
@@ -337,7 +340,8 @@ function projectView() {
       ${stepsView(d)}
     </div>
     ${nextView(d)}
-    ${sectionsView(d)}`;
+    ${sectionsView(d)}
+    ${!d.deleted && (!WORKING.has(d.state) || d.paused) ? '<div class="project-foot"><button class="link" data-action="delete-project">In den Papierkorb</button></div>' : ''}`;
 }
 function autopilotSwitch(d) {
   return `<label class="switch"><input type="checkbox" data-action="autopilot" ${d.idea.autopilot ? 'checked' : ''}><span>Autopilot${d.idea.autopilot ? ': ohne Zwischenstopps' : ''}</span></label>`;
@@ -1096,6 +1100,10 @@ const actions = {
   async pause() { await post(`/api/factory/${S.rid}/pause`); toast('Pausiert, sobald der aktuelle Schritt fertig ist.'); },
   async resume() { await post(`/api/factory/${S.rid}/resume`); toast('Geht weiter.'); },
   async restore() { await post(`/api/factory/${S.rid}/restore`); toast('Wiederhergestellt. Mit „Fortsetzen“ geht es weiter.'); },
+  async 'delete-project'() {
+    if (!confirm(`„${S.run.title}“ in den Papierkorb legen? Die Dateien bleiben erhalten. Unter „Projekte“ kannst du es wiederherstellen.`)) return;
+    await post(`/api/factory/${S.rid}/delete`); toast('In den Papierkorb gelegt.'); location.hash = 'projects';
+  },
   async autopilot(b) { await post(`/api/factory/${S.rid}/autopilot`, { enabled: b.checked }); toast(b.checked ? 'Autopilot an: der Rest läuft ohne Zwischenstopps.' : 'Autopilot aus.'); },
   async 'abort-step'() { if (confirm('Aktuellen Abschnitt abbrechen und pausieren? Fertige Abschnitte bleiben erhalten.')) { await post(`/api/factory/${S.rid}/abort-step`, { fast: false }); toast('Abgebrochen und pausiert.'); } },
   async 'abort-fast'() { if (confirm('Abschnitt neu starten? Fertige Bilder, Stimmen und Abschnitte bleiben erhalten.')) { await post(`/api/factory/${S.rid}/abort-step`, { fast: true }); toast('Der Abschnitt wird neu gerechnet.'); } },
