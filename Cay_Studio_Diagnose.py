@@ -256,6 +256,48 @@ def pc_team():
     print('Empfehlung:', ' '.join(advice) or 'Keine Auffälligkeit in den gelesenen Werten.')
 
 
+def notify_settings():
+    try:
+        data = json.loads((RUNTIME / 'config/benachrichtigungen.json').read_text(encoding='utf-8'))
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def cleaner():
+    """Removes the notification secrets (bot token, ntfy topic) from any text this report prints."""
+    data = notify_settings()
+    part = lambda name: data.get(name) if isinstance(data.get(name), dict) else {}
+    hidden = [str(x) for x in (part('telegram').get('token'), part('ntfy').get('topic')) if x]
+
+    def clean(text):
+        text = str(text or '')
+        for value in hidden: text = text.replace(value, '[entfernt]')
+        return re.sub(r'cay-studio-[a-z0-9]{24}', '[Thema]', re.sub(r'\d{5,15}:[A-Za-z0-9_-]{20,80}', '[entfernt]', text))
+    return clean
+
+
+def notifications(db=None):
+    """Notifications: only whether and how they are connected. Never the bot token or the ntfy topic
+    (both are secrets in config/benachrichtigungen.json); error texts are cleaned of them, too."""
+    data = notify_settings(); clean = cleaner()
+    telegram = data.get('telegram') if isinstance(data.get('telegram'), dict) else {}
+    ntfy = data.get('ntfy') if isinstance(data.get('ntfy'), dict) else {}
+    state = ['Telegram ' + ('verbunden' if telegram.get('token') and telegram.get('chat') else 'Schlüssel ohne Chat' if telegram.get('token') else 'aus'),
+             'ntfy ' + ('an' if ntfy.get('topic') else 'aus')]
+    events = data.get('events') if isinstance(data.get('events'), dict) else {}
+    names = {'done': 'Fertig', 'turn': 'Du bist dran', 'blocked': 'Angehalten'}
+    print('Benachrichtigungen:', ', '.join(state), '| Ereignisse:', ', '.join(n for k, n in names.items() if events.get(k, True)) or 'keine')
+    if db is None: return
+    try:
+        counts = db.execute('SELECT channel,status,COUNT(*) AS n FROM notify_outbox GROUP BY channel,status ORDER BY channel,status').fetchall()
+        if counts: print('   Nachrichten:', ', '.join(f'{r["channel"]} {r["status"]} {r["n"]}' for r in counts))
+        for r in db.execute('SELECT channel,ok,at,detail FROM notify_status ORDER BY channel').fetchall():
+            print(f'   Zuletzt {r["channel"]}: {"ok" if r["ok"] else "Fehler"} {r["at"]} {clean(r["detail"])[:200]}')
+    except sqlite3.Error:
+        pass
+
+
 def main():
     print('CAY STUDIO DIAGNOSE (liest nur, ändert nichts)')
     print('Dashboard:', health())
@@ -275,6 +317,7 @@ def main():
     except (OSError, subprocess.SubprocessError) as error: print('GPU jetzt: nicht lesbar', error)
     db = sqlite3.connect(f'file:{RUNTIME / "data/cay_studio.sqlite3"}?mode=ro', uri=True); db.row_factory = sqlite3.Row
     pc_team()
+    notifications(db)
     rows = db.execute('SELECT * FROM factory_runs ORDER BY updated DESC LIMIT 3').fetchall()
     for row in rows: project(row, root, db)
     for name, count in (('dashboard.log', 25), ('comfyui.log', 40)):
@@ -282,7 +325,7 @@ def main():
         if log.is_file():
             with log.open('rb') as stream:
                 stream.seek(max(0, log.stat().st_size - 60000)); text = stream.read().decode(errors='replace')
-            print(f'\nLetzte Meldungen {name}:'); print('\n'.join(text.splitlines()[-count:]))
+            print(f'\nLetzte Meldungen {name}:'); print(cleaner()('\n'.join(text.splitlines()[-count:])))
 
 
 if __name__ == '__main__':

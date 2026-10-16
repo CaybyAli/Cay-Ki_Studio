@@ -21,6 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from images import Images
 from factory import Factory
+from notify import Notifier
 from studio_resources import Resources
 from production import ProductionRequest, Storyboard, issues_for, prompt_for, technical_profile, fit_scene_durations
 
@@ -390,9 +391,10 @@ async def lifespan(app):
     resources.init()
     images.init()
     factory.init()
+    notifier.init()
     remix.init()
     await asyncio.to_thread(scan_media)
-    monitors = [asyncio.create_task(status_loop()), asyncio.create_task(chat_worker()), asyncio.create_task(images.worker()), asyncio.create_task(factory.worker()),asyncio.create_task(factory.progress.listen()),asyncio.create_task(factory.post_worker()),asyncio.create_task(remix.worker())]
+    monitors = [asyncio.create_task(status_loop()), asyncio.create_task(chat_worker()), asyncio.create_task(images.worker()), asyncio.create_task(factory.worker()),asyncio.create_task(factory.progress.listen()),asyncio.create_task(factory.post_worker()),asyncio.create_task(remix.worker()),asyncio.create_task(notifier.worker())]
     yield
     STOPPING = True
     if ACTIVE_TASK: ACTIVE_TASK.cancel()
@@ -841,6 +843,10 @@ def expert():
 
 factory = Factory(globals())
 factory.routes(app)
+
+# Opt-in notifications (Telegram, ntfy, browser); off until Cay switches a channel on.
+notifier = Notifier(globals())
+notifier.routes(app)
 
 from remix import Remix
 remix = Remix(globals())
