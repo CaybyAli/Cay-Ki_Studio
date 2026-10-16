@@ -177,7 +177,7 @@ function extrasView() {
     <section class="group"><h3 class="group-title">Titel und Musik</h3>
       <label class="field"><span>Titel (optional)</span><input class="input" data-field="title" value="${esc(d.title)}" maxlength="100" placeholder="Wird sonst aus der Idee gebildet"></label>
       <div class="field cover-choice"><span>Titelbild</span>${seg('cover', COVER_CHOICES, d.cover || 'start')}<p class="hint" id="cover-hint">${esc(coverHint(d.cover))}</p></div>
-      <label class="file-pill ${d.music ? 'set' : ''}">${d.music ? 'Eigene Musik gewählt' : 'Eigene Musik hochladen'}<input type="file" accept="audio/*" data-upload="music"></label>
+      <div class="actions">${d.music ? `<span class="voice-note"><button type="button" class="play" data-action="play" data-src="/api/factory/assets/${esc(d.music)}" aria-label="Eigene Musik anhören">${PLAY}</button>Eigene Musik</span>` : ''}<label class="file-pill">${d.music ? 'Andere Musik' : 'Eigene Musik hochladen'}<input type="file" accept="audio/*" data-upload="music"></label>${d.music ? '<button type="button" class="button quiet small" data-action="remove-music">Musik entfernen</button>' : ''}</div>
       <p class="hint">Ohne eigene Musik bleibt die Musik aus.</p></section>`;
 }
 /* Title card (0.18): key art with the film's title as one second of the film. */
@@ -1039,6 +1039,7 @@ const actions = {
   'add-person'() { S.draft.participants.push({ name: '', traits: '', image: null, voice: null }); saveDraft(); refreshExtras(); },
   'remove-person'(b) { S.draft.participants.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
   'remove-example'(b) { S.draft.examples.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
+  'remove-music'() { S.draft.music = null; saveDraft(); refreshExtras(); },
   theme() {
     const root = document.documentElement, dark = (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
     root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cay-theme', root.dataset.theme); } catch (e) { /* ignore */ }
@@ -1301,6 +1302,7 @@ document.addEventListener('change', async event => {
   }
   if (el.matches('[data-upload]')) {
     const kind = el.dataset.upload, files = [...el.files];
+    if (!files.length) return;   // a change without a file must not clear the choice
     await guarded(el, async () => {
       if (kind === 'cast-voice') {
         const id = await upload('voice', files[0]);

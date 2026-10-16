@@ -151,6 +151,17 @@ try:
         m = markus()
         r.check('Neue Stimme, anderer Typ: Typ übernommen, alte Beschreibung weg', m['voice_preset'] == 'grandpa' and m.get('voice_description') == '' and m.get('voice_variant') == 2)
 
+        # 6. New film: own music can be listened to and removed again (also after a reload).
+        wav = media(work / 'musik.wav', 'wav', 4)['file']
+        page.goto(studio.url + '/#new'); page.wait_for_selector('#idea'); page.click('details.more summary')
+        page.set_input_files('input[data-upload="music"]', wav); page.wait_for_selector('[data-action="remove-music"]', timeout=15000)
+        page.reload(); page.wait_for_selector('#idea'); page.click('details.more summary')
+        r.check('Eigene Musik: nach dem Neuladen mit Anhören und Entfernen', page.locator('[data-action="remove-music"]').count() == 1
+                and page.locator('[aria-label="Eigene Musik anhören"]').count() == 1)
+        page.click('[data-action="remove-music"]'); page.wait_for_timeout(300)
+        r.check('Musik entfernt: Entwurf ohne Musik, Hochladen wieder angeboten', page.evaluate("JSON.parse(localStorage.getItem('cay-draft')).music") is None
+                and 'Eigene Musik hochladen' in page.locator('details.more').inner_text() and page.locator('details.more').get_attribute('open') is not None)
+
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
 finally:
