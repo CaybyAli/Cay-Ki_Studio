@@ -105,6 +105,20 @@ try:
         r.check(f'Alte Einzelzeile: Entfernen leert die Szene ({rows()})', rows() == [])
         page.click('#sheet [data-action="close"]')
 
+        # 3. Limits and empty names are said in German before anything is sent.
+        page.click('[data-action="edit-lines"][data-scene="0"]'); page.wait_for_selector('#lines-form')
+        for _ in range(4): page.click('#lines-form [data-action="add-line"]')
+        r.check('Sechs Sätze: kein weiterer Satz, Hinweis auf das Limit', len(rows()) == 6 and page.locator('#lines-form [data-action="add-line"]').count() == 0
+                and 'Höchstens 6 Sätze pro Szene' in page.locator('#lines-form').inner_text())
+        page.click('#sheet [data-action="close"]')
+        page.goto(studio.url + '/#library'); page.wait_for_selector('[data-action="lib-new"]'); page.click('[data-action="lib-new"]')
+        page.fill('#lib-form [name="label"]', '   '); page.fill('#lib-form [name="name"]', ' '); page.click('#lib-form [type="submit"]'); page.wait_for_timeout(400)
+        r.check(f'Figur ohne Namen: deutsche Meldung ({page.locator("#toast").inner_text()})', page.locator('#toast').inner_text() == 'Bitte Profilname und Namen im Film ausfüllen.')
+        page.click('#sheet [data-action="close"]')
+        page.evaluate("fetch('/api/library', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Cay-Token': S.token}, body: JSON.stringify({name: ' ', label: 'x'})}).then(r => r.json()).then(j => window.__lib = j.detail)")
+        page.wait_for_function('window.__lib !== undefined')
+        r.check(f'Server: Formfehler auf Deutsch ({page.evaluate("window.__lib")})', page.evaluate('window.__lib') == 'Bitte „Name“ ausfüllen.')
+
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
 finally:

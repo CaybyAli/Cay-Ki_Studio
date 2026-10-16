@@ -35,7 +35,8 @@ async function api(path, { method = 'GET', body, raw } = {}) {
   try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
   if (!response.ok) {
     const detail = data && data.detail;
-    throw new Error(typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map(x => x.msg).join('; ') : `Anfrage fehlgeschlagen (${response.status}).`);
+    // The server words form errors in German; a raw list (pydantic's English) is never shown.
+    throw new Error(typeof detail === 'string' ? detail : Array.isArray(detail) ? 'Die Eingabe passt nicht. Bitte prüfen.' : `Anfrage fehlgeschlagen (${response.status}).`);
   }
   return data;
 }
@@ -990,6 +991,7 @@ async function notifyStep(channel, fn, focus) {
     NOTE.error = { channel, text: e.message }; notifyRender(S.notify || await api('/api/notify').catch(() => S.notify)); return false;
   }
 }
+const MAX_LINES = 6;   // same limit as the server (SceneDialogueEdit)
 function linesSheet(ei, si) {
   const sc = S.run.episodes[ei].scenes[si], lines = linesOf(sc), speakers = sceneSpeakers(sc);
   const row = (l, i) => `<div class="person"><select class="input" data-line="${i}" data-key="speaker" aria-label="Sprecher">${speakers.map(n => `<option ${n === l.speaker ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
@@ -999,7 +1001,7 @@ function linesSheet(ei, si) {
   openSheet(`<div class="sheet-head"><h2 class="headline">Szene ${si + 1}: Text</h2><button class="button quiet small" data-action="close">${editable ? 'Abbrechen' : 'Schließen'}</button></div>
     <form id="lines-form" data-episode="${ei}" data-scene="${si}">${lines.map(row).join('')}
     ${sc.kind === 'reaction' ? `<p class="muted">${esc(sc.cast.join(' und '))} hört hier nur zu. Die Stimme kommt von ${esc(speakers[0] || 'einer Figur')} aus dem Off.</p>` : ''}
-    ${speakers.length ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>'
+    ${speakers.length ? lines.length < MAX_LINES ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>' : `<p class="small muted">Höchstens ${MAX_LINES} Sätze pro Szene.</p>`
       : `<p class="muted">${sc.kind === 'establish' ? 'Diese Totale zeigt den neuen Ort. Hier spricht niemand.' : 'In dieser Szene ist niemand im Bild.'}</p>`}
     ${editable ? `<p class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</p>
     <div class="actions"><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
@@ -1107,7 +1109,7 @@ const actions = {
     closeSheet(); toast(`${b.dataset.name} wird neu gestaltet.`);
   },
   'edit-lines'(b) { linesSheet(+b.dataset.episode, +b.dataset.scene); },
-  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form, true); lines.push({ speaker: sceneSpeakers(sc)[0], text: '' }); linesSheetFrom(form, lines); },
+  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form, true); if (lines.length >= MAX_LINES) return; lines.push({ speaker: sceneSpeakers(sc)[0], text: '' }); linesSheetFrom(form, lines); },
   'drop-line'(b) { const form = $('#lines-form'), lines = readLines(form, true); lines.splice(+b.dataset.index, 1); linesSheetFrom(form, lines); },
   async 'approve-images'() { await post(`/api/factory/${S.rid}/approve-images`, { revision: S.run.revision }); toast('Bilder übernommen. Die Stimmen entstehen.'); },
   async 'approve-voices'() { await post(`/api/factory/${S.rid}/approve-voices`, { revision: S.run.revision }); toast('Ton freigegeben. Die Animation beginnt.'); },
@@ -1332,11 +1334,13 @@ document.addEventListener('submit', async event => {
     await guarded(form.querySelector('[type=submit]'), async () => {
       if (form.id === 'lib-form') {
         const body = readLibraryForm(form);
+        if (!body.label || !body.name) { toast('Bitte Profilname und Namen im Film ausfüllen.'); return; }
         if (!body.image && !body.voice) { toast('Wähle ein Bild, eine Aufnahme oder beides.'); return; }
         await (form.dataset.id ? put(`/api/library/${form.dataset.id}`, body) : post('/api/library', body));
         toast(form.dataset.id ? 'Änderungen gesichert.' : `„${body.label}“ ist jetzt in deinen Figuren.`);
       } else {
         const label = form.elements.label.value.trim();
+        if (!label) { toast('Bitte einen Profilnamen eingeben.'); return; }
         await post('/api/library/from-project', { project: S.rid, name: form.dataset.name, label });
         toast(`„${label}“ ist jetzt in deinen Figuren.`);
       }

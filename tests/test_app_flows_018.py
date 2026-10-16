@@ -93,3 +93,23 @@ def test_cancel_sends_no_second_film_ready_message(tmp_path):
     factory.save(reopened)
     factory.save(dict(done))                                             # "Abbrechen, fertigen Film behalten"
     assert not outbox(g)
+
+
+def test_form_errors_are_german_name_the_field_and_never_echo_the_input(tmp_path, monkeypatch):
+    """Cay saw 'List should have at most 6 items after validation, not 7' and 'String should have at least 1 character'."""
+    runtime = tmp_path / 'studio'; (runtime / 'config').mkdir(parents=True); (tmp_path / 'ablage').mkdir()
+    (runtime / 'config/ablage.json').write_text(json.dumps({'wsl_root': str(tmp_path / 'ablage'), 'windows_root': 'D:\\Cay_Studio',
+                                                            'local_services': {'comfyui': 'http://127.0.0.1:9', 'ollama': 'http://127.0.0.1:9'}}))
+    monkeypatch.setenv('CAY_STUDIO_RUNTIME', str(runtime)); sys.modules.pop('server', None)
+    import server
+    from fastapi.testclient import TestClient
+    server.execute('CREATE TABLE IF NOT EXISTS studio_trash(id TEXT PRIMARY KEY, deleted_at TEXT NOT NULL)')
+    client = TestClient(server.app, base_url='http://127.0.0.1'); head = {'X-Cay-Token': server.CSRF}
+    seven = {'episode': 0, 'scene': 0, 'action': 'Lena hält den Keks hoch.', 'dialogues': [{'speaker': 'Lena', 'text': 'Hallo.'}] * 7}
+    answer = client.put('/api/factory/' + 'a' * 32 + '/dialogues', json=seven, headers=head)
+    assert answer.status_code == 422 and answer.json() == {'detail': 'Zu viele Sätze: höchstens 6.'}
+    answer = client.post('/api/library', json={'name': '  ', 'label': ' '}, headers=head)
+    assert answer.json()['detail'] == 'Bitte „Name“ ausfüllen. Bitte „Profilname“ ausfüllen.'
+    secret = '7712345678:AAHk3xQ9vYfZpL2mN8rT5wB1cD4eF6gH7iJ' * 9                   # too long, still a secret
+    answer = client.post('/api/notify/telegram/token', json={'token': secret, 'consent': True}, headers=head)
+    assert answer.status_code == 422 and answer.json()['detail'] == '„Bot-Schlüssel“ ist zu lang: höchstens 400 Zeichen.' and 'AAHk3x' not in answer.text

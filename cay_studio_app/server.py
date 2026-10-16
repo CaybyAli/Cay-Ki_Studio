@@ -16,6 +16,7 @@ import uuid
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -409,6 +410,33 @@ async def lifespan(app):
 
 
 app = FastAPI(title='Cay Studio', version=VERSION, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+
+# Form errors in German, naming the field: pydantic's own texts are English and echo the input
+# (a pasted bot key, for example). The app shows `detail` as it is.
+FIELD_NAMES = {'label': 'Profilname', 'name': 'Name', 'idea': 'Idee', 'title': 'Titel', 'traits': 'Aussehen und Art', 'text': 'Satz',
+               'speaker': 'Sprecher', 'action': 'Bildhandlung', 'note': 'Wunsch', 'voice_text': 'Text der Aufnahme', 'address': 'Anrede',
+               'token': 'Bot-Schlüssel', 'message': 'Nachricht'}
+LIST_NAMES = {'dialogues': 'Sätze', 'participants': 'Figuren', 'examples': 'Look-Vorlagen'}
+
+
+def german_error(e):
+    names = [x for x in reversed(e.get('loc') or ()) if isinstance(x, str) and (x in FIELD_NAMES or x in LIST_NAMES)]
+    field = (FIELD_NAMES.get(names[0]) or LIST_NAMES[names[0]]) if names else None
+    kind, ctx = e.get('type', ''), e.get('ctx') or {}
+    if kind in ('json_invalid', 'extra_forbidden', 'model_attributes_type', 'dict_type'): return 'Die Anfrage passt nicht zu dieser Version. Bitte die Seite neu laden.'
+    if kind == 'string_too_short':
+        if ctx.get('min_length', 1) > 1: return f'„{field}“ ist zu kurz: mindestens {ctx["min_length"]} Zeichen.' if field else f'Ein Text ist zu kurz: mindestens {ctx["min_length"]} Zeichen.'
+        return f'Bitte „{field}“ ausfüllen.' if field else 'Bitte alle Pflichtfelder ausfüllen.'
+    if kind == 'string_too_long': return f'„{field}“ ist zu lang: höchstens {ctx.get("max_length")} Zeichen.' if field else f'Ein Text ist zu lang: höchstens {ctx.get("max_length")} Zeichen.'
+    if kind == 'too_long': return f'Zu viele {field or "Einträge"}: höchstens {ctx.get("max_length")}.'
+    if kind == 'too_short': return f'Zu wenige {field or "Einträge"}: mindestens {ctx.get("min_length")}.'
+    if kind == 'missing': return f'„{field}“ fehlt.' if field else 'Eine Angabe fehlt. Bitte die Seite neu laden.'
+    return f'„{field}“ passt nicht. Bitte prüfen.' if field else 'Die Eingabe passt nicht. Bitte prüfen.'
+
+
+@app.exception_handler(RequestValidationError)
+async def german_validation(request: Request, error: RequestValidationError):
+    return JSONResponse({'detail': ' '.join(dict.fromkeys(german_error(e) for e in error.errors()))}, status_code=422)
 
 
 @app.middleware('http')
