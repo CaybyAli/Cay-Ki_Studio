@@ -1,0 +1,2983 @@
+{
+ "film_invent_30s": {
+  "calls": [
+   [
+    "llm",
+    "SourceCast",
+    "Extrahiere ausschließlich ausdrücklich benannte Figuren aus diesem Originaltext. Keine Figuren erfinden, keine Orte, Genrebegriffe, Gruppen oder Rollen ohne Eigennamen. name exakt wie im Original; quote ist ein wortgetreuer zusammenhängender Originalauszug, der diesen Namen als Figur belegt. Ohne benannte Figuren eine leere Liste.",
+    {
+     "source": "Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin."
+    }
+   ],
+   [
+    "llm",
+    "SeriesHeader",
+    "Du bist Autor und Regisseur für kurze eigenständige Filmserien. Entwickle die grobe Nutzeridee selbstständig zu einer zusammenhängenden Staffel. Erfinde Handlung, Pointe, Aussehen, Eigenschaften und passende Stimmen, soweit nicht vorgegeben. Erhalte Namen und Eigenschaften der vorgegebenen Figuren. characters=none bedeutet keine Figuren und keine Sprache. characters=provided erlaubt nur die angegebenen Figuren. Die Staffel hat die gewünschte Anzahl Folgen. Je Folge nur EIN zusammenhängendes Ereignis mit Ziel, Hindernis und Auflösung, höchstens zwei Orte und vorzugsweise zwei bis drei aktive Figuren. Keine gesamte Filmhandlung in eine Minute pressen. Jede Figur bekommt voice_preset passend zu Alter und Rolle und eine eigene voice_description zu Klang und Sprechweise. Kinder, Frauen, Männer und Senioren passend besetzen. Bei Lebensmittel-Figuren im appearance feste Kopfmaterialien, Silhouette und Kleidung definieren, keine Verwandlung in Menschen. Deutsch. appearance und style dürfen Englisch für das Bildmodell sein. Keine Vorgaben anderer Projekte. Bei Parodien eigene Dialoge und Gags. Nennt der Nutzer bekannte Figuren aus Serien, Filmen oder Spielen (zum Beispiel SpongeBob oder Mr. Krabs), spielen genau diese Figuren mit, keine ähnliche Ersatzfigur: name wie vom Nutzer geschrieben, original nennt die Originalfigur mit ihrer Serie auf Englisch (zum Beispiel \"SpongeBob SquarePants from the animated series SpongeBob SquarePants\"), appearance beschreibt ihr bekanntes Originaldesign genau auf Englisch: Form, Farben, Gesicht, Kleidung. Der gewählte Look ändert nur Material und Licht, nie die Figur. Bei erfundenen Figuren bleibt original leer. Beispiele (Look-Vorlagen) zeigen nur den gewünschten Bildstil. Personen und Inhalte daraus gehören nicht in Geschichte oder Besetzung.",
+    {
+     "autopilot": true,
+     "cast_check": true,
+     "characters": "invent",
+     "cover": "start",
+     "duration": 30,
+     "episodes": 1,
+     "examples": [],
+     "fps": 25,
+     "idea": "Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin.",
+     "lip_sync": "audio",
+     "look": "clay",
+     "music": null,
+     "participants": [],
+     "quality": "fast",
+     "request_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "smooth": true,
+     "speech_engine": "auto",
+     "title": ""
+    }
+   ],
+   [
+    "llm",
+    "Outline",
+    "Plane genau die angeforderte Folge der Staffel. Verbindliche Vorgaben und Ereignisse im Original dieser Folge erhalten. Ein zusammenhängendes Ereignis mit Ziel, Hindernis und Auflösung. Keine anderen Folgen zusammenfassen. Die bisherigen Folgen und das Staffelziel berücksichtigen; keine Wiederholungen. Kurze Inhaltsangabe, noch keine Szenenliste. Serie mit mehreren Folgen: pickup beschreibt, wie die ersten Sekunden unmittelbar an den cliffhanger der vorherigen Folge anknüpfen (bei Folge 1 leer). Jede Folge außer der letzten beantwortet zuerst ihre eigene Frage und endet dann mit cliffhanger: eine neue, konkrete, sichtbare offene Frage oder Gefahr, die neugierig auf die nächste Folge macht (kein bloßes „Fortsetzung folgt“). Die letzte Folge löst die Staffel auf; cliffhanger leer.",
+    {
+     "duration": 30,
+     "episode": 1,
+     "previous": [
+      {
+       "cliffhanger": "",
+       "ending": "Die Praktikantin hat ihn.",
+       "pickup": "",
+       "plot": "Lena und Markus streiten um den letzten Keks.",
+       "title": "Der letzte Keks"
+      }
+     ],
+     "series": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "source": "Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin.",
+     "total": 1
+    }
+   ],
+   [
+    "llm",
+    "StorySpine",
+    "Du bist Showrunner für virale Kurzfilme auf TikTok und YouTube Shorts. Lege zuerst das Ziel dieser Folge fest, noch keine Szenen. logline: wer will was, was steht im Weg, was steht auf dem Spiel, in einem Satz. viewer_question: die Frage, wegen der man bis zum Ende schaut. hook: was in den ersten zwei Sekunden sichtbar passiert. goal und stakes konkret. escalations: zwei bis drei Steigerungen, jede schlimmer oder lustiger als die vorige. twist: eine vorbereitete Überraschung. payoff: die Auflösung der Hauptfrage. final_moment: der letzte Gag oder bei einer Serienfolge genau der vorgegebene Cliffhanger. running_gag optional. Alles sichtbar und filmbar, keine Erklärungen. Bekannte Figuren verhalten sich wie im Original. Originalvorgaben und Figuren aus series.cast sind verbindlich. Deutsch.",
+    {
+     "continuity": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "duration": 30,
+     "episode": 1,
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "previous": [],
+     "series": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Handmade claymation stop-motion look: plasticine characters with soft rounded shapes and subtle fingerprints, miniature practical sets, warm soft studio light, shallow depth of field. Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "series_total": 1,
+     "source": "Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin."
+    }
+   ],
+   [
+    "write",
+    "Drehbuch",
+    "Du bist Head-Autor für virale deutsche Kurzfilme auf TikTok und YouTube Shorts. Schreibe das komplette Drehbuch dieser Folge als ein durchgehendes Gespräch für etwa 30 Sekunden. Gesamt 51 bis 78 gesprochene Wörter (Ziel 60), 3 bis 8 Sprecherwechsel, 1 bis 2 AKTION-Zeilen, höchstens 44 Einstellungen. Serie: Ist fortsetzung.pick_up gesetzt, greift die erste Zeile diesen offenen Punkt sofort auf. Ist fortsetzung.end_with gesetzt, wird die Hauptfrage vorher aufgelöst und der letzte Abschnitt zeigt genau diesen Cliffhanger. Regeln für das Drehbuch:\n- Ein durchgehendes Gespräch in Redeblöcken: Eine Figur sagt oft zwei oder drei Sätze nacheinander, jeder Satz als eigene Zeile derselben Figur, bevor die andere antwortet. Jeder Block reagiert auf den vorigen, mit Widerspruch, Ausrede, Drohung, Witz oder Überraschung. Kein Ping-Pong mit nur einem Satz pro Sprecherwechsel. Keine Zeile ohne Bezug.\n- Natürliches gesprochenes Deutsch, meist 7 bis 14 Wörter pro Zeile, ab und zu ein kurzer Ausruf. Kein Telegrammstil wie \"Geld. Jetzt. Sofort.\" oder \"Dein X. Mein Y.\".\n- Lebendig sprechbar: Fragen, Ausrufe, Unterbrechungen mit \"–\", Zögern mit \"…\", Interjektionen wie \"Hey!\", \"Au!\", \"Ha!\".\n- Jede Figur klingt wie sie selbst. Bekannte Figuren reden und handeln wie im Original (Wortwahl, Ticks, Eigenheiten).\n- Spannung: Haken in der ersten Zeile, klares Ziel, zwei echte Steigerungen, eine vorbereitete Wendung, eine Pointe am Schluss. Setup und Payoff für den Witz.\n- Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.\n- AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.\n- Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.\nFormat, exakt so, eine Angabe pro Zeile:\nTITEL: <Filmtitel>\n# <Nummer> | <Ort> | <was in diesem Abschnitt sichtbar passiert>\n<NAME> [<Sprechhaltung>]: <gesprochener Text>\nAKTION: <sichtbare Handlung ohne Sprache, höchstens zwei Figuren, Münder geschlossen>\nSprechhaltung ist genau eines von: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt.\nNAME exakt wie in der Besetzung. Keine weiteren Zeilen, keine Erklärungen, keine Regieanweisungen im gesprochenen Text.\nBeispiel für Ton, Redeblöcke und Format (andere Figuren, nicht übernehmen):\nTITEL: Der verschwundene Kuchen\n# 1 | Küche | Oma steht vor einem leeren Teller, Krümel auf dem Boden\nOMA [wütend]: Wer hat meinen Kuchen gegessen? Ich zähl bis drei!\nOMA [drohend]: Und wer jetzt lügt, kriegt eine Woche lang keinen Nachtisch.\nTIM [ängstlich]: Ich war's nicht, ehrlich! Ich war die ganze Zeit … im Bad.\nTIM [flehend]: Frag doch Opa, der hat mich da gesehen!\nOMA [spöttisch]: Im Bad. Mit Sahne an der Nase?\nAKTION: Tim wischt sich hastig die Nase und versteckt die Hände hinter dem Rücken.\n# 2 | Garten mit Hängematte | Opa schläft, ein leerer Teller liegt auf seinem Bauch\nOPA [verwirrt]: Hm? Ach, das … das ist nur ein Kissen, Liebling.\nOPA [fröhlich]: Ein sehr leckeres Kissen übrigens, mit Kirschen drauf.\nTIM [panisch]: Opa! Das solltest du doch nicht verraten!",
+    {
+     "aktion_zeilen": {
+      "höchstens": 2,
+      "mindestens": 1
+     },
+     "dauer_sekunden": 30,
+     "folge": 1,
+     "folgen_gesamt": 1,
+     "fortsetzung": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "idee_des_nutzers": "Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin.",
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "serie": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Handmade claymation stop-motion look: plasticine characters with soft rounded shapes and subtle fingerprints, miniature practical sets, warm soft studio light, shallow depth of field. Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "sprecherwechsel": {
+      "höchstens": 8,
+      "mindestens": 3
+     },
+     "vorherige_folgen": [],
+     "wortbudget": {
+      "höchstens": 78,
+      "mindestens": 51,
+      "ziel": 60
+     },
+     "ziel_des_films": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     }
+    }
+   ],
+   [
+    "write",
+    "Drehbuch-Doktor",
+    "Du bist Script Doctor für virale Kurzfilme. Lies das Drehbuch laut im Kopf, Zeile für Zeile. Finde: Zeilen ohne Sinn oder Bezug, Antworten, die nicht reagieren, Logikfehler (wer hat was, wo ist wer), fehlende Spannung oder Steigerung, schwache Pointe, Telegrammstil, Wiederholungen, Figuren, die nicht wie sie selbst klingen. Verbessere alles davon. Ereignisse aus der Idee und das Wortbudget bleiben. Antworte nur mit dem vollständigen überarbeiteten Drehbuch. Serie: Ist fortsetzung.pick_up gesetzt, greift die erste Zeile diesen offenen Punkt sofort auf. Ist fortsetzung.end_with gesetzt, wird die Hauptfrage vorher aufgelöst und der letzte Abschnitt zeigt genau diesen Cliffhanger. Regeln für das Drehbuch:\n- Ein durchgehendes Gespräch in Redeblöcken: Eine Figur sagt oft zwei oder drei Sätze nacheinander, jeder Satz als eigene Zeile derselben Figur, bevor die andere antwortet. Jeder Block reagiert auf den vorigen, mit Widerspruch, Ausrede, Drohung, Witz oder Überraschung. Kein Ping-Pong mit nur einem Satz pro Sprecherwechsel. Keine Zeile ohne Bezug.\n- Natürliches gesprochenes Deutsch, meist 7 bis 14 Wörter pro Zeile, ab und zu ein kurzer Ausruf. Kein Telegrammstil wie \"Geld. Jetzt. Sofort.\" oder \"Dein X. Mein Y.\".\n- Lebendig sprechbar: Fragen, Ausrufe, Unterbrechungen mit \"–\", Zögern mit \"…\", Interjektionen wie \"Hey!\", \"Au!\", \"Ha!\".\n- Jede Figur klingt wie sie selbst. Bekannte Figuren reden und handeln wie im Original (Wortwahl, Ticks, Eigenheiten).\n- Spannung: Haken in der ersten Zeile, klares Ziel, zwei echte Steigerungen, eine vorbereitete Wendung, eine Pointe am Schluss. Setup und Payoff für den Witz.\n- Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.\n- AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.\n- Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.\nFormat, exakt so, eine Angabe pro Zeile:\nTITEL: <Filmtitel>\n# <Nummer> | <Ort> | <was in diesem Abschnitt sichtbar passiert>\n<NAME> [<Sprechhaltung>]: <gesprochener Text>\nAKTION: <sichtbare Handlung ohne Sprache, höchstens zwei Figuren, Münder geschlossen>\nSprechhaltung ist genau eines von: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt.\nNAME exakt wie in der Besetzung. Keine weiteren Zeilen, keine Erklärungen, keine Regieanweisungen im gesprochenen Text.",
+    {
+     "aktion_zeilen": {
+      "höchstens": 2,
+      "mindestens": 1
+     },
+     "dauer_sekunden": 30,
+     "drehbuch": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "folge": 1,
+     "folgen_gesamt": 1,
+     "fortsetzung": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "idee_des_nutzers": "Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin.",
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "serie": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Handmade claymation stop-motion look: plasticine characters with soft rounded shapes and subtle fingerprints, miniature practical sets, warm soft studio light, shallow depth of field. Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "sprecherwechsel": {
+      "höchstens": 8,
+      "mindestens": 3
+     },
+     "vorherige_folgen": [],
+     "wortbudget": {
+      "höchstens": 78,
+      "mindestens": 51,
+      "ziel": 60
+     },
+     "ziel_des_films": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     }
+    }
+   ],
+   [
+    "llm",
+    "ShotVisuals",
+    "Du bist Kameramann und Bildregisseur. Für jede Einstellung genau ein Eintrag mit derselben Nummer. role sagt, was die Einstellung im Schnitt tut: speaking = die Figur aus visible spricht ihre lines; reaction = die Figur aus visible hört schweigend zu, die Stimme (hears) kommt von außerhalb des Bildes, ihr Mund bleibt geschlossen, sie reagiert nur mit Augen, Augenbrauen, Kopf und Körper (nicken, zurückweichen, Arme verschränken); action = stumme Handlung, alle Münder geschlossen; establish = weite Totale, die den neuen Ort zeigt. still: ENGLISCHE Bildbeschreibung des Standbilds, nur mit den Figuren aus visible: Pose, Gesichtsausdruck, Requisit, Ort, Licht. Figuren, die nicht in visible stehen, sind außerhalb des Bildes und werden NICHT genannt, auch nicht im Hintergrund und auch nicht als Stimme aus dem Off. Nur die Figuren aus visible sind im Bild. motion: ENGLISCH, eine klar sichtbare Körperbewegung in normaler Geschwindigkeit, die zur Zeile passt; bei reaction eine kleine stumme Reaktion mit geschlossenem Mund; bei action die Handlung selbst; bei establish ruhige Bewegung im Ort. camera: Bildausschnitt mit Abwechslung. Sprechende Einstellungen wechseln zwischen \"medium shot\", \"medium close-up\", \"low angle shot\", \"high angle medium shot\" und \"medium shot from the side\", nie zweimal hintereinander derselbe Ausschnitt; reaction \"close-up\"; establish \"wide establishing shot\"; action \"medium wide shot\" oder eine dynamische Perspektive. ambience: Umgebungsgeräusch. Ort und Licht über aufeinander folgende Einstellungen gleich halten. Figuren immer genau mit ihrem Namen aus visible nennen, nie mit Originalnamen, Spitznamen oder Übersetzungen (nicht \"Squidward\" für Thaddäus, nicht \"Grandma\" für Oma). Im still steht der Gesichtsausdruck passend zur Emotion der Zeile auf Englisch (z. B. \"afraid, wide eyes, tense\"), bei reaction mit geschlossenem Mund (z. B. \"worried, lips pressed together\"), nie ein Ausdruck aus einem Referenzbild. Genau 9 Einträge, Nummer 1 bis 9.",
+    {
+     "cast": [
+      {
+       "appearance": "Lena, friendly figure with a clear silhouette",
+       "name": "Lena",
+       "original": "",
+       "personality": "lebhaft und direkt",
+       "voice": "warm",
+       "voice_description": "klar und lebendig",
+       "voice_preset": "woman"
+      },
+      {
+       "appearance": "Markus, friendly figure with a clear silhouette",
+       "name": "Markus",
+       "original": "",
+       "personality": "lebhaft und direkt",
+       "voice": "warm",
+       "voice_description": "klar und lebendig",
+       "voice_preset": "man"
+      }
+     ],
+     "shots": [
+      {
+       "lines": [
+        {
+         "emotion": "triumphierend",
+         "speaker": "Lena",
+         "text": "Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!"
+        },
+        {
+         "emotion": "spöttisch",
+         "speaker": "Lena",
+         "text": "Du hattest heute schon drei, Markus, ich hab mitgezählt."
+        }
+       ],
+       "place": "Großraumbüro",
+       "role": "speaking",
+       "shot": 1,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "empört",
+         "speaker": "Markus",
+         "text": "Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!"
+        }
+       ],
+       "place": "Großraumbüro",
+       "role": "speaking",
+       "shot": 2,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Markus"
+       ]
+      },
+      {
+       "hears": "Bitte, Lena, ich hatte heute noch gar nichts Süßes.",
+       "lines": [],
+       "place": "Großraumbüro",
+       "role": "reaction: listens silently, voice from off-screen, mouth closed",
+       "shot": 3,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Großraumbüro",
+       "role": "action",
+       "shot": 4,
+       "situation": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Teeküche",
+       "role": "establish: wide view of the new place",
+       "shot": 5,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "überrascht",
+         "speaker": "Lena",
+         "text": "Moment mal. Warum ist die Dose plötzlich ganz leer?"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 6,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "verwirrt",
+         "speaker": "Markus",
+         "text": "Keine Ahnung. Ich war die ganze Zeit hier bei dir!"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 7,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Markus"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "wütend",
+         "speaker": "Lena",
+         "text": "Dann war es die Praktikantin. Sie hat Krümel am Pullover!"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 8,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Teeküche",
+       "role": "action",
+       "shot": 9,
+       "situation": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      }
+     ],
+     "style": "Handmade claymation stop-motion look: plasticine characters with soft rounded shapes and subtle fingerprints, miniature practical sets, warm soft studio light, shallow depth of field. Warm clay look, soft studio light."
+    }
+   ],
+   [
+    "llm",
+    "SocialPost",
+    "Schreibe eine kurze deutsche Beschreibung für TikTok und YouTube Shorts zu genau dieser Folge. caption: ein neugieriger Satz ohne Spoiler der Auflösung, höchstens 150 Zeichen, keine Hashtags im Text, keine erfundenen Fakten. hashtags: 3 bis 6 passende deutsche oder gebräuchliche Hashtags ohne #-Zeichen, ohne Leerzeichen.",
+    {
+     "cliffhanger": "",
+     "episode": 1,
+     "goal": "Den Keks bekommen",
+     "series_title": "Planertitel",
+     "title": "Der letzte Keks",
+     "total": 1
+    }
+   ]
+  ],
+  "project": {
+   "episodes": [
+    {
+     "dialogue_mode": "rich",
+     "estimated_seconds": 46.76,
+     "goal": "Den Keks bekommen",
+     "minimum_seconds": 30,
+     "obstacle": "Der Nachmittag",
+     "resolution": "Krümel am Pullover",
+     "scene_budget": 9,
+     "scenes": [
+      {
+       "action": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "problem",
+       "because": "Einstieg",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "triumphierend",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!"
+        },
+        {
+         "emotion": "spöttisch",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Du hattest heute schon drei, Markus, ich hab mitgezählt."
+        }
+       ],
+       "emotion": "triumphierend",
+       "kind": "line",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 9.48,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face",
+       "title": "Lena: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!",
+       "variants": []
+      },
+      {
+       "action": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium close-up",
+       "cast": [
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "empört",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!"
+        }
+       ],
+       "emotion": "empört",
+       "kind": "line",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 4.88,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Markus in Großraumbüro, expressive face",
+       "title": "Markus: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!",
+       "variants": []
+      },
+      {
+       "action": "Lena hört schweigend zu, die Stimme von Markus kommt aus dem Off.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Reaktion auf Markus",
+       "camera": "close-up",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "flehend",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Bitte, Lena, ich hatte heute noch gar nichts Süßes."
+        }
+       ],
+       "emotion": "ruhig",
+       "kind": "reaction",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 4.88,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face",
+       "title": "Reaktion: Lena hört Markus zu",
+       "variants": [],
+       "voice_of": "Markus"
+      },
+      {
+       "action": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "action",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 4.0,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face, mouths closed",
+       "title": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Neuer Ort",
+       "camera": "wide establishing shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "establish",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 4.0,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Wide establishing view, Lena in Teeküche, expressive face",
+       "title": "Totale: Teeküche",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "überrascht",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Moment mal. Warum ist die Dose plötzlich ganz leer?"
+        }
+       ],
+       "emotion": "überrascht",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 4.88,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face",
+       "title": "Lena: Moment mal. Warum ist die Dose plötzlich ganz leer?",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "turn",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium close-up",
+       "cast": [
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "verwirrt",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Keine Ahnung. Ich war die ganze Zeit hier bei dir!"
+        }
+       ],
+       "emotion": "verwirrt",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.32,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Markus in Teeküche, expressive face",
+       "title": "Markus: Keine Ahnung. Ich war die ganze Zeit hier bei dir!",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "wütend",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Dann war es die Praktikantin. Sie hat Krümel am Pullover!"
+        }
+       ],
+       "emotion": "wütend",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.32,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face",
+       "title": "Lena: Dann war es die Praktikantin. Sie hat Krümel am Pullover!",
+       "variants": []
+      },
+      {
+       "action": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "payoff",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "action",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 4.0,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face, mouths closed",
+       "title": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "variants": []
+      }
+     ],
+     "screenplay": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "screenplay_stats": {
+      "actions": 2,
+      "budget": {
+       "max_actions": 2,
+       "max_turns": 8,
+       "max_words": 78,
+       "min_actions": 1,
+       "min_turns": 3,
+       "min_words": 51,
+       "words": 60
+      },
+      "establishing": 1,
+      "lines": 7,
+      "lip_sync": 5,
+      "reactions": 1,
+      "shots": 9,
+      "words": 66
+     },
+     "script": "screenplay",
+     "social": {
+      "caption": "Wer bekommt den letzten Keks?",
+      "hashtags": [
+       "keks",
+       "büro",
+       "comedy"
+      ]
+     },
+     "source_sha256": "77274b290d76b30bcb59c9ce45830ca6660903536c416f2aec601dd2dfb63f6b",
+     "spine": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     },
+     "story_policy": 14,
+     "title": "Der letzte Keks"
+    }
+   ],
+   "idea": {
+    "autopilot": true,
+    "cast_check": true,
+    "characters": "invent",
+    "cover": "start",
+    "duration": 30,
+    "episodes": 1,
+    "examples": [],
+    "fps": 25,
+    "idea": "Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin.",
+    "lip_sync": "audio",
+    "look": "clay",
+    "music": null,
+    "participants": [],
+    "quality": "fast",
+    "request_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "smooth": true,
+    "speech_engine": "auto",
+    "title": ""
+   },
+   "plan": {
+    "cast": [
+     {
+      "appearance": "Lena, friendly figure with a clear silhouette",
+      "name": "Lena",
+      "original": "",
+      "personality": "lebhaft und direkt",
+      "voice": "warm",
+      "voice_description": "klar und lebendig",
+      "voice_preset": "woman"
+     },
+     {
+      "appearance": "Markus, friendly figure with a clear silhouette",
+      "name": "Markus",
+      "original": "",
+      "personality": "lebhaft und direkt",
+      "voice": "warm",
+      "voice_description": "klar und lebendig",
+      "voice_preset": "man"
+     }
+    ],
+    "episodes": [
+     {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     }
+    ],
+    "mood": "playful",
+    "style": "Handmade claymation stop-motion look: plasticine characters with soft rounded shapes and subtle fingerprints, miniature practical sets, warm soft studio light, shallow depth of field. Warm clay look, soft studio light.",
+    "synopsis": "Eine kurze Geschichte über einen Streit.",
+    "title": "Planertitel",
+    "visual": "clay"
+   },
+   "screenplays": {
+    "0": {
+     "draft": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "final": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "policy": 14,
+     "visuals": {
+      "shots": [
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 1,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 2,
+        "still": "Markus in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 3,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 4,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 5,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 6,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 7,
+        "still": "Markus in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 8,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 9,
+        "still": "Lena in Teeküche, expressive face"
+       }
+      ]
+     }
+    }
+   },
+   "source": {
+    "blocks": [
+     {
+      "end": 77,
+      "episode": 0,
+      "sha256": "77274b290d76b30bcb59c9ce45830ca6660903536c416f2aec601dd2dfb63f6b",
+      "start": 0
+     }
+    ],
+    "characters": 77,
+    "episodes": [],
+    "errors": [],
+    "preamble_end": 77,
+    "sha256": "77274b290d76b30bcb59c9ce45830ca6660903536c416f2aec601dd2dfb63f6b"
+   },
+   "spines": {
+    "0": {
+     "escalations": [
+      "Markus bettelt",
+      "Die Dose ist leer"
+     ],
+     "final_moment": "Beide starren zur Tür",
+     "goal": "Den Keks bekommen",
+     "hook": "Lena hält den Keks hoch.",
+     "logline": "Zwei Kollegen streiten um den letzten Keks.",
+     "payoff": "Krümel am Pullover",
+     "running_gag": "",
+     "stakes": "Der Nachmittag",
+     "twist": "Die Praktikantin",
+     "viewer_question": "Wer bekommt ihn?"
+    }
+   },
+   "state": "pictures",
+   "title": "Planertitel"
+  }
+ },
+ "series_provided_classic": {
+  "calls": [
+   [
+    "llm",
+    "SourceCast",
+    "Extrahiere ausschließlich ausdrücklich benannte Figuren aus diesem Originaltext. Keine Figuren erfinden, keine Orte, Genrebegriffe, Gruppen oder Rollen ohne Eigennamen. name exakt wie im Original; quote ist ein wortgetreuer zusammenhängender Originalauszug, der diesen Namen als Figur belegt. Ohne benannte Figuren eine leere Liste.",
+    {
+     "source": "Lena und Markus streiten in zwei Folgen um Kekse im Büro."
+    }
+   ],
+   [
+    "llm",
+    "SeriesHeader",
+    "Du bist Autor und Regisseur für kurze eigenständige Filmserien. Entwickle die grobe Nutzeridee selbstständig zu einer zusammenhängenden Staffel. Erfinde Handlung, Pointe, Aussehen, Eigenschaften und passende Stimmen, soweit nicht vorgegeben. Erhalte Namen und Eigenschaften der vorgegebenen Figuren. characters=none bedeutet keine Figuren und keine Sprache. characters=provided erlaubt nur die angegebenen Figuren. Die Staffel hat die gewünschte Anzahl Folgen. Je Folge nur EIN zusammenhängendes Ereignis mit Ziel, Hindernis und Auflösung, höchstens zwei Orte und vorzugsweise zwei bis drei aktive Figuren. Keine gesamte Filmhandlung in eine Minute pressen. Jede Figur bekommt voice_preset passend zu Alter und Rolle und eine eigene voice_description zu Klang und Sprechweise. Kinder, Frauen, Männer und Senioren passend besetzen. Bei Lebensmittel-Figuren im appearance feste Kopfmaterialien, Silhouette und Kleidung definieren, keine Verwandlung in Menschen. Deutsch. appearance und style dürfen Englisch für das Bildmodell sein. Keine Vorgaben anderer Projekte. Bei Parodien eigene Dialoge und Gags. Nennt der Nutzer bekannte Figuren aus Serien, Filmen oder Spielen (zum Beispiel SpongeBob oder Mr. Krabs), spielen genau diese Figuren mit, keine ähnliche Ersatzfigur: name wie vom Nutzer geschrieben, original nennt die Originalfigur mit ihrer Serie auf Englisch (zum Beispiel \"SpongeBob SquarePants from the animated series SpongeBob SquarePants\"), appearance beschreibt ihr bekanntes Originaldesign genau auf Englisch: Form, Farben, Gesicht, Kleidung. Der gewählte Look ändert nur Material und Licht, nie die Figur. Bei erfundenen Figuren bleibt original leer. Beispiele (Look-Vorlagen) zeigen nur den gewünschten Bildstil. Personen und Inhalte daraus gehören nicht in Geschichte oder Besetzung.",
+    {
+     "autopilot": false,
+     "cast_check": false,
+     "characters": "provided",
+     "cover": "off",
+     "duration": 60,
+     "episodes": 2,
+     "examples": [],
+     "fps": 25,
+     "idea": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+     "lip_sync": "audio",
+     "look": "auto",
+     "music": null,
+     "participants": [
+      {
+       "image": null,
+       "image_look": null,
+       "image_mode": "exact",
+       "library_id": null,
+       "library_image": null,
+       "library_voice": null,
+       "name": "Lena",
+       "traits": "Projektleiterin",
+       "voice": null,
+       "voice_design": null,
+       "voice_text": ""
+      },
+      {
+       "image": null,
+       "image_look": null,
+       "image_mode": "exact",
+       "library_id": null,
+       "library_image": null,
+       "library_voice": null,
+       "name": "Markus",
+       "traits": "Praktikant",
+       "voice": null,
+       "voice_design": null,
+       "voice_text": ""
+      }
+     ],
+     "quality": "fast",
+     "request_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+     "smooth": true,
+     "speech_engine": "auto",
+     "title": ""
+    }
+   ],
+   [
+    "llm",
+    "Outline",
+    "Plane genau die angeforderte Folge der Staffel. Verbindliche Vorgaben und Ereignisse im Original dieser Folge erhalten. Ein zusammenhängendes Ereignis mit Ziel, Hindernis und Auflösung. Keine anderen Folgen zusammenfassen. Die bisherigen Folgen und das Staffelziel berücksichtigen; keine Wiederholungen. Kurze Inhaltsangabe, noch keine Szenenliste. Serie mit mehreren Folgen: pickup beschreibt, wie die ersten Sekunden unmittelbar an den cliffhanger der vorherigen Folge anknüpfen (bei Folge 1 leer). Jede Folge außer der letzten beantwortet zuerst ihre eigene Frage und endet dann mit cliffhanger: eine neue, konkrete, sichtbare offene Frage oder Gefahr, die neugierig auf die nächste Folge macht (kein bloßes „Fortsetzung folgt“). Die letzte Folge löst die Staffel auf; cliffhanger leer.",
+    {
+     "duration": 60,
+     "episode": 1,
+     "previous": [
+      {
+       "cliffhanger": "",
+       "ending": "Die Praktikantin hat ihn.",
+       "pickup": "",
+       "plot": "Lena und Markus streiten um den letzten Keks.",
+       "title": "Der letzte Keks"
+      },
+      {
+       "cliffhanger": "",
+       "ending": "Die Praktikantin hat ihn.",
+       "pickup": "",
+       "plot": "Lena und Markus streiten um den letzten Keks.",
+       "title": "Der letzte Keks"
+      }
+     ],
+     "series": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "source": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+     "total": 2
+    }
+   ],
+   [
+    "llm",
+    "Outline",
+    "Plane genau die angeforderte Folge der Staffel. Verbindliche Vorgaben und Ereignisse im Original dieser Folge erhalten. Ein zusammenhängendes Ereignis mit Ziel, Hindernis und Auflösung. Keine anderen Folgen zusammenfassen. Die bisherigen Folgen und das Staffelziel berücksichtigen; keine Wiederholungen. Kurze Inhaltsangabe, noch keine Szenenliste. Serie mit mehreren Folgen: pickup beschreibt, wie die ersten Sekunden unmittelbar an den cliffhanger der vorherigen Folge anknüpfen (bei Folge 1 leer). Jede Folge außer der letzten beantwortet zuerst ihre eigene Frage und endet dann mit cliffhanger: eine neue, konkrete, sichtbare offene Frage oder Gefahr, die neugierig auf die nächste Folge macht (kein bloßes „Fortsetzung folgt“). Die letzte Folge löst die Staffel auf; cliffhanger leer.",
+    {
+     "duration": 60,
+     "episode": 2,
+     "previous": [
+      {
+       "cliffhanger": "",
+       "ending": "Die Praktikantin hat ihn.",
+       "pickup": "",
+       "plot": "Lena und Markus streiten um den letzten Keks.",
+       "title": "Der letzte Keks"
+      },
+      {
+       "cliffhanger": "",
+       "ending": "Die Praktikantin hat ihn.",
+       "pickup": "",
+       "plot": "Lena und Markus streiten um den letzten Keks.",
+       "title": "Der letzte Keks"
+      }
+     ],
+     "series": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "source": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+     "total": 2
+    }
+   ],
+   [
+    "llm",
+    "StorySpine",
+    "Du bist Showrunner für virale Kurzfilme auf TikTok und YouTube Shorts. Lege zuerst das Ziel dieser Folge fest, noch keine Szenen. logline: wer will was, was steht im Weg, was steht auf dem Spiel, in einem Satz. viewer_question: die Frage, wegen der man bis zum Ende schaut. hook: was in den ersten zwei Sekunden sichtbar passiert. goal und stakes konkret. escalations: zwei bis drei Steigerungen, jede schlimmer oder lustiger als die vorige. twist: eine vorbereitete Überraschung. payoff: die Auflösung der Hauptfrage. final_moment: der letzte Gag oder bei einer Serienfolge genau der vorgegebene Cliffhanger. running_gag optional. Alles sichtbar und filmbar, keine Erklärungen. Bekannte Figuren verhalten sich wie im Original. Originalvorgaben und Figuren aus series.cast sind verbindlich. Deutsch.",
+    {
+     "continuity": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "duration": 60,
+     "episode": 1,
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "previous": [],
+     "series": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "series_total": 2,
+     "source": "Lena und Markus streiten in zwei Folgen um Kekse im Büro."
+    }
+   ],
+   [
+    "write",
+    "Drehbuch",
+    "Du bist Head-Autor für virale deutsche Kurzfilme auf TikTok und YouTube Shorts. Schreibe das komplette Drehbuch dieser Folge als ein durchgehendes Gespräch für etwa 60 Sekunden. Gesamt 102 bis 156 gesprochene Wörter (Ziel 120), 6 bis 15 Sprecherwechsel, 2 bis 5 AKTION-Zeilen, höchstens 44 Einstellungen. Serie: Ist fortsetzung.pick_up gesetzt, greift die erste Zeile diesen offenen Punkt sofort auf. Ist fortsetzung.end_with gesetzt, wird die Hauptfrage vorher aufgelöst und der letzte Abschnitt zeigt genau diesen Cliffhanger. Regeln für das Drehbuch:\n- Ein durchgehendes Gespräch in Redeblöcken: Eine Figur sagt oft zwei oder drei Sätze nacheinander, jeder Satz als eigene Zeile derselben Figur, bevor die andere antwortet. Jeder Block reagiert auf den vorigen, mit Widerspruch, Ausrede, Drohung, Witz oder Überraschung. Kein Ping-Pong mit nur einem Satz pro Sprecherwechsel. Keine Zeile ohne Bezug.\n- Natürliches gesprochenes Deutsch, meist 7 bis 14 Wörter pro Zeile, ab und zu ein kurzer Ausruf. Kein Telegrammstil wie \"Geld. Jetzt. Sofort.\" oder \"Dein X. Mein Y.\".\n- Lebendig sprechbar: Fragen, Ausrufe, Unterbrechungen mit \"–\", Zögern mit \"…\", Interjektionen wie \"Hey!\", \"Au!\", \"Ha!\".\n- Jede Figur klingt wie sie selbst. Bekannte Figuren reden und handeln wie im Original (Wortwahl, Ticks, Eigenheiten).\n- Spannung: Haken in der ersten Zeile, klares Ziel, zwei echte Steigerungen, eine vorbereitete Wendung, eine Pointe am Schluss. Setup und Payoff für den Witz.\n- Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.\n- AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.\n- Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.\nFormat, exakt so, eine Angabe pro Zeile:\nTITEL: <Filmtitel>\n# <Nummer> | <Ort> | <was in diesem Abschnitt sichtbar passiert>\n<NAME> [<Sprechhaltung>]: <gesprochener Text>\nAKTION: <sichtbare Handlung ohne Sprache, höchstens zwei Figuren, Münder geschlossen>\nSprechhaltung ist genau eines von: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt.\nNAME exakt wie in der Besetzung. Keine weiteren Zeilen, keine Erklärungen, keine Regieanweisungen im gesprochenen Text.\nBeispiel für Ton, Redeblöcke und Format (andere Figuren, nicht übernehmen):\nTITEL: Der verschwundene Kuchen\n# 1 | Küche | Oma steht vor einem leeren Teller, Krümel auf dem Boden\nOMA [wütend]: Wer hat meinen Kuchen gegessen? Ich zähl bis drei!\nOMA [drohend]: Und wer jetzt lügt, kriegt eine Woche lang keinen Nachtisch.\nTIM [ängstlich]: Ich war's nicht, ehrlich! Ich war die ganze Zeit … im Bad.\nTIM [flehend]: Frag doch Opa, der hat mich da gesehen!\nOMA [spöttisch]: Im Bad. Mit Sahne an der Nase?\nAKTION: Tim wischt sich hastig die Nase und versteckt die Hände hinter dem Rücken.\n# 2 | Garten mit Hängematte | Opa schläft, ein leerer Teller liegt auf seinem Bauch\nOPA [verwirrt]: Hm? Ach, das … das ist nur ein Kissen, Liebling.\nOPA [fröhlich]: Ein sehr leckeres Kissen übrigens, mit Kirschen drauf.\nTIM [panisch]: Opa! Das solltest du doch nicht verraten!",
+    {
+     "aktion_zeilen": {
+      "höchstens": 5,
+      "mindestens": 2
+     },
+     "dauer_sekunden": 60,
+     "folge": 1,
+     "folgen_gesamt": 2,
+     "fortsetzung": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "idee_des_nutzers": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "serie": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "sprecherwechsel": {
+      "höchstens": 15,
+      "mindestens": 6
+     },
+     "vorherige_folgen": [],
+     "wortbudget": {
+      "höchstens": 156,
+      "mindestens": 102,
+      "ziel": 120
+     },
+     "ziel_des_films": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     }
+    }
+   ],
+   [
+    "write",
+    "Drehbuch-Doktor",
+    "Du bist Script Doctor für virale Kurzfilme. Lies das Drehbuch laut im Kopf, Zeile für Zeile. Finde: Zeilen ohne Sinn oder Bezug, Antworten, die nicht reagieren, Logikfehler (wer hat was, wo ist wer), fehlende Spannung oder Steigerung, schwache Pointe, Telegrammstil, Wiederholungen, Figuren, die nicht wie sie selbst klingen. Verbessere alles davon. Ereignisse aus der Idee und das Wortbudget bleiben. Antworte nur mit dem vollständigen überarbeiteten Drehbuch. Serie: Ist fortsetzung.pick_up gesetzt, greift die erste Zeile diesen offenen Punkt sofort auf. Ist fortsetzung.end_with gesetzt, wird die Hauptfrage vorher aufgelöst und der letzte Abschnitt zeigt genau diesen Cliffhanger. Regeln für das Drehbuch:\n- Ein durchgehendes Gespräch in Redeblöcken: Eine Figur sagt oft zwei oder drei Sätze nacheinander, jeder Satz als eigene Zeile derselben Figur, bevor die andere antwortet. Jeder Block reagiert auf den vorigen, mit Widerspruch, Ausrede, Drohung, Witz oder Überraschung. Kein Ping-Pong mit nur einem Satz pro Sprecherwechsel. Keine Zeile ohne Bezug.\n- Natürliches gesprochenes Deutsch, meist 7 bis 14 Wörter pro Zeile, ab und zu ein kurzer Ausruf. Kein Telegrammstil wie \"Geld. Jetzt. Sofort.\" oder \"Dein X. Mein Y.\".\n- Lebendig sprechbar: Fragen, Ausrufe, Unterbrechungen mit \"–\", Zögern mit \"…\", Interjektionen wie \"Hey!\", \"Au!\", \"Ha!\".\n- Jede Figur klingt wie sie selbst. Bekannte Figuren reden und handeln wie im Original (Wortwahl, Ticks, Eigenheiten).\n- Spannung: Haken in der ersten Zeile, klares Ziel, zwei echte Steigerungen, eine vorbereitete Wendung, eine Pointe am Schluss. Setup und Payoff für den Witz.\n- Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.\n- AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.\n- Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.\nFormat, exakt so, eine Angabe pro Zeile:\nTITEL: <Filmtitel>\n# <Nummer> | <Ort> | <was in diesem Abschnitt sichtbar passiert>\n<NAME> [<Sprechhaltung>]: <gesprochener Text>\nAKTION: <sichtbare Handlung ohne Sprache, höchstens zwei Figuren, Münder geschlossen>\nSprechhaltung ist genau eines von: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt.\nNAME exakt wie in der Besetzung. Keine weiteren Zeilen, keine Erklärungen, keine Regieanweisungen im gesprochenen Text.",
+    {
+     "aktion_zeilen": {
+      "höchstens": 5,
+      "mindestens": 2
+     },
+     "dauer_sekunden": 60,
+     "drehbuch": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "folge": 1,
+     "folgen_gesamt": 2,
+     "fortsetzung": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "idee_des_nutzers": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "serie": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "sprecherwechsel": {
+      "höchstens": 15,
+      "mindestens": 6
+     },
+     "vorherige_folgen": [],
+     "wortbudget": {
+      "höchstens": 156,
+      "mindestens": 102,
+      "ziel": 120
+     },
+     "ziel_des_films": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     }
+    }
+   ],
+   [
+    "llm",
+    "ShotVisuals",
+    "Du bist Kameramann und Bildregisseur. Für jede Einstellung genau ein Eintrag mit derselben Nummer. role sagt, was die Einstellung im Schnitt tut: speaking = die Figur aus visible spricht ihre lines; reaction = die Figur aus visible hört schweigend zu, die Stimme (hears) kommt von außerhalb des Bildes, ihr Mund bleibt geschlossen, sie reagiert nur mit Augen, Augenbrauen, Kopf und Körper (nicken, zurückweichen, Arme verschränken); action = stumme Handlung, alle Münder geschlossen; establish = weite Totale, die den neuen Ort zeigt. still: ENGLISCHE Bildbeschreibung des Standbilds, nur mit den Figuren aus visible: Pose, Gesichtsausdruck, Requisit, Ort, Licht. Figuren, die nicht in visible stehen, sind außerhalb des Bildes und werden NICHT genannt, auch nicht im Hintergrund und auch nicht als Stimme aus dem Off. Nur die Figuren aus visible sind im Bild. motion: ENGLISCH, eine klar sichtbare Körperbewegung in normaler Geschwindigkeit, die zur Zeile passt; bei reaction eine kleine stumme Reaktion mit geschlossenem Mund; bei action die Handlung selbst; bei establish ruhige Bewegung im Ort. camera: Bildausschnitt mit Abwechslung. Sprechende Einstellungen wechseln zwischen \"medium shot\", \"medium close-up\", \"low angle shot\", \"high angle medium shot\" und \"medium shot from the side\", nie zweimal hintereinander derselbe Ausschnitt; reaction \"close-up\"; establish \"wide establishing shot\"; action \"medium wide shot\" oder eine dynamische Perspektive. ambience: Umgebungsgeräusch. Ort und Licht über aufeinander folgende Einstellungen gleich halten. Figuren immer genau mit ihrem Namen aus visible nennen, nie mit Originalnamen, Spitznamen oder Übersetzungen (nicht \"Squidward\" für Thaddäus, nicht \"Grandma\" für Oma). Im still steht der Gesichtsausdruck passend zur Emotion der Zeile auf Englisch (z. B. \"afraid, wide eyes, tense\"), bei reaction mit geschlossenem Mund (z. B. \"worried, lips pressed together\"), nie ein Ausdruck aus einem Referenzbild. Genau 9 Einträge, Nummer 1 bis 9.",
+    {
+     "cast": [
+      {
+       "appearance": "Lena, friendly figure with a clear silhouette",
+       "name": "Lena",
+       "original": "",
+       "personality": "lebhaft und direkt",
+       "voice": "warm",
+       "voice_description": "klar und lebendig",
+       "voice_preset": "woman"
+      },
+      {
+       "appearance": "Markus, friendly figure with a clear silhouette",
+       "name": "Markus",
+       "original": "",
+       "personality": "lebhaft und direkt",
+       "voice": "warm",
+       "voice_description": "klar und lebendig",
+       "voice_preset": "man"
+      }
+     ],
+     "shots": [
+      {
+       "lines": [
+        {
+         "emotion": "triumphierend",
+         "speaker": "Lena",
+         "text": "Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!"
+        },
+        {
+         "emotion": "spöttisch",
+         "speaker": "Lena",
+         "text": "Du hattest heute schon drei, Markus, ich hab mitgezählt."
+        }
+       ],
+       "place": "Großraumbüro",
+       "role": "speaking",
+       "shot": 1,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "empört",
+         "speaker": "Markus",
+         "text": "Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!"
+        }
+       ],
+       "place": "Großraumbüro",
+       "role": "speaking",
+       "shot": 2,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Markus"
+       ]
+      },
+      {
+       "hears": "Bitte, Lena, ich hatte heute noch gar nichts Süßes.",
+       "lines": [],
+       "place": "Großraumbüro",
+       "role": "reaction: listens silently, voice from off-screen, mouth closed",
+       "shot": 3,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Großraumbüro",
+       "role": "action",
+       "shot": 4,
+       "situation": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Teeküche",
+       "role": "establish: wide view of the new place",
+       "shot": 5,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "überrascht",
+         "speaker": "Lena",
+         "text": "Moment mal. Warum ist die Dose plötzlich ganz leer?"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 6,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "verwirrt",
+         "speaker": "Markus",
+         "text": "Keine Ahnung. Ich war die ganze Zeit hier bei dir!"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 7,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Markus"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "wütend",
+         "speaker": "Lena",
+         "text": "Dann war es die Praktikantin. Sie hat Krümel am Pullover!"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 8,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Teeküche",
+       "role": "action",
+       "shot": 9,
+       "situation": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      }
+     ],
+     "style": "Warm clay look, soft studio light."
+    }
+   ],
+   [
+    "llm",
+    "SocialPost",
+    "Schreibe eine kurze deutsche Beschreibung für TikTok und YouTube Shorts zu genau dieser Folge. caption: ein neugieriger Satz ohne Spoiler der Auflösung, höchstens 150 Zeichen, keine Hashtags im Text, keine erfundenen Fakten. hashtags: 3 bis 6 passende deutsche oder gebräuchliche Hashtags ohne #-Zeichen, ohne Leerzeichen.",
+    {
+     "cliffhanger": "",
+     "episode": 1,
+     "goal": "Den Keks bekommen",
+     "series_title": "Planertitel",
+     "title": "Der letzte Keks",
+     "total": 2
+    }
+   ],
+   [
+    "llm",
+    "StorySpine",
+    "Du bist Showrunner für virale Kurzfilme auf TikTok und YouTube Shorts. Lege zuerst das Ziel dieser Folge fest, noch keine Szenen. logline: wer will was, was steht im Weg, was steht auf dem Spiel, in einem Satz. viewer_question: die Frage, wegen der man bis zum Ende schaut. hook: was in den ersten zwei Sekunden sichtbar passiert. goal und stakes konkret. escalations: zwei bis drei Steigerungen, jede schlimmer oder lustiger als die vorige. twist: eine vorbereitete Überraschung. payoff: die Auflösung der Hauptfrage. final_moment: der letzte Gag oder bei einer Serienfolge genau der vorgegebene Cliffhanger. running_gag optional. Alles sichtbar und filmbar, keine Erklärungen. Bekannte Figuren verhalten sich wie im Original. Originalvorgaben und Figuren aus series.cast sind verbindlich. Deutsch.",
+    {
+     "continuity": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "duration": 60,
+     "episode": 2,
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "previous": [
+      {
+       "resolution": "Krümel am Pullover",
+       "title": "Der letzte Keks"
+      }
+     ],
+     "series": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "series_total": 2,
+     "source": "Lena und Markus streiten in zwei Folgen um Kekse im Büro."
+    }
+   ],
+   [
+    "write",
+    "Drehbuch",
+    "Du bist Head-Autor für virale deutsche Kurzfilme auf TikTok und YouTube Shorts. Schreibe das komplette Drehbuch dieser Folge als ein durchgehendes Gespräch für etwa 60 Sekunden. Gesamt 102 bis 156 gesprochene Wörter (Ziel 120), 6 bis 15 Sprecherwechsel, 2 bis 5 AKTION-Zeilen, höchstens 44 Einstellungen. Serie: Ist fortsetzung.pick_up gesetzt, greift die erste Zeile diesen offenen Punkt sofort auf. Ist fortsetzung.end_with gesetzt, wird die Hauptfrage vorher aufgelöst und der letzte Abschnitt zeigt genau diesen Cliffhanger. Regeln für das Drehbuch:\n- Ein durchgehendes Gespräch in Redeblöcken: Eine Figur sagt oft zwei oder drei Sätze nacheinander, jeder Satz als eigene Zeile derselben Figur, bevor die andere antwortet. Jeder Block reagiert auf den vorigen, mit Widerspruch, Ausrede, Drohung, Witz oder Überraschung. Kein Ping-Pong mit nur einem Satz pro Sprecherwechsel. Keine Zeile ohne Bezug.\n- Natürliches gesprochenes Deutsch, meist 7 bis 14 Wörter pro Zeile, ab und zu ein kurzer Ausruf. Kein Telegrammstil wie \"Geld. Jetzt. Sofort.\" oder \"Dein X. Mein Y.\".\n- Lebendig sprechbar: Fragen, Ausrufe, Unterbrechungen mit \"–\", Zögern mit \"…\", Interjektionen wie \"Hey!\", \"Au!\", \"Ha!\".\n- Jede Figur klingt wie sie selbst. Bekannte Figuren reden und handeln wie im Original (Wortwahl, Ticks, Eigenheiten).\n- Spannung: Haken in der ersten Zeile, klares Ziel, zwei echte Steigerungen, eine vorbereitete Wendung, eine Pointe am Schluss. Setup und Payoff für den Witz.\n- Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.\n- AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.\n- Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.\nFormat, exakt so, eine Angabe pro Zeile:\nTITEL: <Filmtitel>\n# <Nummer> | <Ort> | <was in diesem Abschnitt sichtbar passiert>\n<NAME> [<Sprechhaltung>]: <gesprochener Text>\nAKTION: <sichtbare Handlung ohne Sprache, höchstens zwei Figuren, Münder geschlossen>\nSprechhaltung ist genau eines von: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt.\nNAME exakt wie in der Besetzung. Keine weiteren Zeilen, keine Erklärungen, keine Regieanweisungen im gesprochenen Text.\nBeispiel für Ton, Redeblöcke und Format (andere Figuren, nicht übernehmen):\nTITEL: Der verschwundene Kuchen\n# 1 | Küche | Oma steht vor einem leeren Teller, Krümel auf dem Boden\nOMA [wütend]: Wer hat meinen Kuchen gegessen? Ich zähl bis drei!\nOMA [drohend]: Und wer jetzt lügt, kriegt eine Woche lang keinen Nachtisch.\nTIM [ängstlich]: Ich war's nicht, ehrlich! Ich war die ganze Zeit … im Bad.\nTIM [flehend]: Frag doch Opa, der hat mich da gesehen!\nOMA [spöttisch]: Im Bad. Mit Sahne an der Nase?\nAKTION: Tim wischt sich hastig die Nase und versteckt die Hände hinter dem Rücken.\n# 2 | Garten mit Hängematte | Opa schläft, ein leerer Teller liegt auf seinem Bauch\nOPA [verwirrt]: Hm? Ach, das … das ist nur ein Kissen, Liebling.\nOPA [fröhlich]: Ein sehr leckeres Kissen übrigens, mit Kirschen drauf.\nTIM [panisch]: Opa! Das solltest du doch nicht verraten!",
+    {
+     "aktion_zeilen": {
+      "höchstens": 5,
+      "mindestens": 2
+     },
+     "dauer_sekunden": 60,
+     "folge": 2,
+     "folgen_gesamt": 2,
+     "fortsetzung": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "idee_des_nutzers": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "serie": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "sprecherwechsel": {
+      "höchstens": 15,
+      "mindestens": 6
+     },
+     "vorherige_folgen": [
+      {
+       "resolution": "Krümel am Pullover",
+       "title": "Der letzte Keks"
+      }
+     ],
+     "wortbudget": {
+      "höchstens": 156,
+      "mindestens": 102,
+      "ziel": 120
+     },
+     "ziel_des_films": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     }
+    }
+   ],
+   [
+    "write",
+    "Drehbuch-Doktor",
+    "Du bist Script Doctor für virale Kurzfilme. Lies das Drehbuch laut im Kopf, Zeile für Zeile. Finde: Zeilen ohne Sinn oder Bezug, Antworten, die nicht reagieren, Logikfehler (wer hat was, wo ist wer), fehlende Spannung oder Steigerung, schwache Pointe, Telegrammstil, Wiederholungen, Figuren, die nicht wie sie selbst klingen. Verbessere alles davon. Ereignisse aus der Idee und das Wortbudget bleiben. Antworte nur mit dem vollständigen überarbeiteten Drehbuch. Serie: Ist fortsetzung.pick_up gesetzt, greift die erste Zeile diesen offenen Punkt sofort auf. Ist fortsetzung.end_with gesetzt, wird die Hauptfrage vorher aufgelöst und der letzte Abschnitt zeigt genau diesen Cliffhanger. Regeln für das Drehbuch:\n- Ein durchgehendes Gespräch in Redeblöcken: Eine Figur sagt oft zwei oder drei Sätze nacheinander, jeder Satz als eigene Zeile derselben Figur, bevor die andere antwortet. Jeder Block reagiert auf den vorigen, mit Widerspruch, Ausrede, Drohung, Witz oder Überraschung. Kein Ping-Pong mit nur einem Satz pro Sprecherwechsel. Keine Zeile ohne Bezug.\n- Natürliches gesprochenes Deutsch, meist 7 bis 14 Wörter pro Zeile, ab und zu ein kurzer Ausruf. Kein Telegrammstil wie \"Geld. Jetzt. Sofort.\" oder \"Dein X. Mein Y.\".\n- Lebendig sprechbar: Fragen, Ausrufe, Unterbrechungen mit \"–\", Zögern mit \"…\", Interjektionen wie \"Hey!\", \"Au!\", \"Ha!\".\n- Jede Figur klingt wie sie selbst. Bekannte Figuren reden und handeln wie im Original (Wortwahl, Ticks, Eigenheiten).\n- Spannung: Haken in der ersten Zeile, klares Ziel, zwei echte Steigerungen, eine vorbereitete Wendung, eine Pointe am Schluss. Setup und Payoff für den Witz.\n- Die Ereignisse aus der Idee des Nutzers kommen in seiner Reihenfolge vor.\n- AKTION-Zeilen für Momente ohne Worte: Verfolgung, Enthüllung, Schreck, Reaktion. Nicht mehr als zwei Figuren.\n- Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.\nFormat, exakt so, eine Angabe pro Zeile:\nTITEL: <Filmtitel>\n# <Nummer> | <Ort> | <was in diesem Abschnitt sichtbar passiert>\n<NAME> [<Sprechhaltung>]: <gesprochener Text>\nAKTION: <sichtbare Handlung ohne Sprache, höchstens zwei Figuren, Münder geschlossen>\nSprechhaltung ist genau eines von: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt.\nNAME exakt wie in der Besetzung. Keine weiteren Zeilen, keine Erklärungen, keine Regieanweisungen im gesprochenen Text.",
+    {
+     "aktion_zeilen": {
+      "höchstens": 5,
+      "mindestens": 2
+     },
+     "dauer_sekunden": 60,
+     "drehbuch": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "folge": 2,
+     "folgen_gesamt": 2,
+     "fortsetzung": {
+      "end_with": "",
+      "pick_up": ""
+     },
+     "idee_des_nutzers": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+     "outline": {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     "serie": {
+      "cast": [
+       {
+        "appearance": "Lena, friendly figure with a clear silhouette",
+        "name": "Lena",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "woman"
+       },
+       {
+        "appearance": "Markus, friendly figure with a clear silhouette",
+        "name": "Markus",
+        "original": "",
+        "personality": "lebhaft und direkt",
+        "voice": "warm",
+        "voice_description": "klar und lebendig",
+        "voice_preset": "man"
+       }
+      ],
+      "mood": "playful",
+      "style": "Warm clay look, soft studio light.",
+      "synopsis": "Eine kurze Geschichte über einen Streit.",
+      "title": "Planertitel",
+      "visual": "clay"
+     },
+     "sprecherwechsel": {
+      "höchstens": 15,
+      "mindestens": 6
+     },
+     "vorherige_folgen": [
+      {
+       "resolution": "Krümel am Pullover",
+       "title": "Der letzte Keks"
+      }
+     ],
+     "wortbudget": {
+      "höchstens": 156,
+      "mindestens": 102,
+      "ziel": 120
+     },
+     "ziel_des_films": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     }
+    }
+   ],
+   [
+    "llm",
+    "ShotVisuals",
+    "Du bist Kameramann und Bildregisseur. Für jede Einstellung genau ein Eintrag mit derselben Nummer. role sagt, was die Einstellung im Schnitt tut: speaking = die Figur aus visible spricht ihre lines; reaction = die Figur aus visible hört schweigend zu, die Stimme (hears) kommt von außerhalb des Bildes, ihr Mund bleibt geschlossen, sie reagiert nur mit Augen, Augenbrauen, Kopf und Körper (nicken, zurückweichen, Arme verschränken); action = stumme Handlung, alle Münder geschlossen; establish = weite Totale, die den neuen Ort zeigt. still: ENGLISCHE Bildbeschreibung des Standbilds, nur mit den Figuren aus visible: Pose, Gesichtsausdruck, Requisit, Ort, Licht. Figuren, die nicht in visible stehen, sind außerhalb des Bildes und werden NICHT genannt, auch nicht im Hintergrund und auch nicht als Stimme aus dem Off. Nur die Figuren aus visible sind im Bild. motion: ENGLISCH, eine klar sichtbare Körperbewegung in normaler Geschwindigkeit, die zur Zeile passt; bei reaction eine kleine stumme Reaktion mit geschlossenem Mund; bei action die Handlung selbst; bei establish ruhige Bewegung im Ort. camera: Bildausschnitt mit Abwechslung. Sprechende Einstellungen wechseln zwischen \"medium shot\", \"medium close-up\", \"low angle shot\", \"high angle medium shot\" und \"medium shot from the side\", nie zweimal hintereinander derselbe Ausschnitt; reaction \"close-up\"; establish \"wide establishing shot\"; action \"medium wide shot\" oder eine dynamische Perspektive. ambience: Umgebungsgeräusch. Ort und Licht über aufeinander folgende Einstellungen gleich halten. Figuren immer genau mit ihrem Namen aus visible nennen, nie mit Originalnamen, Spitznamen oder Übersetzungen (nicht \"Squidward\" für Thaddäus, nicht \"Grandma\" für Oma). Im still steht der Gesichtsausdruck passend zur Emotion der Zeile auf Englisch (z. B. \"afraid, wide eyes, tense\"), bei reaction mit geschlossenem Mund (z. B. \"worried, lips pressed together\"), nie ein Ausdruck aus einem Referenzbild. Genau 9 Einträge, Nummer 1 bis 9.",
+    {
+     "cast": [
+      {
+       "appearance": "Lena, friendly figure with a clear silhouette",
+       "name": "Lena",
+       "original": "",
+       "personality": "lebhaft und direkt",
+       "voice": "warm",
+       "voice_description": "klar und lebendig",
+       "voice_preset": "woman"
+      },
+      {
+       "appearance": "Markus, friendly figure with a clear silhouette",
+       "name": "Markus",
+       "original": "",
+       "personality": "lebhaft und direkt",
+       "voice": "warm",
+       "voice_description": "klar und lebendig",
+       "voice_preset": "man"
+      }
+     ],
+     "shots": [
+      {
+       "lines": [
+        {
+         "emotion": "triumphierend",
+         "speaker": "Lena",
+         "text": "Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!"
+        },
+        {
+         "emotion": "spöttisch",
+         "speaker": "Lena",
+         "text": "Du hattest heute schon drei, Markus, ich hab mitgezählt."
+        }
+       ],
+       "place": "Großraumbüro",
+       "role": "speaking",
+       "shot": 1,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "empört",
+         "speaker": "Markus",
+         "text": "Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!"
+        }
+       ],
+       "place": "Großraumbüro",
+       "role": "speaking",
+       "shot": 2,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Markus"
+       ]
+      },
+      {
+       "hears": "Bitte, Lena, ich hatte heute noch gar nichts Süßes.",
+       "lines": [],
+       "place": "Großraumbüro",
+       "role": "reaction: listens silently, voice from off-screen, mouth closed",
+       "shot": 3,
+       "situation": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Großraumbüro",
+       "role": "action",
+       "shot": 4,
+       "situation": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Teeküche",
+       "role": "establish: wide view of the new place",
+       "shot": 5,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "überrascht",
+         "speaker": "Lena",
+         "text": "Moment mal. Warum ist die Dose plötzlich ganz leer?"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 6,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "verwirrt",
+         "speaker": "Markus",
+         "text": "Keine Ahnung. Ich war die ganze Zeit hier bei dir!"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 7,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Markus"
+       ]
+      },
+      {
+       "lines": [
+        {
+         "emotion": "wütend",
+         "speaker": "Lena",
+         "text": "Dann war es die Praktikantin. Sie hat Krümel am Pullover!"
+        }
+       ],
+       "place": "Teeküche",
+       "role": "speaking",
+       "shot": 8,
+       "situation": "Die Keksdose steht offen, daneben Krümel",
+       "visible": [
+        "Lena"
+       ]
+      },
+      {
+       "lines": [],
+       "place": "Teeküche",
+       "role": "action",
+       "shot": 9,
+       "situation": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "visible": [
+        "Lena",
+        "Markus"
+       ]
+      }
+     ],
+     "style": "Warm clay look, soft studio light."
+    }
+   ],
+   [
+    "llm",
+    "SocialPost",
+    "Schreibe eine kurze deutsche Beschreibung für TikTok und YouTube Shorts zu genau dieser Folge. caption: ein neugieriger Satz ohne Spoiler der Auflösung, höchstens 150 Zeichen, keine Hashtags im Text, keine erfundenen Fakten. hashtags: 3 bis 6 passende deutsche oder gebräuchliche Hashtags ohne #-Zeichen, ohne Leerzeichen.",
+    {
+     "cliffhanger": "",
+     "episode": 2,
+     "goal": "Den Keks bekommen",
+     "series_title": "Planertitel",
+     "title": "Der letzte Keks",
+     "total": 2
+    }
+   ]
+  ],
+  "project": {
+   "episodes": [
+    {
+     "dialogue_mode": "rich",
+     "estimated_seconds": 60.0,
+     "goal": "Den Keks bekommen",
+     "minimum_seconds": 60,
+     "obstacle": "Der Nachmittag",
+     "resolution": "Krümel am Pullover",
+     "scene_budget": 9,
+     "scenes": [
+      {
+       "action": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "problem",
+       "because": "Einstieg",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "triumphierend",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!"
+        },
+        {
+         "emotion": "spöttisch",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Du hattest heute schon drei, Markus, ich hab mitgezählt."
+        }
+       ],
+       "emotion": "triumphierend",
+       "kind": "line",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 12.16,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face",
+       "title": "Lena: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!",
+       "variants": []
+      },
+      {
+       "action": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium close-up",
+       "cast": [
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "empört",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!"
+        }
+       ],
+       "emotion": "empört",
+       "kind": "line",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.28,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Markus in Großraumbüro, expressive face",
+       "title": "Markus: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!",
+       "variants": []
+      },
+      {
+       "action": "Lena hört schweigend zu, die Stimme von Markus kommt aus dem Off.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Reaktion auf Markus",
+       "camera": "close-up",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "flehend",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Bitte, Lena, ich hatte heute noch gar nichts Süßes."
+        }
+       ],
+       "emotion": "ruhig",
+       "kind": "reaction",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.28,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face",
+       "title": "Reaktion: Lena hört Markus zu",
+       "variants": [],
+       "voice_of": "Markus"
+      },
+      {
+       "action": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "action",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.12,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face, mouths closed",
+       "title": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Neuer Ort",
+       "camera": "wide establishing shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "establish",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.12,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Wide establishing view, Lena in Teeküche, expressive face",
+       "title": "Totale: Teeküche",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "überrascht",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Moment mal. Warum ist die Dose plötzlich ganz leer?"
+        }
+       ],
+       "emotion": "überrascht",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.24,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face",
+       "title": "Lena: Moment mal. Warum ist die Dose plötzlich ganz leer?",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "turn",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium close-up",
+       "cast": [
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "verwirrt",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Keine Ahnung. Ich war die ganze Zeit hier bei dir!"
+        }
+       ],
+       "emotion": "verwirrt",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.84,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Markus in Teeküche, expressive face",
+       "title": "Markus: Keine Ahnung. Ich war die ganze Zeit hier bei dir!",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "wütend",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Dann war es die Praktikantin. Sie hat Krümel am Pullover!"
+        }
+       ],
+       "emotion": "wütend",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.84,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face",
+       "title": "Lena: Dann war es die Praktikantin. Sie hat Krümel am Pullover!",
+       "variants": []
+      },
+      {
+       "action": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "payoff",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "action",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.12,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face, mouths closed",
+       "title": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "variants": []
+      }
+     ],
+     "screenplay": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "screenplay_stats": {
+      "actions": 2,
+      "budget": {
+       "max_actions": 5,
+       "max_turns": 15,
+       "max_words": 156,
+       "min_actions": 2,
+       "min_turns": 6,
+       "min_words": 102,
+       "words": 120
+      },
+      "establishing": 1,
+      "lines": 7,
+      "lip_sync": 5,
+      "reactions": 1,
+      "shots": 9,
+      "words": 66
+     },
+     "script": "screenplay",
+     "social": {
+      "caption": "Wer bekommt den letzten Keks?",
+      "hashtags": [
+       "keks",
+       "büro",
+       "comedy"
+      ]
+     },
+     "source_sha256": "12cc34eae981b16985d260fd972ff715a7a6fdd0e1e8687ef0da34d303352a3a",
+     "spine": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     },
+     "story_policy": 14,
+     "title": "Der letzte Keks",
+     "warnings": [
+      "Drehbuch prüfen: Zu wenig Dialog: 66 Wörter, nötig 102 bis 156 (Ziel 120). Mehr Wortwechsel, längere natürliche Sätze.; Zu wenig Sprecherwechsel: 5, nötig mindestens 6. Echte Wortwechsel schreiben."
+     ]
+    },
+    {
+     "dialogue_mode": "rich",
+     "estimated_seconds": 60.0,
+     "goal": "Den Keks bekommen",
+     "minimum_seconds": 60,
+     "obstacle": "Der Nachmittag",
+     "resolution": "Krümel am Pullover",
+     "scene_budget": 9,
+     "scenes": [
+      {
+       "action": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "problem",
+       "because": "Einstieg",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "triumphierend",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!"
+        },
+        {
+         "emotion": "spöttisch",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Du hattest heute schon drei, Markus, ich hab mitgezählt."
+        }
+       ],
+       "emotion": "triumphierend",
+       "kind": "line",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 12.16,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face",
+       "title": "Lena: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!",
+       "variants": []
+      },
+      {
+       "action": "Lena hält den letzten Keks hoch, Markus schaut entsetzt",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium close-up",
+       "cast": [
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "empört",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!"
+        }
+       ],
+       "emotion": "empört",
+       "kind": "line",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.28,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Markus in Großraumbüro, expressive face",
+       "title": "Markus: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!",
+       "variants": []
+      },
+      {
+       "action": "Lena hört schweigend zu, die Stimme von Markus kommt aus dem Off.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Reaktion auf Markus",
+       "camera": "close-up",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "flehend",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Bitte, Lena, ich hatte heute noch gar nichts Süßes."
+        }
+       ],
+       "emotion": "ruhig",
+       "kind": "reaction",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.28,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face",
+       "title": "Reaktion: Lena hört Markus zu",
+       "variants": [],
+       "voice_of": "Markus"
+      },
+      {
+       "action": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "action",
+       "location": "Großraumbüro",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.12,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Großraumbüro, expressive face, mouths closed",
+       "title": "Lena hält den Keks hoch über ihren Kopf, Markus springt danach.",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Neuer Ort",
+       "camera": "wide establishing shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "establish",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.12,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Wide establishing view, Lena in Teeküche, expressive face",
+       "title": "Totale: Teeküche",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "überrascht",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Moment mal. Warum ist die Dose plötzlich ganz leer?"
+        }
+       ],
+       "emotion": "überrascht",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.24,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face",
+       "title": "Lena: Moment mal. Warum ist die Dose plötzlich ganz leer?",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "turn",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium close-up",
+       "cast": [
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "verwirrt",
+         "pause_after": 0.15,
+         "speaker": "Markus",
+         "text": "Keine Ahnung. Ich war die ganze Zeit hier bei dir!"
+        }
+       ],
+       "emotion": "verwirrt",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.84,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Markus in Teeküche, expressive face",
+       "title": "Markus: Keine Ahnung. Ich war die ganze Zeit hier bei dir!",
+       "variants": []
+      },
+      {
+       "action": "Die Keksdose steht offen, daneben Krümel",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "attempt",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [
+        {
+         "emotion": "wütend",
+         "pause_after": 0.15,
+         "speaker": "Lena",
+         "text": "Dann war es die Praktikantin. Sie hat Krümel am Pullover!"
+        }
+       ],
+       "emotion": "wütend",
+       "kind": "line",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 6.84,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face",
+       "title": "Lena: Dann war es die Praktikantin. Sie hat Krümel am Pullover!",
+       "variants": []
+      },
+      {
+       "action": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "active_variants": [],
+       "ambience": "room",
+       "animation_prompt": "gestures clearly with both hands",
+       "beat": "payoff",
+       "because": "Fortsetzung des Gesprächs",
+       "camera": "medium shot",
+       "cast": [
+        "Lena",
+        "Markus"
+       ],
+       "continuity": "same location and lighting as the previous shot",
+       "dialogue": "",
+       "dialogues": [],
+       "emotion": "Natürlich",
+       "kind": "action",
+       "location": "Teeküche",
+       "motion": [
+        "gestures clearly with both hands"
+       ],
+       "round": 0,
+       "seconds": 5.12,
+       "selected": null,
+       "sound_cues": [],
+       "speaker": "",
+       "still": "Lena in Teeküche, expressive face, mouths closed",
+       "title": "Markus und Lena starren gleichzeitig zur Tür der Teeküche.",
+       "variants": []
+      }
+     ],
+     "screenplay": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "screenplay_stats": {
+      "actions": 2,
+      "budget": {
+       "max_actions": 5,
+       "max_turns": 15,
+       "max_words": 156,
+       "min_actions": 2,
+       "min_turns": 6,
+       "min_words": 102,
+       "words": 120
+      },
+      "establishing": 1,
+      "lines": 7,
+      "lip_sync": 5,
+      "reactions": 1,
+      "shots": 9,
+      "words": 66
+     },
+     "script": "screenplay",
+     "social": {
+      "caption": "Wer bekommt den letzten Keks?",
+      "hashtags": [
+       "keks",
+       "büro",
+       "comedy"
+      ]
+     },
+     "source_sha256": "12cc34eae981b16985d260fd972ff715a7a6fdd0e1e8687ef0da34d303352a3a",
+     "spine": {
+      "escalations": [
+       "Markus bettelt",
+       "Die Dose ist leer"
+      ],
+      "final_moment": "Beide starren zur Tür",
+      "goal": "Den Keks bekommen",
+      "hook": "Lena hält den Keks hoch.",
+      "logline": "Zwei Kollegen streiten um den letzten Keks.",
+      "payoff": "Krümel am Pullover",
+      "running_gag": "",
+      "stakes": "Der Nachmittag",
+      "twist": "Die Praktikantin",
+      "viewer_question": "Wer bekommt ihn?"
+     },
+     "story_policy": 14,
+     "title": "Der letzte Keks",
+     "warnings": [
+      "Drehbuch prüfen: Zu wenig Dialog: 66 Wörter, nötig 102 bis 156 (Ziel 120). Mehr Wortwechsel, längere natürliche Sätze.; Zu wenig Sprecherwechsel: 5, nötig mindestens 6. Echte Wortwechsel schreiben."
+     ]
+    }
+   ],
+   "idea": {
+    "autopilot": false,
+    "cast_check": false,
+    "characters": "provided",
+    "cover": "off",
+    "duration": 60,
+    "episodes": 2,
+    "examples": [],
+    "fps": 25,
+    "idea": "Lena und Markus streiten in zwei Folgen um Kekse im Büro.",
+    "lip_sync": "audio",
+    "look": "auto",
+    "music": null,
+    "participants": [
+     {
+      "image": null,
+      "image_look": null,
+      "image_mode": "exact",
+      "library_id": null,
+      "library_image": null,
+      "library_voice": null,
+      "name": "Lena",
+      "traits": "Projektleiterin",
+      "voice": null,
+      "voice_design": null,
+      "voice_text": ""
+     },
+     {
+      "image": null,
+      "image_look": null,
+      "image_mode": "exact",
+      "library_id": null,
+      "library_image": null,
+      "library_voice": null,
+      "name": "Markus",
+      "traits": "Praktikant",
+      "voice": null,
+      "voice_design": null,
+      "voice_text": ""
+     }
+    ],
+    "quality": "fast",
+    "request_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "smooth": true,
+    "speech_engine": "auto",
+    "title": ""
+   },
+   "plan": {
+    "cast": [
+     {
+      "appearance": "Lena, friendly figure with a clear silhouette",
+      "name": "Lena",
+      "original": "",
+      "personality": "lebhaft und direkt",
+      "voice": "warm",
+      "voice_description": "klar und lebendig",
+      "voice_preset": "woman"
+     },
+     {
+      "appearance": "Markus, friendly figure with a clear silhouette",
+      "name": "Markus",
+      "original": "",
+      "personality": "lebhaft und direkt",
+      "voice": "warm",
+      "voice_description": "klar und lebendig",
+      "voice_preset": "man"
+     }
+    ],
+    "episodes": [
+     {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     },
+     {
+      "cliffhanger": "",
+      "ending": "Die Praktikantin hat ihn.",
+      "pickup": "",
+      "plot": "Lena und Markus streiten um den letzten Keks.",
+      "title": "Der letzte Keks"
+     }
+    ],
+    "mood": "playful",
+    "style": "Warm clay look, soft studio light.",
+    "synopsis": "Eine kurze Geschichte über einen Streit.",
+    "title": "Planertitel",
+    "visual": "clay"
+   },
+   "screenplays": {
+    "0": {
+     "draft": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "final": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "policy": 14,
+     "visuals": {
+      "shots": [
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 1,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 2,
+        "still": "Markus in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 3,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 4,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 5,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 6,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 7,
+        "still": "Markus in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 8,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 9,
+        "still": "Lena in Teeküche, expressive face"
+       }
+      ]
+     }
+    },
+    "1": {
+     "draft": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "final": "TITEL: Der letzte Keks\n# 1 | Großraumbüro | Lena hält den letzten Keks hoch, Markus schaut entsetzt\nLENA [triumphierend]: Der letzte Keks gehört mir, ich hab ihn zuerst gesehen!\nLENA [spöttisch]: Du hattest heute schon drei, Markus, ich hab mitgezählt.\nMARKUS [empört]: Das waren Reiswaffeln! Die zählen überhaupt nicht als Kekse!\nMARKUS [flehend]: Bitte, Lena, ich hatte heute noch gar nichts Süßes.\nAKTION: Lena hält den Keks hoch über ihren Kopf, Markus springt danach.\n# 2 | Teeküche | Die Keksdose steht offen, daneben Krümel\nLENA [überrascht]: Moment mal. Warum ist die Dose plötzlich ganz leer?\nMARKUS [verwirrt]: Keine Ahnung. Ich war die ganze Zeit hier bei dir!\nLENA [wütend]: Dann war es die Praktikantin. Sie hat Krümel am Pullover!\nAKTION: Markus und Lena starren gleichzeitig zur Tür der Teeküche.\n",
+     "policy": 14,
+     "visuals": {
+      "shots": [
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 1,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 2,
+        "still": "Markus in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 3,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 4,
+        "still": "Lena in Großraumbüro, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 5,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 6,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 7,
+        "still": "Markus in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 8,
+        "still": "Lena in Teeküche, expressive face"
+       },
+       {
+        "ambience": "room",
+        "camera": "medium shot",
+        "motion": "gestures clearly with both hands",
+        "shot": 9,
+        "still": "Lena in Teeküche, expressive face"
+       }
+      ]
+     }
+    }
+   },
+   "source": {
+    "blocks": [
+     {
+      "end": 57,
+      "episode": 0,
+      "sha256": "12cc34eae981b16985d260fd972ff715a7a6fdd0e1e8687ef0da34d303352a3a",
+      "start": 0
+     }
+    ],
+    "characters": 57,
+    "episodes": [],
+    "errors": [],
+    "preamble_end": 57,
+    "sha256": "12cc34eae981b16985d260fd972ff715a7a6fdd0e1e8687ef0da34d303352a3a"
+   },
+   "spines": {
+    "0": {
+     "escalations": [
+      "Markus bettelt",
+      "Die Dose ist leer"
+     ],
+     "final_moment": "Beide starren zur Tür",
+     "goal": "Den Keks bekommen",
+     "hook": "Lena hält den Keks hoch.",
+     "logline": "Zwei Kollegen streiten um den letzten Keks.",
+     "payoff": "Krümel am Pullover",
+     "running_gag": "",
+     "stakes": "Der Nachmittag",
+     "twist": "Die Praktikantin",
+     "viewer_question": "Wer bekommt ihn?"
+    },
+    "1": {
+     "escalations": [
+      "Markus bettelt",
+      "Die Dose ist leer"
+     ],
+     "final_moment": "Beide starren zur Tür",
+     "goal": "Den Keks bekommen",
+     "hook": "Lena hält den Keks hoch.",
+     "logline": "Zwei Kollegen streiten um den letzten Keks.",
+     "payoff": "Krümel am Pullover",
+     "running_gag": "",
+     "stakes": "Der Nachmittag",
+     "twist": "Die Praktikantin",
+     "viewer_question": "Wer bekommt ihn?"
+    }
+   },
+   "state": "pictures",
+   "title": "Planertitel"
+  }
+ }
+}

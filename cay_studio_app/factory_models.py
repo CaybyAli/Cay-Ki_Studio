@@ -82,6 +82,10 @@ class Idea(Strict):
     # channel grid shows that frame), after the first shot, or none. Only projects with
     # edit_policy 18 use it; a client that does not send it gets 'off' (see create).
     cover:Literal['start','after_hook','off']='start'
+    # 'Mein Drehbuch' (0.18): 'script' films Cay's own script word for word (own_script). Only the
+    # new app sends it; the stored idea keeps the key only for 'script', so every other project
+    # document stays exactly as before.
+    story:Literal['ai','script']='ai'
 
 class CastPlan(Strict):
     name:str=Field(min_length=1,max_length=60)

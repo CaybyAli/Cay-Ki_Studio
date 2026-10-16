@@ -909,8 +909,12 @@ def shot_listing(entry, shot):
     return entry
 
 
-async def write_episode(factory, d, index, outline, source, continuity, spine):
-    """Screenplay -> check -> doctor -> shots -> visuals. Stored drafts survive a restart."""
+async def write_episode(factory, d, index, outline, source, continuity, spine, own=None):
+    """Screenplay -> check -> doctor -> shots -> visuals. Stored drafts survive a restart.
+
+    own (0.18, 'Mein Drehbuch'): Cay's script in the internal format (own_script.read). It is the
+    final screenplay as it is: no draft, no Script Doctor, no invented AKTION (ensure_action), its
+    check results are advisory notes. Only the image and motion text come from the planner."""
     idea = d['idea']; cast = [p['name'] for p in d['plan']['cast']]
     stores = d.setdefault('screenplays', {}); store = stores.setdefault(str(index), {})
     # Pinned with the screenplay and per project: a project that began writing screenplays before
@@ -919,6 +923,8 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
     started = (any(s.get('policy', LEGACY_POLICY if s.get('draft') or s.get('final') else None) == LEGACY_POLICY for s in stores.values())
                or any(ep.get('script') == 'screenplay' and ep.get('story_policy', LEGACY_POLICY) == LEGACY_POLICY for ep in d.get('episodes', [])))
     policy = store.setdefault('policy', LEGACY_POLICY if started else POLICY)
+    # After the pin: a stored text without a policy would read as a screenplay from before 0.18.
+    if own is not None: store.update(final=own, own=True)
     b = budget(idea['duration'], len(cast), policy)
     context = {'idee_des_nutzers': source, 'serie': {k: v for k, v in d['plan'].items() if k not in ('episodes',)},
                'folge': index + 1, 'folgen_gesamt': idea['episodes'], 'outline': outline, 'ziel_des_films': spine,
@@ -954,8 +960,16 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
             final = draft; store['doctor_error'] = str(error)[:500]
         store['final'] = final; factory.save(d)
     title, beats, lines, problems = parse(store['final'], cast)
-    remaining = check(title, beats, lines, problems, cast, idea['duration'], policy)
-    cut = ensure_action(shots(title, beats, lines, cast, policy), idea['duration'])
+    if own is not None:
+        from own_script import advice
+        remaining = problems + advice(title, beats, lines, cast)
+        cut = shots(title, beats, lines, cast, policy)
+    else:
+        remaining = check(title, beats, lines, problems, cast, idea['duration'], policy)
+        cut = ensure_action(shots(title, beats, lines, cast, policy), idea['duration'])
+    if own is not None and (not cut or len(cut) > MAX_SHOTS):
+        raise RuntimeError(f'Folge {index + 1} deines Drehbuchs ' + ('hat keine verwertbare Zeile.' if not cut else
+                           f'ergibt {len(cut)} Einstellungen, höchstens {MAX_SHOTS}. Bitte kürzen und als neuen Film anlegen.'))
     if not cut or len(cut) > MAX_SHOTS:
         # Unusable: forget it, so "Neu planen" really writes a new one (it used to parse the same text again).
         d['screenplays'].pop(str(index), None); factory.save(d)
@@ -966,9 +980,11 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
         listing = [{'shot': i + 1, 'visible': s['visible'], 'place': s['place'], 'situation': s['what'],
                     'lines': [{'speaker': l['speaker'], 'emotion': l['emotion'], 'text': l['text']} for l in s['lines']]} for i, s in enumerate(cut)]
         if policy >= 14: listing = [shot_listing(x, s) for x, s in zip(listing, cut)]
+        # Cay's own script: the planner reads all of it, so pictures and motion show what it says.
+        reading = ({'drehbuch': store['final']}, ' Das vollständige Drehbuch steht in drehbuch: Bilder und Bewegungen zeigen genau, was dort passiert.') if own is not None else ({}, '')
         try:
-            answer = await factory.llm(ShotVisuals, visual_instruction(policy) + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.',
-                                       {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': listing})
+            answer = await factory.llm(ShotVisuals, visual_instruction(policy) + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.' + reading[1],
+                                       {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': listing, **reading[0]})
             # Partial answers are usable: assemble() falls back per missing shot.
             numbers = [v['shot'] for v in answer['shots']]
             # Gaps are fine (fallback per shot); duplicates or numbers out of range mean the
@@ -988,6 +1004,7 @@ async def write_episode(factory, d, index, outline, source, continuity, spine):
     if policy >= 14: stats.update(reactions=sum(s['kind'] == 'reaction' for s in cut), establishing=sum(s['kind'] == 'establish' for s in cut),
                                   lip_sync=sum(s['kind'] == 'line' for s in cut))
     episode['screenplay_stats'] = stats
-    if remaining: episode['warnings'] = ['Drehbuch prüfen: ' + '; '.join(remaining)[:900]]
+    if own is not None: episode['own_script'] = True
+    if remaining: episode['warnings'] = [('Hinweis zu deinem Drehbuch: ' if own is not None else 'Drehbuch prüfen: ') + '; '.join(remaining)[:900]]
     if store.get('visual_error'): episode.setdefault('warnings', []).append(store['visual_error'][:400])
     return episode

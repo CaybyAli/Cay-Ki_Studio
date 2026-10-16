@@ -278,7 +278,8 @@ class Quality:
             title,suffix=old['title'],' · neue Fassung'
             while title.endswith(suffix):title=title[:-len(suffix)]
             idea['title']=(title+suffix)[:100];note=body.note if body else ''
-            idea['idea']=idea['idea']+'\nÜberarbeitung: '+(note or 'Nur EIN Ereignis mit Ziel, Hindernis und Pointe. Keine gesamte Filmhandlung in einer Minute. Mehrere kurze Dialogwechsel und passende Altersstimmen. Alte Vorgaben mit einem Satz je Szene sind aufgehoben. Bei Lebensmittel-Parodien keine Verwandlung in Menschen.')
+            # Cay's own script stays word for word: a new edition designs figures, pictures and voices anew.
+            if idea.get('story')!='script':idea['idea']=idea['idea']+'\nÜberarbeitung: '+(note or 'Nur EIN Ereignis mit Ziel, Hindernis und Pointe. Keine gesamte Filmhandlung in einer Minute. Mehrere kurze Dialogwechsel und passende Altersstimmen. Alte Vorgaben mit einem Satz je Szene sind aufgehoben. Bei Lebensmittel-Parodien keine Verwandlung in Menschen.')
             if len(idea['idea'])>100000:idea['idea']=old['idea']['idea']
             # A new edition is a new film: an original from before 0.18 (no field) gets the title card too.
             idea.setdefault('cover','start')

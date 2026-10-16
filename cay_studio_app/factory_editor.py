@@ -132,6 +132,8 @@ class Editor:
                 raise HTTPException(409, 'Bilder vor der Bildfreigabe korrigieren; sonst neue Fassung anlegen.')
             if body.kind in ('music', 'effects') and d['state'] != 'voice_review':
                 raise HTTPException(409, 'Musik und Geräusche in der Tonvorschau korrigieren.')
+            if body.kind == 'dialogue' and d['idea'].get('story') == 'script':
+                raise HTTPException(409, 'Dein Drehbuch bleibt Wort für Wort, wie du es geschrieben hast. Sätze änderst du selbst mit „Text ändern“.')
             if body.kind in ('image', 'effects', 'dialogue'):
                 try: d['episodes'][body.episode]['scenes'][body.scene]
                 except IndexError: raise HTTPException(404, 'Szene fehlt.')
