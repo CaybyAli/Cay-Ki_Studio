@@ -191,6 +191,7 @@ details.more summary::-webkit-details-marker { display: none; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 34px 22px; }
 .grid > *, .film > * { min-width: 0; }
 video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
+.sample { max-width: 300px; }            /* the 9:16 sample is a film frame like .film, not a full-width card */
 .tile { display: grid; gap: 6px; align-content: start; color: var(--ink); cursor: pointer; border: 0; background: none; padding: 0; text-align: left; }
 .tile:hover { text-decoration: none; }
 .tile:hover .frame { transform: scale(1.015); }
