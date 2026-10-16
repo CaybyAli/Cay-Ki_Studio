@@ -809,23 +809,23 @@ function figureSheet(name) {
   const refs = d.cast_refs || {}, scenes = scenesWith(d, name), pend = pendingFor(d, name), url = voiceUrl(d, p);
   const usable = ['image', 'voice'].filter(part => ['now', 'later'].includes(w[part]));
   const row = (attrs, title, text, disabled) => `<button class="menu-row" ${attrs} ${disabled ? 'disabled' : ''}><b>${title}</b><span>${text}</span></button>`;
-  const library = usable.length ? `<div class="menu-section"><p class="menu-title">Aus deinen Figuren</p>
+  const library = usable.length ? `<div class="menu-section"><p class="label menu-title">Aus deinen Figuren</p>
       ${suggestionsFor(d, name).slice(0, 3).filter(f => usableParts(d, f).length).map(f => `<button class="menu-row with-pic" data-action="lib-suggest" data-name="${esc(name)}" data-id="${esc(f.id)}">
         <span class="mini">${f.image ? `<img src="/api/factory/assets/${esc(f.image)}" alt="">` : initials(f)}</span><b>${esc(f.label)} verwenden</b>
         <span>${esc(partsText(usableParts(d, f)))}${usableParts(d, f).some(part => w[part] === 'later') ? `, wird übernommen, ${esc(laterText(d))}` : ''}.</span></button>`).join('')}
       ${row(`data-action="lib-pick-project" data-name="${esc(name)}"`, 'Aus deinen Figuren wählen', `Bild und Stimme aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(name)}.`)}</div>` : '';
   const ownImage = e.image && !e.library_image;
-  const image = w.image === 'now' ? `<div class="menu-section"><p class="menu-title">Bild</p>
+  const image = w.image === 'now' ? `<div class="menu-section"><p class="label menu-title">Bild</p>
       ${imageMode(e) !== 'exact' ? row(`data-action="cast-redo" data-name="${esc(name)}"`, 'Neu gestalten', `Das Studio zeichnet ${esc(name)} noch einmal.`) : ''}
       <label class="menu-row"><b>Eigenes Bild hochladen</b><span>Mit neutralem Gesicht übernommen, jede Szene bestimmt den Ausdruck.</span><input type="file" accept="image/*" data-upload="cast" data-name="${esc(name)}"></label>
       ${e.image ? (imageMode(e) === 'exact'
         ? row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="neutral"`, 'Gesicht neutral nachzeichnen', `${ownImage ? 'Dein Bild' : 'Das Bild'} wird einmal mit neutralem Gesicht gezeichnet, damit ${esc(name)} in jeder Szene passend schaut.`)
         : row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="exact"`, 'Bild genau so verwenden', 'Richtig für fertige Figurenblätter. Der Gesichtsausdruck aus dem Bild bleibt dann in allen Szenen.')) : ''}</div>`
-    : `<div class="menu-section"><p class="menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Figuren aus deiner Bibliothek kannst du schon jetzt vormerken. Zum Neu-Gestalten oder für ein eigenes Bild das Projekt kurz pausieren.` : w.image || '')}</p></div>`;
-  const voice = w.voice === 'now' ? `<div class="menu-section"><p class="menu-title">Stimme</p>
+    : `<div class="menu-section"><p class="label menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Figuren aus deiner Bibliothek kannst du schon jetzt vormerken. Zum Neu-Gestalten oder für ein eigenes Bild das Projekt kurz pausieren.` : w.image || '')}</p></div>`;
+  const voice = w.voice === 'now' ? `<div class="menu-section"><p class="label menu-title">Stimme</p>
       ${row(`data-action="figure-voice-new" data-name="${esc(name)}"`, 'Andere Stimme gestalten', `Das Studio gestaltet eine neue Stimme für ${esc(name)}. Die Sätze werden neu eingesprochen.`)}
       <label class="menu-row"><b>Eigene Aufnahme hochladen</b><span>Eine Sprachaufnahme dieser Figur, 5 bis 20 Sekunden.</span><input type="file" accept="audio/*" data-upload="cast-voice" data-name="${esc(name)}"></label></div>`
-    : `<div class="menu-section"><p class="menu-title">Stimme</p><p class="menu-note">${esc(w.voice === 'later' ? `Eigene Aufnahmen und neue Stimmen gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.voice || '')}</p></div>`;
+    : `<div class="menu-section"><p class="label menu-title">Stimme</p><p class="menu-note">${esc(w.voice === 'later' ? `Eigene Aufnahmen und neue Stimmen gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.voice || '')}</p></div>`;
   const keep = refs[name] || e.voice || (d.voice_profiles || {})[name]
     ? `<div class="menu-section">${row(`data-action="lib-save" data-name="${esc(name)}"`, 'In deine Figuren aufnehmen', 'Bild und Stimme für andere Filme sichern. An diesem Film ändert sich nichts.')}</div>` : '';
   openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)}</h2><button class="button quiet small" data-action="close">Fertig</button></div>
