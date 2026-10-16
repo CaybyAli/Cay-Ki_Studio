@@ -7,6 +7,7 @@ const S = { token: '', version: '', page: 'new', rid: null, run: null, progress:
   draft: null, busy: false, episode: 0, sig: '', health: null, deferred: false,
   library: null, libQuery: '', libLook: 'all', pick: null };
 const $ = (q, root = document) => root.querySelector(q);
+const dec = x => (Number(x) || 0).toFixed(1).replace('.', ',');     // German decimal comma: '1,1 s'
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const hex = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
 const PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg>';
@@ -732,7 +733,7 @@ function soundSection(d) {
   const lines = (d.lines || []).map((l, index) => ({ ...l, index })).filter(l => l.episode === ei);
   return `<section class="section"><h2 class="title">Ton</h2>${episodeTabs(d)}
     <div class="mix"><audio controls preload="metadata" src="/api/factory/${esc(d.id)}/mix/${ei}"></audio>
-      <p class="small muted">${t.seconds ? `${t.seconds.toFixed(1)} s, davon ${(t.speech_seconds || 0).toFixed(1)} s Sprache. Längste Pause ${(t.longest_speech_gap || 0).toFixed(1)} s.` : ''}</p>
+      <p class="small muted">${t.seconds ? `${dec(t.seconds)} s, davon ${dec(t.speech_seconds)} s Sprache. Längste Pause ${dec(t.longest_speech_gap)} s.` : ''}</p>
       <div class="actions"><span class="small muted">Musik</span>${seg('music', [['off', 'Aus'], ['auto', 'Einfach'], ...(d.idea.music ? [['uploaded', 'Eigene']] : [])], music).replaceAll('data-set=', 'data-mix=')}
         ${ownScript(d) ? '' : '<button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button>'}<button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
       ${levelsView(d, music)}</div>
@@ -742,7 +743,7 @@ function soundSection(d) {
         <select class="input" data-voice="${esc(p.name)}" aria-label="Stimmtyp von ${esc(p.name)}">${PRESETS.map(([v, l]) => `<option value="${v}" ${p.voice_preset === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
         <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Neue Stimme</button></div></div>`).join('')}</div>
     <h3 class="headline subhead">Sätze</h3>
-    <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${(l.duration || 0).toFixed(1)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
+    <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${dec(l.duration)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
   </section>`;
 }
 /* Volume of music, effects and ambience, shown relative to the studio's balance (100 %);
@@ -809,7 +810,7 @@ function paintProgress() {
     <progress class="meter" max="${Math.max(1, p.total)}" value="${p.done}" aria-label="Gesamtfortschritt"></progress>
     ${a ? `<div class="now-step"><p class="small muted">${esc(detail.label || 'Animation')}${a.scene != null ? `, Folge ${a.episode + 1}, Szene ${a.scene + 1}` : ''}${node ? `: Schritt ${node.value} von ${node.max}` : ''}</p>
       ${node ? `<progress class="meter sub" max="${node.max}" value="${node.value}" aria-label="Aktueller Abschnitt"></progress>` : ''}</div>` : ''}
-    ${stuck ? `<div class="stall"><p><b>Dieser Abschnitt hängt wahrscheinlich.</b> Seit ${esc(duration(Date.now() / 1000 - p.last_progress))} kein neuer Rechenschritt${g.total_mib ? `, Grafikspeicher ${(g.used_mib / 1024).toFixed(1)} von ${(g.total_mib / 1024).toFixed(0)} GB` : ''}.</p>
+    ${stuck ? `<div class="stall"><p><b>Dieser Abschnitt hängt wahrscheinlich.</b> Seit ${esc(duration(Date.now() / 1000 - p.last_progress))} kein neuer Rechenschritt${g.total_mib ? `, Grafikspeicher ${dec(g.used_mib / 1024)} von ${(g.total_mib / 1024).toFixed(0)} GB` : ''}.</p>
       <div class="actions"><button class="button small" data-action="abort-fast">${keepsQuality(d) ? 'Abschnitt neu starten' : 'Mit „Standard“ neu starten'}</button></div></div>` : ''}`;
 }
 

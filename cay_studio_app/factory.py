@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             ready=any(m.get('name')==self.g['MODEL'] for m in (tags or {}).get('models',[]))
             checks.append({'name':'Planung','ready':ready,'detail':self.g['MODEL'] if ready else 'Planungsmodell oder Ollama nicht erreichbar'})
         free=shutil.disk_usage(self.g['ROOT']).free
-        checks.append({'name':'Speicherplatz','ready':free>3*1024**3,'detail':f'{free/1024**3:.1f} GB frei auf der Studio-Ablage'})
+        checks.append({'name':'Speicherplatz','ready':free>3*1024**3,'detail':f'{free/1024**3:.1f}'.replace('.',',')+' GB frei auf der Studio-Ablage'})
         checks.append({'name':'Filmschnitt','ready':bool(shutil.which('ffmpeg') and shutil.which('ffprobe')),'detail':'FFmpeg und FFprobe'})
         python=self.base/'envs/chatterbox/bin/python'
         # Probe imports only; it must not load a GPU model while another process is rendering.
