@@ -116,6 +116,10 @@ try:
                    (proj, stage, 'GPU', f'2026-01-01T{end}:00+00:00', sec, 'done', '{}'))
     # blocked: speech check
     project('e' * 32, 'blocked', 'Funkstille', {'resume_state': 'audio_mixing', 'error': 'Nachbearbeitung: SPRACHPRÜFUNG: 1 von 6 Dialogbeiträgen nicht hörbar. Ohne hörbare Stimme: Markus. Folge 1, Szene 3, Figur Markus: „Lass mich los!“ – keine hörbare Sprache an dieser Stelle.'})
+    # blocked after a PC restart while animating in the old quality „Hoch“: ComfyUI forgot the section
+    project('7' * 32, 'blocked', 'Nach dem Neustart', {'resume_state': 'rendering', 'uncertain': True,
+            'error': 'Der Auftrag fehlt in ComfyUIs Warteschlange und Verlauf. Keine automatische Doppelproduktion.'}, {'quality': 'high'})
+    db.execute("INSERT INTO factory_steps(id,run_id,step_key,status,prompt_id,graph) VALUES(?,?,?,?,?,?)", ('lost-step', '7' * 32, 'video09:0:0:0:k', 'submitted', 'pid-gone', '{}'))
     db.commit()
 
     from playwright.sync_api import sync_playwright
@@ -145,7 +149,7 @@ try:
         r.check('Serie gewählt: Knopftext und Teil-Etikett', page.locator('#create').inner_text() == 'Serie mit 12 Folgen starten' and page.locator('#preview-part').inner_text() == 'Teil 1/12')
         page.screenshot(path=str(shots / '02_neu_serie.png'))
         shot('03_projekte', '#projects')
-        r.check('Projektliste: 7 Projekte als Hochkantkacheln', page.locator('.tile').count() == 7)
+        r.check('Projektliste: 8 Projekte als Hochkantkacheln', page.locator('.tile').count() == 8)
         r.check('Figurencheck wartet auf Cay (auch mit Autopilot)', 'Wartet auf dich' in page.locator('.tile', has_text='Figurencheck').inner_text())
         r.check('Wartende Projekte stehen vorn', 'Wartet auf dich' in page.locator('.tile').first.inner_text())
         r.check('Timer: Rechenzeit auf den Kacheln', '12:34' in page.locator('.tile', has_text='Der Tresor').inner_text()
@@ -211,11 +215,27 @@ try:
         shot('06_animation', '#p=' + 'c' * 32, wait=3500)
         r.check('Animation: Fortschritt 2 von 12 und Hänger-Hinweis', '2 von 12' in page.locator('#progress-slot').inner_text() and page.locator('.stall').count() == 1)
         r.check('Timer: Projektseite zeigt die Rechenzeit', '12:34' in page.locator('#clock-slot').inner_text())
+        r.check('Hänger, Qualität „Standard“: Abschnitt neu starten', page.locator('.stall [data-action="abort-fast"]').inner_text() == 'Abschnitt neu starten')
+        db.execute("UPDATE factory_runs SET document=json_set(document,'$.idea.quality','high') WHERE id=?", ('c' * 32,)); db.commit()
+        shot('06b_animation_hoch', '#p=' + 'c' * 32, wait=3500); asked = []
+        page.once('dialog', lambda dlg: (asked.append(dlg.message), dlg.dismiss()))
+        page.click('.stall [data-action="abort-fast"]'); page.wait_for_timeout(500)
+        r.check('Hänger, Qualität „Hoch“: Knopf und Rückfrage nennen den Wechsel zu „Standard“',
+                page.locator('.stall [data-action="abort-fast"]').inner_text() == 'Mit „Standard“ neu starten' and asked and 'von „Hoch (alt)“ zu „Standard“' in asked[0])
+        r.check('Rückfrage abgelehnt: Qualität bleibt „Hoch“', json.loads(page.evaluate("fetch('/api/factory/" + 'c' * 32 + "').then(r=>r.text())"))['idea']['quality'] == 'high')
         shot('07_fertig', '#p=' + 'd' * 32)
         r.check('Fertig: 2 Folgen mit Beschreibung', page.locator('.film video').count() == 2 and page.locator('.caption-box').count() >= 2)
         shot('08_angehalten', '#p=' + 'e' * 32)
         r.check('Angehalten: klare Überschrift und Fortsetzen', 'nicht hörbar' in page.locator('.next h2').inner_text() and page.locator('.next [data-action="resume"]').count() == 1)
         r.check('Kein Reiter „Filme“ mehr', page.locator('[data-nav="films"]').count() == 0)
+        shot('08b_neustart', '#p=' + '7' * 32)
+        r.check('Nach Neustart (Animation): ehrliches „Fortsetzen“, kein Neustart mit anderer Qualität',
+                page.locator('.next [data-action="resume"]').inner_text() == 'Fortsetzen' and page.locator('.next [data-action="abort-fast"]').count() == 0
+                and 'fragt ComfyUI erneut' in page.locator('.next').inner_text())
+        page.click('.next [data-action="resume"]'); page.wait_for_timeout(1500)
+        g = json.loads(page.evaluate("fetch('/api/factory/" + '7' * 32 + "').then(r=>r.text())"))
+        r.check('Fortsetzen: verlorener Abschnitt verworfen, Qualität bleibt „Hoch“', g['idea']['quality'] == 'high' and not g.get('uncertain')
+                and db.execute("SELECT COUNT(*) FROM factory_steps WHERE run_id=?", ('7' * 32,)).fetchone()[0] == 0)
         page.goto(studio.url + '/#p=' + 'd' * 32); page.wait_for_selector('.film video', timeout=15000)
         for _ in range(60):
             if page.evaluate("[...document.querySelectorAll('.film video')].every(v => v.readyState >= 1)"): break
