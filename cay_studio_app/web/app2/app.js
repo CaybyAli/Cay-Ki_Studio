@@ -118,8 +118,11 @@ function busyUI() {
 }
 
 /* ---------- compose a new film ---------- */
+const SEG_LABELS = { duration: 'Länge pro Film', episodes: 'Folgen', look: 'Look', quality: 'Qualität', characters: 'Figuren', cover: 'Titelbild', music: 'Musik' };
 function seg(name, options, value) {
-  return `<div class="segmented" role="group" aria-label="${esc(name)}">${options.map(([v, label]) => `<button type="button" data-set="${esc(name)}" data-value="${esc(v)}" aria-pressed="${String(v) === String(value)}">${esc(label)}</button>`).join('')}</div>`;
+  // Long labels ('Nur meine Figuren') would leave one option alone on a second phone row: .long makes an even grid there.
+  const long = options.map(o => o[1]).join('').length > 32;
+  return `<div class="segmented${long ? ' long' : ''}" role="group" aria-label="${esc(SEG_LABELS[name] || name)}">${options.map(([v, label]) => `<button type="button" data-set="${esc(name)}" data-value="${esc(v)}" aria-pressed="${String(v) === String(value)}">${esc(label)}</button>`).join('')}</div>`;
 }
 function composeView() {
   const d = S.draft;
@@ -258,9 +261,13 @@ async function upload(kind, file) {
 }
 
 /* ---------- projects ---------- */
+/* Tile picture: a scene picture, else the first figure design (figure check), else the title as a title card. */
 function frameFor(rid, doc, extra = '') {
   const pic = doc && thumbnail(doc);
-  return `<div class="frame">${pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">` : `<span class="frame-title">${esc(doc ? doc.title : '')}</span>`}${extra}</div>`;
+  const figure = !pic && doc && ((doc.plan && doc.plan.cast) || []).map(p => castImageUrl(doc, p.name)).find(Boolean);
+  const inner = pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">`
+    : figure ? `<img src="${esc(figure)}" alt="" loading="lazy">` : `<span class="frame-title">${esc(doc ? doc.title : '')}</span>`;
+  return `<div class="frame">${inner}${extra}</div>`;
 }
 function thumbnail(doc) {
   for (const ep of doc.episodes || []) for (const sc of ep.scenes || []) {
@@ -343,7 +350,7 @@ function projectView() {
     </div>
     ${nextView(d)}
     ${sectionsView(d)}
-    ${!d.deleted && (!WORKING.has(d.state) || d.paused) ? '<div class="project-foot"><button class="link" data-action="delete-project">In den Papierkorb</button></div>' : ''}`;
+    ${!d.deleted && (!WORKING.has(d.state) || d.paused) ? '<div class="project-foot"><button class="link quiet" data-action="delete-project">In den Papierkorb</button></div>' : ''}`;
 }
 function autopilotSwitch(d) {
   return `<label class="switch"><input type="checkbox" data-action="autopilot" ${d.idea.autopilot ? 'checked' : ''}><span>Autopilot${d.idea.autopilot ? ': ohne Zwischenstopps' : ''}</span></label>`;
@@ -379,7 +386,7 @@ function nextView(d) {
       <div class="sample"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/sample#t=0.1"></video></div>
       <div class="actions"><button class="button" data-action="approve-sample">Passt, weiterrechnen</button><button class="button quiet" data-action="reject-sample">Zurück zum Ton</button></div></section>`;
   if (d.state === 'rendering' || d.state === 'finishing') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie entsteht.' : 'Dein Film entsteht.'}</h2>
-      <p class="muted">${esc(d.phase || '')}</p><div id="progress-slot"></div>
+      <p class="muted">${esc(d.phase || '')}</p><div id="progress-slot" class="progress"></div>
       <div class="actions">${pause}<button class="link" data-action="abort-step">Aktuellen Abschnitt abbrechen</button></div></section>`;
   return `<section class="next"><h2 class="headline">Das Studio arbeitet.</h2><p class="muted">${esc(d.phase || '')}</p>
       <div class="actions">${pause}${autopilotSwitch(d)}</div></section>`;
@@ -411,7 +418,8 @@ function sectionsView(d) {
   if (d.state === 'done') return filmsSection(d);
   const cast = showsCast(d) ? castPanel(d) : '';
   if (['image_review', 'pictures', 'cast_review'].includes(d.state)) return cast + coverCard(d) + scenesSection(d, d.state !== 'cast_review');
-  if (d.state === 'voice_review') return cast + soundSection(d) + scenesSection(d, false);
+  // The order follows the next card: on 'Hör dir den Ton an' the player comes first.
+  if (d.state === 'voice_review') return soundSection(d) + cast + scenesSection(d, false);
   return cast + scenesSection(d, false);
 }
 /* Casting in a running project: who plays whom, where image and voice come from, and what
@@ -458,10 +466,14 @@ function voiceUrl(d, p) {
   if (e.voice) return `/api/factory/assets/${encodeURIComponent(e.voice)}`;
   return (d.voice_profiles || {})[p.name] ? `/api/factory/${encodeURIComponent(d.id)}/voice-profile/${encodeURIComponent(p.name)}` : '';
 }
-function castPicture(d, name) {
-  const cast = d.plan.cast, i = cast.findIndex(p => p.name === name), refs = d.cast_refs || {};
+function castImageUrl(d, name) {
+  const cast = (d.plan && d.plan.cast) || [], i = cast.findIndex(p => p.name === name), refs = d.cast_refs || {};
   // Cache key from the reference itself: an own upload changes the file, not design_round.
-  return refs[name] ? `<img src="/api/factory/${esc(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[name]).slice(-48))}-${cast[i].design_round || 0}" alt="" loading="lazy">`
+  return i >= 0 && refs[name] ? `/api/factory/${encodeURIComponent(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[name]).slice(-48))}-${cast[i].design_round || 0}` : '';
+}
+function castPicture(d, name) {
+  const url = castImageUrl(d, name);
+  return url ? `<img src="${esc(url)}" alt="" loading="lazy">`
     : `<div class="frame-empty">${['pictures', 'cast_review'].includes(d.state) ? 'entsteht' : ''}</div>`;
 }
 function pendingFor(d, name) {
@@ -489,7 +501,8 @@ function castPanel(d) {
         <dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
       ${pend ? `<p class="role-pending">Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“</p>` : ''}${suggestion}</article>`;
   }).join('');
-  return `<section class="cast" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>
+  // Large portraits only where the figures are the task (figure check); elsewhere a compact row.
+  return `<section class="cast${d.state === 'cast_review' ? '' : ' compact'}" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>
     <div class="cast-row">${items}</div></section>`;
 }
 function checkLine(d, ep, ei) {
@@ -522,7 +535,7 @@ function scenesSection(d, choose) {
   const editable = ['image_review', 'voice_review'].includes(d.state);
   return `<section class="section"><h2 class="title">${d.episodes.length > 1 ? esc(ep.title) : 'Drehbuch'}</h2>${episodeTabs(d)}
     ${checkLine(d, ep, ei)}${spineCard(ep)}
-    <div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
+    <div class="scene-list"><div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
       const variants = sc.active_variants || [];
       const pickable = d.state === 'image_review';
       const pictures = choose && variants.length ? `<div class="variants">${variants.map(v => `<button class="variant" data-action="choose" data-episode="${ei}" data-scene="${si}" data-step="${esc(v.id)}" aria-pressed="${sc.selected === v.id}" aria-label="Bild wählen" ${pickable ? '' : 'disabled'}><div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(v.id)}" alt="" loading="lazy"></div></button>`).join('')}</div>`
@@ -532,7 +545,7 @@ function scenesSection(d, choose) {
       const tools = editable ? `<div class="actions">${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
       return `<article class="scene">${pictures}<div class="scene-text"><h3>${si + 1}. ${esc(sc.title)}</h3>${sceneRole(sc)}<p>${esc(sc.action)}</p>${lines}${tools}</div></article>`;
     }).join('')}</div>
-    ${choose && d.state === 'image_review' ? dock(d) : ''}
+    ${choose && d.state === 'image_review' ? dock(d) : ''}</div>
   </section>`;
 }
 /* Scenes and title card chosen? The title card counts only where the project has one. */
@@ -575,12 +588,12 @@ function soundSection(d) {
       <div class="actions"><span class="small muted">Musik</span>${seg('music', [['off', 'Aus'], ['auto', 'Einfach'], ...(d.idea.music ? [['uploaded', 'Eigene']] : [])], music).replaceAll('data-set=', 'data-mix=')}
         <button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button><button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
       ${levelsView(d, music)}</div>
-    <h3 class="headline section">Stimmen</h3>
+    <h3 class="headline subhead">Stimmen</h3>
     <p class="small muted">Stimmtyp wählen und „Neue Stimme“ antippen. Danach werden die Sätze neu eingesprochen.</p>
     <div class="voices">${cast.map(p => `<div class="voice"><div class="actions"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/voice-profile/${encodeURIComponent(p.name)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button><span class="speaker">${esc(p.name)}</span></div>
         <select class="input" data-voice="${esc(p.name)}" aria-label="Stimmtyp von ${esc(p.name)}">${PRESETS.map(([v, l]) => `<option value="${v}" ${p.voice_preset === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
         <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Neue Stimme</button></div></div>`).join('')}</div>
-    <h3 class="headline section">Sätze</h3>
+    <h3 class="headline subhead">Sätze</h3>
     <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${(l.duration || 0).toFixed(1)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
   </section>`;
 }
@@ -603,12 +616,13 @@ function captionBox(d, ep, ei) {
   return `<div class="caption-box"><span>${esc(caption)}</span><span class="tags">${esc(tags)}</span><span><button class="link" data-action="copy" data-text="${esc(caption + '\n\n' + tags)}">Beschreibung kopieren</button></span></div>`;
 }
 function filmsSection(d) {
-  return `<section class="section"><h2 class="title">${d.idea.episodes > 1 ? 'Deine Folgen' : 'Dein Film'}</h2><div class="grid">${(d.exports || []).map((x, i) => {
+  // Same grammar as scenes and the title card: the 9:16 frame on the left, its text on the right.
+  return `<section class="section"><h2 class="title">${d.idea.episodes > 1 ? 'Deine Folgen' : 'Dein Film'}</h2><div class="films">${(d.exports || []).map((x, i) => {
     const ep = d.episodes[x.episode] || {};
-    return `<div class="film"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/export/${i}#t=0.1"></video>
-      <span class="tile-title">${d.idea.episodes > 1 ? `Folge ${x.episode + 1}: ` : ''}${esc(ep.title || d.title)}</span>
+    return `<article class="film"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/export/${i}#t=0.1"></video>
+      <div class="film-text"><h3 class="headline">${d.idea.episodes > 1 ? `Folge ${x.episode + 1}: ` : ''}${esc(ep.title || d.title)}</h3>
       ${ep.social ? captionBox(d, ep, x.episode) : ''}
-      <div class="actions"><a class="button quiet small" href="/api/factory/${esc(d.id)}/export/${i}?download=true" download>Herunterladen</a>${x.cover ? `<a class="button quiet small" href="/api/factory/${esc(d.id)}/cover/export/${i}?download=true" download title="Zum Hochladen als TikTok-Titelbild">Titelbild herunterladen</a>` : ''}</div></div>`;
+      <div class="actions"><a class="button quiet small" href="/api/factory/${esc(d.id)}/export/${i}?download=true" download>Herunterladen</a>${x.cover ? `<a class="button quiet small" href="/api/factory/${esc(d.id)}/cover/export/${i}?download=true" download title="Zum Hochladen als TikTok-Titelbild">Titelbild herunterladen</a>` : ''}</div></div></article>`;
   }).join('')}</div></section>`;
 }
 async function refreshRun(force) {
@@ -645,8 +659,8 @@ function paintProgress() {
       <div class="fact"><strong>${g.utilization == null ? '–' : esc(g.utilization) + ' %'}</strong><span>Grafikkarte ausgelastet</span></div>
     </div>
     <progress class="meter" max="${Math.max(1, p.total)}" value="${p.done}" aria-label="Gesamtfortschritt"></progress>
-    ${a ? `<p class="small muted">${esc(detail.label || 'Animation')}${a.scene != null ? `, Folge ${a.episode + 1}, Szene ${a.scene + 1}` : ''}${node ? `: Schritt ${node.value} von ${node.max}` : ''}</p>
-      ${node ? `<progress class="meter" max="${node.max}" value="${node.value}" aria-label="Aktueller Abschnitt"></progress>` : ''}` : ''}
+    ${a ? `<div class="now-step"><p class="small muted">${esc(detail.label || 'Animation')}${a.scene != null ? `, Folge ${a.episode + 1}, Szene ${a.scene + 1}` : ''}${node ? `: Schritt ${node.value} von ${node.max}` : ''}</p>
+      ${node ? `<progress class="meter sub" max="${node.max}" value="${node.value}" aria-label="Aktueller Abschnitt"></progress>` : ''}</div>` : ''}
     ${stuck ? `<div class="stall"><p><b>Dieser Abschnitt hängt wahrscheinlich.</b> Seit ${esc(duration(Date.now() / 1000 - p.last_progress))} kein neuer Rechenschritt${g.total_mib ? `, Grafikspeicher ${(g.used_mib / 1024).toFixed(1)} von ${(g.total_mib / 1024).toFixed(0)} GB` : ''}.</p>
       <div class="actions"><button class="button small" data-action="abort-fast">${keepsQuality(d) ? 'Abschnitt neu starten' : 'Mit „Standard“ neu starten'}</button></div></div>` : ''}`;
 }
@@ -730,7 +744,7 @@ function libraryEditor(f) {
       </div>
       <label class="field"><span>Was wird in der Aufnahme gesagt? (optional, macht die Stimme genauer)</span><input class="input" name="voice_text" maxlength="2500" value="${esc(x.voice_text || '')}"></label>
       ${source}
-      <div class="sheet-foot">${f ? `<button type="button" class="button danger" data-action="lib-delete" data-id="${esc(f.id)}">Aus deinen Figuren entfernen</button>` : '<span></span>'}<button class="button" type="submit">${f ? 'Änderungen sichern' : 'Figur sichern'}</button></div>
+      <div class="sheet-foot">${f ? `<button type="button" class="button danger" data-action="lib-delete" data-id="${esc(f.id)}">Aus deinen Figuren entfernen</button>` : ''}<button class="button" type="submit">${f ? 'Änderungen sichern' : 'Figur sichern'}</button></div>
     </form>`);
 }
 function readLibraryForm(form) {
@@ -795,23 +809,23 @@ function figureSheet(name) {
   const refs = d.cast_refs || {}, scenes = scenesWith(d, name), pend = pendingFor(d, name), url = voiceUrl(d, p);
   const usable = ['image', 'voice'].filter(part => ['now', 'later'].includes(w[part]));
   const row = (attrs, title, text, disabled) => `<button class="menu-row" ${attrs} ${disabled ? 'disabled' : ''}><b>${title}</b><span>${text}</span></button>`;
-  const library = usable.length ? `<div class="menu-section"><p class="menu-title">Aus deinen Figuren</p>
+  const library = usable.length ? `<div class="menu-section"><p class="label menu-title">Aus deinen Figuren</p>
       ${suggestionsFor(d, name).slice(0, 3).filter(f => usableParts(d, f).length).map(f => `<button class="menu-row with-pic" data-action="lib-suggest" data-name="${esc(name)}" data-id="${esc(f.id)}">
         <span class="mini">${f.image ? `<img src="/api/factory/assets/${esc(f.image)}" alt="">` : initials(f)}</span><b>${esc(f.label)} verwenden</b>
         <span>${esc(partsText(usableParts(d, f)))}${usableParts(d, f).some(part => w[part] === 'later') ? `, wird übernommen, ${esc(laterText(d))}` : ''}.</span></button>`).join('')}
       ${row(`data-action="lib-pick-project" data-name="${esc(name)}"`, 'Aus deinen Figuren wählen', `Bild und Stimme aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(name)}.`)}</div>` : '';
   const ownImage = e.image && !e.library_image;
-  const image = w.image === 'now' ? `<div class="menu-section"><p class="menu-title">Bild</p>
+  const image = w.image === 'now' ? `<div class="menu-section"><p class="label menu-title">Bild</p>
       ${imageMode(e) !== 'exact' ? row(`data-action="cast-redo" data-name="${esc(name)}"`, 'Neu gestalten', `Das Studio zeichnet ${esc(name)} noch einmal.`) : ''}
       <label class="menu-row"><b>Eigenes Bild hochladen</b><span>Mit neutralem Gesicht übernommen, jede Szene bestimmt den Ausdruck.</span><input type="file" accept="image/*" data-upload="cast" data-name="${esc(name)}"></label>
       ${e.image ? (imageMode(e) === 'exact'
         ? row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="neutral"`, 'Gesicht neutral nachzeichnen', `${ownImage ? 'Dein Bild' : 'Das Bild'} wird einmal mit neutralem Gesicht gezeichnet, damit ${esc(name)} in jeder Szene passend schaut.`)
         : row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="exact"`, 'Bild genau so verwenden', 'Richtig für fertige Figurenblätter. Der Gesichtsausdruck aus dem Bild bleibt dann in allen Szenen.')) : ''}</div>`
-    : `<div class="menu-section"><p class="menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Figuren aus deiner Bibliothek kannst du schon jetzt vormerken. Zum Neu-Gestalten oder für ein eigenes Bild das Projekt kurz pausieren.` : w.image || '')}</p></div>`;
-  const voice = w.voice === 'now' ? `<div class="menu-section"><p class="menu-title">Stimme</p>
+    : `<div class="menu-section"><p class="label menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Figuren aus deiner Bibliothek kannst du schon jetzt vormerken. Zum Neu-Gestalten oder für ein eigenes Bild das Projekt kurz pausieren.` : w.image || '')}</p></div>`;
+  const voice = w.voice === 'now' ? `<div class="menu-section"><p class="label menu-title">Stimme</p>
       ${row(`data-action="figure-voice-new" data-name="${esc(name)}"`, 'Andere Stimme gestalten', `Das Studio gestaltet eine neue Stimme für ${esc(name)}. Die Sätze werden neu eingesprochen.`)}
       <label class="menu-row"><b>Eigene Aufnahme hochladen</b><span>Eine Sprachaufnahme dieser Figur, 5 bis 20 Sekunden.</span><input type="file" accept="audio/*" data-upload="cast-voice" data-name="${esc(name)}"></label></div>`
-    : `<div class="menu-section"><p class="menu-title">Stimme</p><p class="menu-note">${esc(w.voice === 'later' ? `Eigene Aufnahmen und neue Stimmen gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.voice || '')}</p></div>`;
+    : `<div class="menu-section"><p class="label menu-title">Stimme</p><p class="menu-note">${esc(w.voice === 'later' ? `Eigene Aufnahmen und neue Stimmen gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.voice || '')}</p></div>`;
   const keep = refs[name] || e.voice || (d.voice_profiles || {})[name]
     ? `<div class="menu-section">${row(`data-action="lib-save" data-name="${esc(name)}"`, 'In deine Figuren aufnehmen', 'Bild und Stimme für andere Filme sichern. An diesem Film ändert sich nichts.')}</div>` : '';
   openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)}</h2><button class="button quiet small" data-action="close">Fertig</button></div>
@@ -825,8 +839,8 @@ function saveToLibrarySheet(name) {
   const d = S.run, look = LOOK_NAMES[d.idea.look];
   openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)} aufnehmen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
     <p class="muted">Bild und Stimme aus diesem Projekt kommen in deine Figuren und lassen sich in jedem Film wiederverwenden.</p>
-    <form id="lib-save-form" data-name="${esc(name)}"><label class="field"><span>Profilname</span><input class="input" name="label" required maxlength="80" value="${esc(look && d.idea.look !== 'auto' ? `${name} ${look}` : name)}"></label>
-      <div class="sheet-foot"><span></span><button class="button" type="submit">In deine Figuren aufnehmen</button></div></form>`);
+    <form id="lib-save-form" class="sheet-form" data-name="${esc(name)}"><label class="field"><span>Profilname</span><input class="input" name="label" required maxlength="80" value="${esc(look && d.idea.look !== 'auto' ? `${name} ${look}` : name)}"></label>
+      <div class="sheet-foot"><button class="button" type="submit">In deine Figuren aufnehmen</button></div></form>`);
 }
 
 /* ---------- sheets ---------- */
@@ -839,24 +853,25 @@ async function settingsSheet() {
     api('/api/notify').catch(() => null)]);
   const rows = (check.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   const anim = (animation && animation.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
+  // Sections like the notifications sheet: a 17 px heading with a hairline, its text and buttons close below it.
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div>
     <div>${rows || `<p class="muted">${esc(check.error || 'Keine Angaben.')}</p>`}</div>
-    <h3 class="headline">Stimmen</h3><p class="small muted">${esc(voices ? voices.message : 'Status nicht lesbar.')}${voices && voices.dialogue_ready ? ' Qwen-Dialogmodell bereit.' : ''}</p>
-    ${voices && voices.state !== 'ready' ? '<div class="actions"><button class="button quiet small" data-action="setup-voices">Stimmen einrichten</button></div>' : ''}
-    ${voices && voices.state === 'ready' && !voices.dialogue_ready ? '<div class="actions"><button class="button quiet small" data-action="upgrade-voices">Dialogmodell ergänzen</button></div>' : ''}
-    <h3 class="headline">Turbo</h3>
-    <p class="small muted">Schnellere Rechenart der Grafikkarte für Sprechszenen, kostenlos. Erwartet etwa 1,5- bis 2-fach schneller, auf deinem PC noch nicht gemessen. Schlägt ein Abschnitt fehl, schaltet sich Turbo selbst ab.</p>
-    <p class="small">${esc(boost ? boost.message : 'Status nicht lesbar.')}${boost && boost.error ? ' ' + esc(boost.error) : ''}</p>
-    <div class="actions">${boost && ['missing', 'off'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-setup">Turbo einrichten</button>' : ''}${boost && ['active', 'restart'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-off">Turbo ausschalten</button>' : ''}</div>
-    <h3 class="headline">Animation</h3><div>${anim}</div>
-    ${animation && animation.message ? `<p class="small muted">${esc(animation.message)}</p>` : ''}
-    ${animation && animation.checks && animation.checks.some(c => !c.ready) ? '<div class="actions"><button class="button quiet small" data-action="setup-animation">Fehlende Animationsteile einrichten</button></div>' : ''}
-    <h3 class="headline">Benachrichtigungen</h3>
-    <p class="small muted">${esc(notify ? notifySummary(notify) : 'Status nicht lesbar.')}</p>
-    <div class="actions"><button class="button quiet small" data-action="notify">${notify && notifyChannels(notify).length ? 'Ändern' : 'Einrichten'}</button></div>
-    <h3 class="headline">Weitere Werkzeuge</h3>
-    <p><a href="/classic#remix">Figurentausch</a> öffnet sich in der bisherigen Ansicht. <a href="/classic">Bisherige Oberfläche</a></p>
-    <p class="small muted">Cay Studio ${esc(S.version)}. Alles läuft lokal, ohne Abo und ohne kostenpflichtige Dienste.</p>`);
+    <section class="sheet-section"><h3 class="group-title">Stimmen</h3><p class="small muted">${esc(voices ? voices.message : 'Status nicht lesbar.')}${voices && voices.dialogue_ready ? ' Qwen-Dialogmodell bereit.' : ''}</p>
+      ${voices && voices.state !== 'ready' ? '<div class="actions"><button class="button quiet small" data-action="setup-voices">Stimmen einrichten</button></div>' : ''}
+      ${voices && voices.state === 'ready' && !voices.dialogue_ready ? '<div class="actions"><button class="button quiet small" data-action="upgrade-voices">Dialogmodell ergänzen</button></div>' : ''}</section>
+    <section class="sheet-section"><h3 class="group-title">Turbo</h3>
+      <p class="small muted">Schnellere Rechenart der Grafikkarte für Sprechszenen, kostenlos. Erwartet etwa 1,5- bis 2-fach schneller, auf deinem PC noch nicht gemessen. Schlägt ein Abschnitt fehl, schaltet sich Turbo selbst ab.</p>
+      <p class="small">${esc(boost ? boost.message : 'Status nicht lesbar.')}${boost && boost.error ? ' ' + esc(boost.error) : ''}</p>
+      ${boost && ['missing', 'off', 'active', 'restart'].includes(boost.state) ? `<div class="actions">${['missing', 'off'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-setup">Turbo einrichten</button>' : '<button class="button quiet small" data-action="turbo-off">Turbo ausschalten</button>'}</div>` : ''}</section>
+    <section class="sheet-section"><h3 class="group-title">Animation</h3>${anim ? `<div>${anim}</div>` : ''}
+      ${animation && animation.message ? `<p class="small muted">${esc(animation.message)}</p>` : ''}
+      ${animation && animation.checks && animation.checks.some(c => !c.ready) ? '<div class="actions"><button class="button quiet small" data-action="setup-animation">Fehlende Animationsteile einrichten</button></div>' : ''}</section>
+    <section class="sheet-section"><h3 class="group-title">Benachrichtigungen</h3>
+      <p class="small muted">${esc(notify ? notifySummary(notify) : 'Status nicht lesbar.')}</p>
+      <div class="actions"><button class="button quiet small" data-action="notify">${notify && notifyChannels(notify).length ? 'Ändern' : 'Einrichten'}</button></div></section>
+    <section class="sheet-section"><h3 class="group-title">Weitere Werkzeuge</h3>
+      <p><a href="/classic#remix">Figurentausch</a> öffnet sich in der bisherigen Ansicht. <a href="/classic">Bisherige Oberfläche</a></p>
+      <p class="small muted">Cay Studio ${esc(S.version)}. Alles läuft lokal, ohne Abo und ohne kostenpflichtige Dienste.</p></section>`);
 }
 /* ---------- notifications (0.18): opt-in, every channel says what leaves the PC ---------- */
 /* "Am PC": this browser shows the server's event feed while a studio tab is open. Nothing leaves the PC.
@@ -1015,12 +1030,11 @@ function linesSheet(ei, si) {
     <input type="hidden" data-line="${i}" data-key="emotion" value="${esc(l.emotion || 'Natürlich')}"><input type="hidden" data-line="${i}" data-key="pause_after" value="${l.pause_after ?? 0.18}"><button class="button danger small" data-action="drop-line" data-index="${i}">Entfernen</button></div>`;
   const editable = speakers.length || lines.length;   // nothing to save in a wide shot without text
   openSheet(`<div class="sheet-head"><h2 class="headline">Szene ${si + 1}: Text</h2><button class="button quiet small" data-action="close">${editable ? 'Abbrechen' : 'Schließen'}</button></div>
-    <form id="lines-form" data-episode="${ei}" data-scene="${si}">${lines.map(row).join('')}
+    <form id="lines-form" class="sheet-form" data-episode="${ei}" data-scene="${si}">${lines.length ? `<div class="line-rows">${lines.map(row).join('')}</div>` : ''}
     ${sc.kind === 'reaction' ? `<p class="muted">${esc(sc.cast.join(' und '))} hört hier nur zu. Die Stimme kommt von ${esc(speakers[0] || 'einer Figur')} aus dem Off.</p>` : ''}
     ${speakers.length ? lines.length < MAX_LINES ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>' : `<p class="small muted">Höchstens ${MAX_LINES} Sätze pro Szene.</p>`
       : `<p class="muted">${sc.kind === 'establish' ? 'Diese Totale zeigt den neuen Ort. Hier spricht niemand.' : 'In dieser Szene ist niemand im Bild.'}</p>`}
-    ${editable ? `<p class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</p>
-    <div class="actions"><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
+    ${editable ? `<div class="sheet-foot"><span class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</span><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
 }
 function readLines(form, keepEmpty) {
   const rows = {};
@@ -1114,15 +1128,14 @@ const actions = {
   async choose(b) { await post(`/api/factory/${S.rid}/choose`, { episode: +b.dataset.episode, scene: +b.dataset.scene, step_id: b.dataset.step }); },
   async revise(b) {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Bilder für Szene ${+b.dataset.scene + 1}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
-      <form id="revise-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
-      <div class="actions"><button class="button" type="submit">Zwei neue Bilder erzeugen</button></div></form>`);
+      <form id="revise-form" class="sheet-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
+      <div class="sheet-foot"><button class="button" type="submit">Zwei neue Bilder erzeugen</button></div></form>`);
   },
   async 'cover-choose'(b) { await post(`/api/factory/${S.rid}/cover/choose`, { step_id: b.dataset.step }); },
   'cover-revise'() {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Titelbilder</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
-      <form id="cover-revise-form"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: alle drei näher zusammen, mehr vom Hafen im Hintergrund"></textarea></label>
-      <p class="muted small">Der Titel wird danach eingesetzt, er steht nie im Bild selbst.</p>
-      <div class="actions"><button class="button" type="submit">Zwei neue Titelbilder erzeugen</button></div></form>`);
+      <form id="cover-revise-form" class="sheet-form"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: alle drei näher zusammen, mehr vom Hafen im Hintergrund"></textarea></label>
+      <div class="sheet-foot"><span class="small muted">Der Titel wird danach eingesetzt, er steht nie im Bild selbst.</span><button class="button" type="submit">Zwei neue Titelbilder erzeugen</button></div></form>`);
   },
   async 'cast-approve'() { await post(`/api/factory/${S.rid}/cast/approve`); toast('Figuren übernommen. Die Szenenbilder entstehen.'); },
   async 'cast-redo'(b) {
@@ -1159,8 +1172,8 @@ const actions = {
   'new-edition'() {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Fassung planen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
       <p class="muted">Das Studio plant mit derselben Idee neu: Drehbuch, Dialoge und Stimmen. Dieses Projekt bleibt, wie es ist.</p>
-      <form id="edition-form"><label class="field"><span>Was soll in der neuen Fassung anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: mehr Streit zwischen den beiden, die Pointe schon nach der Hälfte"></textarea></label>
-      <div class="actions"><button class="button" type="submit">Neue Fassung planen</button></div></form>`);
+      <form id="edition-form" class="sheet-form"><label class="field"><span>Was soll in der neuen Fassung anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: mehr Streit zwischen den beiden, die Pointe schon nach der Hälfte"></textarea></label>
+      <div class="sheet-foot"><button class="button" type="submit">Neue Fassung planen</button></div></form>`);
   },
   episode(b) { S.episode = +b.dataset.index; render(); },
   async copy(b) { try { await navigator.clipboard.writeText(b.dataset.text); toast('Beschreibung kopiert.'); } catch (e) { toast('Kopieren nicht möglich. Text bitte markieren.'); } },

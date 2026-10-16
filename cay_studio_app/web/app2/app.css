@@ -12,6 +12,8 @@
   --accent: #0071e3;
   --accent-ink: #ffffff;
   --accent-soft: #e8f1fd;
+  --accent-text: #0066cc;   /* accent for small text on accent-soft and surfaces: 4.9:1 */
+  --track: var(--fill);      /* switch track when off */
   --done: #248a3d;
   --wait: #b25000;
   --stop: #d70015;
@@ -27,13 +29,13 @@
   :root:not([data-theme="light"]) {
     --canvas: #000000; --surface: #1c1c1e; --ink: #f5f5f7; --muted: #98989d; --hairline: #38383a;
     --fill: #2c2c2e; --accent: #0a84ff; --accent-soft: #0a2b4d; --done: #30d158; --wait: #ff9f0a; --stop: #ff453a;
-    --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; color-scheme: dark;
+    --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --accent-text: #409cff; --track: #48484a; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --canvas: #000000; --surface: #1c1c1e; --ink: #f5f5f7; --muted: #98989d; --hairline: #38383a;
   --fill: #2c2c2e; --accent: #0a84ff; --accent-soft: #0a2b4d; --done: #30d158; --wait: #ff9f0a; --stop: #ff453a;
-  --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; color-scheme: dark;
+  --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --accent-text: #409cff; --track: #48484a; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -75,6 +77,8 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .lede { font-size: 21px; line-height: 1.38; color: var(--muted); max-width: 34em; margin: 14px 0 0; letter-spacing: -.01em; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; line-height: 1.4; letter-spacing: -.005em; }
+/* One small label for every section inside a card or sheet (Besetzung, Titelbild, Ziel des Films, Bild, Stimme). */
+.label { margin: 0 0 8px; font-size: 13px; line-height: 1.3; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
 
 /* Buttons */
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 22px; border-radius: 980px; border: 0; cursor: pointer; font-size: 17px; font-weight: 500; background: var(--accent); color: var(--accent-ink); text-decoration: none; }
@@ -94,23 +98,24 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .idea-input::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
 .idea-line { height: 1px; background: var(--hairline); margin: 8px 0 34px; }
 .choices { display: grid; gap: 26px; }
-.choice { display: grid; grid-template-columns: 120px 1fr; gap: 18px; align-items: center; }
+.choice { display: grid; grid-template-columns: 120px 1fr; gap: 6px 18px; align-items: center; }
 .choice > span { color: var(--muted); font-size: 15px; }
 .segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border-radius: 10px; background: var(--fill); justify-self: start; }
 .segmented button { border: 0; background: transparent; padding: 7px 15px; border-radius: 8px; cursor: pointer; font-size: 15px; }
 .segmented button[aria-pressed="true"] { background: var(--seg-on); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-weight: 500; }
 .switch { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; justify-self: start; }
-.switch input { flex: none; appearance: none; width: 51px; height: 31px; border-radius: 31px; background: var(--fill); position: relative; margin: 0; cursor: pointer; transition: background .2s; }
+.switch input { flex: none; appearance: none; width: 51px; height: 31px; border-radius: 31px; background: var(--track); position: relative; margin: 0; cursor: pointer; transition: background .2s; }
 .switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.25); transition: transform .2s; }
 .switch input:checked { background: var(--done); }
 .switch input:checked::after { transform: translateX(20px); }
 .hint { font-size: 14px; color: var(--muted); margin: 6px 0 0; grid-column: 2; }
+.hint:empty { display: none; }
 details.more { margin-top: 34px; border-top: 1px solid var(--hairline); padding-top: 18px; }
 details.more summary { cursor: pointer; color: var(--accent); list-style: none; font-size: 17px; }
 details.more summary::-webkit-details-marker { display: none; }
 .field { display: grid; gap: 6px; margin-top: 18px; }
 .group > .field { margin-top: 0; }
-.field > span { font-size: 14px; color: var(--muted); }
+.field > span { font-size: 15px; color: var(--muted); }
 .input, .textarea, select.input { width: 100%; border: 1px solid var(--hairline); background: var(--surface); border-radius: 12px; padding: 11px 14px; font-size: 17px; }
 .textarea { min-height: 84px; resize: vertical; }
 .group { display: grid; gap: 12px; justify-items: start; padding: 22px 0; border-bottom: 1px solid var(--hairline); }
@@ -121,7 +126,7 @@ details.more summary::-webkit-details-marker { display: none; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 12px; }
 .thumb { position: relative; width: 96px; height: 96px; border-radius: 16px; overflow: hidden; background: var(--fill); display: grid; place-items: center; cursor: pointer; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.thumb.add { border: 1.5px dashed var(--hairline); background: transparent; color: var(--accent); font-size: 13px; text-align: center; padding: 8px; }
+.thumb.add { border: 1.5px dashed var(--hairline); background: transparent; color: var(--accent-text); font-size: 13px; text-align: center; padding: 8px; }
 .thumb.small { width: 64px; height: 64px; border-radius: 14px; }
 .thumb-remove, .icon-remove { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; border: 0; cursor: pointer; background: rgba(0,0,0,.6); color: #fff; font-size: 15px; line-height: 1; display: grid; place-items: center; }
 .icon-remove { position: static; background: var(--fill); color: var(--muted); width: 32px; height: 32px; }
@@ -129,17 +134,16 @@ details.more summary::-webkit-details-marker { display: none; }
 .person { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px; align-items: start; }
 /* Line editor: the speaker's whole name stays readable ("Mr. Krabs", not "M"). */
 #lines-form .person { grid-template-columns: minmax(6.5em, max-content) minmax(0, 1fr) auto; align-items: center; }
-#lines-form .person + .person { margin-top: 10px; }
+.line-rows { display: grid; gap: 10px; }
 @media (max-width: 560px) {
   #lines-form .person { grid-template-columns: minmax(0, max-content) auto; justify-content: space-between; gap: 8px 14px; }
-  #lines-form .person + .person { margin-top: 18px; }
+  .line-rows { gap: 18px; }
   #lines-form .person [data-key="text"] { grid-column: 1 / -1; grid-row: 2; }
 }
 .person-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 10px; justify-items: start; }
 .person-fields .input { width: 100%; }
 .person-fields .file-pill { grid-column: 1 / -1; }
-.file-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 14px; border-radius: 980px; background: var(--fill); font-size: 14px; cursor: pointer; }
-.file-pill.set { background: var(--accent-soft); color: var(--accent); }
+.file-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 14px; border-radius: 980px; background: var(--fill); font-size: 14px; font-weight: 500; cursor: pointer; }
 .compose-foot { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 42px; flex-wrap: wrap; }
 
 /* The 9:16 frame: the studio's signature */
@@ -159,11 +163,11 @@ details.more summary::-webkit-details-marker { display: none; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 34px 22px; }
 .grid > *, .film > * { min-width: 0; }
 video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
-.tile { display: grid; gap: 12px; color: var(--ink); cursor: pointer; border: 0; background: none; padding: 0; text-align: left; }
+.tile { display: grid; gap: 6px; align-content: start; color: var(--ink); cursor: pointer; border: 0; background: none; padding: 0; text-align: left; }
 .tile:hover { text-decoration: none; }
 .tile:hover .frame { transform: scale(1.015); }
-.tile .frame { transition: transform .25s ease; }
-.tile-title { font-weight: 600; font-size: 17px; line-height: 1.25; overflow-wrap: anywhere; }
+.tile .frame { margin-bottom: 8px; transition: transform .25s ease; }
+.tile-title { font-weight: 600; font-size: 17px; line-height: 1.25; overflow-wrap: break-word; }
 .status { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--muted); }
 .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
 .status.run::before { background: var(--accent); animation: pulse 1.6s ease-in-out infinite; }
@@ -178,9 +182,12 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 
 /* Project */
 .project-head { display: grid; gap: 10px; margin-bottom: 30px; }
+.project-head p { margin: 0; }
 .back { font-size: 15px; }
-.project-foot { margin-top: 48px; }
-.steps { display: flex; gap: 0; margin: 26px 0 0; padding: 0; list-style: none; counter-reset: step; flex-wrap: wrap; }
+/* Quiet end of a page: the trash link and the trash list, small and grey, one section below the content. */
+.project-foot { margin-top: 56px; font-size: 14px; }
+.link.quiet { color: var(--muted); font-size: 14px; }
+.steps { display: flex; gap: 0; margin: 16px 0 0; padding: 0; list-style: none; counter-reset: step; flex-wrap: wrap; }
 .steps li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); padding-right: 22px; }
 .steps li::before { counter-increment: step; content: counter(step); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--fill); color: var(--muted); }
 .steps li.done::before { content: "✓"; background: var(--done); color: #fff; }
@@ -193,6 +200,9 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .error-text { font-family: var(--font); font-size: 14px; line-height: 1.5; color: var(--muted); background: var(--canvas); border-radius: 12px; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; margin: 0; }
 .section { margin-top: 56px; }
 .section > h2 { margin-bottom: 20px; }
+/* Sub-headings inside a section (Stimmen, Sätze): closer to their own content than to the block above. */
+.subhead { margin: 44px 0 14px; }
+.subhead + .small { margin: -8px 0 14px; }
 .episode-tabs { margin-bottom: 26px; }
 .caption-box + .scenes, .episode-tabs + .scenes { margin-top: 0; }
 
@@ -201,25 +211,34 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .meter::-webkit-progress-bar { background: var(--fill); border-radius: 6px; }
 .meter::-webkit-progress-value { background: var(--accent); border-radius: 6px; transition: width .4s ease; }
 .meter::-moz-progress-bar { background: var(--accent); border-radius: 6px; }
+/* The current section: its label with a thinner, softer bar right under it, so the overall bar stays the strong one. */
+.progress { display: grid; gap: 12px; }
+.progress:empty { display: none; }
+.now-step { display: grid; gap: 6px; }
+.now-step p { margin: 0; }
+.meter.sub { height: 4px; }
+.meter.sub::-webkit-progress-value { background: color-mix(in srgb, var(--accent) 45%, var(--fill)); }
+.meter.sub::-moz-progress-bar { background: color-mix(in srgb, var(--accent) 45%, var(--fill)); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; margin-top: 8px; }
 .fact strong { display: block; font-size: 28px; font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
 .fact span { font-size: 14px; color: var(--muted); }
-.stall { border-radius: 14px; padding: 16px 18px; background: color-mix(in srgb, var(--wait) 12%, var(--surface)); }
+.stall { margin-top: 6px; border-radius: 14px; padding: 16px 18px; background: color-mix(in srgb, var(--wait) 12%, var(--surface)); }
 .stall p { margin: 0 0 12px; }
 
 /* Film goal and cast (identity check before the scenes) */
 .check-line { margin: -6px 0 14px; }
 .warn-line { margin: -8px 0 14px; color: var(--muted); border-left: 3px solid #ff9f0a; padding-left: 10px; }
 .spine, .cast { background: var(--surface); border-radius: var(--radius); padding: 20px 24px; margin: 0 0 28px; }
-.spine h3, .cast h3 { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
 .spine p { margin: 0 0 10px; font-size: 17px; }
 .spine dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 15px; }
 .spine dt { color: var(--muted); }
 .spine dd { margin: 0; }
 /* Casting: each figure is one tap target (its portrait and name); sources sit underneath. */
-.cast-head { display: grid; gap: 2px; margin-bottom: 16px; }
+.cast-head { display: grid; gap: 0; margin-bottom: 16px; }
 .cast-head p { margin: 0; max-width: 46em; }
 .cast-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 24px 18px; }
+.cast.compact .cast-row { grid-template-columns: repeat(auto-fill, minmax(112px, 132px)); gap: 20px 16px; }
+.section + .cast { margin-top: 56px; }
 .role { display: grid; gap: 8px; align-content: start; min-width: 0; }
 .role-hit { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .role-hit:focus-visible { outline: none; }
@@ -239,7 +258,7 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .role-src .play { width: 26px; height: 26px; flex: none; }
 .role-pending { margin: 0; font-size: 13px; line-height: 1.35; color: var(--wait); }
 .role-suggest { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 5px 10px 5px 5px; border: 0; border-radius: 12px;
-  background: var(--accent-soft); color: var(--accent); font: inherit; font-size: 13px; line-height: 1.3; text-align: left; cursor: pointer; }
+  background: var(--accent-soft); color: var(--accent-text); font: inherit; font-size: 13px; line-height: 1.3; text-align: left; cursor: pointer; }
 .role-suggest b { font-weight: 600; }
 .mini { flex: none; display: grid; place-items: center; width: 30px; height: 40px; border-radius: 8px; overflow: hidden; background: #1d1d1f; color: rgba(255,255,255,.7); font-size: 11px; font-weight: 600; }
 .mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -263,8 +282,11 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .variant .frame { border-radius: calc(var(--frame-radius) * .7); outline: 3px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
 .variant[aria-pressed="true"] .frame { outline-color: var(--accent); }
 .variant[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
+/* The dock belongs to the scene list (.scene-list is its sticky containing block), so it never covers the film goal above.
+   A solid surface with a hairline edge: on the black dark canvas a shadow alone would vanish. */
 .dock { position: sticky; bottom: 18px; z-index: 10; margin-top: 46px; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 12px 12px 24px; border-radius: 980px;
-  background: var(--bar); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); box-shadow: 0 10px 30px -10px rgba(0,0,0,.3); flex-wrap: wrap; }
+  background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid color-mix(in srgb, var(--hairline) 60%, transparent);
+  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); box-shadow: 0 10px 30px -10px rgba(0,0,0,.3); }
 
 /* Sound */
 .mix { display: grid; gap: 16px; background: var(--surface); border-radius: var(--radius); padding: 24px 28px; }
@@ -274,28 +296,36 @@ audio { width: 100%; height: 40px; }
 .lines { display: grid; gap: 2px; background: var(--surface); border-radius: var(--radius); padding: 8px; }
 .line-row { display: grid; grid-template-columns: 40px 110px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; }
 .line-row:hover { background: var(--canvas); }
-.play { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--accent-soft); color: var(--accent); cursor: pointer; display: grid; place-items: center; }
+.play { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--accent-soft); color: var(--accent-text); cursor: pointer; display: grid; place-items: center; }
 .play svg { width: 13px; height: 13px; }
 .speaker { font-weight: 600; font-size: 15px; }
 
-/* Films */
-.film { display: grid; gap: 12px; }
+/* Films: the finished film as the scenes and the title card show their picture, frame left, text right */
+.films { display: grid; gap: 44px; }
+.film { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
 .film video { border-radius: var(--frame-radius); }
+.film-text { display: grid; gap: 14px; align-content: start; justify-items: start; min-width: 0; }
+.film-text .headline { overflow-wrap: break-word; }
 .caption-box { font-size: 15px; background: var(--surface); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; }
-.caption-box .tags { color: var(--accent); }
+.film .caption-box { width: 100%; max-width: 36em; padding: 16px 18px; }
+.caption-box .tags { color: var(--accent-text); }
 
 /* Sheet (settings) and toast */
 dialog.sheet { border: 0; border-radius: 22px; padding: 0; width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 64px); background: var(--surface); color: var(--ink); box-shadow: 0 40px 80px -20px rgba(0,0,0,.45); }
 dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px); }
 .sheet-body { padding: 28px 30px 30px; display: grid; gap: 18px; overflow: auto; max-height: calc(100vh - 64px); }
-.sheet-head { display: flex; justify-content: space-between; align-items: center; }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.sheet-body > p { margin: 0; }
 .check-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hairline); }
 .check-row:last-child { border-bottom: 0; }
 .check-row .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; background: var(--done); }
 .check-row .dot.bad { background: var(--stop); }
-.toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 140%); opacity: 0; visibility: hidden; background: var(--ink); color: var(--canvas); padding: 12px 20px; border-radius: 980px; font-size: 15px; transition: transform .3s ease; z-index: 50; max-width: calc(100vw - 32px); }
-.toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
-.toast { transition: transform .3s ease, opacity .3s ease, visibility .3s; }
+/* Toast: centred by its own width (left/right + auto margins), so it may use the whole width and stays one line
+   wherever it can. A rounded box, not a pill: a pill only works while the text stays on one line. */
+.toast { position: fixed; left: 16px; right: 16px; bottom: 28px; margin-inline: auto; width: fit-content; max-width: min(560px, calc(100vw - 32px));
+  transform: translateY(140%); opacity: 0; visibility: hidden; background: var(--ink); color: var(--canvas); padding: 12px 20px; border-radius: 22px;
+  font-size: 15px; line-height: 1.4; text-align: center; z-index: 50; transition: transform .3s ease, opacity .3s ease, visibility .3s; }
+.toast.show { transform: none; opacity: 1; visibility: visible; }
 .toast-action { margin-left: 14px; padding: 2px 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
 
 @media (max-width: 860px) {
@@ -303,12 +333,15 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .preview-frame { position: relative; top: 0; width: 220px; margin: 0 auto; }
   .scene { grid-template-columns: 1fr; }
   .scenes.compact .scene { grid-template-columns: 72px minmax(0, 1fr); }
+  .film { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .film video { width: min(100%, 300px); }
   .person-fields { grid-template-columns: 1fr; }
   .choice { grid-template-columns: 1fr; gap: 8px; }
   .hint { grid-column: 1; }
   .idea-input { font-size: 24px; }
   .line-row { grid-template-columns: 36px minmax(0, 1fr) auto; }
   .line-row .speaker { grid-column: 2; }
+  .line-row > .small { grid-column: 3; grid-row: 1; }
   .line-row .line-text { grid-column: 2 / -1; }
 }
 @media (max-width: 560px) {
@@ -323,14 +356,23 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .preview-length strong { font-size: 44px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
   .next { padding: 22px 20px; }
-  .dock { border-radius: 22px; }
+  /* Steps in one row: done and later steps as circles only, the current step with its name (names stay for screen readers). */
+  .steps { flex-wrap: nowrap; }
+  .steps li:not(.now):not(.done:last-child) { font-size: 0; gap: 0; padding-right: 10px; }
+  /* A segmented control that cannot fit one row becomes an even grid of three instead of leaving one option alone. */
+  .segmented:has(> :nth-child(5)), .segmented.long { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); justify-self: stretch; }
+  .segmented:has(> :nth-child(5)) button, .segmented.long button, .segmented:has(> :nth-child(5)) label span { padding: 7px 6px; line-height: 1.25; text-align: center; }
+  .segmented:has(> :nth-child(5)) label span { flex: 1; }
+  /* One row on the phone: count on the left (two short lines at most), button on the right. */
+  .dock { gap: 12px; padding: 8px 8px 8px 16px; border-radius: 22px; }
+  .dock span { font-size: 14px; line-height: 1.3; }
+  .dock .button { min-height: 38px; padding: 0 16px; font-size: 15px; white-space: nowrap; }
 }
 
 /* Compute timer (0.18) */
 .clock { display: inline-flex; gap: 4px; align-items: baseline; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .clock b { font-weight: 600; color: var(--ink); }
-.clock.live b { color: var(--accent); }
-.tile .clock { margin-top: 2px; }
+.clock.live b { color: var(--accent-text); }
 
 /* Figure library (0.18): Cay's casting archive. One idea carries it: the portrait card
    with its real voice outline. Everything else stays in the studio's quiet system. */
@@ -359,12 +401,12 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .portrait img { transition: transform .3s ease; }
 .card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; }
 .chip { display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: 980px; background: var(--fill); color: var(--ink); font-size: 13px; white-space: nowrap; }
-.chip.accent { background: var(--accent-soft); color: var(--accent); }
+.chip.accent { background: var(--accent-soft); color: var(--accent-text); }
 
 /* Library editor */
 .lib-form { display: grid; gap: 16px; }
 .lib-top { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 22px; align-items: start; }
-.lib-photo { position: relative; aspect-ratio: 3 / 4; border-radius: 18px; overflow: hidden; background: var(--fill); display: grid; place-items: center; cursor: pointer; color: var(--accent); font-size: 14px; }
+.lib-photo { position: relative; aspect-ratio: 3 / 4; border-radius: 18px; overflow: hidden; background: var(--fill); display: grid; place-items: center; cursor: pointer; color: var(--accent-text); font-size: 14px; }
 .lib-photo.add { background: transparent; border: 1.5px dashed var(--hairline); }
 .lib-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .lib-fields { display: grid; gap: 12px; }
@@ -377,7 +419,14 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .segmented label span { padding: 7px 15px; border-radius: 8px; font-size: 15px; }
 .segmented label input:checked + span { background: var(--seg-on); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-weight: 500; }
 .segmented label input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 1px; }
-.sheet-foot { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--hairline); }
+/* Every sheet form ends the same way: a hairline, a short note or a quiet action on the left, the main button on the right.
+   It sticks to the bottom of the sheet (-30px = the sheet's own padding), so the save button never falls off-screen. */
+.sheet-form { display: grid; gap: 16px; }
+.sheet-form > .field { margin-top: 0; }
+.sheet-foot { position: sticky; bottom: -30px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 10px 14px; flex-wrap: wrap;
+  padding: 14px 0 6px; margin-bottom: -6px; border-top: 1px solid var(--hairline); background: var(--surface); }
+.sheet-foot > :only-child, .sheet-foot > .button:last-child { margin-left: auto; }
+.sheet-foot > span { flex: 1 1 16em; }
 
 /* Picker (new film and running project) */
 .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 18px 14px; }
@@ -388,7 +437,6 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .pick[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
 .pick-title { font-weight: 600; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
 .pick-play { position: absolute; left: 8px; top: 8px; background: rgba(255,255,255,.94); color: #1d1d1f; }
-.pick-foot { position: sticky; bottom: -30px; background: var(--surface); padding: 14px 0 6px; margin-bottom: -6px; }
 .pick-options { display: grid; gap: 10px; flex: 1 1 260px; }
 .check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; cursor: pointer; }
 .check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
@@ -421,7 +469,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .menu { display: grid; gap: 4px; }
 .menu-section { display: grid; gap: 2px; }
 .menu-section + .menu-section { border-top: 1px solid var(--hairline); padding-top: 12px; margin-top: 10px; }
-.menu-title { margin: 0 14px 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.menu-title { margin: 0 14px 4px; }
 .menu-note { margin: 0 14px 4px; font-size: 14px; line-height: 1.45; color: var(--muted); }
 .menu-row { display: grid; gap: 3px; text-align: left; border: 0; background: none; padding: 12px 14px; border-radius: 14px; cursor: pointer; color: var(--ink); font: inherit; }
 .menu-row:hover { background: var(--canvas); }
@@ -442,11 +490,12 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .figure-side .role-src { grid-template-columns: max-content minmax(0, 1fr); gap: 4px 10px; align-items: center; }
   .figure-side .role-src dt:not(:first-child) { margin-top: 0; }
   .cast-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; }
+  .cast.compact .cast-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 10px; }
 }
 
 /* Title card (0.18): key art with the film's title, chosen above the scenes like a scene image */
 .cover { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; background: var(--surface); border-radius: var(--radius); padding: 20px 24px; margin: 0 0 28px; }
-.cover h3 { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.cover-text .label { margin: 0; }
 .cover-text { display: grid; gap: 8px; justify-items: start; align-content: start; }
 .cover-text p { margin: 0; max-width: 34em; color: var(--muted); font-size: 15px; }
 .cover-text .cover-lead { color: var(--ink); font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
@@ -465,7 +514,9 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
    sends data off the PC shows what goes where before anything is switched on. */
 .notify-head { display: grid; gap: 2px; justify-items: start; }
 .notify-lede { margin: 0; }
-.notify-when, .notify-channel { display: grid; gap: 12px; padding: 20px 0 22px; border-top: 1px solid var(--hairline); min-width: 0; }
+.notify-when, .notify-channel, .sheet-section { display: grid; gap: 12px; padding: 20px 0 22px; border-top: 1px solid var(--hairline); min-width: 0; }
+.sheet-section p { margin: 0; }
+.sheet-section:last-child { padding-bottom: 0; }
 .notify-when { gap: 14px; }
 .notify-channel p { margin: 0; }
 .notify-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
