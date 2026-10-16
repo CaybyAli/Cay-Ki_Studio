@@ -13,7 +13,7 @@ Starte danach kein älteres Update mehr. Ab 0.18 verweigert das Update-Programm 
 
 ## Das neue Studio
 
-- **Neu:** Idee eintippen, Länge, Folgen, Look und Qualität wählen. **Autopilot** an = ohne Zwischenstopps fertig.
+- **Neu:** Idee eintippen, Länge, Folgen, Look und Qualität wählen. **Autopilot** an = ohne Zwischenstopps fertig. Oder **Mein Drehbuch**: dein eigenes Drehbuch wortgetreu verfilmen (siehe unten).
 - **Projekte:** Alles, was auf dich wartet, steht vorn. Jedes Projekt zeigt genau einen nächsten Schritt und die echte Rechenzeit.
 - **Figuren (Reiter):** Deine Figuren-Bibliothek. Bild und Stimme einmal festlegen, in jedem Film wiederverwenden, auch in einem laufenden Projekt (tippe dort auf die Figur).
 - **Fertige Filme** liegen im jeweiligen Projekt: ansehen, herunterladen, Beschreibung kopieren. Mit Titelbild gibt es zusätzlich `Cover_<Film>.png`.
@@ -26,6 +26,25 @@ Starte danach kein älteres Update mehr. Ab 0.18 verweigert das Update-Programm 
 - **Drehbuch:** Die KI schreibt den Film als durchgehendes Gespräch, prüft Wortzahl und Sprecherwechsel und überarbeitet es einmal. Über dem Drehbuch steht eine Prüfzeile: Wörter, Einstellungen, stumme Aktionen, später Sprachanteil und längste Pause.
 - **Figuren vorher zeigen:** Ein kurzer Stopp vor den Szenenbildern, auch mit Autopilot. „Neu gestalten“ oder „Eigenes Bild“, dann „Figuren passen, weiter“. Abschaltbar beim Anlegen.
 - **Zahnrad oben rechts:** Einrichtung prüfen, **Turbo einrichten**, Stimmen und Animation einrichten, **Benachrichtigungen**, Figurentausch und bisherige Oberfläche.
+
+## Mein Drehbuch
+
+Du hast schon ein fertiges Drehbuch? Oben bei **Neu** auf **Mein Drehbuch** tippen, den Text einfügen oder eine **.md**- oder **.txt**-Datei wählen. Das Studio spricht jeden Satz genau so, wie er dasteht. Die KI liest dein Drehbuch, weiß dadurch, was passiert, und gestaltet nur Figuren, Bilder und Bewegung dazu. Sie ändert keinen Satz und erfindet keine Handlung.
+
+Unter dem Textfeld steht sofort, was das Studio liest: Figuren, Szenen, Sätze, Wörter, Folgen und die **Länge nach Drehbuch** (15 bis 90 Sekunden pro Film). Probleme stehen mit Zeilennummer da. Unter „Figuren, Look-Vorlagen, Titelbild und Musik“ kannst du jeder Figur aus dem Drehbuch ein eigenes Bild, eine eigene Stimme oder ein Profil aus deinen Figuren geben. **Vorlage herunterladen** zeigt ein fertiges Beispiel.
+
+So schreibst du es:
+
+```
+# Der verschwundene Kuchen
+FIGUR: Oma Hilde – 72 Jahre, Schürze, streng, aber herzlich
+### Szene 1 – Küche – Oma steht vor dem leeren Teller
+OMA HILDE (wütend): Wer hat meinen Kuchen gegessen?
+TIM [ängstlich]: Ich war's nicht, ehrlich!
+AKTION: Tim versteckt die Hände hinter dem Rücken.
+```
+
+Für eine Serie: Überschriften `## Folge 1: Titel`, `## Folge 2: Titel`. Sprechhaltungen: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt. Was im Satz in Klammern steht, wird nicht gesprochen. Eine PDF-Datei kann das Studio nicht zuverlässig lesen: Text im PDF kopieren und einfügen oder als .txt speichern.
 
 ## Benachrichtigungen aufs Handy
 
