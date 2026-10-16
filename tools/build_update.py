@@ -2,8 +2,9 @@
 """Rebuild Cay_Studio_Update_Produktion.py from cay_studio_app/.
 
 The installer logic stays in the existing update script; only VERSION, the
-embedded ZIP payload and its SHA256 are replaced. The result is verified by
-unpacking it again and comparing every file byte for byte.
+embedded ZIP payload and its SHA256 are replaced. Only git-tracked files are
+packed, and a cay_studio_app/ with unsaved or untracked files is refused. The
+result is verified by unpacking it again and comparing every file byte for byte.
 
 Usage: python3 tools/build_update.py
 """
@@ -12,6 +13,7 @@ import base64
 import hashlib
 import io
 import re
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -28,8 +30,17 @@ def app_version():
     return match.group(1)
 
 
+def tracked():
+    """Exactly the committed app: git-tracked files only, and nothing unsaved or stray next to them
+    (a test work folder with a database or a bot key, an editor swap file)."""
+    def git(*args): return subprocess.run(['git', '-C', str(ROOT), *args, '--', APP.relative_to(ROOT).as_posix()], capture_output=True, check=True).stdout
+    dirty = git('status', '--porcelain', '--untracked-files=all').decode('utf-8', 'replace')
+    if dirty.strip(): raise SystemExit('Ungespeicherte oder fremde Dateien in cay_studio_app, Paket nicht gebaut:\n' + dirty)
+    return sorted(ROOT / name for name in git('ls-files', '-z').decode('utf-8').split('\0') if name)
+
+
 def payload():
-    files = sorted(p for p in APP.rglob('*') if p.is_file() and '__pycache__' not in p.parts)
+    files = tracked()
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for path in files:
