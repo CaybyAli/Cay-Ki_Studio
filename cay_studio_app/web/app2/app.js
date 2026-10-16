@@ -503,6 +503,8 @@ function autopilotSwitch(d) {
 }
 function nextView(d) {
   const pause = d.paused ? '<button class="button" data-action="resume">Fortsetzen</button>' : '<button class="button quiet" data-action="pause">Pausieren</button>';
+  // Paused: say so, and where it goes on; never 'Das Studio arbeitet.' while nothing runs.
+  const phase = d.paused ? `${d.phase ? `Zuletzt: ${esc(d.phase.replace(/[.\s]+$/, ''))}. ` : ''}Fortsetzen macht dort weiter.` : esc(d.phase || '');
   if (d.deleted) return `<section class="next wait"><h2 class="headline">Im Papierkorb.</h2><p>Dateien bleiben erhalten.</p><div class="actions"><button class="button" data-action="restore">Wiederherstellen</button></div></section>`;
   if (d.state === 'blocked') return blockedView(d);
   if (d.state === 'done') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie ist fertig.' : 'Dein Film ist fertig.'}</h2>
@@ -531,10 +533,10 @@ function nextView(d) {
       <p>Mundbewegung, Stimme und Figur. Danach rechnet das Studio den Rest ohne Unterbrechung.</p>
       <div class="sample"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/sample#t=0.1"></video></div>
       <div class="actions"><button class="button" data-action="approve-sample">Passt, weiterrechnen</button><button class="button quiet" data-action="reject-sample">Zurück zum Ton</button></div></section>`;
-  if (d.state === 'rendering' || d.state === 'finishing') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie entsteht.' : 'Dein Film entsteht.'}</h2>
-      <p class="muted">${esc(d.phase || '')}</p><div id="progress-slot" class="progress"></div>
+  if (d.state === 'rendering' || d.state === 'finishing') return `<section class="next"><h2 class="headline">${d.paused ? 'Pausiert.' : d.idea.episodes > 1 ? 'Deine Serie entsteht.' : 'Dein Film entsteht.'}</h2>
+      <p class="muted">${phase}</p><div id="progress-slot" class="progress"></div>
       <div class="actions">${pause}<button class="link" data-action="abort-step">Aktuellen Abschnitt abbrechen</button></div></section>`;
-  return `<section class="next"><h2 class="headline">Das Studio arbeitet.</h2><p class="muted">${esc(d.phase || '')}</p>
+  return `<section class="next"><h2 class="headline">${d.paused ? 'Pausiert.' : 'Das Studio arbeitet.'}</h2><p class="muted">${phase}</p>
       <div class="actions">${pause}${autopilotSwitch(d)}</div></section>`;
 }
 function blockedView(d) {
