@@ -892,7 +892,9 @@ function notifyHtml(n) {
       ${notifySwitch('done', 'Film fertig', n.events.done)}
       ${notifySwitch('turn', 'Du bist dran', n.events.turn, 'Wenn eine Freigabe auf dich wartet. Mit Autopilot nur, wenn er nicht allein weiterkommt.')}
       ${notifySwitch('blocked', 'Angehalten', n.events.blocked, 'Wenn ein Projekt wegen eines Fehlers stehen bleibt.')}
-      ${notifySwitch('link', 'Link zum Projekt mitsenden', n.link, 'Der Link öffnet das Projekt nur am PC, nicht am Handy.')}</section>
+      ${notifySwitch('link', 'Link zum Projekt mitsenden', n.link, 'Der Link öffnet das Projekt nur am PC, nicht am Handy.')}
+      <label class="field notify-address"><span>So spricht dich das Studio an</span><input class="input" data-notify-text="address" value="${esc(n.address || 'Sir Cay')}" maxlength="40" autocomplete="off"></label>
+      <p class="small muted">Zum Beispiel: „🎬 ${esc(n.address || 'Sir Cay')}, dein Film ist fertig!“ mit dem Titelbild als Vorschau.</p></section>
     ${pcBlock()}${telegramBlock(n.telegram)}${ntfyBlock(n.ntfy)}
     <p class="small muted notify-whatsapp">WhatsApp gibt es hier nicht: Meta verlangt für jede Nachricht, die das Studio von sich aus schickt, eine Gebühr, und die kostenlosen Umwege laufen über inoffizielle Fremdanbieter – Telegram funktioniert ähnlich und ist kostenlos.</p>`;
 }
@@ -1156,6 +1158,10 @@ document.addEventListener('click', async event => {
 document.addEventListener('change', async event => {
   const el = event.target;
   if (el.matches('input[data-action="autopilot"]')) { await guarded(el, async () => { await actions.autopilot(el); await refreshRun(true); }); return; }
+  if (el.matches('[data-notify-text]')) {
+    await guarded(el, async () => { S.notify = await put('/api/notify', { [el.dataset.notifyText]: el.value.trim() || 'Sir Cay' }); notifyRender(S.notify); });
+    return;
+  }
   if (el.matches('[data-notify]')) {
     await guarded(el, async () => {
       try { S.notify = await put('/api/notify', { [el.dataset.notify]: el.checked }); } catch (e) { el.checked = !el.checked; throw e; }

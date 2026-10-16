@@ -146,7 +146,7 @@ try:
         page.click('[data-action="tg-connect"]'); page.wait_for_selector('[data-action="notify-test"][data-channel="telegram"]')
         r.check('Verbunden mit dem privaten Chat (nicht der Gruppe)', 'Verbunden mit Cay' in page.locator('#sheet').inner_text())
         page.click('[data-action="notify-test"][data-channel="telegram"]'); page.wait_for_timeout(800)
-        r.check('Testnachricht über Telegram', any(b'Test: Cay Studio meldet sich' in m['raw'] and b'424242' in m['raw'] for m in sent('sendMessage')))
+        r.check('Testnachricht über Telegram', any('Cay Studio meldet sich'.encode() in m['raw'] and b'424242' in m['raw'] for m in sent('sendMessage')))
 
         # ntfy and "Am PC"
         page.click('[data-action="ntfy-on"]'); page.wait_for_timeout(300)
@@ -155,7 +155,7 @@ try:
         topic = page.locator('.notify-topic code').inner_text()
         r.check('ntfy: Zufallsthema groß angezeigt mit Link', len(topic) == 35 and topic.startswith('cay-studio-') and page.locator(f'a[href="{NET_URL}/ntfy/{topic}"]').count() == 1)
         page.click('[data-action="notify-test"][data-channel="ntfy"]'); page.wait_for_timeout(800)
-        r.check('Testnachricht über ntfy', NET['ntfy'] and NET['ntfy'][-1]['topic'] == topic and NET['ntfy'][-1]['query']['title'] == ['Test: Cay Studio meldet sich'])
+        r.check('Testnachricht über ntfy', NET['ntfy'] and NET['ntfy'][-1]['topic'] == topic and 'Cay Studio meldet sich' in NET['ntfy'][-1]['query']['title'][0])
         page.click('[data-action="pc-on"]'); page.wait_for_selector('[data-action="pc-test"]')
         r.check('Am PC eingeschaltet, Probe-Meldung gezeigt', page.evaluate('window.__notes.length') == 1)
         page.click('[data-notify="telegram_film"]'); page.wait_for_timeout(500)
@@ -179,12 +179,12 @@ try:
         db.execute("INSERT INTO factory_post(id,run_id,kind,episode,generation,spec,status,result) VALUES(?,?,?,?,?,?,?,?)",
                    ('x1', 'd' * 32, 'export', 0, 0, '{}', 'done', json.dumps({**export, 'episode': 0, 'title': 'Kekse für Ömer'}))); db.commit()
         r.check('Fertig erkannt (Worker setzt „done“)', wait(lambda: studio.call('/api/factory/' + 'd' * 32)[1]['state'] == 'done'))
-        r.check('Telegram: Foto mit Text, danach der Film', wait(lambda: sent('sendVideo')) and any(b'Fertig: Kekse f\xc3\xbcr \xc3\x96mer (3 s)' in m['raw'] and b'\xff\xd8' in m['raw'] for m in sent('sendPhoto')))
+        r.check('Telegram: Foto mit Text, danach der Film', wait(lambda: sent('sendVideo')) and any(b'Sir Cay' in m['raw'] and 'Kekse für Ömer'.encode() in m['raw'] and b'\xff\xd8' in m['raw'] for m in sent('sendPhoto')))
         r.check('ntfy: Vorschaubild ≤ 2 MB, Umlaute als URL-Parameter', wait(lambda: any(m['method'] == 'PUT' for m in NET['ntfy'])) and any(
-            m['method'] == 'PUT' and m['query']['title'] == ['Fertig: Kekse für Ömer (3 s)'] and '%C3%96' in m['url'] and m['raw'][:2] == b'\xff\xd8' and len(m['raw']) <= 2 * 1024 * 1024
+            m['method'] == 'PUT' and 'Sir Cay' in m['query']['title'][0] and 'Kekse für Ömer' in m['query']['message'][0] and '%C3%96' in m['url'] and m['raw'][:2] == b'\xff\xd8' and len(m['raw']) <= 2 * 1024 * 1024
             and m['query']['filename'] == ['vorschau.jpg'] and any('Am PC öffnen: http://127.0.0.1:' in x for x in m['query']['message']) for m in NET['ntfy']))
-        r.check('Am PC: Meldung im offenen Studio-Tab', wait(lambda: any(n['title'].startswith('Fertig: Kekse') for n in page.evaluate('window.__notes.map(n => ({title: n.title}))'))))
-        page.evaluate("window.__notes.find(n => n.title.startsWith('Fertig')).onclick()"); page.wait_for_timeout(300)
+        r.check('Am PC: Meldung im offenen Studio-Tab', wait(lambda: any('Sir Cay' in n['title'] for n in page.evaluate('window.__notes.map(n => ({title: n.title}))'))))
+        page.evaluate("window.__notes.find(n => n.title.includes('Sir Cay')).onclick()"); page.wait_for_timeout(300)
         r.check('Klick auf die Meldung öffnet das Projekt', page.evaluate('location.hash') == '#p=' + 'd' * 32)
         counts = (len(NET['telegram']), len(NET['ntfy']), page.evaluate('window.__notes.length'))
         for enabled in (False, True, False):
@@ -197,16 +197,16 @@ try:
         db.execute("INSERT INTO factory_post(id,run_id,kind,episode,generation,spec,status,error) VALUES(?,?,?,?,?,?,?,?)",
                    ('x2', 'e' * 32, 'mix', 0, 0, '{}', 'failed', 'Tonspur zu kurz: 12,0 s statt 15,0 s')); db.commit()
         r.check('Angehalten erkannt', wait(lambda: studio.call('/api/factory/' + 'e' * 32)[1]['state'] == 'blocked'))
-        blocked_tries = lambda: [m for m in sent('sendMessage') if b'Angehalten: Der Keks-Krieg' in m['raw'] and b'Tonspur zu kurz' in m['raw']]
+        blocked_tries = lambda: [m for m in sent('sendMessage') if '„Der Keks-Krieg“ hat angehalten'.encode() in m['raw'] and b'Tonspur zu kurz' in m['raw']]
         started = time.time()
         r.check('Telegram: nach 429 („retry_after“: 2 s) erneut gesendet, mit Fehlertext', wait(lambda: len(blocked_tries()) == 2, 25) and time.time() - started >= 2
                 and wait(lambda: call('/api/notify')[1]['telegram']['pending'] == 0))
-        r.check('ntfy: Angehalten', wait(lambda: any(m['query'].get('title') == ['Angehalten: Der Keks-Krieg'] for m in NET['ntfy'])))
+        r.check('ntfy: Angehalten', wait(lambda: any('hat angehalten' in (m['query'].get('title') or [''])[0] for m in NET['ntfy'])))
 
         studio.project('f' * 32, 'sample_review', {'title': 'Probe', 'sample': {'key': 'k1', 'file': export['file'], 'sha256': export['sha256']}}, paused=0)
         code, run = call('/api/factory/' + 'f' * 32)
         code, _ = call('/api/factory/' + 'f' * 32 + '/reject-sample', {'revision': run['revision']})
-        r.check('Du bist dran: Ton wartet auf Freigabe', code == 200 and wait(lambda: any(b'Du bist dran: Probe' in m['raw'] and 'Bitte den Ton anhören'.encode() in m['raw'] for m in sent('sendMessage'))))
+        r.check('Du bist dran: Ton wartet auf Freigabe', code == 200 and wait(lambda: any('Ohren auf, Sir Cay'.encode() in m['raw'] and 'Der Ton wartet auf deine Freigabe'.encode() in m['raw'] for m in sent('sendMessage'))))
 
         code, feed = call('/api/notify/feed?after=0')
         r.check('Ereignisliste für den Browser: fertig, angehalten, dran', [e['event'] for e in feed['events']] == ['done', 'blocked', 'turn'])

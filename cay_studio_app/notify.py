@@ -193,36 +193,59 @@ def _short(text, limit=200):
     return text if len(text) <= limit else text[:limit - 1].rstrip() + '…'
 
 
-def compose(d, event, settled=False):
-    """Short German texts: head (title line) and body lines. At most one emoji, added per channel."""
+ADDRESS = 'Sir Cay'     # how the studio addresses its owner in messages (setting "Anrede")
+
+# Lively, but honest: every message says what happened and what to do. One template per message,
+# picked from the transition key, so a retry or a second channel says exactly the same thing.
+DONE_FILM = (('🎬 {name}, dein Film ist fertig!', '„{title}“ · {seconds} Sekunden', 'Popcorn bereit? 🍿 Ansehen, herunterladen, hochladen.'),
+             ('✨ Applaus, {name}!', '„{title}“ ist im Kasten: {seconds} Sekunden.', 'Bereit für TikTok. 🚀'),
+             ('🏆 Mission erfüllt, {name}!', '„{title}“ wartet auf seinen großen Auftritt ({seconds} s).', 'Viel Erfolg beim Hochladen! 🎉'))
+DONE_SERIES = (('📺 {name}, deine Serie ist komplett!', '„{title}“: {episodes} Folgen sind fertig.', 'Folge für Folge bereit zum Hochladen. 🎉'),
+               ('🍿 Staffel im Kasten, {name}!', '„{title}“ · {episodes} Folgen.', 'Zeit für die Premiere. 🚀'))
+TURN = {'cast_review': ('👀 {name}, deine Besetzung wartet.', '„{title}“: Bitte die Figuren ansehen und freigeben.'),
+        'image_review': ('🖼️ {name}, die Szenenbilder sind da.', '„{title}“: Pro Szene ein Bild wählen, dann geht es weiter.'),
+        'voice_review': ('🎧 Ohren auf, {name}!', '„{title}“: Der Ton wartet auf deine Freigabe.'),
+        'sample_review': ('🎞️ {name}, eine kurze Probe wartet.', '„{title}“: Passen Mund, Stimme und Figur?')}
+BLOCKED = ('⚠️ {name}, „{title}“ hat angehalten.', 'Im Studio steht der passende Knopf, meist „Fortsetzen“.')
+
+
+def _pick(options, key):
+    return options[int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) % len(options)]
+
+
+def compose(d, event, settled=False, name=ADDRESS):
+    """German message: head (first line, with its emoji) and body lines, addressed to `name`."""
+    name = _short(name or ADDRESS, 40)
     title = _short(d.get('title') or 'Ohne Titel', 90)
     films = [e for e in d.get('exports', []) if isinstance(e, dict) and e.get('file')]
+    key = transition_key(d, event)
     if event == 'done':
         episodes = max(len(films), int((d.get('idea') or {}).get('episodes') or 1))
-        if episodes > 1:
-            head = f'Fertig: {title}, {episodes} Folgen'
-        else:
-            seconds = round(float(films[0].get('seconds') or 0)) if films else 0
-            head = f'Fertig: {title} ({seconds} s)' if seconds else f'Fertig: {title}'
-        lines = ['Du kannst ihn jetzt im Studio ansehen und hochladen.' if episodes == 1 else 'Du kannst die Folgen jetzt im Studio ansehen und hochladen.']
+        seconds = round(float(films[0].get('seconds') or 0)) if films else 0
+        template = _pick(DONE_SERIES, key) if episodes > 1 else _pick(DONE_FILM, key)
+        head, *lines = [t.format(name=name, title=title, seconds=seconds, episodes=episodes) for t in template]
+        if episodes == 1 and not seconds: lines[0] = f'„{title}“ ist fertig.'
     elif event == 'turn':
-        head = f'Du bist dran: {title}'
-        lines = [ASK.get(d.get('state'), 'Das Studio wartet auf dich.')]
+        head, line = (t.format(name=name, title=title) for t in TURN.get(d.get('state'), ('👉 {name}, das Studio wartet auf dich.', '„{title}“')))
+        lines = [line]
         stop = d.get('autopilot_stopped')
         if PILOT.autopilot_on(d) and PILOT.autopilot_waits(d) and isinstance(stop, dict) and stop.get('reason'):
             lines.append(_short('Der Autopilot wartet: ' + str(stop['reason']), 200))
         elif settled:
             lines.append('Der Autopilot kommt hier nicht allein weiter.')
     else:
-        head = f'Angehalten: {title}'
-        lines = [_short(d.get('error') or 'Unbekannter Fehler.', 200)]
+        head, hint = (t.format(name=name, title=title) for t in BLOCKED)
+        lines = [_short(d.get('error') or 'Unbekannter Fehler.', 200), hint]
     return {'run_id': d.get('id'), 'event': event, 'state': d.get('state'), 'head': head, 'lines': lines,
-            'films': [{'file': e['file'], 'seconds': e.get('seconds'), 'episode': e.get('episode', i)} for i, e in enumerate(films)] if event == 'done' else []}
+            'films': [{'file': e['file'], 'seconds': e.get('seconds'), 'episode': e.get('episode', i),
+                       **({'cover': e['cover']['file']} if isinstance(e.get('cover'), dict) and e['cover'].get('file') else {})}
+                      for i, e in enumerate(films)] if event == 'done' else []}
 
 
 # ---------- request bodies ----------
 
 class NotifyOptions(Strict):
+    address: str | None = Field(default=None, max_length=40)
     done: bool | None = None
     turn: bool | None = None
     blocked: bool | None = None
@@ -281,6 +304,7 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
         events = data.get('events') if isinstance(data.get('events'), dict) else {}
         data['events'] = {e: bool(events.get(e, True)) for e in EVENTS}
         data['link'] = bool(data.get('link', True))
+        data['address'] = _short(data.get('address') or ADDRESS, 40)
         for channel in CHANNELS:
             if not isinstance(data.get(channel), dict): data[channel] = {}
         return data
@@ -338,7 +362,15 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
 
     def record(self, d, event, settled=False):
         key = f"{d['id']}:{event}:{transition_key(d, event)}"
-        payload = compose(d, event, settled)
+        payload = compose(d, event, settled, self.load()['address'])
+        if event == 'done':
+            # Measured compute time, if the studio knows it (the clock on the project tile).
+            try:
+                seconds = (self.g['factory'].clocks(d['id']).get(d['id']) or {}).get('seconds') if self.g.get('factory') else None
+                if seconds:
+                    h, m = divmod(round(seconds / 60), 60)
+                    payload['lines'].insert(1, f'⏱ Rechenzeit: {h} h {m:02} min' if h else f'⏱ Rechenzeit: {m} min')
+            except Exception as error: self.trouble(error)
         created = self.g['now']()
         with self.g['conn']() as db:
             fresh = db.execute('INSERT OR IGNORE INTO notify_events(key,run_id,event,payload,created) VALUES(?,?,?,?,?)',
@@ -438,11 +470,15 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
         except OSError: pass
 
     def preview(self, payload):
-        """JPG frame about 1 s into the first film, 540 px wide. None if there is none."""
+        """JPG, 540 px wide: the film's title card (cover with the title) if it has one, else a frame
+        about 1 s into the first film. None if there is none."""
         films = payload.get('films') or []
         if not films: return None
         try:
             film = self.g['allowed'](films[0]['file'])
+            if films[0].get('cover'):
+                cover = self.g['allowed'](films[0]['cover'])
+                if cover.is_file(): film = cover
             if not film.is_file(): return None
             stat = film.stat()
             folder = self.preview_folder(); folder.mkdir(parents=True, exist_ok=True)
@@ -501,8 +537,7 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
 
     async def deliver_telegram(self, data, payload):
         settings = data['telegram']; token = settings['token']; chat = settings['chat']['id']
-        emoji = STYLE[payload['event']][0]
-        message = '\n'.join([f"{emoji} {payload['head']}", *self.text(data, payload)])
+        message = '\n'.join([payload['head'], *self.text(data, payload)])
         if 'parts' not in payload:
             parts = ['message']
             if payload['event'] == 'done' and settings.get('film'):
@@ -581,7 +616,7 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
                     'last': status.get('telegram'), 'pending': pending.get('telegram', 0)}
         ntfy = {'state': 'on' if nt.get('topic') else 'off', 'topic': nt.get('topic', ''), 'url': f"{NTFY}/{nt['topic']}" if nt.get('topic') else '',
                 'server': NTFY, 'preview': bool(nt.get('preview', True)), 'last': status.get('ntfy'), 'pending': pending.get('ntfy', 0)}
-        return {'events': data['events'], 'link': data['link'], 'pc': f"http://127.0.0.1:{self.g.get('PORT', 8787)}", 'telegram': telegram, 'ntfy': ntfy}
+        return {'events': data['events'], 'link': data['link'], 'address': data['address'], 'pc': f"http://127.0.0.1:{self.g.get('PORT', 8787)}", 'telegram': telegram, 'ntfy': ntfy}
 
     def feed(self, after):
         """Events for the browser tab after cursor `after`. Without `after`: only the cursor (a newly
@@ -639,8 +674,8 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
         data = self.load()
         if not self.enabled(data).get(channel):
             raise HTTPException(409, 'Dieser Kanal ist noch nicht fertig eingerichtet.')
-        payload = {'run_id': None, 'event': 'done', 'head': 'Test: Cay Studio meldet sich', 'films': [], 'parts': ['message'], 'sent': [],
-                   'lines': ['So sieht eine Nachricht aus. Du bekommst sie, wenn ein Film fertig ist, wenn du dran bist oder wenn etwas angehalten hat.']}
+        payload = {'run_id': None, 'event': 'done', 'head': f"🔔 Hallo {data['address']}! Cay Studio meldet sich.", 'films': [], 'parts': ['message'], 'sent': [],
+                   'lines': ['So klingen die Nachrichten: wenn ein Film fertig ist, wenn du dran bist oder wenn etwas angehalten hat. 🎬']}
         try:
             if channel == 'telegram': await self.deliver_telegram(data, payload)
             else: await self.deliver_ntfy(data, payload)
@@ -673,6 +708,7 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
                 for event in EVENTS:
                     if event in values: data['events'][event] = values[event]
                 if 'link' in values: data['link'] = values['link']
+                if 'address' in values: data['address'] = _short(values['address'], 40) or ADDRESS
                 if 'telegram_preview' in values: data['telegram']['preview'] = values['telegram_preview']
                 if 'telegram_film' in values: data['telegram']['film'] = values['telegram_film']
                 if 'ntfy_preview' in values: data['ntfy']['preview'] = values['ntfy_preview']

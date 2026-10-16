@@ -125,15 +125,20 @@ def test_transition_keys_are_stable_and_change_with_new_material():
     assert signature(run(state='cast_review')) != signature(run(state='image_review'))
 
 
-def test_texts_are_short_german_and_name_the_situation():
-    d = run(state='done', exports=[{'file': '/f/1.mp4', 'sha256': 'aa', 'seconds': 61.6}])
-    assert notify.compose(d, 'done')['head'] == 'Fertig: Der Keks-Krieg (62 s)'
+def test_texts_are_lively_addressed_and_name_the_situation():
+    d = run(state='done', exports=[{'file': '/f/1.mp4', 'sha256': 'aa', 'seconds': 61.6, 'cover': {'file': '/f/Cover_1.png'}}])
+    done = notify.compose(d, 'done')
+    assert 'Sir Cay' in done['head'] and done['head'][0] in '🎬✨🏆' and '„Der Keks-Krieg“' in done['lines'][0] and '62' in done['lines'][0]
+    assert done['films'][0]['cover'] == '/f/Cover_1.png'
+    assert notify.compose(d, 'done') == done                                     # same transition, same words
+    assert 'Chef' in notify.compose(d, 'done', name='Chef')['head']
     series = run(state='done', idea={'episodes': 3}, exports=[{'file': f'/f/{i}.mp4', 'seconds': 60} for i in range(3)])
-    assert notify.compose(series, 'done')['head'] == 'Fertig: Der Keks-Krieg, 3 Folgen'
+    assert '3 Folgen' in ' '.join(notify.compose(series, 'done')['lines'])
     blocked = notify.compose(run(state='blocked', error='x ' * 300), 'blocked')
-    assert blocked['head'] == 'Angehalten: Der Keks-Krieg' and len(blocked['lines'][0]) <= 200
+    assert blocked['head'] == '⚠️ Sir Cay, „Der Keks-Krieg“ hat angehalten.' and len(blocked['lines'][0]) <= 200
     stop = run(state='voice_review', idea={'autopilot': True}, audio_revision=1, autopilot_stopped={'state': 'voice_review', 'audio_revision': 1, 'reason': 'Mindestdauer nicht erreicht'})
-    assert notify.compose(stop, 'turn')['lines'] == ['Bitte den Ton anhören und freigeben.', 'Der Autopilot wartet: Mindestdauer nicht erreicht']
+    turn = notify.compose(stop, 'turn')
+    assert turn['head'] == '🎧 Ohren auf, Sir Cay!' and turn['lines'] == ['„Der Keks-Krieg“: Der Ton wartet auf deine Freigabe.', 'Der Autopilot wartet: Mindestdauer nicht erreicht']
 
 
 # ---------- hook in Factory.save and dedupe ----------
@@ -308,7 +313,7 @@ def test_message_text_and_photo(tmp_path):
     asyncio.run(n.send_due())
     assert [r.url.path.rsplit('/', 1)[1] for r in seen] == ['sendPhoto']
     body = seen[0].content
-    assert b'\xff\xd8' in body and 'Fertig: Der Keks-Krieg (2 s)'.encode() in body and b'Am PC \xc3\xb6ffnen: http://127.0.0.1:8787/#p=p1' in body
+    assert b'\xff\xd8' in body and 'Sir Cay'.encode() in body and '„Der Keks-Krieg“'.encode() in body and b'Am PC \xc3\xb6ffnen: http://127.0.0.1:8787/#p=p1' in body
     assert outbox(g)[0]['status'] == 'sent'
 
 
@@ -379,7 +384,7 @@ def test_ntfy_sends_umlauts_as_url_encoded_parameters_and_a_small_preview(tmp_pa
     request = seen[0]
     query = parse_qs(urlsplit(str(request.url)).query)
     assert request.method == 'PUT' and request.url.path == '/cay-studio-' + 'a' * 24
-    assert query['title'] == ['Fertig: Kekse für Ömer (2 s)'] and '%C3%96' in str(request.url) and query['filename'] == ['vorschau.jpg']
+    assert 'Sir Cay' in query['title'][0] and 'Ömer' in query['message'][0] and '%C3%96' in str(request.url) and query['filename'] == ['vorschau.jpg']
     assert query['tags'] == ['white_check_mark'] and 'Am PC öffnen' in query['message'][0]
     assert request.content[:2] == b'\xff\xd8' and len(request.content) <= 2 * 1024 * 1024
     assert all(ord(c) < 128 for k, v in request.headers.items() for c in k + v)   # nothing non-ASCII in headers
