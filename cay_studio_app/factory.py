@@ -582,6 +582,23 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if len(row)>3 and isinstance(row[3],dict) and row[3].get('cay_factory_step')==s['id']:ids.add(pid)
         if len(ids)!=1:raise Uncertain('Der Renderauftrag ist nicht eindeutig auffindbar. Er wird nicht erneut abgeschickt. ComfyUI-Verlauf prüfen und „Status erneut prüfen“ wählen.')
         return next(iter(ids))
+    async def comfy_steps(self,c,rid,video=False):
+        """This run's unfinished steps, each with what ComfyUI holds of the prompts proven to be its own:
+        (step, history items, queued ids, running ids). A step with none of them is lost (ComfyUI keeps its
+        queue only in memory): it can never produce output, so dropping it cannot create a double render."""
+        steps=self.rows("SELECT * FROM factory_steps WHERE run_id=?"+(" AND step_key LIKE 'video%'" if video else '')+" AND status IN ('new','submitting','submitted')",(rid,))
+        q=await self.g['get_json'](c,self.g['COMFY']+'/queue')
+        h=await self.g['get_json'](c,self.g['COMFY']+'/history?max_items=500')
+        if q is None or h is None:raise HTTPException(503,'ComfyUI antwortet gerade nicht. In einer Minute erneut versuchen; nach einem PC-Neustart zuerst Cay_Studio_Starten.cmd öffnen.')
+        def owner(row):return row[3].get('cay_factory_step') if len(row)>3 and isinstance(row[3],dict) else None
+        found=[]
+        for s in steps:
+            pids={s['prompt_id']} if s['prompt_id'] else set()
+            pids|={row[1] for row in q.get('queue_running',[])+q.get('queue_pending',[]) if owner(row)==s['id']}
+            pids|={pid for pid,item in h.items() if owner(item.get('prompt',[]))==s['id']}
+            found.append((s,[h[pid] for pid in pids if isinstance(h.get(pid),dict)],[row[1] for row in q.get('queue_pending',[]) if row[1] in pids],
+                          [row[1] for row in q.get('queue_running',[]) if row[1] in pids]))
+        return found
     async def render(self,d,key,graph,video=False):
         resources=self.g.get('resources');token=resources.begin(d['id']) if resources else None
         try:return await self.render_step(d,key,graph,video)
@@ -1099,21 +1116,11 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d=self.get(rid)
             if not (d['state']=='rendering' or (d['state']=='blocked' and d.get('resume_state')=='rendering')):
                 raise HTTPException(409,'Abbrechen ist nur während der Animation möglich.')
-            steps=self.rows("SELECT * FROM factory_steps WHERE run_id=? AND step_key LIKE 'video%' AND status IN ('new','submitting','submitted')",(rid,))
             async with httpx.AsyncClient(trust_env=False,timeout=15) as c:
-                q=await self.g['get_json'](c,self.g['COMFY']+'/queue')
-                h=await self.g['get_json'](c,self.g['COMFY']+'/history?max_items=500')
-                if q is None or h is None:raise HTTPException(503,'ComfyUI antwortet gerade nicht. In einer Minute erneut versuchen; nach einem PC-Neustart zuerst Cay_Studio_Starten.cmd öffnen.')
-                def owner(row):return row[3].get('cay_factory_step') if len(row)>3 and isinstance(row[3],dict) else None
-                for s in steps:
-                    pids={s['prompt_id']} if s['prompt_id'] else set()
-                    pids|={row[1] for row in q.get('queue_running',[])+q.get('queue_pending',[]) if owner(row)==s['id']}
-                    pids|={pid for pid,item in h.items() if owner(item.get('prompt',[]))==s['id']}
-                    if any((h.get(pid) or {}).get('status',{}).get('completed') for pid in pids):continue  # finished: resume collects it
-                    pending=[row[1] for row in q.get('queue_pending',[]) if row[1] in pids]
+                for s,history,pending,running in await self.comfy_steps(c,rid,video=True):
+                    if any(item.get('status',{}).get('completed') for item in history):continue  # finished: resume collects it
                     if pending:(await c.post(self.g['COMFY']+'/queue',json={'delete':pending})).raise_for_status()
-                    if any(row[1] in pids for row in q.get('queue_running',[])):
-                        (await c.post(self.g['COMFY']+'/interrupt',json={'prompt_id':next(row[1] for row in q['queue_running'] if row[1] in pids)})).raise_for_status()
+                    if running:(await c.post(self.g['COMFY']+'/interrupt',json={'prompt_id':running[0]})).raise_for_status()
                     self.sql("UPDATE factory_steps SET status='aborted' WHERE id=? AND status IN ('new','submitting','submitted')",(s['id'],))
             if self.busy!=rid:self.sql("DELETE FROM factory_steps WHERE run_id=? AND status='aborted'",(rid,))
             d=self.get(rid)
@@ -1147,6 +1154,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d=self.get(rid)
             d.pop('autopilot_stopped',None)
             if d['state']=='blocked':
+                if d.get('uncertain'):
+                    # „Fortsetzen“ checks ComfyUI again: a job it forgot (restart, crash) is dropped and rendered anew;
+                    # one that is still queued, running or in its history stays and is collected by the worker.
+                    async with httpx.AsyncClient(trust_env=False,timeout=15) as c:
+                        for s,history,pending,running in await self.comfy_steps(c,rid):
+                            if not (history or pending or running):self.sql("DELETE FROM factory_steps WHERE id=? AND status IN ('new','submitting','submitted')",(s['id'],))
                 # A failed speech check needs new takes, not the identical mix again.
                 retake=self.speech_retake(d)
                 # Definitively failed submissions may be retried only by this explicit action.

@@ -46,6 +46,21 @@ try:
     # 4) Wrong state is refused.
     e = 'e' * 32; project(e, 'voice_review', {}, 'done', None)
     check('falscher Zustand abgelehnt (409)', call(f'/api/factory/{e}/abort-step', {'fast': True})[0] == 409)
+    # 5) Scene image lost by a ComfyUI restart: „Fortsetzen“ (what app2 sends) drops it, a running one stays.
+    COMFY.update(running=[], pending=[], history={}, calls=[]); f = 'f' * 32
+    studio.project(f, 'blocked', {'resume_state': 'pictures', 'uncertain': True, 'error': 'Der Auftrag fehlt in ComfyUIs Warteschlange und Verlauf.'})
+    db.execute('INSERT INTO factory_steps(id,run_id,step_key,status,prompt_id,graph) VALUES(?,?,?,?,?,?)', ('step-ffff', f, 'image:0:0:0:0', 'submitted', 'pid-gone', '{}'))
+    db.execute('INSERT INTO factory_steps(id,run_id,step_key,status,prompt_id,graph) VALUES(?,?,?,?,?,?)', ('step-fff2', f, 'image:0:0:0:1', 'submitted', 'pid-runs', '{}')); db.commit()
+    COMFY['running'] = [[0, 'pid-runs', {}, {'cay_factory_step': 'step-fff2'}, []]]
+    code, d = call(f'/api/factory/{f}/resume', {})
+    check('Bild-Neustart: „Fortsetzen“ angenommen, Zustand wieder „pictures“', code == 200 and d['state'] == 'pictures' and not d.get('uncertain'))
+    check('Bild-Neustart: verlorenes Bild verworfen, laufendes bleibt', db.execute('SELECT step_key FROM factory_steps WHERE run_id=?', (f,)).fetchall() == [('image:0:0:0:1',)])
+    check('Bild-Neustart: ComfyUI nicht angefasst', COMFY['calls'] == [])
+    # 6) Animation after a restart, quality „Hoch“: „Fortsetzen“ keeps the quality (no silent switch to „Standard“).
+    COMFY.update(running=[], pending=[], calls=[]); g = '9' * 32
+    project(g, 'blocked', {'resume_state': 'rendering', 'uncertain': True, 'error': 'Der Auftrag fehlt in ComfyUIs Warteschlange'}, 'submitted', 'pid-gone')
+    code, d = call(f'/api/factory/{g}/resume', {})
+    check('Animations-Neustart: Abschnitt verworfen, Qualität bleibt „Hoch“', code == 200 and steps(g) == [] and d['state'] == 'rendering' and d['idea']['quality'] == 'high')
 finally:
     studio.close()
 r.done()
