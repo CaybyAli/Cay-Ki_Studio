@@ -130,7 +130,8 @@ try:
         # Telegram wizard by hand
         page.fill('#tg-token', 'irgendwas'); page.click('[data-action="tg-token"]'); page.wait_for_timeout(300)
         r.check('Ohne Haken: Hinweis direkt beim Kanal', 'Einverstanden' in page.locator('section[aria-labelledby="nc-tg"] .notify-error').inner_text())
-        page.check('#tg-consent'); page.click('[data-action="tg-token"]'); page.wait_for_selector('#sheet .notify-error')
+        # Wait for the server's answer itself: the box from the step before ('Einverstanden') is still there.
+        page.check('#tg-consent'); page.click('[data-action="tg-token"]'); page.locator('#sheet .notify-error', has_text='kein Bot-Schlüssel').wait_for(timeout=15000)
         r.check('Falscher Schlüssel: klare Meldung, Eingabe und Haken bleiben', 'kein Bot-Schlüssel' in page.locator('#sheet .notify-error').inner_text()
                 and page.input_value('#tg-token') == 'irgendwas' and page.is_checked('#tg-consent'))
         page.screenshot(path=str(shots / '07_falscher_schluessel.png'))
@@ -138,7 +139,7 @@ try:
         page.wait_for_selector('[data-action="tg-connect"]')
         r.check('Bot geprüft (getMe): Name und t.me-Link', 'Cay Studio Test' in page.locator('#sheet').inner_text() and page.locator('a[href="https://t.me/cay_studio_test_bot"]').count() == 1
                 and sent('getMe'))
-        page.click('[data-action="tg-connect"]'); page.wait_for_selector('#sheet .notify-error')
+        page.click('[data-action="tg-connect"]'); page.locator('#sheet .notify-error', has_text='„Start“').wait_for(timeout=15000)
         r.check('Noch nicht „Start“ getippt: sagt, was zu tun ist', '„Start“' in page.locator('#sheet .notify-error').inner_text())
         page.screenshot(path=str(shots / '08_noch_kein_start.png'))
         NET['updates'] = [{'update_id': 5, 'message': {'chat': {'id': -77, 'type': 'group', 'title': 'Familie'}, 'text': 'hi'}},
