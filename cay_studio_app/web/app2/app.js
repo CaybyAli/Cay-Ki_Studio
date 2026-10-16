@@ -14,8 +14,10 @@ const PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5h2.5
 
 /* ---------- data ---------- */
 function defaults() {
+  // story/script: 'Mein Drehbuch' (0.18). Only story 'script' goes to the server, the script text as idea.
   return { request_key: hex(), idea: '', title: '', episodes: 1, duration: 60, look: 'auto', characters: 'invent', participants: [],
-    examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true, cast_check: true, cover: 'start' };
+    examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true, cast_check: true, cover: 'start',
+    story: 'ai', script: '' };
 }
 function loadDraft() {
   try { const saved = JSON.parse(localStorage.getItem('cay-draft') || 'null'); if (saved && saved.request_key) return { ...defaults(), ...saved }; } catch (e) { /* private mode */ }
@@ -80,9 +82,9 @@ function duration(seconds) {
   const h = Math.floor(m / 60), rest = m % 60;
   return rest ? `${h} h ${rest} min` : `${h} h`;
 }
-function estimate(draft) {
+function estimate(draft, seconds) {
   // Prefer what this PC measured for finished films; else the 14.10. measurement.
-  const total = draft.duration * draft.episodes, measured = S.speed && S.speed[draft.quality];
+  const total = seconds ?? draft.duration * draft.episodes, measured = S.speed && S.speed[draft.quality];
   const [low, high] = measured ? [measured.low, measured.high] : SECONDS_PER_FILM_SECOND[draft.quality] || SECONDS_PER_FILM_SECOND.fast;
   const basis = measured ? `gemessen an ${measured.films} fertigen ${measured.films === 1 ? 'Film' : 'Filmen'} in dieser Qualität` : 'Hochrechnung aus deiner Messung vom 14.10. mit der Beschleunigung aus 0.17';
   return `Rechenzeit ungefähr ${low === high ? duration(total * low) : `${duration(total * low)} bis ${duration(total * high)}`}, ${basis}`;
@@ -100,6 +102,7 @@ function render() {
   main.innerHTML = S.page === 'project' ? projectView() : S.page === 'projects' ? projectsView() : S.page === 'library' ? libraryView() : composeView();
   S.deferred = false;
   if (S.page === 'new') updateCompose();
+  if (S.page === 'new' && S.draft.story === 'script') { paintCheck(); if (S.checkFor !== S.draft.script) checkScript(true); }
   if (S.page === 'project') paintProgress();
 }
 async function load() {
@@ -118,24 +121,106 @@ function busyUI() {
 }
 
 /* ---------- compose a new film ---------- */
-const SEG_LABELS = { duration: 'Länge pro Film', episodes: 'Folgen', look: 'Look', quality: 'Qualität', characters: 'Figuren', cover: 'Titelbild', music: 'Musik' };
+const SEG_LABELS = { duration: 'Länge pro Film', episodes: 'Folgen', look: 'Look', quality: 'Qualität', characters: 'Figuren', cover: 'Titelbild', music: 'Musik', story: 'Wer schreibt das Drehbuch?' };
 function seg(name, options, value) {
   // Long labels ('Nur meine Figuren') would leave one option alone on a second phone row: .long makes an even grid there.
   const long = options.map(o => o[1]).join('').length > 32;
   return `<div class="segmented${long ? ' long' : ''}" role="group" aria-label="${esc(SEG_LABELS[name] || name)}">${options.map(([v, label]) => `<button type="button" data-set="${esc(name)}" data-value="${esc(v)}" aria-pressed="${String(v) === String(value)}">${esc(label)}</button>`).join('')}</div>`;
 }
-function composeView() {
-  const d = S.draft;
-  return `<section class="compose">
-    <div>
-      <h1 class="display">Was soll passieren?</h1>
+/* 'Mein Drehbuch' (0.18): Cay's own script, filmed word for word. The server reads it (own_script.py). */
+const PDF_MESSAGE = 'PDF kann das Studio nicht zuverlässig lesen. Öffne das PDF, kopiere den Text und füge ihn hier ein, oder speichere es als .txt.';
+const SCRIPT_EXAMPLE = '# Der verschwundene Kuchen\nFIGUR: Oma – 72 Jahre, Schürze, streng, aber herzlich\n### Szene 1 – Küche – Oma steht vor dem leeren Teller\n'
+  + 'OMA (wütend): Wer hat meinen Kuchen gegessen?\nTIM [ängstlich]: Ich war\'s nicht, ehrlich!\nAKTION: Tim versteckt die Hände hinter dem Rücken.';
+function scriptMode() { return S.draft.story === 'script'; }
+function storyHead(d) {
+  if (d.story !== 'script') return `<h1 class="display">Was soll passieren?</h1>
       <p class="lede">Ein, zwei Sätze reichen. Das Studio schreibt Drehbuch und Dialoge, gestaltet die Figuren, spricht und animiert.</p>
       <label class="sr" for="idea">Deine Idee</label>
       <textarea id="idea" class="idea-input" data-field="idea" placeholder="Zwei Kollegen streiten um den letzten Keks. Am Ende hat ihn die Praktikantin längst gegessen.">${esc(d.idea)}</textarea>
-      <div class="idea-line"></div>
+      <div class="idea-line"></div>`;
+  return `<h1 class="display">Dein Drehbuch</h1>
+      <p class="lede">Füg dein fertiges Drehbuch ein oder wähle eine Datei. Das Studio verfilmt jeden Satz genau so, wie er dasteht, und gestaltet dazu Figuren, Bilder, Stimmen und Bewegung.</p>
+      <div class="script-tools">
+        <label class="file-pill">Datei wählen (.md oder .txt)<input type="file" accept=".md,.markdown,.txt,.text,text/plain,text/markdown,.pdf,application/pdf" data-upload="script"></label>
+        <a class="link" href="/static/app2/Drehbuch_Vorlage.md" download="Drehbuch_Vorlage.md">Vorlage herunterladen</a>
+      </div>
+      <details class="script-help"><summary>So schreibst du es</summary>
+        <pre>${esc(SCRIPT_EXAMPLE)}\n## Folge 2: Titel    (nur für Serien)</pre>
+        <p class="small muted">Gesprochen wird genau, was hinter dem Doppelpunkt steht. Klammern im Satz werden nicht gesprochen, sie geben die Sprechhaltung an.
+          Eine Zeile ohne Namen davor ist Handlung ohne Worte. Ein Film dauert 15 bis 90 Sekunden, etwa zweieinhalb Wörter sind eine Sekunde.</p></details>
+      <label class="sr" for="script">Dein Drehbuch</label>
+      <textarea id="script" class="script-input" data-field="script" spellcheck="false" placeholder="${esc(SCRIPT_EXAMPLE)}">${esc(d.script)}</textarea>
+      <div id="script-check" class="script-check-slot" aria-live="polite"></div>`;
+}
+/* The server's reading of the script: length, figures, scenes, lines and every problem with its line. */
+function checkView(c) {
+  const notice = S.scriptNotice ? `<ul class="problems block"><li>${esc(S.scriptNotice)}</li></ul>` : '';
+  if (!c) return notice + '<p class="small muted">Sobald dein Drehbuch hier steht, prüft das Studio, wer spricht, wie lang der Film wird und ob etwas fehlt.</p>';
+  if (c.error) return notice + `<ul class="problems block"><li>${esc(c.error)}</li></ul>`;
+  const eps = c.episodes || [], plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const length = eps.length > 1 ? eps.map(e => `Folge ${e.number} etwa ${e.seconds} s`).join(' · ') : eps.length ? `etwa ${eps[0].seconds} s` : '–';
+  const facts = [plural(c.figures.length, 'Figur', 'Figuren'), plural(c.scenes, 'Szene', 'Szenen'), plural(c.lines, 'Satz', 'Sätze'), plural(c.words, 'Wort', 'Wörter'),
+    eps.length > 1 ? `${eps.length} Folgen` : 'Einzelfilm'];
+  const list = (items, cls) => items.length ? `<ul class="problems${cls}">${items.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '';
+  const blocking = c.problems.filter(p => p.blocking), hints = c.problems.filter(p => !p.blocking);
+  return `${notice}<div class="script-check${c.ok ? '' : ' bad'}">
+      <p class="script-length"><span>Länge nach Drehbuch</span><strong>${esc(length)}</strong></p>
+      <p class="small muted">${esc(facts.join(' · '))}${c.figures.length ? `. Es spielen ${esc(c.figures.map(f => f.name).join(', '))}.` : ''}</p>
+      ${list(blocking, ' block')}${list(hints, '')}
+      ${c.ok ? `<p class="small ok-line">${hints.length ? 'Der Film kann so entstehen. Die Hinweise sind Vorschläge, das Studio ändert nichts daran.' : 'Passt. Der Film kann so entstehen.'}</p>` : ''}
+      ${c.preview ? `<details class="script-preview"${S.previewOpen ? ' open' : ''}><summary>So liest das Studio dein Drehbuch</summary><pre>${esc(c.preview)}</pre></details>` : ''}
+    </div>`;
+}
+function paintCheck() { const box = $('#script-check'); if (box) box.innerHTML = checkView(S.check); }
+async function checkScript(now) {
+  clearTimeout(checkScript.timer);
+  if (!now) { checkScript.timer = setTimeout(() => checkScript(true), 450); return; }
+  const text = S.draft.script, seq = checkScript.seq = (checkScript.seq || 0) + 1;
+  if (!text.trim()) { S.check = null; S.checkFor = text; paintCheck(); syncScriptCast(); updateCompose(); return; }
+  let result;
+  try { result = await post('/api/factory/script/check', { text }); } catch (e) { result = { error: e.message }; }
+  if (seq !== checkScript.seq || S.page !== 'new') return;
+  S.check = result; S.checkFor = text; paintCheck(); syncScriptCast(); updateCompose();
+}
+/* The script's figures are the cast: each gets a row in Figuren (own picture, voice or library profile by name). */
+function scriptFigures() { return (S.check && !S.check.error && S.check.figures) || []; }
+function syncScriptCast() {
+  const figures = scriptFigures(), keys = new Set(figures.map(f => nameKey(f.name)));
+  // Rows the script added and nobody filled go when the figure leaves the script; anything Cay set stays.
+  S.draft.participants = S.draft.participants.filter(p => !p.from_script || keys.has(nameKey(p.name)) || p.image || p.voice || p.library_id);
+  for (const f of figures) if (!S.draft.participants.some(p => nameKey(p.name) === nameKey(f.name))) S.draft.participants.push({ name: f.name, traits: '', image: null, voice: null, from_script: true });
+  saveDraft();
+  const sig = JSON.stringify(figures.map(f => [f.name, f.description]));
+  if (sig !== S.castSig) { S.castSig = sig; refreshExtras(false); }
+}
+async function readScriptFile(file) {
+  S.scriptNotice = '';
+  const fail = text => { S.scriptNotice = text; paintCheck(); toast(text); };
+  if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') return fail(PDF_MESSAGE);
+  if (/\.(docx?|odt|rtf|pages)$/i.test(file.name)) return fail('Word-Dateien kann das Studio nicht lesen. Speichere dein Drehbuch dort als .txt („Nur Text“) oder kopiere den Text hier hinein.');
+  if (file.size > 400000) return fail('Die Datei ist zu groß. Ein Drehbuch hat bis zu 100.000 Zeichen.');
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes.includes(0)) return fail('Diese Datei ist kein Text. Speichere dein Drehbuch als .txt oder .md und wähle es noch einmal.');
+  let text = new TextDecoder('utf-8').decode(bytes);
+  // Older Windows editors save ANSI: umlauts would turn into replacement characters.
+  if (text.includes('�')) text = new TextDecoder('windows-1252').decode(bytes);
+  text = text.replace(/^﻿/, '');
+  if (text.length > 100000) return fail('Das Drehbuch ist zu lang. Bis zu 100.000 Zeichen gehen.');
+  S.draft.script = text; saveDraft();
+  const box = $('#script'); if (box) box.value = text;
+  toast(`${file.name} übernommen.`);
+  await checkScript(true);
+}
+function composeView() {
+  const d = S.draft, script = d.story === 'script';
+  return `<section class="compose">
+    <div>
+      <div class="story-choice">${seg('story', [['ai', 'Die KI schreibt'], ['script', 'Mein Drehbuch']], d.story || 'ai')}</div>
+      ${storyHead(d)}
       <div class="choices">
-        <div class="choice"><span>Länge pro Film</span>${seg('duration', [[15, '15 s'], [30, '30 s'], [60, '60 s'], [90, '90 s']], d.duration)}</div>
-        <div class="choice"><span>Folgen</span>${seg('episodes', [[1, 'Einzelfilm'], [3, '3'], [6, '6'], [12, '12']], d.episodes)}
+        ${script ? '<div class="choice"><span>Länge pro Film</span><p class="choice-text" id="script-length"></p></div>'
+          : `<div class="choice"><span>Länge pro Film</span>${seg('duration', [[15, '15 s'], [30, '30 s'], [60, '60 s'], [90, '90 s']], d.duration)}</div>`}
+        <div class="choice"><span>Folgen</span>${script ? '<p class="choice-text" id="script-episodes"></p>' : seg('episodes', [[1, 'Einzelfilm'], [3, '3'], [6, '6'], [12, '12']], d.episodes)}
           <p class="hint" id="series-hint"></p></div>
         <div class="choice"><span>Look</span>${seg('look', LOOKS, d.look)}</div>
         <div class="choice"><span>Qualität</span>${seg('quality', [['draft', 'Entwurf'], ['fast', 'Standard']], d.quality)}
@@ -154,33 +239,47 @@ function composeView() {
     </aside>
   </section>`;
 }
-function extrasView() {
-  const d = S.draft;
-  const thumbs = d.examples.map((id, i) => `<div class="thumb"><img src="/api/factory/assets/${esc(id)}" alt="Vorlage ${i + 1}"><button class="thumb-remove" data-action="remove-example" data-index="${i}" aria-label="Vorlage ${i + 1} entfernen">×</button></div>`).join('');
-  const add = d.examples.length < 4 ? `<label class="thumb add"><span>Bild hinzufügen</span><input type="file" accept="image/*" multiple data-upload="example"></label>` : '';
-  const people = d.participants.map((p, i) => `<div class="person">
-      <label class="thumb small ${p.image ? '' : 'add'}" title="Bild genau dieser Figur">${p.image ? `<img src="/api/factory/assets/${esc(p.image)}" alt="">` : '<span>Bild</span>'}<input type="file" accept="image/*" data-upload="image" data-index="${i}"></label>
-      <div class="person-fields">
-        <input class="input" aria-label="Name" placeholder="Name" data-person="${i}" data-key="name" value="${esc(p.name)}" maxlength="60">
-        <input class="input" aria-label="Aussehen und Art" placeholder="Aussehen, Alter, Art" data-person="${i}" data-key="traits" value="${esc(p.traits)}" maxlength="1500">
+/* One figure row. from: the script's figure in 'Mein Drehbuch' (name and description come from the script). */
+function personRow(p, i, from) {
+  const fields = from ? `<p class="person-name">${esc(from.name)}</p>
+        <p class="small muted person-about">${esc(from.description || 'Im Drehbuch ohne Beschreibung. Das Studio gestaltet die Figur passend zu ihren Sätzen.')}</p>`
+    : `<input class="input" aria-label="Name" placeholder="Name" data-person="${i}" data-key="name" value="${esc(p.name)}" maxlength="60">
+        <input class="input" aria-label="Aussehen und Art" placeholder="Aussehen, Alter, Art" data-person="${i}" data-key="traits" value="${esc(p.traits)}" maxlength="1500">`;
+  return `<div class="person">
+      <label class="thumb small ${p.image ? '' : 'add'}" title="Bild genau dieser Figur">${p.image ? `<img src="/api/factory/assets/${esc(p.image)}" alt="">` : '<span>Bild</span>'}<input type="file" accept="image/*" data-upload="image" data-index="${i}" aria-label="Bild für ${esc(p.name || 'die Figur')}"></label>
+      <div class="person-fields${from ? ' from-script' : ''}">
+        ${fields}
         <div class="person-tools">
           ${p.library_label ? `<span class="chip accent" title="${p.library_image && p.voice_from_library ? 'Bild und Stimme' : p.library_image ? 'Bild' : 'Stimme'} aus deiner Bibliothek">${esc(p.library_label)}</span>` : ''}
           ${p.voice ? `<span class="voice-note"><button type="button" class="play" data-action="play" data-src="/api/factory/assets/${esc(p.voice)}" aria-label="Stimme von ${esc(p.name || 'Figur')} anhören">${PLAY}</button>${p.library_id && p.voice_from_library ? 'Stimme aus deinen Figuren' : 'Eigene Stimme'}</span>` : ''}
           <label class="file-pill">${p.voice ? 'Andere Aufnahme' : 'Eigene Stimme (optional)'}<input type="file" accept="audio/*" data-upload="voice" data-index="${i}"></label>
+          ${from ? `<button type="button" class="button quiet small" data-action="lib-pick-script" data-name="${esc(from.name)}">Aus deinen Figuren</button>` : ''}
           ${p.image && !(p.library_image && p.image_mode === 'exact') ? `<label class="switch compact"><input type="checkbox" data-person-exact="${i}" ${p.image_mode === 'exact' ? 'checked' : ''}><span>Gesichtsausdruck aus dem Bild übernehmen</span></label>` : ''}
         </div>
       </div>
-      <button class="icon-remove" data-action="remove-person" data-index="${i}" aria-label="Figur entfernen">×</button></div>`).join('');
+      ${from ? '' : `<button class="icon-remove" data-action="remove-person" data-index="${i}" aria-label="Figur entfernen">×</button>`}</div>`;
+}
+function figuresGroup(d) {
+  if (d.story !== 'script') return `<section class="group"><h3 class="group-title">Figuren</h3>
+      ${seg('characters', [['invent', 'Studio erfindet'], ['provided', 'Nur meine Figuren'], ['none', 'Ohne Figuren']], d.characters)}
+      <p class="hint">Eigene Figuren mit Bild sehen in jeder Szene und Folge gleich aus. Den Gesichtsausdruck bestimmt jede Szene selbst.</p>
+      <div class="people">${d.participants.map((p, i) => personRow(p, i)).join('')}</div>
+      <div class="actions"><button class="button quiet small" data-action="lib-pick-compose">Aus deinen Figuren wählen</button><button class="button quiet small" data-action="add-person">Figur hinzufügen</button></div></section>`;
+  const rows = scriptFigures().map(f => { const i = d.participants.findIndex(p => nameKey(p.name) === nameKey(f.name)); return i < 0 ? '' : personRow(d.participants[i], i, f); }).join('');
+  return `<section class="group"><h3 class="group-title">Figuren</h3>
+      <p class="hint">Es spielen genau die Figuren aus deinem Drehbuch. Gib einer Figur ein eigenes Bild, eine eigene Stimme oder ein Profil aus deinen Figuren. Sonst gestaltet das Studio sie nach der Beschreibung im Drehbuch.</p>
+      <div class="people">${rows || '<p class="small muted">Sobald dein Drehbuch Sätze hat, stehen die Figuren hier.</p>'}</div></section>`;
+}
+function extrasView() {
+  const d = S.draft;
+  const thumbs = d.examples.map((id, i) => `<div class="thumb"><img src="/api/factory/assets/${esc(id)}" alt="Vorlage ${i + 1}"><button class="thumb-remove" data-action="remove-example" data-index="${i}" aria-label="Vorlage ${i + 1} entfernen">×</button></div>`).join('');
+  const add = d.examples.length < 4 ? `<label class="thumb add"><span>Bild hinzufügen</span><input type="file" accept="image/*" multiple data-upload="example"></label>` : '';
   return `<section class="group"><h3 class="group-title">Look-Vorlagen</h3>
       <p class="hint">Bis zu vier Bilder, die zeigen, wie dein Film aussehen soll, zum Beispiel Knete-Optik, Farben oder Licht. Das Studio übernimmt den Stil, nicht die Figuren daraus.</p>
       <div class="thumbs">${thumbs}${add}</div></section>
-    <section class="group"><h3 class="group-title">Figuren</h3>
-      ${seg('characters', [['invent', 'Studio erfindet'], ['provided', 'Nur meine Figuren'], ['none', 'Ohne Figuren']], d.characters)}
-      <p class="hint">Eigene Figuren mit Bild sehen in jeder Szene und Folge gleich aus. Den Gesichtsausdruck bestimmt jede Szene selbst.</p>
-      <div class="people">${people}</div>
-      <div class="actions"><button class="button quiet small" data-action="lib-pick-compose">Aus deinen Figuren wählen</button><button class="button quiet small" data-action="add-person">Figur hinzufügen</button></div></section>
+    ${figuresGroup(d)}
     <section class="group"><h3 class="group-title">Titel und Musik</h3>
-      <label class="field"><span>Titel (optional)</span><input class="input" data-field="title" value="${esc(d.title)}" maxlength="100" placeholder="Wird sonst aus der Idee gebildet"></label>
+      <label class="field"><span>Titel (optional)</span><input class="input" data-field="title" value="${esc(d.title)}" maxlength="100" placeholder="${d.story === 'script' ? 'Sonst der Titel aus deinem Drehbuch' : 'Wird sonst aus der Idee gebildet'}"></label>
       <div class="field cover-choice"><span>Titelbild</span>${seg('cover', COVER_CHOICES, d.cover || 'start')}<p class="hint" id="cover-hint">${esc(coverHint(d.cover))}</p></div>
       <div class="actions">${d.music ? `<span class="voice-note"><button type="button" class="play" data-action="play" data-src="/api/factory/assets/${esc(d.music)}" aria-label="Eigene Musik anhören">${PLAY}</button>Eigene Musik</span>` : ''}<label class="file-pill">${d.music ? 'Andere Musik' : 'Eigene Musik hochladen'}<input type="file" accept="audio/*" data-upload="music"></label>${d.music ? '<button type="button" class="button quiet small" data-action="remove-music">Musik entfernen</button>' : ''}</div>
       <p class="hint">Ohne eigene Musik bleibt die Musik aus.</p></section>`;
@@ -196,9 +295,9 @@ function coverHint(position) {
 /* Projects since 0.18 (edit_policy 18) with the card switched on; older projects never have one. */
 function coverWanted(d) { return (d.edit_policy || 0) >= 18 && ['start', 'after_hook'].includes(d.idea.cover); }
 function coverChosen(d) { const c = d.cover; return !!(c && c.selected && (c.active_variants || []).some(v => v.id === c.selected)); }
-function refreshExtras() {
+function refreshExtras(open = true) {
   const box = $('details.more'); if (!box) return;
-  box.innerHTML = '<summary>Figuren, Look-Vorlagen, Titelbild und Musik</summary>' + extrasView(); box.open = true;
+  box.innerHTML = '<summary>Figuren, Look-Vorlagen, Titelbild und Musik</summary>' + extrasView(); if (open) box.open = true;
 }
 async function asPng(file) {
   // The studio stores PNG; convert JPG/WebP/AVIF in the browser and keep it within 2048 px.
@@ -215,22 +314,66 @@ async function asPng(file) {
 }
 function updateCompose() {
   const d = S.draft;
+  if (!$('#create')) return;
   document.querySelectorAll('[data-set]').forEach(b => b.setAttribute('aria-pressed', String(String(d[b.dataset.set]) === b.dataset.value)));
+  $('#preview').dataset.look = d.look;
+  $('#quality-hint').textContent = d.quality === 'draft' ? 'Etwa doppelt so schnell, etwas weniger scharf. Gut zum Ausprobieren.' : 'Die Qualität deines letzten Films.';
+  $('#autopilot-text').textContent = d.autopilot ? 'Ohne Zwischenstopps fertigstellen' : 'Bilder, Ton und Probe selbst freigeben';
+  const coverText = $('#cover-hint'); if (coverText) coverText.textContent = coverHint(d.cover);
+  if (d.story === 'script') {
+    // Length and episodes come from the script itself (the server's check).
+    const c = S.check && !S.check.error ? S.check : null, eps = c ? c.episodes : [], first = eps[0];
+    $('#script-length').textContent = !first ? 'Länge nach Drehbuch: sobald es geprüft ist'
+      : eps.length > 1 ? `Länge nach Drehbuch: ${eps.map(e => `Folge ${e.number} etwa ${e.seconds} s`).join(', ')}` : `Länge nach Drehbuch: etwa ${first.seconds} s`;
+    $('#script-episodes').textContent = eps.length > 1 ? `${eps.length} Folgen aus deinem Drehbuch` : 'Einzelfilm';
+    $('#series-hint').textContent = eps.length > 1 ? 'Die Folgen stehen in deinem Drehbuch, jede mit ihrem eigenen Titel.' : 'Für eine Serie schreib „## Folge 1: Titel“, „## Folge 2: Titel“ in dein Drehbuch.';
+    $('#preview-seconds').textContent = first ? `${first.seconds} s` : '– s';
+    $('#preview-scenes').textContent = !first ? 'nach deinem Drehbuch' : eps.length > 1 ? `Folge 1 von ${eps.length}, ${first.scenes} ${first.scenes === 1 ? 'Szene' : 'Szenen'}` : `${first.scenes} ${first.scenes === 1 ? 'Szene' : 'Szenen'}`;
+    $('#preview-part').textContent = eps.length > 1 ? `Teil 1/${eps.length}` : '';
+    $('#preview-part').hidden = eps.length < 2;
+    $('#estimate').textContent = c ? estimate(d, c.seconds) + '.' : 'Die Rechenzeit steht hier, sobald dein Drehbuch geprüft ist.';
+    $('#create').textContent = eps.length > 1 ? `Serie mit ${eps.length} Folgen verfilmen` : 'Drehbuch verfilmen';
+    return;
+  }
   const scenes = Math.max(3, Math.min(15, Math.ceil(d.duration / 6)));
   $('#preview-seconds').textContent = `${d.duration} s`;
   $('#preview-scenes').textContent = d.episodes > 1 ? `${d.episodes} Folgen mit je ${scenes} Szenen` : `${scenes} Szenen`;
   $('#preview-part').textContent = d.episodes > 1 ? `Teil 1/${d.episodes}` : '';
   $('#preview-part').hidden = d.episodes < 2;
-  $('#preview').dataset.look = d.look;
   $('#series-hint').textContent = d.episodes > 1 ? 'Jede Folge endet mit einem offenen Ende, die nächste knüpft daran an.' : '';
-  $('#quality-hint').textContent = d.quality === 'draft' ? 'Etwa doppelt so schnell, etwas weniger scharf. Gut zum Ausprobieren.' : 'Die Qualität deines letzten Films.';
-  $('#autopilot-text').textContent = d.autopilot ? 'Ohne Zwischenstopps fertigstellen' : 'Bilder, Ton und Probe selbst freigeben';
   $('#estimate').textContent = estimate(d) + '.';
-  const coverText = $('#cover-hint'); if (coverText) coverText.textContent = coverHint(d.cover);
   $('#create').textContent = d.episodes > 1 ? `Serie mit ${d.episodes} Folgen starten` : 'Film starten';
+}
+function participantBody(p, name) {
+  return { name, traits: p.traits || '', image: p.image || null,
+    voice: p.voice || null, voice_text: p.voice_text || '', image_mode: p.image_mode === 'exact' ? 'exact' : 'neutral',
+    library_id: p.library_id || null, voice_design: p.voice_from_library && p.voice_design ? p.voice_design : null,
+    library_image: p.library_image || null, library_voice: p.voice_from_library ? p.library_voice || p.library_id || null : null,
+    image_look: p.library_image ? p.image_look || null : null };
+}
+/* 'Mein Drehbuch': the server checks again and takes episodes, length and cast from the script. */
+async function createFromScript() {
+  const d = S.draft;
+  if (d.script.trim().length < 12) { toast('Füg dein Drehbuch ein oder wähle eine Datei.'); $('#script').focus(); return; }
+  if (S.checkFor !== d.script || !S.check || S.check.error) await checkScript(true);
+  const c = S.check;
+  if (!c || c.error) { toast(c ? c.error : 'Das Drehbuch ließ sich nicht prüfen. Bitte noch einmal versuchen.'); return; }
+  const block = c.problems.find(p => p.blocking);
+  if (block) { toast(block.text); $('#script-check').scrollIntoView({ block: 'nearest' }); return; }
+  const names = new Map(c.figures.map(f => [nameKey(f.name), f.name]));
+  // Only figures of the script, and only where Cay gave a picture, a voice or a profile; the rest comes from the script.
+  const own = d.participants.filter(p => names.has(nameKey(p.name)) && (p.image || p.voice || p.library_id));
+  const body = { ...d, idea: d.script, title: d.title.trim(), story: 'script', episodes: c.episodes.length, duration: c.duration, characters: 'provided',
+    participants: own.map(p => participantBody(p, names.get(nameKey(p.name)))) };
+  delete body.script;
+  const run = await post('/api/factory', body);
+  S.draft = { ...defaults(), story: 'script' }; S.check = null; S.checkFor = ''; S.castSig = ''; saveDraft();
+  toast(body.episodes > 1 ? 'Serie angelegt. Das Studio liest dein Drehbuch.' : 'Film angelegt. Das Studio liest dein Drehbuch.');
+  location.hash = 'p=' + run.id;
 }
 async function createFilm() {
   const d = S.draft;
+  if (d.story === 'script') return createFromScript();
   if (d.idea.trim().length < 12) { toast('Beschreib deine Idee in mindestens einem kurzen Satz.'); $('#idea').focus(); return; }
   // A figure with a picture, voice, look or profile but no name would be dropped silently; only empty rows are.
   const nameless = d.characters === 'none' ? -1 : d.participants.findIndex(p => !p.name.trim() && (p.image || p.voice || (p.traits || '').trim() || p.library_id));
@@ -241,11 +384,8 @@ async function createFilm() {
     return;
   }
   const body = { ...d, idea: d.idea.trim(), title: d.title.trim(),
-    participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => ({ name: p.name.trim(), traits: p.traits || '', image: p.image || null,
-      voice: p.voice || null, voice_text: p.voice_text || '', image_mode: p.image_mode === 'exact' ? 'exact' : 'neutral',
-      library_id: p.library_id || null, voice_design: p.voice_from_library && p.voice_design ? p.voice_design : null,
-      library_image: p.library_image || null, library_voice: p.voice_from_library ? p.library_voice || p.library_id || null : null,
-      image_look: p.library_image ? p.image_look || null : null })) };
+    participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => participantBody(p, p.name.trim())) };
+  delete body.story; delete body.script;   // the AI writes: exactly the request of before 0.18
   if (d.characters === 'provided' && !body.participants.length) { toast('Für „Nur meine Figuren“ mindestens eine Figur mit Namen eintragen.'); return; }
   if (body.participants.length > MAX_CAST) { toast(`Bis zu ${MAX_CAST} Figuren pro Film. Du hast ${body.participants.length}.`); return; }
   const run = await post('/api/factory', body);
@@ -335,8 +475,12 @@ function stepsView(d) {
   const now = stageOf(d);
   return `<ol class="steps" aria-label="Ablauf">${STEPS.map((s, i) => `<li class="${i < now || d.state === 'done' ? 'done' : i === now ? 'now' : ''}">${esc(s)}</li>`).join('')}</ol>`;
 }
+/* 'Mein Drehbuch' projects: the length is the script's own (idea.duration is only the planned minimum). */
+function ownScript(d) { return !!(d && d.idea && d.idea.story === 'script'); }
 function settingsLine(d) {
-  const i = d.idea, parts = [`${i.duration} Sekunden`, i.episodes > 1 ? `${i.episodes} Folgen` : 'Einzelfilm', `Qualität ${QUALITY[i.quality] || i.quality}`];
+  const i = d.idea, eps = (d.script && d.script.episodes) || [];
+  const length = !ownScript(d) ? `${i.duration} Sekunden` : eps.length === 1 ? `Mein Drehbuch, etwa ${eps[0].seconds} Sekunden` : 'Mein Drehbuch';
+  const parts = [length, i.episodes > 1 ? `${i.episodes} Folgen` : 'Einzelfilm', `Qualität ${QUALITY[i.quality] || i.quality}`];
   return parts.join(', ') + '.';
 }
 function projectView() {
@@ -533,7 +677,7 @@ function sceneRole(sc) {
 function scenesSection(d, choose) {
   const ep = d.episodes[S.episode] || d.episodes[0], ei = d.episodes.indexOf(ep);
   const editable = ['image_review', 'voice_review'].includes(d.state);
-  return `<section class="section"><h2 class="title">${d.episodes.length > 1 ? esc(ep.title) : 'Drehbuch'}</h2>${episodeTabs(d)}
+  return `<section class="section"><h2 class="title">${d.episodes.length > 1 ? esc(ep.title) : ownScript(d) ? 'Dein Drehbuch' : 'Drehbuch'}</h2>${episodeTabs(d)}
     ${checkLine(d, ep, ei)}${spineCard(ep)}
     <div class="scene-list"><div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
       const variants = sc.active_variants || [];
@@ -586,7 +730,7 @@ function soundSection(d) {
     <div class="mix"><audio controls preload="metadata" src="/api/factory/${esc(d.id)}/mix/${ei}"></audio>
       <p class="small muted">${t.seconds ? `${t.seconds.toFixed(1)} s, davon ${(t.speech_seconds || 0).toFixed(1)} s Sprache. Längste Pause ${(t.longest_speech_gap || 0).toFixed(1)} s.` : ''}</p>
       <div class="actions"><span class="small muted">Musik</span>${seg('music', [['off', 'Aus'], ['auto', 'Einfach'], ...(d.idea.music ? [['uploaded', 'Eigene']] : [])], music).replaceAll('data-set=', 'data-mix=')}
-        <button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button><button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
+        ${ownScript(d) ? '' : '<button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button>'}<button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
       ${levelsView(d, music)}</div>
     <h3 class="headline subhead">Stimmen</h3>
     <p class="small muted">Stimmtyp wählen und „Neue Stimme“ antippen. Danach werden die Sätze neu eingesprochen.</p>
@@ -755,10 +899,17 @@ function readLibraryForm(form) {
     voice_design: v('voice') && v('voice') === fig.voice ? fig.voice_design || null : null, voice_preset: fig.voice_preset || '', original: fig.original || '' };
 }
 /* Picker: one sheet for a new film (several figures) and for one figure of a running project. */
+/* A library profile as a figure of the new film (picture and voice by reference). */
+function libraryEntry(f) {
+  return { name: f.name, traits: f.traits || '', image: f.image || null, image_mode: f.image_mode || 'neutral', voice: f.voice || null,
+    voice_text: f.voice_text || '', voice_design: f.voice_design || null, voice_from_library: !!f.voice, library_id: f.id, library_label: f.label,
+    library_image: f.image ? f.id : null, library_voice: f.voice ? f.id : null, image_look: f.image ? f.look : null };
+}
 function pickerSheet() {
   const p = S.pick, d = S.run, list = (S.library || []);
-  const title = p.mode === 'project' ? `Figur für ${esc(p.name)}` : 'Aus deinen Figuren wählen';
-  const intro = p.mode === 'project' ? `Bild und Stimme kommen aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(p.name)}.` : 'Gewählte Figuren spielen mit ihrem Bild und ihrer Stimme in deinem Film mit.';
+  // 'script': one figure of Cay's own script ('Mein Drehbuch') before the film exists; 'project': a figure of a running film.
+  const title = p.mode !== 'compose' ? `Figur für ${esc(p.name)}` : 'Aus deinen Figuren wählen';
+  const intro = p.mode !== 'compose' ? `Bild und Stimme kommen aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(p.name)}.` : 'Gewählte Figuren spielen mit ihrem Bild und ihrer Stimme in deinem Film mit.';
   if (!list.length) {
     openSheet(`<div class="sheet-head"><h2 class="headline">${title}</h2><button class="button quiet small" data-action="close">Schließen</button></div>
       <div class="empty compact"><h3 class="headline">Noch keine Figuren.</h3><p class="muted">Nimm Figuren aus einem Projekt auf oder lege sie im Bereich „Figuren“ an.</p><a class="button quiet" href="#library" data-action="close">Zu deinen Figuren</a></div>`);
@@ -772,11 +923,11 @@ function pickerSheet() {
 function pickItems() {
   const p = S.pick, d = S.run;
   const look = p.mode === 'project' ? d.idea.look : S.draft.look;
-  const fits = f => p.mode === 'project' && nameKey(f.name) === nameKey(p.name);
+  const fits = f => p.mode !== 'compose' && nameKey(f.name) === nameKey(p.name);
   // A figure with the same film name comes first: "Patrick" in the film, "Patrick Knete" in the library.
   const list = (S.library || []).filter(libraryMatches).sort((a, b) => (fits(b) - fits(a)) || (lookRank(b, look) - lookRank(a, look)));
   return list.map(f => {
-    const chosen = p.mode === 'project' ? p.selected === f.id : p.selected.has(f.id);
+    const chosen = p.mode !== 'compose' ? p.selected === f.id : p.selected.has(f.id);
     const other = look && look !== 'auto' && f.look !== 'auto' && f.look !== look;
     return `<div class="pick-item"><button type="button" class="pick" data-action="lib-choose" data-id="${esc(f.id)}" aria-pressed="${chosen}">
         ${portrait(f, false)}<span class="pick-title">${esc(f.label)}</span><span class="small muted">${fits(f) ? `Passt zu ${esc(p.name)}. ` : ''}${esc(LOOK_NAMES[f.look] || '')}${other && f.image ? `, wird im Look ${p.mode === 'project' ? 'dieses' : 'deines'} Films nachgezeichnet` : ''}</span></button>
@@ -788,6 +939,11 @@ function pickFoot() {
   if (p.mode === 'compose') {
     const n = p.selected.size;
     return `<span class="small muted">${n ? `${n} gewählt` : 'Tippe auf Figuren, um sie zu wählen.'}</span><button class="button" data-action="lib-add-compose" ${n ? '' : 'disabled'}>${n === 1 ? 'Figur übernehmen' : `${n || ''} Figuren übernehmen`.trim()}</button>`;
+  }
+  if (p.mode === 'script') {
+    const f = (S.library || []).find(x => x.id === p.selected);
+    return `<span class="small muted">${f ? `${esc(f.label)} spielt ${esc(p.name)}, mit ${f.image && f.voice ? 'Bild und Stimme' : f.image ? 'Bild' : 'Stimme'} aus deinen Figuren.` : 'Tippe auf eine Figur.'}</span>
+      <button class="button" data-action="lib-add-script" ${f ? '' : 'disabled'}>Für ${esc(p.name)} übernehmen</button>`;
   }
   const d = S.run, f = (S.library || []).find(x => x.id === p.selected), w = d.cast_windows || {};
   if (!f) return '<span class="small muted">Wähle eine Figur.</span><button class="button" disabled>Übernehmen</button>';
@@ -1170,6 +1326,10 @@ const actions = {
   },
   async 'cancel-sound-edit'() { await post(`/api/factory/${S.rid}/cancel-sound-edit`, { revision: S.run.revision }); toast('Dein fertiger Film ist wieder da.'); },
   'new-edition'() {
+    // Cay's own script stays word for word: no wish for the writer, the figures, pictures and voices are new.
+    if (ownScript(S.run)) return openSheet(`<div class="sheet-head"><h2 class="headline">Neue Fassung planen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+      <p class="muted">Dein Drehbuch bleibt Wort für Wort gleich. Das Studio gestaltet Figuren, Bilder, Stimmen und Bewegung neu. Dieses Projekt bleibt, wie es ist.</p>
+      <form id="edition-form" class="sheet-form"><input type="hidden" name="note" value=""><div class="sheet-foot"><button class="button" type="submit">Neue Fassung planen</button></div></form>`);
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Fassung planen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
       <p class="muted">Das Studio plant mit derselben Idee neu: Drehbuch, Dialoge und Stimmen. Dieses Projekt bleibt, wie es ist.</p>
       <form id="edition-form" class="sheet-form"><label class="field"><span>Was soll in der neuen Fassung anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: mehr Streit zwischen den beiden, die Pointe schon nach der Hälfte"></textarea></label>
@@ -1198,17 +1358,24 @@ const actions = {
   async 'lib-pick-project'(b) { await refreshLibrary(); S.libQuery = ''; S.libLook = 'all'; S.pick = { mode: 'project', name: b.dataset.name, selected: null }; pickerSheet(); },
   'lib-choose'(b) {
     const p = S.pick, id = b.dataset.id;
-    if (p.mode === 'project') p.selected = p.selected === id ? null : id;
+    if (p.mode !== 'compose') p.selected = p.selected === id ? null : id;
     else if (p.selected.has(id)) p.selected.delete(id); else p.selected.add(id);
-    document.querySelectorAll('#pick-grid .pick').forEach(x => x.setAttribute('aria-pressed', String(p.mode === 'project' ? p.selected === x.dataset.id : p.selected.has(x.dataset.id))));
+    document.querySelectorAll('#pick-grid .pick').forEach(x => x.setAttribute('aria-pressed', String(p.mode !== 'compose' ? p.selected === x.dataset.id : p.selected.has(x.dataset.id))));
     $('#pick-foot').innerHTML = pickFoot();
+  },
+  async 'lib-pick-script'(b) { await refreshLibrary(); S.libQuery = ''; S.libLook = 'all'; S.pick = { mode: 'script', name: b.dataset.name, selected: null }; pickerSheet(); },
+  'lib-add-script'() {
+    const f = (S.library || []).find(x => x.id === S.pick.selected), name = S.pick.name;
+    if (!f) return;
+    // The figure keeps the script's name; picture and voice come from the profile.
+    const entry = { ...libraryEntry(f), name }, at = S.draft.participants.findIndex(x => nameKey(x.name) === nameKey(name));
+    if (at >= 0) S.draft.participants[at] = entry; else S.draft.participants.push(entry);
+    saveDraft(); closeSheet(); refreshExtras(); toast(`${f.label} spielt ${name}.`);
   },
   'lib-add-compose'() {
     const chosen = (S.library || []).filter(f => S.pick.selected.has(f.id));
     for (const f of chosen) {
-      const entry = { name: f.name, traits: f.traits || '', image: f.image || null, image_mode: f.image_mode || 'neutral', voice: f.voice || null,
-        voice_text: f.voice_text || '', voice_design: f.voice_design || null, voice_from_library: !!f.voice, library_id: f.id, library_label: f.label,
-        library_image: f.image ? f.id : null, library_voice: f.voice ? f.id : null, image_look: f.image ? f.look : null };
+      const entry = libraryEntry(f);
       const at = S.draft.participants.findIndex(x => x.name.trim().toLowerCase() === f.name.toLowerCase());
       if (at >= 0) S.draft.participants[at] = entry; else S.draft.participants.push(entry);
     }
@@ -1270,7 +1437,15 @@ document.addEventListener('click', async event => {
   const libLink = event.target.closest('a[href="#library"][data-action="close"]');
   if (libLink) { closeSheet(); return; }
   const set = event.target.closest('[data-set]');
-  if (set && S.page === 'new') { const v = set.dataset.value; S.draft[set.dataset.set] = /^\d+$/.test(v) ? +v : v; saveDraft(); updateCompose(); return; }
+  if (set && S.page === 'new') {
+    const v = set.dataset.value; S.draft[set.dataset.set] = /^\d+$/.test(v) ? +v : v;
+    if (set.dataset.set === 'story') {
+      // Back to 'Die KI schreibt': rows the script added and nobody filled go; the script text stays in the draft.
+      if (v === 'ai') S.draft.participants = S.draft.participants.filter(p => !p.from_script || p.image || p.voice || p.library_id);
+      S.castSig = ''; saveDraft(); render(); const field = $(v === 'script' ? '#script' : '#idea'); if (field) field.focus(); return;
+    }
+    saveDraft(); updateCompose(); return;
+  }
   const look = event.target.closest('[data-liblook]');
   if (look) {
     S.libLook = look.dataset.liblook;
@@ -1338,6 +1513,8 @@ document.addEventListener('change', async event => {
   if (el.matches('[data-upload]')) {
     const kind = el.dataset.upload, files = [...el.files];
     if (!files.length) return;   // a change without a file must not clear the choice
+    // 'Mein Drehbuch': the file is read here in the browser; nothing is uploaded.
+    if (kind === 'script') { await guarded(el, () => readScriptFile(files[0])); el.value = ''; return; }
     await guarded(el, async () => {
       if (kind === 'cast-voice') {
         const id = await upload('voice', files[0]);
@@ -1374,8 +1551,17 @@ document.addEventListener('input', event => {
   if (el.dataset.level) { const out = el.parentElement.querySelector('output'); if (out) out.textContent = el.value + ' %'; return; }
   if (el.dataset.libq) { S.libQuery = el.value; const grid = $('#' + el.dataset.libq); if (grid) grid.innerHTML = el.dataset.libq === 'pick-grid' ? pickItems() : libraryCards(); return; }
   if (el.dataset.field && !['autopilot', 'cast_check'].includes(el.dataset.field)) { S.draft[el.dataset.field] = el.value; saveDraft(); }
+  if (el.dataset.field === 'script') { S.scriptNotice = ''; checkScript(); }
   if (el.dataset.person) { S.draft.participants[+el.dataset.person][el.dataset.key] = el.value; saveDraft(); }
 });
+// A script file dropped onto the script field is read like a chosen one.
+document.addEventListener('dragover', event => { if (event.target.closest && event.target.closest('#script')) event.preventDefault(); });
+document.addEventListener('drop', event => {
+  const box = event.target.closest && event.target.closest('#script'), file = event.dataTransfer && event.dataTransfer.files[0];
+  if (!box || !file) return;
+  event.preventDefault(); guarded(null, () => readScriptFile(file));
+});
+document.addEventListener('toggle', event => { if (event.target.matches && event.target.matches('.script-preview')) S.previewOpen = event.target.open; }, true);
 document.addEventListener('submit', async event => {
   const form = event.target; event.preventDefault();
   if (form.id === 'lib-form' || form.id === 'lib-save-form') {
