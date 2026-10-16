@@ -31,3 +31,10 @@ def test_thirteen_figures_are_accepted_everywhere():
 def test_the_bound_still_exists():
     with pytest.raises(ValidationError):
         Idea.model_validate(idea(MAX_CAST + 1))
+
+
+def test_the_app_knows_the_same_limit():
+    import re
+    from factory_models import MAX_CAST
+    app = (Path(__file__).resolve().parents[1] / 'cay_studio_app/web/app2/app.js').read_text(encoding='utf-8')
+    assert int(re.search(r'const MAX_CAST = (\d+);', app).group(1)) == MAX_CAST

@@ -180,6 +180,7 @@ function extrasView() {
       <p class="hint">Ohne eigene Musik bleibt die Musik aus.</p></section>`;
 }
 /* Title card (0.18): key art with the film's title as one second of the film. */
+const MAX_CAST = 30;   // same limit as the server (factory_models.MAX_CAST)
 const COVER_CHOICES = [['start', 'Am Anfang'], ['after_hook', 'Nach dem Einstieg'], ['off', 'Aus']];
 function coverHint(position) {
   return { start: 'TikTok zeigt das erste Bild in deinem Kanal. So erkennt man sofort, zu welcher Reihe der Film gehört.',
@@ -232,6 +233,7 @@ async function createFilm() {
       library_image: p.library_image || null, library_voice: p.voice_from_library ? p.library_voice || p.library_id || null : null,
       image_look: p.library_image ? p.image_look || null : null })) };
   if (d.characters === 'provided' && !body.participants.length) { toast('Für „Nur meine Figuren“ mindestens eine Figur mit Namen eintragen.'); return; }
+  if (body.participants.length > MAX_CAST) { toast(`Bis zu ${MAX_CAST} Figuren pro Film. Du hast ${body.participants.length}.`); return; }
   const run = await post('/api/factory', body);
   S.draft = defaults(); saveDraft();
   toast(body.episodes > 1 ? 'Serie angelegt. Das Drehbuch entsteht.' : 'Film angelegt. Das Drehbuch entsteht.');
