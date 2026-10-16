@@ -510,6 +510,22 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .cover { grid-template-columns: 1fr; gap: 18px; padding: 18px; }
   .cover-variants { max-width: 360px; }
 }
+/* Looks per episode (0.18): under each figure one row per episode where its clothing changes, and the choice
+   in a new film (only for a series: hidden for a single film) */
+.choice[hidden] { display: none; }
+.role-looks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; min-width: 0; }
+.look-item { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: 8px; width: 100%; min-height: 48px; padding: 4px 8px 4px 4px;
+  border: 0; border-radius: 12px; background: var(--canvas); color: var(--ink); font: inherit; font-size: 13px; line-height: 1.3; text-align: left; cursor: pointer; }
+.look-item:hover { background: var(--fill); }
+.look-item > span:last-child { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.look-item b { font-weight: 600; }
+.look-detail { display: grid; gap: 16px; min-width: 0; }
+.look-now { margin: 0; display: grid; gap: 4px; font-size: 17px; }
+.look-now span { overflow-wrap: anywhere; }
+.look-detail .hint { margin: 0; max-width: 34em; }
+@media (max-width: 560px) {
+  .segmented.long:not(:has(> :nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 /* Notifications (0.18): one quiet sheet. "Wann" first, then one block per channel; every block that
    sends data off the PC shows what goes where before anything is switched on. */
 .notify-head { display: grid; gap: 2px; justify-items: start; }
