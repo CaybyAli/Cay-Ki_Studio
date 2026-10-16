@@ -1152,7 +1152,12 @@ const actions = {
     await post(`/api/factory/${S.rid}/reopen-output`, { revision: S.run.revision });
   },
   async 'cancel-sound-edit'() { await post(`/api/factory/${S.rid}/cancel-sound-edit`, { revision: S.run.revision }); toast('Dein fertiger Film ist wieder da.'); },
-  async 'new-edition'() { const run = await post(`/api/factory/${S.rid}/new-edition`); toast('Neue Fassung angelegt.'); location.hash = 'p=' + run.id; },
+  'new-edition'() {
+    openSheet(`<div class="sheet-head"><h2 class="headline">Neue Fassung planen</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+      <p class="muted">Das Studio plant mit derselben Idee neu: Drehbuch, Dialoge und Stimmen. Dieses Projekt bleibt, wie es ist.</p>
+      <form id="edition-form"><label class="field"><span>Was soll in der neuen Fassung anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: mehr Streit zwischen den beiden, die Pointe schon nach der Hälfte"></textarea></label>
+      <div class="actions"><button class="button" type="submit">Neue Fassung planen</button></div></form>`);
+  },
   episode(b) { S.episode = +b.dataset.index; render(); },
   async copy(b) { try { await navigator.clipboard.writeText(b.dataset.text); toast('Beschreibung kopiert.'); } catch (e) { toast('Kopieren nicht möglich. Text bitte markieren.'); } },
   'lib-new'() { libraryEditor(null); },
@@ -1377,6 +1382,9 @@ document.addEventListener('submit', async event => {
     } else if (form.id === 'cover-revise-form') {
       await post(`/api/factory/${S.rid}/cover/revise`, { note: form.note.value.trim() });
       toast('Zwei neue Titelbilder werden erzeugt.');
+    } else if (form.id === 'edition-form') {
+      const run = await post(`/api/factory/${S.rid}/new-edition`, { note: form.note.value.trim() });
+      closeSheet(); toast('Neue Fassung angelegt. Das Drehbuch entsteht.'); location.hash = 'p=' + run.id; return;
     } else if (form.id === 'lines-form') {
       const sc = S.run.episodes[ei].scenes[si];
       await put(`/api/factory/${S.rid}/dialogues`, { episode: ei, scene: si, action: sc.action, dialogues: readLines(form) });

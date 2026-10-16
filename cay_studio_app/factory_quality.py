@@ -5,7 +5,7 @@ import httpx
 from fastapi import HTTPException
 from figure_library import drop_library_voice
 from fastapi.responses import FileResponse
-from factory_models import Idea,Review,VoiceSettings,SceneDialogueEdit,MixSettings,ProductionSettings
+from factory_models import Idea,Review,VoiceSettings,SceneDialogueEdit,MixSettings,ProductionSettings,EditionWish
 from factory_audio import turns,layout,mix,edit_spec,scene_kinds
 from factory_video import file_hash
 from factory_editor import regenerate
@@ -265,8 +265,13 @@ class Quality:
             if d['state']!='voice_review':raise HTTPException(409,'Ton in der Hörvorschau neu erzeugen.')
             d['state']='voicing';d['previews']=[];d.pop('voice_approval',None);self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/new-edition')
-        async def edition(rid:str):
-            old=self.get(rid);idea=copy.deepcopy(old['idea']);idea['request_key']=uuid.uuid4().hex;idea['title']=(old['title']+' · neue Fassung')[:100];idea['idea']=idea['idea']+'\nÜberarbeitung: Nur EIN Ereignis mit Ziel, Hindernis und Pointe. Keine gesamte Filmhandlung in einer Minute. Mehrere kurze Dialogwechsel und passende Altersstimmen. Alte Vorgaben mit einem Satz je Szene sind aufgehoben. Bei Lebensmittel-Parodien keine Verwandlung in Menschen.'
+        async def edition(rid:str,body:EditionWish|None=None):
+            old=self.get(rid);idea=copy.deepcopy(old['idea']);idea['request_key']=uuid.uuid4().hex
+            # One suffix, however often a film is planned anew; Cay's own wish steers it, else the general note.
+            title,suffix=old['title'],' · neue Fassung'
+            while title.endswith(suffix):title=title[:-len(suffix)]
+            idea['title']=(title+suffix)[:100];note=body.note if body else ''
+            idea['idea']=idea['idea']+'\nÜberarbeitung: '+(note or 'Nur EIN Ereignis mit Ziel, Hindernis und Pointe. Keine gesamte Filmhandlung in einer Minute. Mehrere kurze Dialogwechsel und passende Altersstimmen. Alte Vorgaben mit einem Satz je Szene sind aufgehoben. Bei Lebensmittel-Parodien keine Verwandlung in Menschen.')
             if len(idea['idea'])>100000:idea['idea']=old['idea']['idea']
             # A new edition is a new film: an original from before 0.18 (no field) gets the title card too.
             idea.setdefault('cover','start')

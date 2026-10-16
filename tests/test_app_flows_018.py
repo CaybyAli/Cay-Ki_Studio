@@ -115,6 +115,28 @@ def test_form_errors_are_german_name_the_field_and_never_echo_the_input(tmp_path
     assert answer.status_code == 422 and answer.json()['detail'] == '„Bot-Schlüssel“ ist zu lang: höchstens 400 Zeichen.' and 'AAHk3x' not in answer.text
 
 
+def test_new_edition_takes_cays_wish_and_keeps_one_title_suffix(tmp_path):
+    """'Neue Fassung planen' asked nothing, appended the same paragraph and grew the title each time."""
+    from contextlib import contextmanager
+    from factory_models import EditionWish
+    f, db, route = studio(tmp_path)
+    db.execute('CREATE TABLE factory_assets(id TEXT PRIMARY KEY,kind TEXT NOT NULL,path TEXT NOT NULL,sha256 TEXT NOT NULL,name TEXT NOT NULL)')
+
+    @contextmanager
+    def conn():
+        yield db
+        db.commit()
+    f.g['conn'] = conn
+    rid, _ = finished(db)
+    d = f.get(rid); d['idea'].update(idea='Zwei Kollegen streiten um den letzten Keks im Büro.', request_key='1' * 32, title=''); f.save(d)
+    first = asyncio.run(route['new-edition'](rid, EditionWish(note='Mehr Streit, die Pointe schon nach der Hälfte.')))
+    assert first['title'] == 'Butterblitz · neue Fassung' and first['state'] == 'planning'
+    assert first['idea']['idea'].endswith('\nÜberarbeitung: Mehr Streit, die Pointe schon nach der Hälfte.')
+    second = asyncio.run(route['new-edition'](first['id'], None))                  # classic view: no body
+    assert second['title'] == 'Butterblitz · neue Fassung'
+    assert second['idea']['idea'].count('Überarbeitung:') == 2 and 'Nur EIN Ereignis' in second['idea']['idea']
+
+
 def test_a_damaged_audio_file_gets_a_german_message_without_paths(tmp_path, capsys):
     """Cay saw "Command '['ffprobe', ... /ablage/00_Eingang/...source.mp3']' returned non-zero exit status 1." and "'duration'"."""
     import subprocess

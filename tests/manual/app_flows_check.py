@@ -200,6 +200,19 @@ try:
         r.check('Während gerechnet wird, kein Löschlink', page.locator('[data-action="delete-project"]').count() == 0)
         db.execute("UPDATE factory_control SET paused=1 WHERE id=?", (lines,)); db.commit()
 
+        # 9. 'Neue Fassung planen' asks what should change; the wish goes into the new plan.
+        page.goto(studio.url + '/#p=' + done); page.wait_for_selector('[data-action="new-edition"]')
+        page.click('[data-action="new-edition"]'); page.wait_for_selector('#edition-form')
+        r.check('Neue Fassung: Blatt mit optionalem Wunsch, noch nichts angelegt', len(studio.call('/api/factory')[1]['runs']) == before)
+        page.fill('#edition-form [name="note"]', 'Mehr Streit, die Pointe schon nach der Hälfte.'); page.click('#edition-form [type="submit"]')
+        for _ in range(40):
+            if '#p=' in page.url and done not in page.url: break
+            page.wait_for_timeout(250)
+        page.wait_for_selector('.steps')
+        new = doc(page.evaluate('location.hash.slice(3)'))
+        r.check(f'Neue Fassung: Wunsch im Plan, Titel mit einem Zusatz ({new["title"]})', new['idea']['idea'].endswith('Überarbeitung: Mehr Streit, die Pointe schon nach der Hälfte.')
+                and new['title'] == 'Butterblitz · neue Fassung')
+
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
 finally:
