@@ -207,6 +207,8 @@ def invalidate(document, name):
     """
     from factory_editor import regenerate
     document.setdefault('cast_refs', {}).pop(name, None)
+    # 0.18 looks per episode: its variants were drawn from the old design.
+    for box in (document.get('episode_refs') or {}).values(): box.pop(name, None)
     document.pop('cast_approval', None)
     count = 0
     for episode in document.get('episodes', []):
@@ -220,8 +222,11 @@ def invalidate(document, name):
 
 
 def signature(document):
-    """Approval is bound to exactly these figure designs; a redesign needs a new look."""
-    return digest(sorted((document.get('cast_refs') or {}).items()))
+    """Approval is bound to exactly these figure designs; a redesign needs a new look.
+    0.18: and to the look variants per episode (without any, the digest is the one from before)."""
+    refs = sorted((document.get('cast_refs') or {}).items())
+    looks = sorted((ei, sorted(box.items())) for ei, box in (document.get('episode_refs') or {}).items() if box)
+    return digest([refs, looks] if looks else refs)
 
 
 def needs_review(document):
@@ -233,7 +238,9 @@ def needs_review(document):
     own = {p['name'] for p in document['idea'].get('participants', [])
            if p.get('image') and p.get('image_mode', 'exact') == 'exact' and not other_look(p.get('image_look'), look)}
     designed = [p['name'] for p in document['plan']['cast'] if p['name'] not in own]
-    return bool(designed) and document.get('cast_approval') != signature(document)
+    # A look variant per episode is always drawn by the studio, also from an upload used as it is.
+    looks = any((document.get('episode_refs') or {}).values())
+    return bool(designed or looks) and document.get('cast_approval') != signature(document)
 
 
 async def design(factory, document, person, examples, models):

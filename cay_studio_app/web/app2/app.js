@@ -18,7 +18,7 @@ function defaults() {
   // story/script: 'Mein Drehbuch' (0.18). Only story 'script' goes to the server, the script text as idea.
   return { request_key: hex(), idea: '', title: '', episodes: 1, duration: 60, look: 'auto', characters: 'invent', participants: [],
     examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true, cast_check: true, cover: 'start',
-    story: 'ai', script: '' };
+    story: 'ai', script: '', looks: 'same' };
 }
 function loadDraft() {
   try { const saved = JSON.parse(localStorage.getItem('cay-draft') || 'null'); if (saved && saved.request_key) return { ...defaults(), ...saved }; } catch (e) { /* private mode */ }
@@ -122,7 +122,7 @@ function busyUI() {
 }
 
 /* ---------- compose a new film ---------- */
-const SEG_LABELS = { duration: 'Länge pro Film', episodes: 'Folgen', look: 'Look', quality: 'Qualität', characters: 'Figuren', cover: 'Titelbild', music: 'Musik', story: 'Wer schreibt das Drehbuch?' };
+const SEG_LABELS = { duration: 'Länge pro Film', episodes: 'Folgen', look: 'Look', quality: 'Qualität', characters: 'Figuren', cover: 'Titelbild', music: 'Musik', looks: 'Aussehen der Figuren', story: 'Wer schreibt das Drehbuch?' };
 function seg(name, options, value) {
   // Long labels ('Nur meine Figuren') would leave one option alone on a second phone row: .long makes an even grid there.
   const long = options.map(o => o[1]).join('').length > 32;
@@ -225,6 +225,8 @@ function composeView() {
           : `<div class="choice"><span>Länge pro Film</span>${seg('duration', [[15, '15 s'], [30, '30 s'], [60, '60 s'], [90, '90 s']], d.duration)}</div>`}
         <div class="choice"><span>Folgen</span>${script ? '<p class="choice-text" id="script-episodes"></p>' : seg('episodes', [[1, 'Einzelfilm'], [3, '3'], [6, '6'], [12, '12']], d.episodes)}
           <p class="hint" id="series-hint"></p></div>
+        <div class="choice" id="looks-choice" ${d.episodes > 1 ? '' : 'hidden'}><span>Aussehen der Figuren</span>${seg('looks', LOOK_CHOICES, d.looks || 'same')}
+          <p class="hint" id="looks-hint"></p></div>
         <div class="choice"><span>Look</span>${seg('look', LOOKS, d.look)}</div>
         <div class="choice"><span>Qualität</span>${seg('quality', [['draft', 'Entwurf'], ['fast', 'Standard']], d.quality)}
           <p class="hint" id="quality-hint"></p></div>
@@ -295,6 +297,11 @@ function coverHint(position) {
     after_hook: 'Erst die erste Einstellung als Einstieg, dann eine Sekunde Titelbild. Beim Hochladen als Kanal-Vorschau wählbar.',
     off: 'Der Film beginnt direkt mit der ersten Szene.' }[position] || '';
 }
+/* Looks per episode (0.18, series only): face and body stay, clothing and condition follow each episode. */
+const LOOK_CHOICES = [['same', 'Gleich in allen Folgen'], ['per_episode', 'Pro Folge anpassen']];
+const LOOK_HINTS = { same: 'Jede Figur sieht in allen Folgen gleich aus.',
+  per_episode: 'Gesicht und Körper bleiben gleich. Kleidung und Zustand passen sich jeder Folge an, z. B. Folge 1 zerrissene Kleidung, Folge 6 Anzug.' };
+function looksWanted(d) { return d.idea.looks === 'per_episode' && d.idea.episodes > 1; }
 /* Projects since 0.18 (edit_policy 18) with the card switched on; older projects never have one. */
 function coverWanted(d) { return (d.edit_policy || 0) >= 18 && ['start', 'after_hook'].includes(d.idea.cover); }
 function coverChosen(d) { const c = d.cover; return !!(c && c.selected && (c.active_variants || []).some(v => v.id === c.selected)); }
@@ -323,6 +330,9 @@ function updateCompose() {
   $('#quality-hint').textContent = d.quality === 'draft' ? 'Etwa doppelt so schnell, etwas weniger scharf. Gut zum Ausprobieren.' : 'Die Qualität deines letzten Films.';
   $('#autopilot-text').textContent = d.autopilot ? 'Ohne Zwischenstopps fertigstellen' : 'Bilder, Ton und Probe selbst freigeben';
   const coverText = $('#cover-hint'); if (coverText) coverText.textContent = coverHint(d.cover);
+  // Looks per episode only for a series: in script mode the script's 'Folge' parts decide.
+  $('#looks-choice').hidden = seriesCount(d) < 2;
+  $('#looks-hint').textContent = LOOK_HINTS[d.looks] || LOOK_HINTS.same;
   if (d.story === 'script') {
     // Length and episodes come from the script itself (the server's check).
     const c = S.check && !S.check.error ? S.check : null, eps = c ? c.episodes : [], first = eps[0];
@@ -346,6 +356,10 @@ function updateCompose() {
   $('#series-hint').textContent = d.episodes > 1 ? 'Jede Folge endet mit einem offenen Ende, die nächste knüpft daran an.' : '';
   $('#estimate').textContent = estimate(d) + '.';
   $('#create').textContent = d.episodes > 1 ? `Serie mit ${d.episodes} Folgen starten` : 'Film starten';
+}
+function seriesCount(d) {
+  if (d.story !== 'script') return d.episodes;
+  return S.check && !S.check.error ? (S.check.episodes || []).length : 1;
 }
 function participantBody(p, name) {
   return { name, traits: p.traits || '', image: p.image || null,
@@ -386,7 +400,8 @@ async function createFilm() {
     const field = $(`input[data-person="${nameless}"][data-key="name"]`); if (field) field.focus();
     return;
   }
-  const body = { ...d, idea: d.idea.trim(), title: d.title.trim(),
+  // Only a series changes its looks; a single film sends 'same', whatever the draft held before.
+  const body = { ...d, idea: d.idea.trim(), title: d.title.trim(), looks: seriesCount(d) > 1 && d.looks === 'per_episode' ? 'per_episode' : 'same',
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => participantBody(p, p.name.trim())) };
   delete body.story; delete body.script;   // the AI writes: exactly the request of before 0.18
   if (d.characters === 'provided' && !body.participants.length) { toast('Für „Nur meine Figuren“ mindestens eine Figur mit Namen eintragen.'); return; }
@@ -483,7 +498,7 @@ function ownScript(d) { return !!(d && d.idea && d.idea.story === 'script'); }
 function settingsLine(d) {
   const i = d.idea, eps = (d.script && d.script.episodes) || [];
   const length = !ownScript(d) ? `${i.duration} Sekunden` : eps.length === 1 ? `Mein Drehbuch, etwa ${eps[0].seconds} Sekunden` : 'Mein Drehbuch';
-  const parts = [length, i.episodes > 1 ? `${i.episodes} Folgen` : 'Einzelfilm', `Qualität ${QUALITY[i.quality] || i.quality}`];
+  const parts = [length, i.episodes > 1 ? `${i.episodes} Folgen` : 'Einzelfilm', ...(looksWanted(d) ? ['Aussehen pro Folge'] : []), `Qualität ${QUALITY[i.quality] || i.quality}`];
   return parts.join(', ') + '.';
 }
 function projectView() {
@@ -513,7 +528,7 @@ function nextView(d) {
       <div class="actions"><button class="button quiet" data-action="reopen-output">Lautstärke und Ton ändern</button><button class="button quiet" data-action="new-edition">Neue Fassung planen</button></div></section>`;
   if (d.state === 'cast_review') {
     return `<section class="next wait"><h2 class="headline">Prüf deine Figuren.</h2>
-      <p>So sieht jede Figur in allen Szenen aus. Passt eine nicht, tippe auf sie: eine aus deinen Figuren nehmen, neu gestalten oder ein eigenes Bild hochladen. Danach entstehen die Szenen${d.idea.autopilot ? ' und der Autopilot macht ohne weitere Stopps fertig' : ''}.</p>
+      <p>${looksWanted(d) ? 'So sieht jede Figur aus, darunter ihre Kleidung in einzelnen Folgen. Passt etwas nicht, tippe darauf' : 'So sieht jede Figur in allen Szenen aus. Passt eine nicht, tippe auf sie'}: eine aus deinen Figuren nehmen, neu gestalten oder ein eigenes Bild hochladen. Danach entstehen die Szenen${d.idea.autopilot ? ' und der Autopilot macht ohne weitere Stopps fertig' : ''}.</p>
       <div class="actions"><button class="button" data-action="cast-approve">Figuren passen, weiter</button></div></section>`;
   }
   if (d.state === 'image_review') {
@@ -648,11 +663,29 @@ function castPanel(d) {
         <span class="role-name">${esc(p.name)}</span></button>
       <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd>
         <dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
-      ${pend ? `<p class="role-pending">Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“</p>` : ''}${suggestion}</article>`;
+      ${roleLooks(d, p.name)}${pend ? `<p class="role-pending">Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“</p>` : ''}${suggestion}</article>`;
   }).join('');
   // Large portraits only where the figures are the task (figure check); elsewhere a compact row.
   return `<section class="cast${d.state === 'cast_review' ? '' : ' compact'}" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>
     <div class="cast-row">${items}</div></section>`;
+}
+/* Looks per episode (0.18): each figure's variant for the episodes where its clothing or condition changes. */
+function looksOf(d, name) {
+  return looksWanted(d) ? (d.episodes || []).map((ep, ei) => ({ ei, look: (ep.looks || {})[name], label: (ep.look_labels || {})[name] })).filter(x => x.look) : [];
+}
+function lookImageUrl(d, ei, name) {
+  const cast = (d.plan && d.plan.cast) || [], i = cast.findIndex(p => p.name === name), ref = ((d.episode_refs || {})[ei] || {})[name];
+  return i >= 0 && ref ? `/api/factory/${encodeURIComponent(d.id)}/look-image/${ei}/${i}?v=${encodeURIComponent(String(ref).slice(-48))}` : '';
+}
+function lookMini(d, ei, name) {
+  const url = lookImageUrl(d, ei, name);
+  return `<span class="mini">${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : ''}</span>`;
+}
+function roleLooks(d, name) {
+  const looks = looksOf(d, name);
+  if (!looks.length) return '';
+  return `<ul class="role-looks" aria-label="${esc(name)} in einzelnen Folgen">${looks.map(x => `<li><button class="look-item" data-action="look-menu" data-name="${esc(name)}" data-episode="${x.ei}">
+      ${lookMini(d, x.ei, name)}<span><b>Folge ${x.ei + 1}:</b> ${esc(x.label || x.look)}</span></button></li>`).join('')}</ul>`;
 }
 function checkLine(d, ep, ei) {
   // Automatic checks in one line: script size, speech share, lip-sync windows.
@@ -988,6 +1021,11 @@ function figureSheet(name) {
       ${row(`data-action="figure-voice-new" data-name="${esc(name)}"`, 'Andere Stimme gestalten', `Das Studio gestaltet eine neue Stimme für ${esc(name)}. Die Sätze werden neu eingesprochen.`)}
       <label class="menu-row"><b>Eigene Aufnahme hochladen</b><span>Eine Sprachaufnahme dieser Figur, 5 bis 20 Sekunden.</span><input type="file" accept="audio/*" data-upload="cast-voice" data-name="${esc(name)}"></label></div>`
     : `<div class="menu-section"><p class="label menu-title">Stimme</p><p class="menu-note">${esc(w.voice === 'later' ? `Eigene Aufnahmen und neue Stimmen gehen, ${laterText(d)}. Figuren aus deiner Bibliothek kannst du schon jetzt vormerken.` : w.voice || '')}</p></div>`;
+  const seen = looksWanted(d) ? d.episodes.map((ep, ei) => ({ ei, ep })).filter(x => x.ep.scenes.some(s => (s.cast || []).includes(name))) : [];
+  const base = castImageUrl(d, name);
+  const looks = seen.length ? `<div class="menu-section"><p class="label menu-title">Aussehen pro Folge</p>
+      ${seen.map(({ ei, ep }) => `<button class="menu-row with-pic" data-action="look-menu" data-name="${esc(name)}" data-episode="${ei}">${(ep.looks || {})[name] ? lookMini(d, ei, name)
+        : `<span class="mini">${base ? `<img src="${esc(base)}" alt="" loading="lazy">` : ''}</span>`}<b>Folge ${ei + 1}</b><span>${esc((ep.look_labels || {})[name] || (ep.looks || {})[name] || 'Wie im Grunddesign')}</span></button>`).join('')}</div>` : '';
   const keep = refs[name] || e.voice || (d.voice_profiles || {})[name]
     ? `<div class="menu-section">${row(`data-action="lib-save" data-name="${esc(name)}"`, 'In deine Figuren aufnehmen', 'Bild und Stimme für andere Filme sichern. An diesem Film ändert sich nichts.')}</div>` : '';
   openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)}</h2><button class="button quiet small" data-action="close">Fertig</button></div>
@@ -995,7 +1033,23 @@ function figureSheet(name) {
     <div class="figure-sheet"><div class="figure-side"><div class="figure-pic">${castPicture(d, name)}</div>
         <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd><dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
         <p class="small muted">In ${scenes} ${scenes === 1 ? 'Szene' : 'Szenen'} zu sehen.</p></div>
-      <div class="menu">${library}${image}${voice}${keep}</div></div>`);
+      <div class="menu">${library}${image}${looks}${voice}${keep}</div></div>`);
+}
+/* One figure in one episode: its variant, what it wears, and a new design with an optional wish. */
+function lookSheet(ei, name) {
+  const d = S.run, ep = d.episodes[ei], look = (ep.looks || {})[name] || '', label = (ep.look_labels || {})[name] || '', w = d.cast_windows || {};
+  const scenes = ep.scenes.filter(s => (s.cast || []).includes(name)), drawn = scenes.filter(s => (s.variants || []).length).length;
+  const url = lookImageUrl(d, ei, name);
+  const pic = url ? `<img src="${esc(url)}" alt="${esc(name)} in Folge ${ei + 1}">` : `<div class="frame-empty">${look ? 'entsteht' : 'Grunddesign'}</div>`;
+  const effect = drawn ? ` ${drawn} ${drawn === 1 ? 'Szene' : 'Szenen'} in Folge ${ei + 1} mit ${name} ${drawn === 1 ? 'bekommt' : 'bekommen'} neue Bilder, alle anderen bleiben.` : '';
+  const form = w.image === 'now' ? `<form id="look-form" class="sheet-form" data-episode="${ei}" data-name="${esc(name)}">
+        <label class="field"><span>${look ? 'Was soll anders sein? (optional)' : `Wie sieht ${esc(name)} in Folge ${ei + 1} aus?`}</span><textarea class="textarea" name="note" maxlength="300" ${look ? '' : 'required'} placeholder="Zum Beispiel: dunkelblauer Anzug mit roter Krawatte, Haare gekämmt"></textarea></label>
+        <p class="hint">Gesicht und Körper bleiben gleich. ${look ? 'Dein Text ersetzt die Beschreibung für diese Folge, ohne Text entsteht ein neuer Versuch.' : 'Nur Kleidung, Frisur und Zustand.'}${esc(effect)}</p>
+        <div class="sheet-foot"><button class="button" type="submit">${look ? 'Neu gestalten' : 'Aussehen festlegen'}</button></div></form>`
+    : `<p class="menu-note">${esc(w.image === 'later' ? 'Das Studio zeichnet gerade. Pausiere kurz, dann kannst du das Aussehen neu gestalten.' : w.image || '')}</p>`;
+  openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)} in Folge ${ei + 1}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+    <div class="figure-sheet"><div class="figure-side"><div class="figure-pic">${pic}</div><p class="small muted">In ${scenes.length} ${scenes.length === 1 ? 'Szene' : 'Szenen'} dieser Folge zu sehen.</p></div>
+      <div class="look-detail">${look ? `<p class="look-now"><b>${esc(label || look)}</b>${label && label !== look ? `<span class="small muted">Für das Bild: ${esc(look)}</span>` : ''}</p>` : `<p class="muted">In dieser Folge sieht ${esc(name)} aus wie im Grunddesign.</p>`}${form}</div></div>`);
 }
 function saveToLibrarySheet(name) {
   const d = S.run, look = LOOK_NAMES[d.idea.look];
@@ -1405,6 +1459,7 @@ const actions = {
   },
   async 'lib-save'(b) { saveToLibrarySheet(b.dataset.name); },
   'figure-menu'(b) { figureSheet(b.dataset.name); },
+  'look-menu'(b) { lookSheet(+b.dataset.episode, b.dataset.name); },
   async 'lib-suggest'(b) {
     const d = S.run, f = (S.library || []).find(x => x.id === b.dataset.id), name = b.dataset.name;
     if (!f) return;
@@ -1601,6 +1656,9 @@ document.addEventListener('submit', async event => {
     if (form.id === 'revise-form') {
       await post(`/api/factory/${S.rid}/revise`, { episode: ei, scene: si, note: form.note.value.trim() });
       toast('Zwei neue Bilder werden erzeugt.');
+    } else if (form.id === 'look-form') {
+      await post(`/api/factory/${S.rid}/look/redo`, { episode: ei, name: form.dataset.name, note: form.note.value.trim() });
+      toast(`${form.dataset.name} in Folge ${ei + 1} wird neu gestaltet.`);
     } else if (form.id === 'cover-revise-form') {
       await post(`/api/factory/${S.rid}/cover/revise`, { note: form.note.value.trim() });
       toast('Zwei neue Titelbilder werden erzeugt.');

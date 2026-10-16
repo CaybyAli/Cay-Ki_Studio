@@ -167,7 +167,9 @@ def signature(d, settled=False):
 def _material(d):
     state = d.get('state')
     if state == 'cast_review':
-        return [d.get('cast_refs') or {}, [p.get('design_round', 0) for p in (d.get('plan') or {}).get('cast', []) if isinstance(p, dict)]]
+        figures = [d.get('cast_refs') or {}, [p.get('design_round', 0) for p in (d.get('plan') or {}).get('cast', []) if isinstance(p, dict)]]
+        # 0.18 looks per episode: a newly drawn variant is new material too (projects without any keep their key).
+        return figures + [d['episode_refs']] if d.get('episode_refs') else figures
     if state == 'image_review':
         return [[[v.get('id') for v in (s.get('variants') or []) if isinstance(v, dict)] for s in ep.get('scenes', [])] for ep in d.get('episodes', [])]
     if state == 'voice_review':
