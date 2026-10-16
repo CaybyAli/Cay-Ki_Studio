@@ -466,3 +466,28 @@ def test_export_spec_carries_the_chosen_card(tmp_path):
     picture(art, '0x00ff00')                                                                 # changed outside the studio
     with pytest.raises(RuntimeError, match='außerhalb des Studios verändert'):
         fake.cover_spec(d, 0)
+
+
+def test_new_key_art_rounds_differ_and_only_the_newest_wish_leads(tmp_path):
+    """'Neue Titelbilder' without a wish must still look new; a second wish replaces the first."""
+    from factory_models import CoverRevise
+
+    class Both(Routes, Recorder):
+        def __init__(self, tmp): Routes.__init__(self, tmp); self.calls = []; self.paused_ = False
+    fake = Both(tmp_path); routes = endpoints(fake); refs = {p['name']: f'/designs/{p["name"]}.png' for p in CAST}
+    d = project(); d['id'] = 'a' * 32; d['state'] = 'pictures'; fake.save(d)
+
+    def draw():
+        doc = fake.get(d['id']); (doc.get('cover') or {}).pop('active_variants', None)
+        asyncio.run(fake.cover_pictures(doc, refs, {})); doc['state'] = 'image_review'; fake.save(doc)
+        return {c['key']: c['prompt'] for c in fake.calls}
+    first = draw()
+    assert first['cover:0:0:0'] == cover.prompt(project(), cover.main_cast(project()), 0)       # round 0 as before
+    call(routes['POST', 'revise'], d['id'], CoverRevise(note=''))
+    second = draw()
+    assert all(second[f'cover:0:1:{v}'] != first[f'cover:0:0:{v}'] for v in range(2))
+    call(routes['POST', 'revise'], d['id'], CoverRevise(note='Titel heller, mehr Licht')); draw()
+    call(routes['POST', 'revise'], d['id'], CoverRevise(note='dunkler und dramatischer'))
+    assert fake.get(d['id'])['cover']['note'] == 'dunkler und dramatischer'
+    last = draw()['cover:0:3:0']
+    assert last.startswith('Most important, requested by the director: dunkler und dramatischer. ') and 'heller' not in last
