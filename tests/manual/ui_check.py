@@ -228,6 +228,10 @@ try:
         shot('08_angehalten', '#p=' + 'e' * 32)
         r.check('Angehalten: klare Überschrift und Fortsetzen', 'nicht hörbar' in page.locator('.next h2').inner_text() and page.locator('.next [data-action="resume"]').count() == 1)
         r.check('Kein Reiter „Filme“ mehr', page.locator('[data-nav="films"]').count() == 0)
+        db.execute("UPDATE factory_runs SET document=json_set(document,'$.resume_state','planning','$.error',?) WHERE id=?",
+                   ('Das Sprachmodell hat zu lange nicht geantwortet. Fertige Planungsschritte bleiben erhalten.', 'e' * 32)); db.commit()
+        shot('08c_planung', '#p=' + 'e' * 32)
+        r.check('Planung angehalten: Knopf „Planung fortsetzen“ (nicht „Neu planen“)', page.locator('.next [data-action="resume"]').inner_text() == 'Planung fortsetzen')
         shot('08b_neustart', '#p=' + '7' * 32)
         r.check('Nach Neustart (Animation): ehrliches „Fortsetzen“, kein Neustart mit anderer Qualität',
                 page.locator('.next [data-action="resume"]').inner_text() == 'Fortsetzen' and page.locator('.next [data-action="abort-fast"]').count() == 0

@@ -920,7 +920,15 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         except Wait as e:
                             latest=self.get(d['id']);latest['phase']=str(e);self.save(latest)
                         except Exception as e:
-                            latest=self.get(d['id']);latest.update(state='blocked',resume_state=stage,error=str(e)[:2000],uncertain=isinstance(e,Uncertain));self.save(latest)
+                            latest=self.get(d['id']);talk=stage in ('planning','correcting')
+                            if talk and isinstance(e,(httpx.NetworkError,httpx.RemoteProtocolError,httpx.ConnectTimeout)):
+                                # Ollama restarted or dropped the connection: wait like idle() and try again; checkpoints keep finished steps.
+                                latest['phase']='Verbindung zu Ollama unterbrochen. Es geht von selbst weiter, sobald Ollama wieder antwortet. Fertige Planungsschritte bleiben erhalten.';self.save(latest)
+                            else:
+                                # A read timeout has no text at all; Cay never gets an empty cause.
+                                error=('Das Sprachmodell hat zu lange nicht geantwortet. Fertige Planungsschritte bleiben erhalten. Prüf, ob Ollama läuft, dann geht es mit „'
+                                       +('Planung fortsetzen' if stage=='planning' else 'Fortsetzen')+'“ weiter.') if talk and isinstance(e,httpx.TimeoutException) else str(e) or f'Unerwarteter Fehler ohne Beschreibung ({type(e).__name__}). Der Fehlerbericht hilft bei der Suche.'
+                                latest.update(state='blocked',resume_state=stage,error=error[:2000],uncertain=isinstance(e,Uncertain));self.save(latest)
                         finally:
                             try:
                                 if stage in ('planning','correcting'):await self.release_planner()

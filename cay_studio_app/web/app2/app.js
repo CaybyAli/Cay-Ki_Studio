@@ -374,7 +374,7 @@ function blockedView(d) {
     : 'Die Ursache steht unten. Fertige Bilder, Stimmen und Abschnitte bleiben gespeichert.';
   const actions = [];
   if (silent && d.resume_state === 'voicing') actions.push('<button class="button" data-action="new-edition">Neue Fassung planen</button>');
-  else actions.push(`<button class="button" data-action="resume">${d.resume_state === 'planning' ? 'Neu planen' : 'Fortsetzen'}</button>`);
+  else actions.push(`<button class="button" data-action="resume">${d.resume_state === 'planning' ? 'Planung fortsetzen' : 'Fortsetzen'}</button>`);
   if ((d.previews || []).length && ['rendering', 'finishing'].includes(d.resume_state) && !d.uncertain) actions.push('<button class="button quiet" data-action="reopen-voices">Ton bearbeiten</button>');
   actions.push(`<a class="link" href="/api/factory/${esc(d.id)}/diagnostics/download" download>Fehlerbericht speichern</a>`);
   return `<section class="next alert"><h2 class="headline">${title}</h2><p>${text}</p><pre class="error-text">${esc(error)}</pre><div class="actions">${actions.join('')}</div></section>`;

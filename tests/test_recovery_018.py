@@ -148,6 +148,41 @@ def test_post_worker_survives_a_failed_status_write(monkeypatch):
     assert post.status == 'done' and post.runs == 2
 
 
+def planning(tmp_path, monkeypatch, chat):
+    """A new film in planning; every /api/chat call goes to `chat`. The worker runs ~0.6 s."""
+    f = factory(tmp_path, monkeypatch); rid = '3' * 32; real = fast_sleep(monkeypatch)
+    f.services.chat = chat; f.release_planner = lambda: real(0)
+    project(f, rid, 'planning', {'preflight': {'checks': []}},
+            {'idea': 'Lena und Tom streiten um den letzten Keks. Lena: Der gehört mir! Tom: Nein, mir!'})
+    f.sql("UPDATE factory_runs SET document=json_remove(json_remove(document,'$.plan'),'$.source') WHERE id=?", (rid,))
+
+    async def run():
+        worker = asyncio.create_task(f.worker())
+        await real(.6); f.g['STOPPING'] = True
+        await asyncio.wait_for(worker, 5)
+    asyncio.run(run())
+    return f.get(rid), sum(1 for c in f.services.calls if c[0] == '/api/chat')
+
+
+def test_ollama_drop_during_planning_waits_and_tries_again(tmp_path, monkeypatch):
+    """Ollama restarts mid-answer: the project is not blocked with an English error, it waits and retries."""
+    import httpx
+
+    def drop(request, body): raise httpx.RemoteProtocolError('Server disconnected without sending a response.', request=request)
+    d, calls = planning(tmp_path, monkeypatch, drop)
+    assert d['state'] == 'planning' and not d.get('error') and calls >= 2
+    assert d['phase'].startswith('Verbindung zu Ollama unterbrochen.')
+
+
+def test_ollama_timeout_blocks_with_a_german_cause(tmp_path, monkeypatch):
+    import httpx
+
+    def silent(request, body): raise httpx.ReadTimeout('', request=request)    # str() is empty, as in httpx
+    d, calls = planning(tmp_path, monkeypatch, silent)
+    assert d['state'] == 'blocked' and d['resume_state'] == 'planning' and calls == 1
+    assert d['error'].startswith('Das Sprachmodell hat zu lange nicht geantwortet.') and '„Planung fortsetzen“' in d['error']
+
+
 def test_remix_worker_survives_a_full_disk(monkeypatch):
     from factory import Wait
     from remix import Remix
