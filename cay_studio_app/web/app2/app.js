@@ -42,9 +42,11 @@ async function api(path, { method = 'GET', body, raw } = {}) {
 const post = (path, body = {}) => api(path, { method: 'POST', body });
 const put = (path, body) => api(path, { method: 'PUT', body });
 
-function toast(text) {
+function toast(text, action) {
   const el = $('#toast'); el.textContent = text; el.classList.add('show');
-  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 4200);
+  // Optional button (e.g. Rückgängig): its data-action runs through the normal click handler; stays longer.
+  if (action) { const b = document.createElement('button'); b.type = 'button'; b.className = 'toast-action'; b.textContent = action.label; Object.assign(b.dataset, action.data); el.append(b); }
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), action ? 8000 : 4200);
 }
 
 /* ---------- vocabulary ---------- */
@@ -1130,7 +1132,12 @@ const actions = {
     const f = (S.library || []).find(x => x.id === b.dataset.id);
     if (!f || !confirm(`„${f.label}“ aus deinen Figuren entfernen? Filme, die die Figur schon nutzen, bleiben unverändert.`)) return;
     await api(`/api/library/${f.id}`, { method: 'DELETE' });
-    await refreshLibrary(); closeSheet(); render(); toast(`„${f.label}“ entfernt.`);
+    await refreshLibrary(); closeSheet(); render(); toast(`„${f.label}“ entfernt.`, { label: 'Rückgängig', data: { action: 'lib-restore', id: f.id, label: f.label } });
+  },
+  async 'lib-restore'(b) {
+    // The server only marks a removed figure; image, voice and design come back unchanged.
+    await post(`/api/library/${b.dataset.id}/restore`);
+    await refreshLibrary(); render(); toast(`„${b.dataset.label}“ ist wieder da.`);
   },
   'lib-voice-clear'() {
     const form = $('#lib-form'); form.elements.voice.value = '';

@@ -166,6 +166,17 @@ try:
         page.screenshot(path=str(shots / '08_figuren_handy.png'), full_page=True)
         r.check('Handy: keine waagerechte Scrollleiste', page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
         page.click('.card-open >> nth=0'); page.wait_for_timeout(300); page.screenshot(path=str(shots / '09_editor_handy.png'))
+        # Removed by mistake: "Rückgängig" in the message brings the figure back with image and voice
+        label = page.locator('#lib-form [name="label"]').input_value(); cards = page.locator('.card').count()
+        page.once('dialog', lambda d: d.accept()); page.click('#lib-form [data-action="lib-delete"]'); page.wait_for_selector('#toast .toast-action'); page.wait_for_timeout(400)
+        page.screenshot(path=str(shots / '10_entfernt_rueckgaengig_handy.png'))
+        r.check('Entfernen: Meldung mit „Rückgängig“, Karte weg, keine waagerechte Scrollleiste', f'„{label}“ entfernt.' in page.locator('#toast').inner_text()
+                and page.locator('#toast .toast-action').inner_text() == 'Rückgängig' and page.locator('.card').count() == cards - 1
+                and page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+        page.click('#toast .toast-action'); page.wait_for_timeout(700)
+        lib = json.loads(page.evaluate("fetch('/api/library').then(r=>r.text())"))
+        r.check('Rückgängig: Figur wieder da, Meldung sagt es', page.locator('.card').count() == cards and any(f['label'] == label for f in lib['figures'])
+                and f'„{label}“ ist wieder da.' in page.locator('#toast').inner_text() and page.locator('#toast .toast-action').count() == 0)
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
 finally:
