@@ -511,3 +511,21 @@ OMA: »Im Bad. Mit Sahne an der Nase?«
     # Prose with words in quotes is shown, not spoken: the studio says so.
     prose = own_script.read('### Szene 1 – Küche\nOMA: Hallo Tim, schön dich zu sehen heute.\n„Wo ist der Kuchen?“, fragt Tim leise.')
     assert any(t.startswith('Zeile 3: „„Wo ist der Kuchen?“, fragt Tim leise.“ wird nicht gesprochen') for t in notes(prose))
+
+
+def test_deep_brackets_and_many_speakers_stay_fast_and_the_check_runs_beside_the_server(tmp_path, monkeypatch):
+    import time
+    start = time.monotonic(); r = own_script.read('TIM: ' + '(' * 30000 + 'x' + ')' * 29990)
+    assert time.monotonic() - start < 3 and not r['ok']
+    nested = own_script.read('### Szene 1 – Küche\nTIM: (((leise))) Hallo Oma, ich bin wieder da.\nOMA: (((((wütend))))) Wo warst du?')
+    assert said(nested)[0] == ('Tim', 'Hallo Oma, ich bin wieder da.') and not nested['ok']      # deeper than four: the check stops the film
+    start = time.monotonic(); many = own_script.read('\n'.join(f'FIGUR{chr(65 + i // 26)}{chr(65 + i % 26)}: Das ist ein Satz.' for i in range(600)))
+    assert time.monotonic() - start < 3 and any('höchstens 30 sind möglich' in p['text'] for p in many['problems'])
+    # The live check reads the script in a worker thread, so a long script never holds up the other requests.
+    f = studio_fakes.factory(tmp_path, monkeypatch); client = studio_fakes.client(f); seen = []; real = own_script.read
+    def spy(text):
+        try: asyncio.get_running_loop(); seen.append('event loop')
+        except RuntimeError: seen.append('thread')
+        return real(text)
+    monkeypatch.setattr(own_script, 'read', spy)
+    assert client.post('/api/factory/script/check', json={'text': SCRIPT}).json()['ok'] and seen == ['thread']

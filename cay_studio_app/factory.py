@@ -1141,7 +1141,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             """Live check of 'Mein Drehbuch': figures, scenes, lines, length and every problem with its line."""
             body=await request.json();text=body.get('text','') if isinstance(body,dict) else None
             if not isinstance(text,str) or len(text)>100000:raise HTTPException(400,'Bis zu 100.000 Zeichen pro Drehbuch.')
-            return own_script.read(text)
+            return await asyncio.to_thread(own_script.read,text)   # a long script must not hold up the other requests
         @app.get('/api/factory/{rid}/source')
         def original_source(rid:str):
             d=self.get(rid);path=self.folder(d)/'01_Planung'/'Originalgeschichte.txt'

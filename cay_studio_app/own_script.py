@@ -638,7 +638,7 @@ def read(text):
         if spoken and not any(b['place'] and b['place'] != 'Ort' for b in beat_list):
             r.problem(ep['line'], ('Kein Ort angegeben' if not series else f'{label}: kein Ort angegeben') + '. Schreib zum Beispiel '
                                   '„### Szene 1 – Küche – Oma steht am Tisch“, dann weiß das Studio, wo es spielt.')
-        if spoken and not problems:
+        if spoken and not problems and seconds <= MAX_SECONDS and len(cut) <= screenplay.MAX_SHOTS and len(names) <= MAX_CAST:
             for note in advice(title2, beat_list, lines, names): r.problem(None, (f'{label}: ' if series else 'Hinweis: ') + note)
         about = [' '.join(x.split()) for x in r.preface + logline + [b['what'] for b in beat_list] if x.strip()]
         plot = ' '.join(x if x[-1] in '.!?…' else x + '.' for x in about) or ' '.join(l['text'] for l in lines[:4])
@@ -647,8 +647,9 @@ def read(text):
                          'shots': len(cut), 'seconds': seconds, 'speakers': list(dict.fromkeys(l['speaker'] for l in spoken)),
                          'plot': plot[:1200], 'ending': (lines[-1]['text'] if lines else '')[:400]})
     if not r.episodes: r.problem(None, 'Im Drehbuch steht kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“', True)
-    for f in figures:
-        f['lines'] = sum(1 for ep in r.episodes for s in ep['scenes'] for x in s['items'] if x['kind'] == 'line' and r.figures[name_key(x['name'])] is f)
+    said = {}
+    for key, items in spellings.items(): said[id(r.figures[key])] = said.get(id(r.figures[key]), 0) + len(items)
+    for f in figures: f['lines'] = said.get(id(f), 0)
     problems = sorted(r.problems, key=lambda p: (not p['blocking'], p['line'] or 0))
     shortest = min((e['seconds'] for e in episodes), default=60)
     return {'title': r.title, 'figures': [{k: f[k] for k in ('name', 'description', 'lines', 'declared')} for f in figures], 'episodes': episodes,
