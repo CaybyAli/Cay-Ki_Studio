@@ -1,10 +1,12 @@
 """Scoped, persistent corrections and recoverable project lifecycle controls."""
 import copy
+import shutil
+import sqlite3
 from typing import Literal
 from pydantic import Field
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from factory_models import Strict, VoiceSettings, SoundCue
+from factory_models import Strict, VoiceSettings, SoundCue, Purge
 
 
 def image_rounds(scene):
@@ -89,7 +91,7 @@ class Editor:
                 parts = request.url.path.strip('/').split('/')
                 if (request.method in ('POST', 'PUT', 'PATCH', 'DELETE') and len(parts) >= 4
                         and parts[:2] in (['api', 'factory'], ['api', 'remix'])
-                        and parts[3] != 'restore'
+                        and parts[3] not in ('restore', 'purge')
                         and self.rows('SELECT id FROM studio_trash WHERE id=?', (parts[2],))):
                     return JSONResponse({'detail': 'Projekt liegt im Papierkorb. Zuerst wiederherstellen.'}, status_code=409)
                 return await call_next(request)
@@ -117,6 +119,25 @@ class Editor:
             return self.get(rid)
 
         if kind != 'factory': return
+
+        @app.post(prefix + '/{rid}/purge')
+        def purge(rid: str, body: Purge):
+            """Delete for good (Cay: "Ich will es löschen können"). Only from the trash and never while a step runs.
+            The project's own files go; finished films only when Cay says so. Library figures and uploads live in
+            00_Eingang and stay; timing samples stay for the remaining-time estimate."""
+            d = self.get(rid)
+            if not d.get('deleted'): raise HTTPException(409, 'Zuerst in den Papierkorb legen.')
+            if getattr(self, 'busy', None) == rid or self.rows("SELECT id FROM factory_post WHERE run_id=? AND status='running'", (rid,)):
+                raise HTTPException(409, 'Ein Arbeitsschritt dieses Projekts läuft noch. In einer Minute erneut versuchen.')
+            folders = [self.folder(d)] + ([self.path(self.g['ROOT'] / '03_Fertige_Videos' / 'Studio' / d['id'])] if body.films else [])
+            with self.g['conn']() as db:
+                for table, column in (('factory_steps', 'run_id'), ('factory_post', 'run_id'), ('factory_cast_pending', 'run_id'),
+                                      ('notify_outbox', 'run_id'), ('notify_events', 'run_id'), ('factory_control', 'id'),
+                                      ('factory_switches', 'id'), ('studio_trash', 'id'), ('factory_runs', 'id')):
+                    try: db.execute(f'DELETE FROM {table} WHERE {column}=?', (d['id'],))
+                    except sqlite3.OperationalError: pass          # table of a feature this studio has not started yet
+            for folder in folders: shutil.rmtree(folder, ignore_errors=True)
+            return {'ok': True, 'films_kept': not body.films}
 
         @app.post(prefix + '/{rid}/correction')
         async def correction(rid: str, body: Correction):

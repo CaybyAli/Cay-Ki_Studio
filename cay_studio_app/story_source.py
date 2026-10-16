@@ -91,7 +91,11 @@ async def compact_notes(llm, notes, cache, checkpoint, limit=11000):
                 checkpoint()
             reduced.append(cache[key])
         new='\n\n'.join(reduced)
-        if len(new)>=len(text):raise ValueError('Die Quellenübersicht konnte nicht ausreichend verdichtet werden. Originaltext bleibt gespeichert.')
+        if len(new)>=len(text):
+            # The summaries did not get shorter: keep the beginning of every note so all parts stay represented.
+            # No length stop for Cay's text (the original stays stored and each episode still reads its own part).
+            parts=new.split('\n\n');share=max(200,limit//max(1,len(parts)))
+            return '\n\n'.join(p[:share] for p in parts)[:limit]
         text=new
     return text
 

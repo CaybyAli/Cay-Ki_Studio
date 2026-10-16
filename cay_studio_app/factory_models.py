@@ -186,6 +186,9 @@ class CastImage(Strict):
 class AutopilotSwitch(Strict):
     enabled:bool
 
+class Purge(Strict):
+    films:bool=False
+
 class AbortStep(Strict):
     fast:bool=False
 

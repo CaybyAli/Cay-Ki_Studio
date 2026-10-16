@@ -5,6 +5,7 @@ from pathlib import Path
 import httpx
 from fastapi import HTTPException,Request
 from fastapi.responses import FileResponse
+from pydantic import ValidationError
 from factory_models import MAX_CAST,Shot,Idea,SeriesPlan,EpisodePlan,Choice,Review,ReviseScene,SceneText,VoiceReference,Outline,AbortStep,AutopilotSwitch,SocialPost,CastRedo,CastImage,repair_episode_overview
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
@@ -35,7 +36,7 @@ def uid():return uuid.uuid4().hex
 
 from lipsync_shots import split_episode,silent_by_accident,MISSING_MARK
 from factory_cast import (name_key as _name_key, canonical_scene as _canonical_scene_cast,
-    scene_errors, constrain_scene_schema, validate_header, SourceCast, evidenced_names, resolve_name)
+    scene_errors, constrain_scene_schema, validate_header, SourceCast, evidenced_names, resolve_name, merge_figure)
 
 from story_policy import shot_count, DIRECTION, structure_errors, dialogue_errors, StoryReview, StoryNotes, apply_notes, StorySpine, SPINE_INSTRUCTION
 
@@ -48,6 +49,25 @@ def scene_limits(duration):
     n=shot_count(duration)
     return n,n
 
+def fit_lengths(schema,raw):
+    """Ollama does not always keep a schema's maxLength. A model text that is too long is cut at its last
+    sentence end instead of failing the whole planning (Cay, 0.17: 'SourceNote summary … at most 2200 characters').
+    Only texts: a list that is too long (figures, scenes) still goes back to the model."""
+    for _ in range(6):
+        try:schema.model_validate(raw);return raw
+        except ValidationError as error:
+            long=[e for e in error.errors() if e.get('type')=='string_too_long']
+            if not long:return raw
+            for e in long:
+                try:
+                    target=raw
+                    for key in e['loc'][:-1]:target=target[key]
+                    value,limit=target[e['loc'][-1]],int(e['ctx']['max_length'])
+                except (KeyError,IndexError,TypeError,ValueError):return raw
+                cut=value[:limit];end=max(cut.rfind(x) for x in ('. ','! ','? ','\n'))
+                cut=cut[:end+1] if end>=limit*.5 else cut[:cut.rfind(' ')] if ' ' in cut[int(limit*.5):] else cut
+                target[e['loc'][-1]]=cut.rstrip()
+    return raw
 class Wait(Exception):pass
 class Uncertain(Exception):pass
 
@@ -232,6 +252,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                             for scene in scenes:
                                 if isinstance(scene,dict) and isinstance(scene.get('cast'),list) and isinstance(scene.get('dialogues',[]),list) and all(isinstance(line,dict) for line in scene.get('dialogues',[])):
                                     _canonical_scene_cast(scene,[p['name'] for p in data['series']['cast']])
+                    if isinstance(raw,dict):raw=fit_lengths(schema,raw)
                     result=schema.model_validate(raw).model_dump()
                     if schema in (SeriesPlan, SeriesHeader):
                         validate_header(result,data)
@@ -416,7 +437,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                             'der diesen Namen als Figur belegt. Ohne benannte Figuren eine leere Liste.', {'source':raw})
                         evidence[block['sha256']]=evidenced_names(parsed,raw);self.save(d)
                     for raw_name in evidence[block['sha256']]:
-                        name=resolve_name(raw_name,[p['name'] for p in required])
+                        # The text calls one figure by several names (Cay: "Spongebob, SpongeBob Schwammkopf, Mr Krabs,
+                        # Mr. Krabs, Krabs, Larry der Hummer, Larry dem Hummer"): the first name it got stays.
+                        name=merge_figure(raw_name,[p['name'] for p in required]) or resolve_name(raw_name,[p['name'] for p in required])
                         if name not in [p['name'] for p in required]:
                             required.append({'name':name,'traits':'Figur aus dem Originalskript; dortige Eigenschaften bewahren.','image':None,'voice':None})
                 if len(required)>MAX_CAST:
@@ -563,6 +586,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 scene['variants']=[];scene['selected']=None;scene['round']=0
             ep['source_sha256']=next((e['sha256'] for e in source['episodes'] if e['number']==i+1),source['sha256'])
             d['episodes'].append(ep);self.save(d)
+        if len(d['episodes'])!=idea['episodes']:
+            raise RuntimeError(f'Geplant sind {len(d["episodes"])} statt {idea["episodes"]} Folgen. Es wurde noch kein Bild gerechnet; bitte den Fehlerbericht speichern und schicken.')
         d['state']='pictures';d['phase']='Figuren und Szenenbilder werden vorbereitet';self.save(d)
     def stage(self,path):
         path=self.path(path);h=file_hash(path);rel='CayStudio/factory_refs/'+h+path.suffix.lower()

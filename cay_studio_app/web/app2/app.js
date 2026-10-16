@@ -357,7 +357,7 @@ function autopilotSwitch(d) {
 }
 function nextView(d) {
   const pause = d.paused ? '<button class="button" data-action="resume">Fortsetzen</button>' : '<button class="button quiet" data-action="pause">Pausieren</button>';
-  if (d.deleted) return `<section class="next wait"><h2 class="headline">Im Papierkorb.</h2><p>Dateien bleiben erhalten.</p><div class="actions"><button class="button" data-action="restore">Wiederherstellen</button></div></section>`;
+  if (d.deleted) return `<section class="next wait"><h2 class="headline">Im Papierkorb.</h2><p>Dateien bleiben erhalten.</p><div class="actions"><button class="button" data-action="restore">Wiederherstellen</button><button class="button quiet danger" data-action="purge-project">Endgültig löschen</button></div></section>`;
   if (d.state === 'blocked') return blockedView(d);
   if (d.state === 'done') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie ist fertig.' : 'Dein Film ist fertig.'}</h2>
       <p>Unten ansehen, herunterladen und mit der fertigen Beschreibung hochladen.</p>
@@ -1117,6 +1117,14 @@ const actions = {
   async pause() { await post(`/api/factory/${S.rid}/pause`); toast('Pausiert, sobald der aktuelle Schritt fertig ist.'); },
   async resume() { await post(`/api/factory/${S.rid}/resume`); toast('Geht weiter.'); },
   async restore() { await post(`/api/factory/${S.rid}/restore`); toast('Wiederhergestellt. Mit „Fortsetzen“ geht es weiter.'); },
+  async 'purge-project'() {
+    const title = S.run.title;
+    if (!confirm(`„${title}“ endgültig löschen? Bilder, Stimmen und Animationen dieses Projekts werden gelöscht. Das lässt sich nicht rückgängig machen.`)) return;
+    const films = (S.run.exports || []).length > 0 && confirm('Die fertigen Videos auch löschen?\n\nOK: ja, auch die Videos löschen.\nAbbrechen: Die Videos bleiben im Ordner 03_Fertige_Videos.');
+    await post(`/api/factory/${S.rid}/purge`, { films });
+    toast(films ? 'Endgültig gelöscht.' : 'Endgültig gelöscht. Die fertigen Videos bleiben im Ordner 03_Fertige_Videos.');
+    location.hash = 'projects';
+  },
   async 'delete-project'() {
     if (!confirm(`„${S.run.title}“ in den Papierkorb legen? Die Dateien bleiben erhalten. Unter „Projekte“ kannst du es wiederherstellen.`)) return;
     await post(`/api/factory/${S.rid}/delete`); toast('In den Papierkorb gelegt.'); location.hash = 'projects';
