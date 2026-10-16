@@ -186,6 +186,11 @@ def install_sampler_adapter(runtime, release):
     atomic(target, data)
 
 
+def version_key(text):
+    try: return tuple(int(x) for x in str(text).split('.'))
+    except ValueError: return None
+
+
 def activate(runtime, root, release, url):
     current = runtime / 'current'
     if not current.is_symlink(): raise RuntimeError('Eine vorhandene Studio-Installation mit current-Verweis wird benötigt.')
@@ -193,6 +198,11 @@ def activate(runtime, root, release, url):
     previous = health(url)
     if previous and (previous.get('app') != 'CayStudio' or previous.get('root') != str(root.resolve())):
         raise RuntimeError('Auf diesem Port läuft eine andere Anwendung. Es wurde nichts beendet.')
+    # Never an older version over a newer one: its projects would fail in the old code. Without a running
+    # dashboard the installed version comes from the release folder name (releases/<VERSION>_<sha12>).
+    installed = previous.get('version') if previous else old.name.split('_', 1)[0]
+    if version_key(installed) and version_key(installed) > version_key(VERSION):
+        raise RuntimeError('Auf diesem PC ist schon die neuere Version ' + str(installed) + ' installiert. Dieses ältere Update wurde nicht ausgeführt, dein Studio bleibt, wie es ist. Nimm bitte das neueste Update.')
     if previous and previous.get('version') == VERSION and old == release:
         install_sampler_adapter(runtime, release)
         if previous.get('maintenance'):
