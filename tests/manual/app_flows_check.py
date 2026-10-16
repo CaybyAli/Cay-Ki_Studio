@@ -162,6 +162,26 @@ try:
         r.check('Musik entfernt: Entwurf ohne Musik, Hochladen wieder angeboten', page.evaluate("JSON.parse(localStorage.getItem('cay-draft')).music") is None
                 and 'Eigene Musik hochladen' in page.locator('details.more').inner_text() and page.locator('details.more').get_attribute('open') is not None)
 
+        # 7. Uploads with the keyboard: Tab reaches every file input, and its pill or tile shows the focus.
+        def tab_uploads(limit=90):
+            found, ring = [], []
+            for _ in range(limit):
+                page.keyboard.press('Tab')
+                kind = page.evaluate("document.activeElement && document.activeElement.type === 'file' ? document.activeElement.dataset.upload : null")
+                if kind and kind not in found:
+                    found.append(kind)
+                    ring.append(page.evaluate("getComputedStyle(document.activeElement.closest('label')).outlineStyle"))
+            return found, ring
+        page.goto(studio.url + '/#new'); page.wait_for_selector('#idea'); page.evaluate("document.querySelector('details.more').open = true"); page.wait_for_timeout(300)
+        page.focus('#idea'); found, ring = tab_uploads()
+        r.check(f'Tastatur: alle Uploads im neuen Film erreichbar ({found})', {'example', 'image', 'voice', 'music'} <= set(found))
+        r.check(f'Tastatur: fokussierter Upload zeigt einen Rahmen ({ring})', ring and all(x == 'solid' for x in ring))
+        page.screenshot(path=str(shots / '07_tastatur.png'))
+        page.goto(studio.url + '/#library'); page.wait_for_selector('[data-action="lib-new"]'); page.click('[data-action="lib-new"]'); page.wait_for_selector('#lib-form')
+        page.focus('#sheet [data-action="close"]'); found, ring = tab_uploads(30)
+        r.check(f'Tastatur: Bild und Aufnahme einer neuen Figur erreichbar ({found})', {'lib-image', 'lib-voice'} <= set(found) and all(x == 'solid' for x in ring))
+        page.click('#sheet [data-action="close"]')
+
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
 finally:

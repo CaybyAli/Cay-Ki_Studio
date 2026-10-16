@@ -44,6 +44,9 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; border-radius: 10px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Uploads: the file input is hidden but reachable with Tab (Enter or Space opens it); its tile or pill shows the focus. */
+.thumb input, .file-pill input, .lib-photo input, .menu-row input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); }
+.thumb:has(input:focus-visible), .file-pill:has(input:focus-visible), .lib-photo:has(input:focus-visible), .menu-row:has(input:focus-visible) { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* Bar */
@@ -118,7 +121,6 @@ details.more summary::-webkit-details-marker { display: none; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 12px; }
 .thumb { position: relative; width: 96px; height: 96px; border-radius: 16px; overflow: hidden; background: var(--fill); display: grid; place-items: center; cursor: pointer; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.thumb input { display: none; }
 .thumb.add { border: 1.5px dashed var(--hairline); background: transparent; color: var(--accent); font-size: 13px; text-align: center; padding: 8px; }
 .thumb.small { width: 64px; height: 64px; border-radius: 14px; }
 .thumb-remove, .icon-remove { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; border: 0; cursor: pointer; background: rgba(0,0,0,.6); color: #fff; font-size: 15px; line-height: 1; display: grid; place-items: center; }
@@ -137,7 +139,6 @@ details.more summary::-webkit-details-marker { display: none; }
 .person-fields .input { width: 100%; }
 .person-fields .file-pill { grid-column: 1 / -1; }
 .file-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 14px; border-radius: 980px; background: var(--fill); font-size: 14px; cursor: pointer; }
-.file-pill input { display: none; }
 .file-pill.set { background: var(--accent-soft); color: var(--accent); }
 .compose-foot { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 42px; flex-wrap: wrap; }
 
@@ -364,7 +365,6 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .lib-photo { position: relative; aspect-ratio: 3 / 4; border-radius: 18px; overflow: hidden; background: var(--fill); display: grid; place-items: center; cursor: pointer; color: var(--accent); font-size: 14px; }
 .lib-photo.add { background: transparent; border: 1.5px dashed var(--hairline); }
 .lib-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.lib-photo input { display: none; }
 .lib-fields { display: grid; gap: 12px; }
 .lib-fields .field, .lib-form > .field { margin-top: 0; }
 .lib-note { margin: -8px 0 0; max-width: 40em; }
@@ -431,7 +431,6 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   border-radius: 14px; background: color-mix(in srgb, var(--wait) 12%, var(--surface)); font-size: 15px; line-height: 1.4; }
 .menu-row b { font-weight: 600; font-size: 16px; }
 .menu-row span { font-size: 14px; color: var(--muted); line-height: 1.4; }
-.menu-row input { display: none; }
 .voice-note { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
 .voice-note .play { width: 28px; height: 28px; }
 @media (max-width: 560px) {
