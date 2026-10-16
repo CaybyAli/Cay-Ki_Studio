@@ -350,7 +350,7 @@ function projectView() {
     </div>
     ${nextView(d)}
     ${sectionsView(d)}
-    ${!d.deleted && (!WORKING.has(d.state) || d.paused) ? '<div class="project-foot"><button class="link" data-action="delete-project">In den Papierkorb</button></div>' : ''}`;
+    ${!d.deleted && (!WORKING.has(d.state) || d.paused) ? '<div class="project-foot"><button class="link quiet" data-action="delete-project">In den Papierkorb</button></div>' : ''}`;
 }
 function autopilotSwitch(d) {
   return `<label class="switch"><input type="checkbox" data-action="autopilot" ${d.idea.autopilot ? 'checked' : ''}><span>Autopilot${d.idea.autopilot ? ': ohne Zwischenstopps' : ''}</span></label>`;

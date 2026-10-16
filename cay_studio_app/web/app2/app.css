@@ -184,7 +184,9 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .project-head { display: grid; gap: 10px; margin-bottom: 30px; }
 .project-head p { margin: 0; }
 .back { font-size: 15px; }
-.project-foot { margin-top: 48px; }
+/* Quiet end of a page: the trash link and the trash list, small and grey, one section below the content. */
+.project-foot { margin-top: 56px; font-size: 14px; }
+.link.quiet { color: var(--muted); font-size: 14px; }
 .steps { display: flex; gap: 0; margin: 16px 0 0; padding: 0; list-style: none; counter-reset: step; flex-wrap: wrap; }
 .steps li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); padding-right: 22px; }
 .steps li::before { counter-increment: step; content: counter(step); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--fill); color: var(--muted); }
