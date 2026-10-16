@@ -743,8 +743,9 @@ function openSheet(html) { const sheet = $('#sheet'); sheet.innerHTML = `<div cl
 function closeSheet() { const sheet = $('#sheet'); if (sheet.open) sheet.close(); }
 async function settingsSheet() {
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div><p class="muted">Bereitschaft wird geprüft …</p>`);
-  const [check, voices, animation, boost] = await Promise.all([api('/api/factory/check').catch(e => ({ error: e.message })),
-    api('/api/factory/voice-studio/status').catch(() => null), api('/api/factory/render-studio/status').catch(() => null), api('/api/factory/turbo').catch(() => null)]);
+  const [check, voices, animation, boost, notify] = await Promise.all([api('/api/factory/check').catch(e => ({ error: e.message })),
+    api('/api/factory/voice-studio/status').catch(() => null), api('/api/factory/render-studio/status').catch(() => null), api('/api/factory/turbo').catch(() => null),
+    api('/api/notify').catch(() => null)]);
   const rows = (check.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   const anim = (animation && animation.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div>
@@ -759,9 +760,159 @@ async function settingsSheet() {
     <h3 class="headline">Animation</h3><div>${anim}</div>
     ${animation && animation.message ? `<p class="small muted">${esc(animation.message)}</p>` : ''}
     ${animation && animation.checks && animation.checks.some(c => !c.ready) ? '<div class="actions"><button class="button quiet small" data-action="setup-animation">Fehlende Animationsteile einrichten</button></div>' : ''}
+    <h3 class="headline">Benachrichtigungen</h3>
+    <p class="small muted">${esc(notify ? notifySummary(notify) : 'Status nicht lesbar.')}</p>
+    <div class="actions"><button class="button quiet small" data-action="notify">${notify && notifyChannels(notify).length ? 'Ändern' : 'Einrichten'}</button></div>
     <h3 class="headline">Weitere Werkzeuge</h3>
     <p><a href="/classic#remix">Figurentausch</a> öffnet sich in der bisherigen Ansicht. <a href="/classic">Bisherige Oberfläche</a></p>
     <p class="small muted">Cay Studio ${esc(S.version)}. Alles läuft lokal, ohne Abo und ohne kostenpflichtige Dienste.</p>`);
+}
+/* ---------- notifications (0.18): opt-in, every channel says what leaves the PC ---------- */
+/* "Am PC": this browser shows the server's event feed while a studio tab is open. Nothing leaves the PC.
+   The server decides what counts (autopilot rules, dedupe); this tab only remembers what it has shown. */
+const NOTE = { seq: null, busy: false, error: null, token: '', consent: { telegram: false, ntfy: false } };
+function pcNotify() {
+  if (!('Notification' in window)) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  let on = false;
+  try { on = localStorage.getItem('cay-notify-pc') === 'on'; } catch (e) { /* private mode: off */ }
+  return on && Notification.permission === 'granted' ? 'on' : 'off';
+}
+function setPcNotify(on) { try { localStorage.setItem('cay-notify-pc', on ? 'on' : 'off'); } catch (e) { /* ignore */ } }
+function shownBefore(key) {
+  try {
+    const seen = JSON.parse(localStorage.getItem('cay-notify-seen') || '[]');
+    if (seen.includes(key)) return true;
+    seen.push(key); localStorage.setItem('cay-notify-seen', JSON.stringify(seen.slice(-200)));
+  } catch (e) { /* without storage the tag still keeps one message per event */ }
+  return false;
+}
+function showPc(title, body, tag, rid) {
+  try {
+    const note = new Notification(title, { body, tag, lang: 'de' });
+    note.onclick = () => { window.focus(); if (rid) location.hash = 'p=' + rid; note.close(); };
+    return true;
+  } catch (e) { return false; }
+}
+async function notifyPoll() {
+  if (pcNotify() !== 'on') { NOTE.seq = null; return; }
+  if (NOTE.busy) return;
+  NOTE.busy = true;
+  try {
+    const feed = await api('/api/notify/feed' + (NOTE.seq === null ? '' : '?after=' + NOTE.seq));
+    if (NOTE.seq !== null) for (const e of feed.events) if (!shownBefore(e.key)) showPc(e.title, e.body, e.key, e.run_id);
+    NOTE.seq = feed.latest;
+  } catch (e) { /* next tick */ } finally { NOTE.busy = false; }
+}
+function notifyChannels(n) {
+  return [n.telegram.state === 'connected' && 'Telegram', n.ntfy.state === 'on' && 'ntfy', pcNotify() === 'on' && 'Am PC'].filter(Boolean);
+}
+function notifySummary(n) {
+  const on = notifyChannels(n);
+  if (!on.length) return 'Aus. Auf Wunsch sagt dir das Studio Bescheid, wenn ein Film fertig ist oder du gebraucht wirst.';
+  const failed = ['telegram', 'ntfy'].filter(c => n[c].last && !n[c].last.ok).map(c => (c === 'telegram' ? 'Telegram' : 'ntfy'));
+  return `An: ${on.join(', ')}.` + (failed.length ? ` Letzte Nachricht über ${failed.join(' und ')} fehlgeschlagen.` : '');
+}
+function when(iso) {
+  const t = new Date(iso);
+  return isNaN(t) ? '' : t.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function notifyLast(c) {
+  if (c.pending) return `<p class="small notify-last wait">${c.pending === 1 ? 'Eine Nachricht wartet' : `${c.pending} Nachrichten warten`} auf einen neuen Versuch.${c.last && !c.last.ok ? ' ' + esc(c.last.text) : ''}</p>`;
+  if (!c.last) return '';
+  return `<p class="small notify-last ${c.last.ok ? 'ok' : 'bad'}">${c.last.ok ? 'Zuletzt' : 'Fehlgeschlagen'} am ${esc(when(c.last.at))}: ${esc(c.last.text)}</p>`;
+}
+function notifySwitch(key, label, checked, hint) {
+  return `<div class="notify-option"><label class="switch"><input type="checkbox" data-notify="${key}" ${checked ? 'checked' : ''}><span>${esc(label)}</span></label>${hint ? `<p class="small muted">${esc(hint)}</p>` : ''}</div>`;
+}
+function notifyError(channel) {
+  return NOTE.error && NOTE.error.channel === channel ? `<p class="notify-error" role="alert" tabindex="-1">${esc(NOTE.error.text)}</p>` : '';
+}
+function chip(on, text) { return `<span class="chip${on ? ' on' : ''}">${esc(text)}</span>`; }
+function pcBlock() {
+  const pc = pcNotify();
+  const body = pc === 'unsupported' ? '<p class="small">Dieser Browser kann keine Meldungen anzeigen. Nimm Telegram oder ntfy.</p>'
+    : pc === 'denied' ? '<p class="small">Im Browser blockiert. Erlaube Benachrichtigungen für das Studio in den Website-Einstellungen (Symbol links neben der Adresse) und lade die Seite neu.</p>'
+    : pc === 'on' ? '<div class="actions"><button class="button quiet small" data-action="pc-test">Probe anzeigen</button><button class="button danger small" data-action="pc-off">Ausschalten</button></div>'
+    : '<div class="actions"><button class="button small" data-action="pc-on">Am PC einschalten</button></div>';
+  return `<section class="notify-channel" aria-labelledby="nc-pc"><div class="notify-top"><h3 class="group-title" id="nc-pc">Am PC</h3>${chip(pc === 'on', pc === 'on' ? 'An' : 'Aus')}</div>
+    <p class="small muted">Eine Meldung am Bildschirm, solange ein Studio-Fenster offen ist. Dabei verlassen keine Daten den PC.</p>${body}${notifyError('pc')}</section>`;
+}
+function telegramBlock(t) {
+  let body;
+  if (t.state === 'off') {
+    body = `<div class="notify-disclosure"><b>Was an Telegram geht</b><ul>
+        <li>Projekttitel, Status und eine kurze Fehlermeldung, auf Wunsch ein Vorschaubild und der fertige Film.</li>
+        <li>Telegram speichert die Nachrichten auf seinen Servern. Sie sind nicht Ende-zu-Ende verschlüsselt.</li>
+        <li>Der Bot-Schlüssel bleibt auf deinem PC. Wer ihn hat, kann deinen Bot steuern. @BotFather stellt dir jederzeit einen neuen aus.</li></ul></div>
+      <ol class="notify-steps"><li>In Telegram <b>@BotFather</b> öffnen, <b>/newbot</b> senden und einen Namen wählen. Er schickt dir einen Schlüssel.</li>
+        <li><label class="field"><span>Schlüssel hier einfügen</span><input class="input notify-token" id="tg-token" value="${esc(NOTE.token)}" autocomplete="off" spellcheck="false" placeholder="123456789:AA…"></label></li></ol>
+      <label class="check"><input type="checkbox" id="tg-consent" ${NOTE.consent.telegram ? 'checked' : ''}><span>Einverstanden: Diese Angaben dürfen an Telegram gehen.</span></label>
+      <div class="actions"><button class="button small" data-action="tg-token">Bot prüfen</button></div>`;
+  } else if (t.state === 'token') {
+    body = `<p>Bot gefunden: <b>${esc(t.bot.name)}</b> (@${esc(t.bot.username)})</p>
+      <ol class="notify-steps" start="3"><li>Öffne <a href="${esc(t.bot.link)}" target="_blank" rel="noopener noreferrer">${esc(t.bot.link.replace('https://', ''))}</a> oder suche in Telegram nach <b>@${esc(t.bot.username)}</b> und tippe auf <b>Start</b>.</li>
+        <li>Dann hier auf „Verbindung prüfen“.</li></ol>
+      <div class="actions"><button class="button small" data-action="tg-connect">Verbindung prüfen</button><button class="button danger small" data-action="notify-off" data-channel="telegram">Abbrechen</button></div>`;
+  } else {
+    body = `<p>Verbunden mit <b>${esc(t.chat.name)}</b> über <b>@${esc(t.bot.username)}</b>.</p>
+      ${notifySwitch('telegram_preview', 'Vorschaubild mitsenden', t.preview)}
+      ${notifySwitch('telegram_film', 'Fertigen Film mitsenden', t.film, 'Nur bis 49\u00a0MB, das schafft Telegram. Ein Film von 60\u00a0Sekunden hat etwa 20\u00a0MB.')}
+      ${notifyLast(t)}
+      <div class="actions"><button class="button quiet small" data-action="notify-test" data-channel="telegram">Testnachricht senden</button><button class="button danger small" data-action="notify-off" data-channel="telegram">Trennen</button></div>`;
+  }
+  const label = t.state === 'connected' ? 'Verbunden' : t.state === 'token' ? 'Noch nicht fertig' : 'Aus';
+  return `<section class="notify-channel" aria-labelledby="nc-tg"><div class="notify-top"><h3 class="group-title" id="nc-tg">Telegram</h3>${chip(t.state === 'connected', label)}</div>
+    <p class="small muted">Aufs Handy, mit Vorschaubild. Kostenlos, ohne Abo. Empfohlen.</p>${body}${notifyError('telegram')}</section>`;
+}
+function ntfyBlock(n) {
+  let body;
+  if (n.state === 'off') {
+    body = `<div class="notify-disclosure"><b>Was an ntfy.sh geht</b><ul>
+        <li>Projekttitel, Status und eine kurze Fehlermeldung, auf Wunsch ein Vorschaubild.</li>
+        <li>Wer den Namen deines Themas kennt, kann mitlesen. Das Studio wählt einen langen Zufallsnamen. Gib ihn nicht weiter.</li>
+        <li>Nicht Ende-zu-Ende verschlüsselt. Kostenlos bis 250 Nachrichten am Tag.</li></ul></div>
+      <label class="check"><input type="checkbox" id="ntfy-consent" ${NOTE.consent.ntfy ? 'checked' : ''}><span>Einverstanden: Diese Angaben dürfen an ntfy.sh gehen.</span></label>
+      <div class="actions"><button class="button small" data-action="ntfy-on">ntfy einschalten</button></div>`;
+  } else {
+    body = `<ol class="notify-steps"><li>Die kostenlose App <b>ntfy</b> installieren (Android oder iPhone).</li><li>In der App auf <b>+</b> tippen und dieses Thema eintragen:</li></ol>
+      <div class="notify-topic"><code>${esc(n.topic)}</code><button class="button quiet small" data-action="notify-copy" data-text="${esc(n.topic)}">Kopieren</button></div>
+      <p class="small muted">Oder im Browser öffnen: <a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.url.replace('https://', ''))}</a></p>
+      ${notifySwitch('ntfy_preview', 'Vorschaubild mitsenden', n.preview)}
+      ${notifyLast(n)}
+      <div class="actions"><button class="button quiet small" data-action="notify-test" data-channel="ntfy">Testnachricht senden</button><button class="button danger small" data-action="notify-off" data-channel="ntfy">Trennen</button></div>`;
+  }
+  return `<section class="notify-channel" aria-labelledby="nc-ntfy"><div class="notify-top"><h3 class="group-title" id="nc-ntfy">ntfy</h3>${chip(n.state === 'on', n.state === 'on' ? 'An' : 'Aus')}</div>
+    <p class="small muted">Aufs Handy, ohne Konto und ohne Telefonnummer.</p>${body}${notifyError('ntfy')}</section>`;
+}
+function notifyHtml(n) {
+  return `<div class="sheet-head"><div class="notify-head"><button class="link small" data-action="settings">‹ Einrichtung</button><h2 class="headline">Benachrichtigungen</h2></div><button class="button quiet small" data-action="close">Fertig</button></div>
+    <p class="muted notify-lede">Das Studio sagt dir Bescheid, wenn ein Film fertig ist, wenn du dran bist oder wenn etwas angehalten hat.${notifyChannels(n).length ? '' : ' Alles bleibt aus, bis du es hier einschaltest.'}</p>
+    <section class="notify-when" aria-labelledby="nc-when"><h3 class="group-title" id="nc-when">Wann</h3>
+      ${notifySwitch('done', 'Film fertig', n.events.done)}
+      ${notifySwitch('turn', 'Du bist dran', n.events.turn, 'Wenn eine Freigabe auf dich wartet. Mit Autopilot nur, wenn er nicht allein weiterkommt.')}
+      ${notifySwitch('blocked', 'Angehalten', n.events.blocked, 'Wenn ein Projekt wegen eines Fehlers stehen bleibt.')}
+      ${notifySwitch('link', 'Link zum Projekt mitsenden', n.link, 'Der Link öffnet das Projekt nur am PC, nicht am Handy.')}</section>
+    ${pcBlock()}${telegramBlock(n.telegram)}${ntfyBlock(n.ntfy)}
+    <p class="small muted notify-whatsapp">WhatsApp gibt es hier nicht: Meta verlangt für jede Nachricht, die das Studio von sich aus schickt, eine Gebühr, und die kostenlosen Umwege laufen über inoffizielle Fremdanbieter – Telegram funktioniert ähnlich und ist kostenlos.</p>`;
+}
+function notifyRender(n, focus) {
+  const before = $('#sheet .sheet-body'), top = before ? before.scrollTop : 0;
+  S.notify = n; openSheet(notifyHtml(n));
+  const body = $('#sheet .sheet-body'); if (body) body.scrollTop = top;
+  const target = (focus && $(focus)) || $('#sheet .notify-error');
+  if (target) target.focus({ preventScroll: false });
+}
+async function notifySheet() {
+  NOTE.error = null;
+  openSheet(`<div class="sheet-head"><h2 class="headline">Benachrichtigungen</h2><button class="button quiet small" data-action="close">Fertig</button></div><p class="muted">Wird geladen …</p>`);
+  try { notifyRender(await api('/api/notify')); } catch (e) { openSheet(`<div class="sheet-head"><h2 class="headline">Benachrichtigungen</h2><button class="button quiet small" data-action="close">Fertig</button></div><p class="notify-error" role="alert">${esc(e.message)}</p>`); }
+}
+/* One step of a channel setup: errors stay next to the channel they belong to. */
+async function notifyStep(channel, fn, focus) {
+  try { const n = await fn(); NOTE.error = null; notifyRender(n || await api('/api/notify'), focus); return true; } catch (e) {
+    NOTE.error = { channel, text: e.message }; notifyRender(S.notify || await api('/api/notify').catch(() => S.notify)); return false;
+  }
 }
 function linesSheet(ei, si) {
   const sc = S.run.episodes[ei].scenes[si], lines = linesOf(sc);
@@ -802,6 +953,48 @@ const actions = {
     root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cay-theme', root.dataset.theme); } catch (e) { /* ignore */ }
   },
   async settings() { await settingsSheet(); },
+  async notify() { await notifySheet(); },
+  async 'pc-on'() {
+    if (!('Notification' in window)) return;
+    const answer = await Notification.requestPermission();
+    if (answer !== 'granted') {
+      NOTE.error = { channel: 'pc', text: answer === 'denied' ? 'Der Browser hat Meldungen blockiert. Erlaube sie in den Website-Einstellungen (Symbol links neben der Adresse) und lade die Seite neu.'
+        : 'Ohne deine Erlaubnis im Browser geht es nicht. Bitte noch einmal tippen und „Zulassen“ wählen.' };
+      notifyRender(S.notify); return;
+    }
+    setPcNotify(true); NOTE.seq = null; NOTE.error = null; await notifyPoll();
+    showPc('Cay Studio', 'So sieht eine Meldung am PC aus.', 'cay-studio-probe', null);
+    notifyRender(S.notify, '[data-action="pc-test"]');
+  },
+  'pc-off'() { setPcNotify(false); NOTE.seq = null; NOTE.error = null; notifyRender(S.notify, '[data-action="pc-on"]'); },
+  'pc-test'() { if (!showPc('Cay Studio', 'So sieht eine Meldung am PC aus.', 'cay-studio-probe', null)) toast('Der Browser hat die Meldung nicht angezeigt.'); },
+  async 'tg-token'() {
+    NOTE.token = ($('#tg-token') || {}).value?.trim() || ''; NOTE.consent.telegram = !!($('#tg-consent') || {}).checked;
+    if (!NOTE.token) { NOTE.error = { channel: 'telegram', text: 'Bitte zuerst den Schlüssel aus der Nachricht von @BotFather einfügen.' }; notifyRender(S.notify, '#tg-token'); return; }
+    if (!NOTE.consent.telegram) { NOTE.error = { channel: 'telegram', text: 'Bitte zuerst den Haken bei „Einverstanden“ setzen.' }; notifyRender(S.notify, '#tg-consent'); return; }
+    if (await notifyStep('telegram', () => post('/api/notify/telegram/token', { token: NOTE.token, consent: true }), '[data-action="tg-connect"]')) NOTE.token = '';
+  },
+  async 'tg-connect'() {
+    if (await notifyStep('telegram', () => post('/api/notify/telegram/connect'), '[data-action="notify-test"][data-channel="telegram"]')) toast('Verbunden. Schick dir zur Probe eine Testnachricht.');
+  },
+  async 'ntfy-on'() {
+    NOTE.consent.ntfy = !!($('#ntfy-consent') || {}).checked;
+    if (!NOTE.consent.ntfy) { NOTE.error = { channel: 'ntfy', text: 'Bitte zuerst den Haken bei „Einverstanden“ setzen.' }; notifyRender(S.notify, '#ntfy-consent'); return; }
+    if (await notifyStep('ntfy', () => post('/api/notify/ntfy/enable', { consent: true }), '[data-action="notify-copy"]')) toast('ntfy ist an. Trag jetzt das Thema in der App ein.');
+  },
+  async 'notify-test'(b) {
+    const channel = b.dataset.channel;
+    if (await notifyStep(channel, () => post('/api/notify/test', { channel }), `[data-action="notify-test"][data-channel="${channel}"]`)) toast('Testnachricht gesendet. Sie sollte gleich auf dem Handy erscheinen.');
+  },
+  async 'notify-off'(b) {
+    const channel = b.dataset.channel, telegram = channel === 'telegram';
+    if (!confirm(telegram ? 'Telegram trennen? Der Bot-Schlüssel wird auf diesem PC gelöscht.' : 'ntfy trennen? Das Thema wird gelöscht. Schaltest du ntfy wieder ein, gibt es ein neues.')) return;
+    NOTE.consent[channel] = false;
+    if (await notifyStep(channel, () => api('/api/notify/' + channel, { method: 'DELETE' }))) toast(telegram ? 'Getrennt. Den Bot selbst löschst du bei @BotFather mit /deletebot.' : 'ntfy ist aus.');
+  },
+  async 'notify-copy'(b) {
+    try { await navigator.clipboard.writeText(b.dataset.text); toast('Thema kopiert.'); } catch (e) { toast('Kopieren nicht möglich. Bitte das Thema abschreiben.'); }
+  },
   close() { closeSheet(); },
   async 'setup-voices'() { await post('/api/factory/voice-studio/setup'); toast('Stimmen werden eingerichtet. Das dauert einige Minuten.'); closeSheet(); },
   async 'upgrade-voices'() { await post('/api/factory/voice-studio/upgrade'); toast('Dialogmodell wird ergänzt.'); closeSheet(); },
@@ -963,6 +1156,12 @@ document.addEventListener('click', async event => {
 document.addEventListener('change', async event => {
   const el = event.target;
   if (el.matches('input[data-action="autopilot"]')) { await guarded(el, async () => { await actions.autopilot(el); await refreshRun(true); }); return; }
+  if (el.matches('[data-notify]')) {
+    await guarded(el, async () => {
+      try { S.notify = await put('/api/notify', { [el.dataset.notify]: el.checked }); } catch (e) { el.checked = !el.checked; throw e; }
+    });
+    return;
+  }
   if (el.matches('[data-field="autopilot"]')) { S.draft.autopilot = el.checked; saveDraft(); updateCompose(); return; }
   if (el.matches('[data-field="cast_check"]')) { S.draft.cast_check = el.checked; saveDraft(); return; }
   if (el.matches('[data-person-exact]')) { S.draft.participants[+el.dataset.personExact].image_mode = el.checked ? 'exact' : 'neutral'; saveDraft(); return; }
@@ -1058,6 +1257,7 @@ async function guarded(el, fn) {
 
 /* ---------- polling ---------- */
 async function tick() {
+  notifyPoll();
   try {
     if (S.page === 'project' && S.rid) {
       const before = S.run && S.run.state;
@@ -1080,7 +1280,7 @@ async function start() {
   S.token = boot.csrf; S.version = boot.version; $('#version').textContent = 'Cay Studio ' + boot.version;
   S.speed = await api('/api/factory/speed').catch(() => null);
   await refreshLibrary().catch(() => { S.library = []; });
-  route(); await load(); health();
+  route(); await load(); health(); notifyPoll();
   window.addEventListener('hashchange', () => { route(); load(); });
   setInterval(tick, 2500); setInterval(health, 15000); setInterval(tickClocks, 1000);
 }

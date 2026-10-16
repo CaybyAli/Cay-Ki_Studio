@@ -84,8 +84,11 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         d['revision']=digest(d);return d
     def save(self,d):
         d=self.merge_posts(dict(d));d.pop('revision',None);d.pop('cpu_jobs',None);d['updated']=self.g['now']()
+        # Notifications (notify.py) compare the stored previous state with this one; they never raise.
+        note=self.g.get('notifier');change=note.before(d) if note else None
         self.sql('UPDATE factory_runs SET state=?,document=?,updated=? WHERE id=?',(d['state'],packed(d),d['updated'],d['id']))
         self.atomic(self.folder(d)/'Projekt.json',packed(d).encode())
+        if change:note.after(change,d)
     def folder(self,d):return self.path(self.g['ROOT']/'01_Projekte'/'Studio'/d['id'])
     def asset(self,aid,kind=None):
         found=self.rows('SELECT * FROM factory_assets WHERE id=?',(aid,))
