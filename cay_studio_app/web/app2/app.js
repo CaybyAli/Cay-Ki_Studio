@@ -386,7 +386,7 @@ function nextView(d) {
       <div class="sample"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/sample#t=0.1"></video></div>
       <div class="actions"><button class="button" data-action="approve-sample">Passt, weiterrechnen</button><button class="button quiet" data-action="reject-sample">Zurück zum Ton</button></div></section>`;
   if (d.state === 'rendering' || d.state === 'finishing') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie entsteht.' : 'Dein Film entsteht.'}</h2>
-      <p class="muted">${esc(d.phase || '')}</p><div id="progress-slot"></div>
+      <p class="muted">${esc(d.phase || '')}</p><div id="progress-slot" class="progress"></div>
       <div class="actions">${pause}<button class="link" data-action="abort-step">Aktuellen Abschnitt abbrechen</button></div></section>`;
   return `<section class="next"><h2 class="headline">Das Studio arbeitet.</h2><p class="muted">${esc(d.phase || '')}</p>
       <div class="actions">${pause}${autopilotSwitch(d)}</div></section>`;
@@ -659,8 +659,8 @@ function paintProgress() {
       <div class="fact"><strong>${g.utilization == null ? '–' : esc(g.utilization) + ' %'}</strong><span>Grafikkarte ausgelastet</span></div>
     </div>
     <progress class="meter" max="${Math.max(1, p.total)}" value="${p.done}" aria-label="Gesamtfortschritt"></progress>
-    ${a ? `<p class="small muted">${esc(detail.label || 'Animation')}${a.scene != null ? `, Folge ${a.episode + 1}, Szene ${a.scene + 1}` : ''}${node ? `: Schritt ${node.value} von ${node.max}` : ''}</p>
-      ${node ? `<progress class="meter" max="${node.max}" value="${node.value}" aria-label="Aktueller Abschnitt"></progress>` : ''}` : ''}
+    ${a ? `<div class="now-step"><p class="small muted">${esc(detail.label || 'Animation')}${a.scene != null ? `, Folge ${a.episode + 1}, Szene ${a.scene + 1}` : ''}${node ? `: Schritt ${node.value} von ${node.max}` : ''}</p>
+      ${node ? `<progress class="meter sub" max="${node.max}" value="${node.value}" aria-label="Aktueller Abschnitt"></progress>` : ''}</div>` : ''}
     ${stuck ? `<div class="stall"><p><b>Dieser Abschnitt hängt wahrscheinlich.</b> Seit ${esc(duration(Date.now() / 1000 - p.last_progress))} kein neuer Rechenschritt${g.total_mib ? `, Grafikspeicher ${(g.used_mib / 1024).toFixed(1)} von ${(g.total_mib / 1024).toFixed(0)} GB` : ''}.</p>
       <div class="actions"><button class="button small" data-action="abort-fast">${keepsQuality(d) ? 'Abschnitt neu starten' : 'Mit „Standard“ neu starten'}</button></div></div>` : ''}`;
 }
