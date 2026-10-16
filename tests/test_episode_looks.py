@@ -99,7 +99,7 @@ def references(graph): return [n['inputs']['image'] for _, n in sorted(graph.ite
 def text(graph): return next(n['inputs']['text'] for n in graph.values() if n['class_type'] == 'CLIPTextEncode')
 
 
-def staged(f, path):
+def staged(path):
     return 'CayStudio/factory_refs/' + hashlib.sha256(open(path, 'rb').read()).hexdigest() + '.png'
 
 
@@ -204,8 +204,8 @@ def test_variants_from_the_base_design_and_scenes_per_episode(tmp_path, monkeypa
     f = run(tmp_path, monkeypatch, 'per_episode'); d = f.get(RID); steps = dict(drawing(f))
     kinds = [k.split(':')[0] for k, _ in drawing(f)]
     assert kinds == ['cast3', 'cast3', 'look', 'look', 'cover', 'cover'] + ['image'] * 8 and d['state'] == 'image_review'
-    base = {name: staged(f, path) for name, path in d['cast_refs'].items()}
-    look = {ei: staged(f, d['episode_refs'][str(ei)]['SpongeBob']) for ei in (0, 1)}
+    base = {name: staged(path) for name, path in d['cast_refs'].items()}
+    look = {ei: staged(d['episode_refs'][str(ei)]['SpongeBob']) for ei in (0, 1)}
     assert set(d['episode_refs']) == {'0', '1'} and all(set(v) == {'SpongeBob'} for v in d['episode_refs'].values())
     for ei in (0, 1):
         k = next(k for k in steps if k.startswith(f'look:{ei}:spongebob:0:'))
@@ -249,8 +249,8 @@ def test_new_look_redraws_only_that_episode_with_that_figure(tmp_path, monkeypat
     asyncio.run(f.pictures(f.get(RID)))
     again = drawing(f, handed)
     assert [k.rsplit(':', 1)[0] if k.startswith('look:') else k for k, _ in again] == ['look:1:spongebob:1', 'image:1:0:1:0', 'image:1:0:1:1']
-    assert 'grauer Anzug mit roter Krawatte' in text(again[0][1]) and references(again[0][1]) == [staged(f, d['cast_refs']['SpongeBob'])]
-    assert references(again[1][1])[0] == staged(f, f.get(RID)['episode_refs']['1']['SpongeBob']) and 'In this episode: grauer Anzug' in text(again[1][1])
+    assert 'grauer Anzug mit roter Krawatte' in text(again[0][1]) and references(again[0][1]) == [staged(d['cast_refs']['SpongeBob'])]
+    assert references(again[1][1])[0] == staged(f.get(RID)['episode_refs']['1']['SpongeBob']) and 'In this episode: grauer Anzug' in text(again[1][1])
     assert f.get(RID)['state'] == 'image_review'
     # Without a wish: a new round of the same text; a figure not seen in that episode or a 'same' project is refused.
     assert api.post(f'/api/factory/{RID}/look/redo', json={'episode': 0, 'name': 'SpongeBob'}).status_code == 200
