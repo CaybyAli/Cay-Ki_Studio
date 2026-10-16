@@ -620,6 +620,18 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             for prior in self.rows("SELECT * FROM factory_steps WHERE run_id=? AND status='done' AND step_key LIKE 'video08:%'",(d['id'],)):
                 if signature(json.loads(prior['graph']))==wanted:
                     found=[prior];break
+            if not found:
+                # Turbo only changes how attention is computed (attention_mode), not the shot: a section finished
+                # with or without Turbo stays when Turbo switches on or off. Keys and graphs stay as they are.
+                def without_turbo(value):
+                    value=json.loads(packed(value))
+                    for node in value.values():
+                        inputs=node.get('inputs',{});inputs.pop('filename_prefix',None);inputs.pop('attention_mode',None)
+                    return digest(value)
+                wanted=without_turbo(graph)
+                for prior in self.rows("SELECT * FROM factory_steps WHERE run_id=? AND status='done' AND step_key LIKE ?",(d['id'],':'.join(key.split(':')[:4])+':%')):
+                    if without_turbo(json.loads(prior['graph']))==wanted:
+                        found=[prior];break
         if found:
             s=found[0]
             if video and key.startswith('video09:'):
@@ -676,7 +688,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         if any(n.get('inputs',{}).get('attention_mode')=='sageattn' for n in graph.values()):
                             # Turbo is optional: never let it block production twice.
                             turbo.disable(self.g['RUNTIME'],error)
-                            error+=' Turbo wurde ausgeschaltet. „Fortsetzen“ rechnet diesen Abschnitt ohne Turbo neu.'
+                            error+=' Turbo wurde ausgeschaltet. „Fortsetzen“ rechnet nur diesen Abschnitt ohne Turbo neu, fertige Abschnitte bleiben.'
                         self.sql("UPDATE factory_steps SET status='failed',error=? WHERE id=?",(error,s['id']));raise RuntimeError(error)
                     output=item.get('outputs',{}).get('15' if video else '77',{})
                     candidates=[o for values in output.values() if isinstance(values,list) for o in values if isinstance(o,dict) and 'filename' in o]

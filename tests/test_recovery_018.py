@@ -183,6 +183,40 @@ def test_ollama_timeout_blocks_with_a_german_cause(tmp_path, monkeypatch):
     assert d['error'].startswith('Das Sprachmodell hat zu lange nicht geantwortet.') and '„Planung fortsetzen“' in d['error']
 
 
+def test_turbo_switch_keeps_finished_lip_sync_sections(tmp_path, monkeypatch):
+    """Turbo on, off or switched off after an error: a finished section of the episode in progress stays.
+    The exact keys and graphs are unchanged; only a missing key gets one more lookup."""
+    import render_studio
+    from factory import digest, packed
+    from factory_video import file_hash
+    monkeypatch.setattr(render_studio, 'node', lambda info, kind, **kw: {'class_type': kind, 'inputs': kw})
+    monkeypatch.setattr(render_studio, 'talk_models', lambda info, fast=False: {k: k for k in ('model', 'talk', 'wav', 'vae', 'text', 'vision', 'lora')})
+    monkeypatch.setattr(render_studio, 'validate_graph', lambda info, graph: None)
+    info = {'CayWanVideoSampler': {'input': {'optional': {'cay_audio_cfg_steps': ('INT', {'default': 0})}}}}
+    f = factory(tmp_path, monkeypatch); rid = '4' * 32
+    project(f, rid, 'rendering', idea={'quality': 'high'}); d = f.get(rid)
+
+    def section(attention, seed=42): return render_studio.audio_graph(info, 'img.png', 'dlg.wav', 'prompt', seed, 5, 'high', attention=attention)
+    def key(graph, seg=1): return f'video09:0:3:{seg}:' + digest(graph)[:24]
+    clip = f.g['ROOT'] / 'clip.mp4'; clip.write_bytes(b'finished section')
+    f.services.on_prompt = lambda: f.g.update(STOPPING=True)                       # a new render ends right after the hand-over
+    for attention in ('sdpa', 'sageattn'):
+        f.sql('DELETE FROM factory_steps')
+        done = step(f, rid, key(section(attention)), 'done', graph=packed(section(attention)))
+        f.sql('UPDATE factory_steps SET output=?,sha256=? WHERE id=?', (str(clip), file_hash(clip), done))
+        other = 'sageattn' if attention == 'sdpa' else 'sdpa'
+        assert key(section(other)) != key(section(attention))                       # keys stay as they always were
+        reused = asyncio.run(f.render(d, key(section(other)), section(other), True))
+        assert reused['id'] == done and f.services.prompts() == []
+    # Another seed is another variant and another window is another shot: never taken from a neighbour.
+    f.g['STOPPING'] = True                                                          # end right after the hand-over
+    for n, (graph, k) in enumerate(((section('sdpa', seed=7), key(section('sdpa', seed=7))), (section('sdpa'), key(section('sdpa'), seg=2))), 1):
+        f.services.pending = []
+        try: asyncio.run(f.render(d, k, graph, True))
+        except Exception as e: assert 'Studio wird beendet' in str(e)
+        assert len(f.services.prompts()) == n and f.rows('SELECT status FROM factory_steps WHERE step_key=?', (k,))[0]['status'] == 'submitted'
+
+
 def test_remix_worker_survives_a_full_disk(monkeypatch):
     from factory import Wait
     from remix import Remix
