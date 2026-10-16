@@ -119,6 +119,19 @@ try:
         page.wait_for_function('window.__lib !== undefined')
         r.check(f'Server: Formfehler auf Deutsch ({page.evaluate("window.__lib")})', page.evaluate('window.__lib') == 'Bitte „Name“ ausfüllen.')
 
+        # 4. New film: a figure with a picture but no name is not dropped silently.
+        png = media(work / 'figur.png', 'png')['file']
+        page.goto(studio.url + '/#new'); page.wait_for_selector('#idea')
+        page.fill('#idea', 'Ein blauer Roboter mit Schnurrbart erklärt der Katze die Spülmaschine.')
+        page.click('details.more summary'); page.click('[data-action="add-person"]')
+        page.set_input_files('input[data-upload="image"][data-index="0"]', png); page.wait_for_selector('.person img', timeout=15000)
+        page.fill('input[data-person="0"][data-key="traits"]', 'Blauer Roboter mit Schnurrbart')
+        before = len(studio.call('/api/factory')[1]['runs'])
+        page.click('#create'); page.wait_for_timeout(800)
+        r.check(f'Figur mit Bild ohne Namen: Hinweis, Fokus aufs Namensfeld, kein Film ({page.locator("#toast").inner_text()})',
+                page.locator('#toast').inner_text() == 'Gib jeder Figur einen Namen oder entferne sie.' and len(studio.call('/api/factory')[1]['runs']) == before
+                and page.evaluate("document.activeElement.matches('input[data-person=\"0\"][data-key=\"name\"]')"))
+
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
 finally:

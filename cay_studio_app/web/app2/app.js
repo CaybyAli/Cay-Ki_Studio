@@ -227,7 +227,15 @@ function updateCompose() {
 async function createFilm() {
   const d = S.draft;
   if (d.idea.trim().length < 12) { toast('Beschreib deine Idee in mindestens einem kurzen Satz.'); $('#idea').focus(); return; }
-  const body = { ...d, idea: d.idea.trim(), title: d.title.trim(),
+  // A figure with a picture, voice, look or profile but no name would be dropped silently; only empty rows are.
+  const nameless = d.characters === 'none' ? -1 : d.participants.findIndex(p => !p.name.trim() && (p.image || p.voice || (p.traits || '').trim() || p.library_id));
+  if (nameless >= 0) {
+    const box = $('details.more'); if (box) box.open = true;
+    toast('Gib jeder Figur einen Namen oder entferne sie.');
+    const field = $(`input[data-person="${nameless}"][data-key="name"]`); if (field) field.focus();
+    return;
+  }
+  const body ={ ...d, idea: d.idea.trim(), title: d.title.trim(),
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => ({ name: p.name.trim(), traits: p.traits || '', image: p.image || null,
       voice: p.voice || null, voice_text: p.voice_text || '', image_mode: p.image_mode === 'exact' ? 'exact' : 'neutral',
       library_id: p.library_id || null, voice_design: p.voice_from_library && p.voice_design ? p.voice_design : null,
