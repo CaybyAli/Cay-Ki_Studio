@@ -186,6 +186,17 @@ def test_restore_and_resume_do_not_announce_the_old_state(tmp_path):
     assert not g['rows']('SELECT * FROM notify_events')
 
 
+def test_reopening_the_sound_is_not_announced_but_the_finished_remix_is(tmp_path):
+    g, n, factory, _ = studio(tmp_path); connect_telegram(n)
+    done = run(state='done', idea={'autopilot': True, 'episodes': 1}, audio_revision=3, exports=[{'file': '/x.mp4', 'sha256': 'aa', 'seconds': 30}]); insert(g, done)
+    reopened = dict(done, state='voice_review', sound_edit=True, exports=[], export_generation=1)
+    factory.save(reopened)                                                      # Cay clicks "Lautstärke und Ton ändern"
+    assert not outbox(g)
+    factory.save(dict(reopened, state='voicing', audio_only=True))              # a slider remixes
+    factory.save(dict(reopened, audio_revision=4, previews=[{'sha256': 'bb'}])) # remix ready: Cay may have walked away
+    assert [r['event'] for r in outbox(g)] == ['turn']
+
+
 def test_autopilot_stop_is_announced_but_its_passing_is_not(tmp_path):
     g, n, factory, _ = studio(tmp_path); connect_telegram(n)
     d = run(state='voicing', idea={'autopilot': True}, audio_revision=2); insert(g, d)

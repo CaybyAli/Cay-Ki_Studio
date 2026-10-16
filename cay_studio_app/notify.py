@@ -347,9 +347,13 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
             new = signature(d)
             if not new: return None
             found = self.g['rows']('SELECT document FROM factory_runs WHERE id=?', (d['id'],))
+            stored = json.loads(found[0]['document']) if found else {}
+            # "Lautstärke und Ton ändern" / "Ton bearbeiten" is Cay's own click at the PC: the sound stop
+            # it opens is not news. The finished remix after a slider change is announced as usual.
+            if d.get('sound_edit') and d.get('state') == 'voice_review' and stored.get('state') in ('done', 'blocked'): return None
             # The stored trash/pause flags are ignored: restoring or resuming a project is Cay's own
             # click at the PC and must not announce the state it was already in.
-            old = signature({**json.loads(found[0]['document']), 'deleted': False, 'paused': False}) if found else None
+            old = signature({**stored, 'deleted': False, 'paused': False}) if found else None
             return None if old == new else new
         except Exception as error:
             self.trouble(error); return None
