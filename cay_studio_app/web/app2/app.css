@@ -193,6 +193,9 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .error-text { font-family: var(--font); font-size: 14px; line-height: 1.5; color: var(--muted); background: var(--canvas); border-radius: 12px; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; margin: 0; }
 .section { margin-top: 56px; }
 .section > h2 { margin-bottom: 20px; }
+/* Sub-headings inside a section (Stimmen, Sätze): closer to their own content than to the block above. */
+.subhead { margin: 44px 0 14px; }
+.subhead + .small { margin: -8px 0 14px; }
 .episode-tabs { margin-bottom: 26px; }
 .caption-box + .scenes, .episode-tabs + .scenes { margin-top: 0; }
 
@@ -297,7 +300,8 @@ audio { width: 100%; height: 40px; }
 dialog.sheet { border: 0; border-radius: 22px; padding: 0; width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 64px); background: var(--surface); color: var(--ink); box-shadow: 0 40px 80px -20px rgba(0,0,0,.45); }
 dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px); }
 .sheet-body { padding: 28px 30px 30px; display: grid; gap: 18px; overflow: auto; max-height: calc(100vh - 64px); }
-.sheet-head { display: flex; justify-content: space-between; align-items: center; }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.sheet-body > p { margin: 0; }
 .check-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hairline); }
 .check-row:last-child { border-bottom: 0; }
 .check-row .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; background: var(--done); }
@@ -482,7 +486,9 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
    sends data off the PC shows what goes where before anything is switched on. */
 .notify-head { display: grid; gap: 2px; justify-items: start; }
 .notify-lede { margin: 0; }
-.notify-when, .notify-channel { display: grid; gap: 12px; padding: 20px 0 22px; border-top: 1px solid var(--hairline); min-width: 0; }
+.notify-when, .notify-channel, .sheet-section { display: grid; gap: 12px; padding: 20px 0 22px; border-top: 1px solid var(--hairline); min-width: 0; }
+.sheet-section p { margin: 0; }
+.sheet-section:last-child { padding-bottom: 0; }
 .notify-when { gap: 14px; }
 .notify-channel p { margin: 0; }
 .notify-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

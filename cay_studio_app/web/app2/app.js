@@ -585,12 +585,12 @@ function soundSection(d) {
       <div class="actions"><span class="small muted">Musik</span>${seg('music', [['off', 'Aus'], ['auto', 'Einfach'], ...(d.idea.music ? [['uploaded', 'Eigene']] : [])], music).replaceAll('data-set=', 'data-mix=')}
         <button class="button quiet small" data-action="more-dialogue">Dialoge ergänzen</button><button class="button quiet small" data-action="rebuild-audio">Ton neu erzeugen</button></div>
       ${levelsView(d, music)}</div>
-    <h3 class="headline section">Stimmen</h3>
+    <h3 class="headline subhead">Stimmen</h3>
     <p class="small muted">Stimmtyp wählen und „Neue Stimme“ antippen. Danach werden die Sätze neu eingesprochen.</p>
     <div class="voices">${cast.map(p => `<div class="voice"><div class="actions"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/voice-profile/${encodeURIComponent(p.name)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button><span class="speaker">${esc(p.name)}</span></div>
         <select class="input" data-voice="${esc(p.name)}" aria-label="Stimmtyp von ${esc(p.name)}">${PRESETS.map(([v, l]) => `<option value="${v}" ${p.voice_preset === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
         <div class="actions"><button class="button quiet small" data-action="new-voice" data-name="${esc(p.name)}">Neue Stimme</button></div></div>`).join('')}</div>
-    <h3 class="headline section">Sätze</h3>
+    <h3 class="headline subhead">Sätze</h3>
     <div class="lines">${lines.map(l => `<div class="line-row"><button class="play" data-action="play" data-src="/api/factory/${esc(d.id)}/audio/${l.index}" aria-label="Satz anhören">${PLAY}</button><span class="speaker">${esc(l.speaker)}</span><span class="line-text">${esc(l.text)}</span><span class="small muted">${(l.duration || 0).toFixed(1)} s</span></div>`).join('') || '<p class="muted small">In dieser Folge spricht niemand.</p>'}</div>
   </section>`;
 }
@@ -850,24 +850,25 @@ async function settingsSheet() {
     api('/api/notify').catch(() => null)]);
   const rows = (check.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   const anim = (animation && animation.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
+  // Sections like the notifications sheet: a 17 px heading with a hairline, its text and buttons close below it.
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div>
     <div>${rows || `<p class="muted">${esc(check.error || 'Keine Angaben.')}</p>`}</div>
-    <h3 class="headline">Stimmen</h3><p class="small muted">${esc(voices ? voices.message : 'Status nicht lesbar.')}${voices && voices.dialogue_ready ? ' Qwen-Dialogmodell bereit.' : ''}</p>
-    ${voices && voices.state !== 'ready' ? '<div class="actions"><button class="button quiet small" data-action="setup-voices">Stimmen einrichten</button></div>' : ''}
-    ${voices && voices.state === 'ready' && !voices.dialogue_ready ? '<div class="actions"><button class="button quiet small" data-action="upgrade-voices">Dialogmodell ergänzen</button></div>' : ''}
-    <h3 class="headline">Turbo</h3>
-    <p class="small muted">Schnellere Rechenart der Grafikkarte für Sprechszenen, kostenlos. Erwartet etwa 1,5- bis 2-fach schneller, auf deinem PC noch nicht gemessen. Schlägt ein Abschnitt fehl, schaltet sich Turbo selbst ab.</p>
-    <p class="small">${esc(boost ? boost.message : 'Status nicht lesbar.')}${boost && boost.error ? ' ' + esc(boost.error) : ''}</p>
-    <div class="actions">${boost && ['missing', 'off'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-setup">Turbo einrichten</button>' : ''}${boost && ['active', 'restart'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-off">Turbo ausschalten</button>' : ''}</div>
-    <h3 class="headline">Animation</h3><div>${anim}</div>
-    ${animation && animation.message ? `<p class="small muted">${esc(animation.message)}</p>` : ''}
-    ${animation && animation.checks && animation.checks.some(c => !c.ready) ? '<div class="actions"><button class="button quiet small" data-action="setup-animation">Fehlende Animationsteile einrichten</button></div>' : ''}
-    <h3 class="headline">Benachrichtigungen</h3>
-    <p class="small muted">${esc(notify ? notifySummary(notify) : 'Status nicht lesbar.')}</p>
-    <div class="actions"><button class="button quiet small" data-action="notify">${notify && notifyChannels(notify).length ? 'Ändern' : 'Einrichten'}</button></div>
-    <h3 class="headline">Weitere Werkzeuge</h3>
-    <p><a href="/classic#remix">Figurentausch</a> öffnet sich in der bisherigen Ansicht. <a href="/classic">Bisherige Oberfläche</a></p>
-    <p class="small muted">Cay Studio ${esc(S.version)}. Alles läuft lokal, ohne Abo und ohne kostenpflichtige Dienste.</p>`);
+    <section class="sheet-section"><h3 class="group-title">Stimmen</h3><p class="small muted">${esc(voices ? voices.message : 'Status nicht lesbar.')}${voices && voices.dialogue_ready ? ' Qwen-Dialogmodell bereit.' : ''}</p>
+      ${voices && voices.state !== 'ready' ? '<div class="actions"><button class="button quiet small" data-action="setup-voices">Stimmen einrichten</button></div>' : ''}
+      ${voices && voices.state === 'ready' && !voices.dialogue_ready ? '<div class="actions"><button class="button quiet small" data-action="upgrade-voices">Dialogmodell ergänzen</button></div>' : ''}</section>
+    <section class="sheet-section"><h3 class="group-title">Turbo</h3>
+      <p class="small muted">Schnellere Rechenart der Grafikkarte für Sprechszenen, kostenlos. Erwartet etwa 1,5- bis 2-fach schneller, auf deinem PC noch nicht gemessen. Schlägt ein Abschnitt fehl, schaltet sich Turbo selbst ab.</p>
+      <p class="small">${esc(boost ? boost.message : 'Status nicht lesbar.')}${boost && boost.error ? ' ' + esc(boost.error) : ''}</p>
+      ${boost && ['missing', 'off', 'active', 'restart'].includes(boost.state) ? `<div class="actions">${['missing', 'off'].includes(boost.state) ? '<button class="button quiet small" data-action="turbo-setup">Turbo einrichten</button>' : '<button class="button quiet small" data-action="turbo-off">Turbo ausschalten</button>'}</div>` : ''}</section>
+    <section class="sheet-section"><h3 class="group-title">Animation</h3>${anim ? `<div>${anim}</div>` : ''}
+      ${animation && animation.message ? `<p class="small muted">${esc(animation.message)}</p>` : ''}
+      ${animation && animation.checks && animation.checks.some(c => !c.ready) ? '<div class="actions"><button class="button quiet small" data-action="setup-animation">Fehlende Animationsteile einrichten</button></div>' : ''}</section>
+    <section class="sheet-section"><h3 class="group-title">Benachrichtigungen</h3>
+      <p class="small muted">${esc(notify ? notifySummary(notify) : 'Status nicht lesbar.')}</p>
+      <div class="actions"><button class="button quiet small" data-action="notify">${notify && notifyChannels(notify).length ? 'Ändern' : 'Einrichten'}</button></div></section>
+    <section class="sheet-section"><h3 class="group-title">Weitere Werkzeuge</h3>
+      <p><a href="/classic#remix">Figurentausch</a> öffnet sich in der bisherigen Ansicht. <a href="/classic">Bisherige Oberfläche</a></p>
+      <p class="small muted">Cay Studio ${esc(S.version)}. Alles läuft lokal, ohne Abo und ohne kostenpflichtige Dienste.</p></section>`);
 }
 /* ---------- notifications (0.18): opt-in, every channel says what leaves the PC ---------- */
 /* "Am PC": this browser shows the server's event feed while a studio tab is open. Nothing leaves the PC.
