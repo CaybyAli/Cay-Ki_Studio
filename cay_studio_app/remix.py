@@ -269,7 +269,9 @@ CREATE TABLE IF NOT EXISTS remix_assets(id TEXT PRIMARY KEY,document TEXT NOT NU
                             self.busy=None
                     break
             except asyncio.CancelledError:raise
-            except Exception as e:self.g['record']('remix_worker_error',str(e)[:1200])
+            except Exception as e:
+                try:self.g['record']('remix_worker_error',str(e)[:1200])
+                except Exception:pass      # full disk: keep the worker alive
             await asyncio.sleep(2)
     def routes(self,app):
         self.editor_routes(app,'remix')

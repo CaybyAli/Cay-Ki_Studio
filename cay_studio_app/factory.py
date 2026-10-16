@@ -930,7 +930,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                             finally:self.busy=None
                     break
             except asyncio.CancelledError:raise
-            except Exception as error:self.g['record']('factory_worker_error',str(error)[:1200])
+            except Exception as error:
+                # The note is best effort: a full disk fails this write too and must not end the worker for good.
+                try:self.g['record']('factory_worker_error',str(error)[:1200])
+                except Exception:pass
             await asyncio.sleep(2)
     def routes(self,app):
         self.editor_routes(app)

@@ -80,20 +80,29 @@ class PostProduction:
     async def post_worker(self):
         try:
             while not self.g['STOPPING']:
-                for key,task in list(self.post_tasks.items()):
-                    if task.done():
-                        await task;self.post_tasks.pop(key,None)
-                if not self.g['MAINTENANCE']:
-                    limit=self.g['resources'].options['workers']-len(self.post_tasks)
-                    if limit>0:
-                        candidates=self.rows("SELECT p.* FROM factory_post p JOIN factory_runs r ON r.id=p.run_id LEFT JOIN factory_control c ON c.id=r.id LEFT JOIN studio_trash t ON t.id=r.id WHERE p.status='queued' AND COALESCE(c.paused,0)=0 AND t.id IS NULL AND r.state IN ('rendering','finishing','audio_mixing') ORDER BY p.rowid")
-                        for row in candidates:
-                            if limit<=0:break
-                            d=self.get(row['run_id'])
-                            generation=d.get('audio_revision',0) if row['kind']=='mix' else d.get('export_generation',0)
-                            if row['generation']!=generation:continue
-                            self.sql("UPDATE factory_post SET status='running' WHERE id=? AND status='queued'",(row['id'],))
-                            self.post_tasks[row['id']]=asyncio.create_task(self.post_execute(row));limit-=1
+                try:
+                    for key,task in list(self.post_tasks.items()):
+                        if task.done():
+                            try:await task
+                            except Exception:
+                                # Its own status write failed (disk full for a moment): queue it again, as after a restart.
+                                self.sql("UPDATE factory_post SET status='queued' WHERE id=? AND status='running'",(key,))
+                            self.post_tasks.pop(key,None)
+                    if not self.g['MAINTENANCE']:
+                        limit=self.g['resources'].options['workers']-len(self.post_tasks)
+                        if limit>0:
+                            candidates=self.rows("SELECT p.* FROM factory_post p JOIN factory_runs r ON r.id=p.run_id LEFT JOIN factory_control c ON c.id=r.id LEFT JOIN studio_trash t ON t.id=r.id WHERE p.status='queued' AND COALESCE(c.paused,0)=0 AND t.id IS NULL AND r.state IN ('rendering','finishing','audio_mixing') ORDER BY p.rowid")
+                            for row in candidates:
+                                if limit<=0:break
+                                d=self.get(row['run_id'])
+                                generation=d.get('audio_revision',0) if row['kind']=='mix' else d.get('export_generation',0)
+                                if row['generation']!=generation:continue
+                                self.sql("UPDATE factory_post SET status='running' WHERE id=? AND status='queued'",(row['id'],))
+                                self.post_tasks[row['id']]=asyncio.create_task(self.post_execute(row));limit-=1
+                except Exception as error:
+                    # A failed database write must not end mixing and export for good; the next round tries again.
+                    try:self.g['record']('post_worker_error',str(error)[:1200])
+                    except Exception:pass
                 await asyncio.sleep(.4)
         finally:
             tasks=list(self.post_tasks.values())
