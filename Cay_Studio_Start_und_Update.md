@@ -9,7 +9,7 @@
 
 Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er selbst zur vorherigen zurück. Projekte, Bilder, Stimmen und fertige Filme bleiben erhalten.
 
-Starte danach kein älteres Update mehr und lösche alte ZIP-Ordner: Projekte aus 0.18 laufen nur mit 0.18 (ist es doch passiert, starte einfach das 0.18-Update noch einmal, es geht nichts verloren).
+Starte danach kein älteres Update mehr (das Update-Programm verweigert es inzwischen selbst): Projekte aus 0.18 laufen nur mit 0.18 (ist es doch passiert, starte einfach das 0.18-Update noch einmal, es geht nichts verloren).
 
 ## Das neue Studio
 
