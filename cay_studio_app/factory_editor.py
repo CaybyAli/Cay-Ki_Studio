@@ -74,6 +74,10 @@ class Editor:
         control = self.rows('SELECT paused FROM factory_control WHERE id=?', (d['id'],))
         d['deleted'] = bool(self.rows('SELECT id FROM studio_trash WHERE id=?', (d['id'],)))
         d['paused'] = d['deleted'] or bool(control and control[0]['paused'])
+        if isinstance(d.get('idea'), dict):
+            try: switch = self.rows('SELECT autopilot FROM factory_switches WHERE id=?', (d['id'],))
+            except Exception: switch = []          # remix runs and databases before 0.18 have none
+            if switch: d['idea']['autopilot'] = bool(switch[0]['autopilot'])
         return d
 
     def editor_routes(self, app, kind='factory'):

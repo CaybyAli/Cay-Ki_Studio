@@ -71,6 +71,7 @@ class Factory(Quality,Editor,PostProduction,Autopilot,Library,TitleCard):
             db.executescript('''
 CREATE TABLE IF NOT EXISTS factory_runs(id TEXT PRIMARY KEY,request_key TEXT UNIQUE NOT NULL,state TEXT NOT NULL,document TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS factory_control(id TEXT PRIMARY KEY,paused INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS factory_switches(id TEXT PRIMARY KEY,autopilot INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS factory_assets(id TEXT PRIMARY KEY,kind TEXT NOT NULL,path TEXT NOT NULL,sha256 TEXT NOT NULL,name TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,step_key TEXT NOT NULL,status TEXT NOT NULL,prompt_id TEXT,graph TEXT NOT NULL,output TEXT,sha256 TEXT,error TEXT,UNIQUE(run_id,step_key));
 ''')
@@ -1135,6 +1136,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         @app.post('/api/factory/{rid}/autopilot')
         async def autopilot(rid:str,body:AutopilotSwitch):
             """Switch unattended production on or off; the worker advances waiting stops."""
+            # Stored beside the document like the pause flag: a step that is running saves its own copy
+            # of the document and used to switch the autopilot back (Cay: "nur noch schrittweise").
+            self.sql('INSERT INTO factory_switches(id,autopilot) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET autopilot=excluded.autopilot',(rid,int(body.enabled)))
             d=self.get(rid);d['idea']['autopilot']=body.enabled;d.pop('autopilot_stopped',None)
             d['phase']='Autopilot an: der Rest läuft ohne Zwischenfreigaben.' if body.enabled else 'Autopilot aus: du gibst jeden Schritt frei.'
             self.save(d);return self.get(rid)
