@@ -140,6 +140,8 @@ Feedback: Figurengrenze 8 → 30 (`MAX_CAST`); Restzeit pro Abschnittsart mit Vo
 Alte Projekte: alle Neuerungen per Projekt-Pin nur für neue Filme und „Neue Fassung“; `tests/test_compat_016.py` + `tests/fixtures/v17_reference.json` bytegleich.
 Prüfungen: Schlussprüfung Oberfläche (3 Funde, behoben: offene CSS-Klammer, Upload bei Bibliotheksfigur, Restzeit-Text); Gesamtprüfung mit 5 Linsen + Gegenprüfern (23 Funde; Umsetzung siehe unten).
 Nicht geprüft: alles auf Cays GPU (Bildvarianz von FLUX, geschlossene Lippen bei Reaktionen, GPU-Ersparnis des Schnitts), echte Telegram-/ntfy-Server (nur Testserver).
+Danach: Gesamtprüfung (5 Linsen, 23 Funde: 16 Fehler + 6 Verbesserungen umgesetzt, 1 bewusst nicht), Webseiten-Feinschliff (13 Design-Punkte + Kritikrunde), „Mein Drehbuch“ (`own_script.py`, deterministisch, Wort für Wort, Skeptiker-Runde mit 10 Funden behoben, bis 180 s/90 Einstellungen pro eigener Folge), „Aussehen pro Folge“ (`episode_looks.py`, Look-Varianten aus dem Grunddesign), Cays 0.17-Meldungen (Namensvarianten zusammengeführt, `fit_lengths` statt Abbruch bei zu langen KI-Texten, Folgenzahl-Sicherung, endgültig löschen).
+Prüfungen zuletzt: pytest 365 bestanden; Browser-Prüfungen 11/11 bestanden (ui, autopilot, abort_step, queue, library, library_ui, cover_ui, cut_ui, notify, script_ui, looks).
 
 ## Nächster konkreter Schritt
 Cay: 0.18.0 installieren (kein Neustart), kurzer 60-s-Test, dann der große Testlauf (6 Folgen, 13 Figuren); Video + Diagnose schicken. Entscheidung zu Arbeiten von unterwegs (Empfehlung Tailscale).

@@ -11,8 +11,12 @@ CAY STUDIO 0.18.0 - NUR DIESE SCHRITTE
    Qualitaet "Standard", Autopilot AN, Titelbild "Am Anfang".
    Achte auf: Titelbild, Gespraeche in Bloecken, Untertitel,
    Musik-Lautstaerke.
-7. Danach dein grosser Testlauf (6 Folgen, 13 Figuren).
-   Figuren aus dem Reiter "Figuren" kannst du direkt zuweisen.
+7. Dein angehaltenes Projekt "Gangster SpongeBob in Bikini Bottom":
+   oeffnen und "Neu planen" druecken. Die doppelten Figurennamen
+   und der Textlaengen-Fehler sind behoben.
+   Fuer neue Serien: "Aussehen der Figuren" > "Pro Folge anpassen",
+   wenn sich Kleidung von Folge zu Folge aendern soll.
+   Eigenes Skript: "Mein Drehbuch" waehlen, .md/.txt oder einfuegen.
 8. Wenn ein Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
    und Cay_Studio_Diagnose.txt plus das Video schicken.
    Das Video direkt aus D:\Cay_Studio\03_Fertige_Videos nehmen,

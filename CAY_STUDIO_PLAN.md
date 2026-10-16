@@ -84,17 +84,23 @@ Grundlage: dein Video (Einzelbilder und Tonpausen gemessen), Diagnose 0.16.1, f�
 | Ausdruck aus dem Upload friert ein | **[Sicher]** Das Bild wurde 1:1 als Figur benutzt. | Einmal mit neutralem Gesicht nachgezeichnet. „Bild genau so verwenden“ bleibt wählbar. |
 | Ping-Pong-Schnitt | **[Sicher]** Jede Zeile war eine eigene Einstellung. | Gesprächsblöcke, Reaktions- und Orts-Einstellungen. **[Hochrechnung]** Bei deinem Film ~58 → ~42 GPU-Minuten. |
 | Figuren-Bibliothek, Titelbild, Render-Uhr | – | Gebaut, siehe README. |
+| „Mehr als acht Figuren“ bei SpongeBob-Serie (0.17) | **[Sicher]** Eine Figur unter mehreren Schreibweisen wurde mehrfach gezählt (16 Namen für 8 Figuren). | Schreibweisen werden zusammengeführt; Test mit deiner Liste ergibt 8. |
+| „SourceNote … at most 2200 characters“ (0.17) | **[Sicher]** Ollama hält die Längenvorgabe nicht immer ein; ein zu langer KI-Text brach die Planung ab. | Zu lange KI-Texte werden am Satzende gekürzt, nirgends ein Abbruch. |
+| 6 Folgen gewählt, 5 erstellt | **[Vermutung]** Ursache nicht belegt, Fehlerbericht fehlt. | Planung hält vor dem ersten Bild an, wenn die Zahl nicht stimmt. |
+| Pausierte/fertige Projekte nicht löschbar | **[Sicher]** 0.17 hatte in der neuen Oberfläche kein Löschen. | Papierkorb + „Endgültig löschen“ (Videos nur nach zweiter Bestätigung). |
+| Eigenes Skript einfügen | – | „Mein Drehbuch“: .md/.txt oder einfügen, jedes Wort bleibt, bis 3 Minuten pro Folge. PDF nicht (Text kopieren). |
+| Figuren pro Folge anders anziehen | – | „Aussehen pro Folge“: Gesicht und Körper gleich, Kleidung je Folge; Figurencheck zeigt die Varianten. |
 
 **Ehrliche Grenzen:**
 1. Nichts davon lief auf deiner Grafikkarte. Ob Wan bei Reaktions-Einstellungen den Mund des Zuhörers geschlossen hält, zeigt erst dein Film **[Vermutung]**.
 2. Ob die neuen Bildrunden mit dem echten FLUX-Modell deutlich anders aussehen, ist nicht gemessen.
 3. Telegram und ntfy sind nur gegen einen Testserver geprüft, nicht gegen die echten Dienste.
 4. Laufende Projekte behalten den 0.17-Schnitt. Neuerungen gibt es in neuen Filmen und mit „Neue Fassung“.
+5. „Mein Drehbuch“ und „Aussehen pro Folge“ sind nur mit Test-KI geprüft. Wie gut FLUX das Gesicht bei neuer Kleidung hält, zeigt erst dein PC.
 
 ## 3e. Geplant für 0.19
 
-1. **Figuren-Looks pro Folge:** Grunddesign bleibt (Gesicht, Körper), pro Folge ein eigenes Outfit, z. B. Folge 1 zerrissene Kleidung, Folge 6 Millionär. Planung und Bildauswahl pro Folge.
-2. **Arbeiten von unterwegs:** Wartet auf deine Entscheidung (Datenübertragung nach außen). Empfehlung: Tailscale (kostenlos, privat, nur deine Geräte). Nicht über GitHub: Projekte lägen dann auf fremden Servern.
+1. **Arbeiten von unterwegs:** Wartet auf deine Entscheidung (Datenübertragung nach außen). Empfehlung: Tailscale (kostenlos, privat, nur deine Geräte). Nicht über GitHub: Projekte lägen dann auf fremden Servern.
 
 ## 4b. Nächste Zeithebel nach deinem Test (alle kostenlos)
 

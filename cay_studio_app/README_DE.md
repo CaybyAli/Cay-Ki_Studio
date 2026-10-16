@@ -20,6 +20,8 @@
 - **Autopilot:** Aus- und wieder Einschalten mitten im Film läuft wieder durchgehend (vorher nur noch schrittweise).
 - **Robuster:** Nach einem Absturz oder Neustart rechnet „Fortsetzen“ nur den verlorenen Auftrag neu, statt immer wieder anzuhalten. Turbo an oder aus lässt fertige Sprechabschnitte stehen. Bricht Ollama kurz weg, wartet die Planung und macht allein weiter. Ist die Festplatte kurz voll, läuft die Produktion danach von selbst weiter.
 - **Kleinere Verbesserungen:** Projekte in den Papierkorb legen (Wiederherstellen möglich). „Neue Fassung planen“ fragt, was anders werden soll. Entfernte Figur mit „Rückgängig“. Eigene Musik wieder entfernen. Eingabefehler auf Deutsch. Uploads auch per Tastatur. Nach „Lautstärke und Ton ändern“ holt „Abbrechen, fertigen Film behalten“ den alten Film zurück.
+- **Deine Meldungen aus 0.17:** Eine Figur mit mehreren Schreibweisen („Mr Krabs“, „Mr. Krabs“, „Krabs“, „Larry der Hummer“) zählt jetzt als eine Figur. Ist ein KI-Text zu lang, wird er am Satzende gekürzt, statt die Planung abzubrechen. Plant die KI eine andere Zahl an Folgen als gewählt, hält das Studio vor dem ersten Bild mit einer Meldung an.
+- **Endgültig löschen:** Im Papierkorb gibt es „Endgültig löschen“. Die fertigen Videos werden nur gelöscht, wenn du die zweite Frage bestätigst. Bibliothek und Uploads bleiben.
 - Ein älteres Update-Programm wird nicht mehr über 0.18 installiert.
 - Laufende Projekte behalten Schnitt, Stimmen und Bildtexte von 0.17. Die Neuerungen gibt es für neue Filme und mit „Neue Fassung“. Kein PC-Neustart nötig.
 
