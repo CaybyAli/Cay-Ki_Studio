@@ -281,10 +281,14 @@ audio { width: 100%; height: 40px; }
 .play svg { width: 13px; height: 13px; }
 .speaker { font-weight: 600; font-size: 15px; }
 
-/* Films */
-.film { display: grid; gap: 12px; }
+/* Films: the finished film as the scenes and the title card show their picture, frame left, text right */
+.films { display: grid; gap: 44px; }
+.film { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
 .film video { border-radius: var(--frame-radius); }
+.film-text { display: grid; gap: 14px; align-content: start; justify-items: start; min-width: 0; }
+.film-text .headline { overflow-wrap: break-word; }
 .caption-box { font-size: 15px; background: var(--surface); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; }
+.film .caption-box { width: 100%; max-width: 36em; padding: 16px 18px; }
 .caption-box .tags { color: var(--accent); }
 
 /* Sheet (settings) and toast */
@@ -306,6 +310,8 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .preview-frame { position: relative; top: 0; width: 220px; margin: 0 auto; }
   .scene { grid-template-columns: 1fr; }
   .scenes.compact .scene { grid-template-columns: 72px minmax(0, 1fr); }
+  .film { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .film video { width: min(100%, 300px); }
   .person-fields { grid-template-columns: 1fr; }
   .choice { grid-template-columns: 1fr; gap: 8px; }
   .hint { grid-column: 1; }

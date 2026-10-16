@@ -603,12 +603,13 @@ function captionBox(d, ep, ei) {
   return `<div class="caption-box"><span>${esc(caption)}</span><span class="tags">${esc(tags)}</span><span><button class="link" data-action="copy" data-text="${esc(caption + '\n\n' + tags)}">Beschreibung kopieren</button></span></div>`;
 }
 function filmsSection(d) {
-  return `<section class="section"><h2 class="title">${d.idea.episodes > 1 ? 'Deine Folgen' : 'Dein Film'}</h2><div class="grid">${(d.exports || []).map((x, i) => {
+  // Same grammar as scenes and the title card: the 9:16 frame on the left, its text on the right.
+  return `<section class="section"><h2 class="title">${d.idea.episodes > 1 ? 'Deine Folgen' : 'Dein Film'}</h2><div class="films">${(d.exports || []).map((x, i) => {
     const ep = d.episodes[x.episode] || {};
-    return `<div class="film"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/export/${i}#t=0.1"></video>
-      <span class="tile-title">${d.idea.episodes > 1 ? `Folge ${x.episode + 1}: ` : ''}${esc(ep.title || d.title)}</span>
+    return `<article class="film"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/export/${i}#t=0.1"></video>
+      <div class="film-text"><h3 class="headline">${d.idea.episodes > 1 ? `Folge ${x.episode + 1}: ` : ''}${esc(ep.title || d.title)}</h3>
       ${ep.social ? captionBox(d, ep, x.episode) : ''}
-      <div class="actions"><a class="button quiet small" href="/api/factory/${esc(d.id)}/export/${i}?download=true" download>Herunterladen</a>${x.cover ? `<a class="button quiet small" href="/api/factory/${esc(d.id)}/cover/export/${i}?download=true" download title="Zum Hochladen als TikTok-Titelbild">Titelbild herunterladen</a>` : ''}</div></div>`;
+      <div class="actions"><a class="button quiet small" href="/api/factory/${esc(d.id)}/export/${i}?download=true" download>Herunterladen</a>${x.cover ? `<a class="button quiet small" href="/api/factory/${esc(d.id)}/cover/export/${i}?download=true" download title="Zum Hochladen als TikTok-Titelbild">Titelbild herunterladen</a>` : ''}</div></div></article>`;
   }).join('')}</div></section>`;
 }
 async function refreshRun(force) {
