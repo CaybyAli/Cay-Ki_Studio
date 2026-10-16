@@ -1004,12 +1004,13 @@ function linesSheet(ei, si) {
     ${editable ? `<p class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</p>
     <div class="actions"><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
 }
-function readLines(form) {
+function readLines(form, keepEmpty) {
   const rows = {};
   form.querySelectorAll('[data-line]').forEach(el => { (rows[el.dataset.line] ||= {})[el.dataset.key] = el.value.trim(); });
   // Delivery and pause travel with each line: saving must not turn 'schreiend' into 'Natürlich'.
   const pause = v => (v === undefined || v === '' || !isFinite(+v)) ? 0.18 : +v;
-  return Object.values(rows).filter(l => l.text).map(l => ({ speaker: l.speaker, text: l.text, emotion: l.emotion || 'Natürlich', pause_after: pause(l.pause_after) }));
+  // keepEmpty: the editor itself keeps every row in place, so 'Entfernen' hits the row it sits in; saving drops empty ones.
+  return Object.values(rows).filter(l => keepEmpty || l.text).map(l => ({ speaker: l.speaker, text: l.text || '', emotion: l.emotion || 'Natürlich', pause_after: pause(l.pause_after) }));
 }
 
 /* Library figure -> figure of this project; the answer says whether it is applied or kept for later. */
@@ -1106,8 +1107,8 @@ const actions = {
     closeSheet(); toast(`${b.dataset.name} wird neu gestaltet.`);
   },
   'edit-lines'(b) { linesSheet(+b.dataset.episode, +b.dataset.scene); },
-  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form); lines.push({ speaker: sceneSpeakers(sc)[0], text: '' }); linesSheetFrom(form, lines); },
-  'drop-line'(b) { const form = $('#lines-form'), lines = readLines(form); lines.splice(+b.dataset.index, 1); linesSheetFrom(form, lines); },
+  'add-line'() { const form = $('#lines-form'), sc = S.run.episodes[+form.dataset.episode].scenes[+form.dataset.scene]; const lines = readLines(form, true); lines.push({ speaker: sceneSpeakers(sc)[0], text: '' }); linesSheetFrom(form, lines); },
+  'drop-line'(b) { const form = $('#lines-form'), lines = readLines(form, true); lines.splice(+b.dataset.index, 1); linesSheetFrom(form, lines); },
   async 'approve-images'() { await post(`/api/factory/${S.rid}/approve-images`, { revision: S.run.revision }); toast('Bilder übernommen. Die Stimmen entstehen.'); },
   async 'approve-voices'() { await post(`/api/factory/${S.rid}/approve-voices`, { revision: S.run.revision }); toast('Ton freigegeben. Die Animation beginnt.'); },
   async 'approve-sample'() { await post(`/api/factory/${S.rid}/approve-sample`, { revision: S.run.revision }); toast('Probe übernommen.'); },
@@ -1209,7 +1210,8 @@ const actions = {
 };
 function linesSheetFrom(form, lines) {
   const ei = +form.dataset.episode, si = +form.dataset.scene, sc = S.run.episodes[ei].scenes[si];
-  const original = sc.dialogues; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); linesSheet(ei, si); sc.dialogues = original;
+  // An old single-line scene keeps its text in 'dialogue': blank it while drawing, or removing its last line brings it back.
+  const keep = [sc.dialogues, sc.dialogue]; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); sc.dialogue = ''; linesSheet(ei, si); [sc.dialogues, sc.dialogue] = keep;
 }
 const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'cover-choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output', 'cancel-sound-edit']);
 

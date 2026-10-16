@@ -57,6 +57,10 @@ try:
     exports = [{**media(folder / 'Folge_01.mp4', 'mp4', 3), 'episode': 0, 'seconds': 3, 'fps': 25}]
     project(done, 'done', 'Butterblitz', {'exports': exports, 'export_generation': 0, 'audio_revision': 2, 'render_segments': {'0:0:0': 'x'}},
             {'autopilot': True}, episodes=[{'title': 'Butterblitz', 'scenes': [scene('S', ['Lena'], [('Lena', 'Hallo')])]}])
+    # image review: a scene with two speakers and an old single-line scene (line editor)
+    lines = 'e' * 32
+    old = scene('Alt', ['Lena'], []); old.update(dialogue='Alter Satz.', speaker='Lena', emotion='flüsternd')
+    project(lines, 'image_review', 'Textprobe', episodes=[{'title': 'Textprobe', 'scenes': [scene('Zwei', ['Lena', 'Markus'], [('Lena', 'Hallo.')]), old]}])
     db.commit()
 
     from playwright.sync_api import sync_playwright
@@ -79,6 +83,27 @@ try:
         d = doc(done)
         r.check('Abbrechen: fertiger Film und Download wieder da, gleiche Fassung', d['state'] == 'done' and d['export_generation'] == 0 and d['exports'] == exports
                 and 'sound_edit' not in d and status(f'/api/factory/{done}/export/0') == 200)
+
+        # 2. Line editor: every row stays in place; 'Entfernen' removes exactly its own row.
+        def rows(): return page.eval_on_selector_all('#lines-form [data-key="text"]', 'els => els.map(e => e.value)')
+        page.goto(studio.url + '/#p=' + lines); page.wait_for_selector('[data-action="edit-lines"]')
+        page.click('[data-action="edit-lines"][data-scene="0"]'); page.wait_for_selector('#lines-form')
+        page.click('#lines-form [data-action="add-line"]'); page.click('#lines-form [data-action="add-line"]')
+        r.check(f'Satz hinzufügen zweimal: drei Zeilen ({rows()})', rows() == ['Hallo.', '', ''])
+        page.fill('#lines-form [data-line="2"][data-key="text"]', 'Dritter Satz.')
+        page.click('#lines-form [data-action="drop-line"][data-index="1"]')
+        r.check(f'Entfernen auf leerer Zeile: getippter Satz bleibt ({rows()})', rows() == ['Hallo.', 'Dritter Satz.'])
+        page.fill('#lines-form [data-line="0"][data-key="text"]', '')
+        page.click('#lines-form [data-action="add-line"]'); page.click('#lines-form [data-action="drop-line"][data-index="2"]')
+        r.check(f'Geleerte Zeile bleibt beim Bearbeiten stehen ({rows()})', rows() == ['', 'Dritter Satz.'])
+        page.fill('#lines-form [data-line="0"][data-key="text"]', 'Neu.')
+        page.click('#lines-form button[type="submit"]'); page.wait_for_timeout(1200)
+        said = doc(lines)['episodes'][0]['scenes'][0]['dialogues']
+        r.check('Speichern nimmt nur Zeilen mit Text', [x['text'] for x in said] == ['Neu.', 'Dritter Satz.'])
+        page.click('[data-action="edit-lines"][data-scene="1"]'); page.wait_for_selector('#lines-form')
+        page.click('#lines-form [data-action="drop-line"][data-index="0"]')
+        r.check(f'Alte Einzelzeile: Entfernen leert die Szene ({rows()})', rows() == [])
+        page.click('#sheet [data-action="close"]')
 
         r.check('Keine JavaScript-Fehler', not [e for e in errors if 'Failed to load resource' not in e]); print('   ', errors[:3])
         browser.close()
