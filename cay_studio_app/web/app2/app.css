@@ -364,7 +364,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .scenes.compact .scene { grid-template-columns: 72px minmax(0, 1fr); }
   .film { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .film video { width: min(100%, 300px); }
-  .person-fields { grid-template-columns: 1fr; }
+  .person-fields { grid-template-columns: minmax(0, 1fr); }      /* a long chip must not widen the row under the × */
   .choice { grid-template-columns: 1fr; gap: 8px; }
   .hint { grid-column: 1; }
   .idea-input { font-size: 24px; }
@@ -476,7 +476,8 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .empty.compact { padding: 24px 0; }
 
 /* Figures in a new film and in a project */
-.person-tools { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.person-tools { grid-column: 1 / -1; justify-self: stretch; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.person-tools .chip { display: inline-block; line-height: 24px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .switch.compact { gap: 10px; font-size: 14px; }
 .switch.compact input { width: 42px; height: 26px; }
 .switch.compact input::after { width: 22px; height: 22px; }
