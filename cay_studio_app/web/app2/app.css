@@ -23,19 +23,20 @@
   --bar: rgba(245, 245, 247, .72);
   --seg-on: #ffffff;
   --frame-edge: #1d1d1f;
+  --frame-bg: #1d1d1f;      /* an empty 9:16 frame or picture; lighter in dark mode so it shows on a card */
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --canvas: #000000; --surface: #1c1c1e; --ink: #f5f5f7; --muted: #98989d; --hairline: #38383a;
     --fill: #2c2c2e; --accent: #0a84ff; --accent-soft: #0a2b4d; --done: #30d158; --wait: #ff9f0a; --stop: #ff453a;
-    --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --accent-text: #409cff; --track: #48484a; color-scheme: dark;
+    --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --frame-bg: #2c2c2e; --accent-text: #409cff; --track: #48484a; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --canvas: #000000; --surface: #1c1c1e; --ink: #f5f5f7; --muted: #98989d; --hairline: #38383a;
   --fill: #2c2c2e; --accent: #0a84ff; --accent-soft: #0a2b4d; --done: #30d158; --wait: #ff9f0a; --stop: #ff453a;
-  --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --accent-text: #409cff; --track: #48484a; color-scheme: dark;
+  --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --frame-bg: #2c2c2e; --accent-text: #409cff; --track: #48484a; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -132,6 +133,7 @@ details.more summary::-webkit-details-marker { display: none; }
 .icon-remove { position: static; background: var(--fill); color: var(--muted); width: 32px; height: 32px; }
 .people { display: grid; gap: 14px; }
 .person { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px; align-items: start; }
+.person > .icon-remove { margin-top: 8px; }                  /* centred on the 48 px name field */
 /* Line editor: the speaker's whole name stays readable ("Mr. Krabs", not "M"). */
 #lines-form .person { grid-template-columns: minmax(6.5em, max-content) minmax(0, 1fr) auto; align-items: center; }
 .line-rows { display: grid; gap: 10px; }
@@ -146,8 +148,36 @@ details.more summary::-webkit-details-marker { display: none; }
 .file-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 14px; border-radius: 980px; background: var(--fill); font-size: 14px; font-weight: 500; cursor: pointer; }
 .compose-foot { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 42px; flex-wrap: wrap; }
 
+/* Mein Drehbuch (0.18): Cay's own script, read by the server, checked live */
+.story-choice { margin: 0 0 28px; }
+.script-tools { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; margin: 24px 0 0; }
+.script-help { margin: 16px 0 0; }
+.script-help summary, .script-preview summary { cursor: pointer; color: var(--accent-text); font-size: 15px; width: fit-content; }
+.script-help p { margin: 10px 0 0; max-width: 40em; }
+.script-help pre, .script-preview pre { margin: 10px 0 0; padding: 12px 14px; background: var(--surface); border-radius: 12px; font: 13px/1.55 ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; }
+.script-preview pre { background: var(--canvas); }
+.script-input { display: block; width: 100%; min-height: 340px; margin: 18px 0 0; padding: 16px 18px; border: 1px solid var(--hairline); border-radius: 16px; background: var(--surface);
+  resize: vertical; font: 15px/1.6 ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace; letter-spacing: 0; tab-size: 2; }
+.script-input::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+.script-check-slot { margin: 16px 0 34px; display: grid; gap: 10px; }
+.script-check-slot > p { margin: 0; }
+.script-check { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 10px; }
+.script-check p { margin: 0; }
+.script-length { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.script-length span { color: var(--muted); font-size: 15px; }
+.script-length strong { font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+.problems { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
+.problems li { padding-left: 10px; border-left: 3px solid var(--hairline); color: var(--muted); overflow-wrap: anywhere; }
+.problems.block li { border-left-color: var(--stop); color: var(--ink); }
+.ok-line { color: var(--done); font-weight: 500; }
+.choice-text { margin: 0; font-size: 17px; }
+.person-fields.from-script { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.person-name { margin: 0; font-weight: 600; }
+.person-about { margin: 0 0 6px; overflow-wrap: anywhere; }
+
 /* The 9:16 frame: the studio's signature */
-.frame { position: relative; aspect-ratio: 9 / 16; border-radius: var(--frame-radius); overflow: hidden; background: #1d1d1f; color: #fff; isolation: isolate; }
+.frame { position: relative; aspect-ratio: 9 / 16; border-radius: var(--frame-radius); overflow: hidden; background: var(--frame-bg); color: #fff; isolation: isolate; }
 .frame img, .frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .frame .frame-empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 22px; color: rgba(255,255,255,.72); font-size: 15px; }
 .preview-frame { position: sticky; top: 92px; box-shadow: 0 30px 60px -20px rgba(0,0,0,.35); border: 10px solid var(--frame-edge); border-radius: 44px; }
@@ -163,6 +193,7 @@ details.more summary::-webkit-details-marker { display: none; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 34px 22px; }
 .grid > *, .film > * { min-width: 0; }
 video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
+.sample { max-width: 300px; }            /* the 9:16 sample is a film frame like .film, not a full-width card */
 .tile { display: grid; gap: 6px; align-content: start; color: var(--ink); cursor: pointer; border: 0; background: none; padding: 0; text-align: left; }
 .tile:hover { text-decoration: none; }
 .tile:hover .frame { transform: scale(1.015); }
@@ -260,10 +291,10 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .role-suggest { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 5px 10px 5px 5px; border: 0; border-radius: 12px;
   background: var(--accent-soft); color: var(--accent-text); font: inherit; font-size: 13px; line-height: 1.3; text-align: left; cursor: pointer; }
 .role-suggest b { font-weight: 600; }
-.mini { flex: none; display: grid; place-items: center; width: 30px; height: 40px; border-radius: 8px; overflow: hidden; background: #1d1d1f; color: rgba(255,255,255,.7); font-size: 11px; font-weight: 600; }
+.mini { flex: none; display: grid; place-items: center; width: 30px; height: 40px; border-radius: 8px; overflow: hidden; background: var(--frame-bg); color: rgba(255,255,255,.7); font-size: 11px; font-weight: 600; }
 .mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .figure { margin: 0; width: 132px; display: grid; gap: 8px; }
-.figure-pic { display: block; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #1d1d1f; position: relative; }
+.figure-pic { display: block; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: var(--frame-bg); position: relative; }
 .figure-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .figure-pic .frame-empty { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.72); font-size: 13px; }
 .figure figcaption { display: grid; gap: 4px; justify-items: start; font-size: 15px; }
@@ -335,7 +366,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .scenes.compact .scene { grid-template-columns: 72px minmax(0, 1fr); }
   .film { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .film video { width: min(100%, 300px); }
-  .person-fields { grid-template-columns: 1fr; }
+  .person-fields { grid-template-columns: minmax(0, 1fr); }      /* a long chip must not widen the row under the × */
   .choice { grid-template-columns: 1fr; gap: 8px; }
   .hint { grid-column: 1; }
   .idea-input { font-size: 24px; }
@@ -346,6 +377,8 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 }
 @media (max-width: 560px) {
   main { padding: 32px 16px 100px; }
+  .footer { padding: 0 16px 32px; }
+  .mix { padding: 20px; }
   .bar { grid-template-columns: auto 1fr auto; padding: 0 10px; gap: 6px; }
   .tabs { justify-self: center; }
   .tabs button { padding: 5px 8px; font-size: 13px; }
@@ -354,6 +387,8 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .icon-button { width: 30px; height: 30px; }
   .preview-frame { width: 170px; border-width: 7px; border-radius: 32px; }
   .preview-length strong { font-size: 44px; }
+  .script-input { min-height: 280px; padding: 12px 14px; font-size: 14px; }
+  .script-check { padding: 16px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
   .next { padding: 22px 20px; }
   /* Steps in one row: done and later steps as circles only, the current step with its name (names stay for screen readers). */
@@ -379,11 +414,12 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .page-intro { display: grid; gap: 8px; }
 .page-intro p { margin: 0; max-width: 36em; }
 .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: -12px 0 30px; }
+.sheet-body .filters { margin: 0; }                          /* in a sheet the sheet's own gap spaces it */
 .filters .search { max-width: 300px; min-height: 40px; padding: 8px 14px; border-radius: 980px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 34px 22px; }
 .cards-empty { grid-column: 1 / -1; }
 .card { position: relative; display: grid; gap: 10px; align-content: start; min-width: 0; }
-.portrait { position: relative; aspect-ratio: 3 / 4; border-radius: 22px; overflow: hidden; background: #1d1d1f; isolation: isolate; }
+.portrait { position: relative; aspect-ratio: 3 / 4; border-radius: 22px; overflow: hidden; background: var(--frame-bg); isolation: isolate; }
 .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .portrait-empty { position: absolute; inset: 0; display: grid; place-items: center; font-size: 44px; font-weight: 600; letter-spacing: -.03em; color: rgba(255,255,255,.55); }
 .portrait-wrap { position: relative; }
@@ -445,7 +481,8 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .empty.compact { padding: 24px 0; }
 
 /* Figures in a new film and in a project */
-.person-tools { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.person-tools { grid-column: 1 / -1; justify-self: stretch; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.person-tools .chip { display: inline-block; line-height: 24px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .switch.compact { gap: 10px; font-size: 14px; }
 .switch.compact input { width: 42px; height: 26px; }
 .switch.compact input::after { width: 22px; height: 22px; }
@@ -459,6 +496,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .lib-photo { width: 150px; }
   .pick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filters .search { max-width: none; flex: 1 1 100%; }
+  .filters .segmented { flex: 1 1 100%; }
   .voice-strip { left: 8px; right: 8px; bottom: 8px; }
 }
 

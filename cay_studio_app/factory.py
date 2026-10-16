@@ -24,6 +24,7 @@ from factory_timing import plan_seconds, POLICY, off_screen, allowed_speakers
 from factory_editor import Editor, image_rounds, active_variants, regenerate
 from studio_quality_policy import settings,segments,scene_segments,motion_direction,motion_direction_v16,RENDER_POLICY
 from story_source import manifest,validate_count,prepare_notes,episode_source,SeriesHeader
+import own_script
 
 ACTIVE={'planning','pictures','voicing','rendering','correcting'}
 
@@ -178,7 +179,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             ready=any(m.get('name')==self.g['MODEL'] for m in (tags or {}).get('models',[]))
             checks.append({'name':'Planung','ready':ready,'detail':self.g['MODEL'] if ready else 'Planungsmodell oder Ollama nicht erreichbar'})
         free=shutil.disk_usage(self.g['ROOT']).free
-        checks.append({'name':'Speicherplatz','ready':free>3*1024**3,'detail':f'{free/1024**3:.1f} GB frei auf der Studio-Ablage'})
+        checks.append({'name':'Speicherplatz','ready':free>3*1024**3,'detail':f'{free/1024**3:.1f}'.replace('.',',')+' GB frei auf der Studio-Ablage'})
         checks.append({'name':'Filmschnitt','ready':bool(shutil.which('ffmpeg') and shutil.which('ffprobe')),'detail':'FFmpeg und FFprobe'})
         python=self.base/'envs/chatterbox/bin/python'
         # Probe imports only; it must not load a GPU model while another process is rendering.
@@ -420,9 +421,13 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d['phase']=phase;self.save(d)
         summary=await prepare_notes(self.llm,idea['idea'],source,cache,checkpoint,progress)
         if self.paused(d['id']):return
+        # 'Mein Drehbuch' (0.18): Cay's own script, read once at creation (own_script). Cast, episodes and
+        # every spoken line come from it; no outline, story goal, script writing or doctor. Other ideas never have it.
+        if idea.get('story')=='script' and not d.get('script'):d['script']=own_script.prepare(dict(idea,participants=list(idea['participants'])))
+        script=d.get('script') if idea.get('story')=='script' else None
         if not d.get('plan'):
-            required=list(idea['participants'])
-            if idea['characters']!='none':
+            required=own_script.participants(script,idea['participants']) if script else list(idea['participants'])
+            if idea['characters']!='none' and not script:
                 from story_source import chunks
                 evidence=d.setdefault('source_cast',{})
                 for block in chunks(idea['idea']):
@@ -454,7 +459,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 except ValueError:partial.pop('header');partial['outlines']=[]
 
             if not partial.get('header'):
-                partial['header']=await self.llm(SeriesHeader,
+                partial['header']=await self.llm(SeriesHeader,own_script.HEADER if script else
                 'Du bist Autor und Regisseur für kurze eigenständige Filmserien. Entwickle die grobe Nutzeridee selbstständig zu einer zusammenhängenden Staffel. '
                 'Erfinde Handlung, Pointe, Aussehen, Eigenschaften und passende Stimmen, soweit nicht vorgegeben. Erhalte Namen und Eigenschaften der vorgegebenen Figuren. '
                 'characters=none bedeutet keine Figuren und keine Sprache. characters=provided erlaubt nur die angegebenen Figuren. '
@@ -468,6 +473,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     {**planning_idea,'idea':summary})
                 self.save(d)
             outlines=partial.setdefault('outlines',[])
+            if script and not outlines:outlines.extend(own_script.outlines(script))
             for number in range(len(outlines)+1,idea['episodes']+1):
                 if self.paused(d['id']):return
                 progress(f'Handlung für Folge {number}/{idea["episodes"]} planen')
@@ -482,7 +488,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     {'series':partial['header'],'episode':number,'total':idea['episodes'],
                      'source':original,'previous':outlines,'duration':idea['duration']}))
                 self.save(d)
-            plan=SeriesPlan.model_validate({**partial['header'],'episodes':outlines}).model_dump()
+            plan=SeriesPlan.model_validate({**(own_script.header(partial['header'],script) if script else partial['header']),'episodes':outlines}).model_dump()
             if len(plan['episodes'])!=idea['episodes']:raise RuntimeError('Die KI hat nicht die gewünschte Anzahl Folgen geplant. Noch keine Bilder gestartet.')
             names=[x['name'] for x in plan['cast']]
             if len(names)!=len(set(names)):raise RuntimeError('Die KI hat Figurennamen doppelt vergeben.')
@@ -497,12 +503,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             if len(d['episodes'])>i:continue
             n=shot_count(idea['duration'])
             d['phase']=f'Drehbuch für Folge {i+1} von {idea["episodes"]}';self.save(d)
-            original=await episode_source(self.llm,idea['idea'],source,i+1,cache,checkpoint)
+            original=script['episodes'][i]['text'] if script else await episode_source(self.llm,idea['idea'],source,i+1,cache,checkpoint)
             # Serial hooks: pick up the previous cliffhanger, end on this one (not after the last episode).
             continuity={'pick_up':d['plan']['episodes'][i-1].get('cliffhanger','') if i else '',
                         'end_with':outline.get('cliffhanger','') if i+1<idea['episodes'] else ''}
-            # The film's goal first, then scenes. Stored so a restart does not re-plan it.
-            spines=d.setdefault('spines',{})
+            # The film's goal first, then scenes. Stored so a restart does not re-plan it. Cay's own script is its own goal.
+            spines=d.setdefault('spines',{}) if not script else {str(i):None}
             if str(i) not in spines:
                 d['phase']=f'Folge {i+1}: Ziel des Films festlegen';self.save(d)
                 try:
@@ -517,10 +523,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 self.save(d)
             spine=spines[str(i)]
             from dialogue_density import enrich,speech_requested
-            if d['plan']['cast'] and speech_requested(idea):
+            if d['plan']['cast'] and (script or speech_requested(idea)):
                 # 0.17: screenplay first (see screenplay.py). Silent films keep the scene planner.
-                d['phase']=f'Folge {i+1}: Drehbuch schreiben';self.save(d)
-                ep=await screenplay.write_episode(self,d,i,outline,original,continuity,spine)
+                d['phase']=f'Folge {i+1}: '+('Dein Drehbuch lesen' if script else 'Drehbuch schreiben');self.save(d)
+                ep=await screenplay.write_episode(self,d,i,outline,original,continuity,spine,**({'own':script['episodes'][i]['text']} if script else {}))
                 ep['scene_budget']=len(ep['scenes'])
             else:
                 ep=await self.llm(EpisodePlan,
@@ -1121,6 +1127,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         @app.post('/api/factory')
         def create(body:Idea):
             existing=self.rows('SELECT id FROM factory_runs WHERE request_key=?',(body.request_key,));idea=cover.idea_document(body)
+            # Own script: episodes, length, cast and title come from it; refused with the first blocking problem.
+            try:script=own_script.prepare(idea)
+            except ValueError as error:raise HTTPException(400,str(error))
             if existing:
                 previous=self.get(existing[0]['id'])
                 if previous['idea']!=idea:raise HTTPException(409,'Diese Anfrage gehört zu einer anderen Idee. Bitte das bereits angelegte Projekt öffnen.')
@@ -1134,11 +1143,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 if p.voice:self.asset(p.voice,'voice')
             if body.music:self.asset(body.music,'music')
             source=manifest(body.idea)
-            try:validate_count(source,body.episodes)
+            try:validate_count(source,idea['episodes'])
             except ValueError as error:raise HTTPException(409,str(error))
             rid=uid();now=self.g['now']();d={'id':rid,'title':body.title or body.idea[:55],'source':source,'idea':idea,'state':'planning','phase':'Idee gespeichert · Planung wartet','episodes':[],'exports':[],'mix':{'music_mode':'uploaded' if body.music else 'off','music_level':.7,'effects_level':.65,'ambience_level':.6},'paused':False,'created':now,'updated':now}
             # Pinned once per project: 0.18 editing (title card). Projects without it keep their exact old export.
             d['edit_policy']=cover.POLICY
+            if script:d.update(script=script,title=idea['title'] or 'Mein Drehbuch',phase='Drehbuch gespeichert · Planung wartet')
             with self.g['conn']() as db:
                 db.execute('INSERT OR IGNORE INTO factory_runs VALUES(?,?,?,?,?,?)',(rid,body.request_key,d['state'],packed(d),now,now))
                 found=db.execute('SELECT id FROM factory_runs WHERE request_key=?',(body.request_key,)).fetchone()[0]
@@ -1151,6 +1161,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             body=await request.json();text=body.get('text','')
             if not isinstance(text,str) or len(text)>100000:raise HTTPException(400,'Bis zu 100.000 Zeichen pro Geschichte.')
             return manifest(text)
+        @app.post('/api/factory/script/check')
+        async def script_check(request:Request):
+            """Live check of 'Mein Drehbuch': figures, scenes, lines, length and every problem with its line."""
+            body=await request.json();text=body.get('text','') if isinstance(body,dict) else None
+            if not isinstance(text,str) or len(text)>100000:raise HTTPException(400,'Bis zu 100.000 Zeichen pro Drehbuch.')
+            return await asyncio.to_thread(own_script.read,text)   # a long script must not hold up the other requests
         @app.get('/api/factory/{rid}/source')
         def original_source(rid:str):
             d=self.get(rid);path=self.folder(d)/'01_Planung'/'Originalgeschichte.txt'
