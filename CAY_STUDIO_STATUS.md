@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 15.10.2026 (0.17.0) · Branch `claude/new-session-s0p05c`
+Stand: 16.10.2026 (0.18.0) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -134,8 +134,15 @@ Analyse: Video (Einzelbilder, silencedetect: 2,2–4,5 s Stille nach jeder Zeile
 - Schlussprüfung (Abstürze/Einbindung, 2 bestätigt, behoben): Fällt die KI-Rückfrage aus (Zeitüberschreitung, Ollama-Fehler), bleibt die erste Antwort gespeichert und die Planung läuft weiter; Namen mit „:“, „–“ oder „Dann“ werden nicht zerschnitten. Alte Projekte (prompt_policy 16) unverändert (`tests/test_compat_016.py`).
 - Prüfungen: `pytest` 162 bestanden; Browser `ui_check.py` 30/30, `autopilot_check.py` 5/5, `abort_step_check.py` 11/11, `queue_check.py` bestanden; Update gebaut (Payload `139e893c`, 78 Dateien) und Trockeninstallation bytegleich, neuer Release-Ordner.
 
+## 0.18.0 (16.10.2026) – Cays acht Wünsche, sieben Feedback-Punkte, Gesamtprüfung
+Wünsche: Figurencheck-Schalter, Ausdruck aus Upload nicht einfrieren (neutrales Nachzeichnen, `image_mode`), Render-Uhr (Vereinigung gemessener Intervalle + laufende Tokens), Figuren-Bibliothek (`figure_library.py`, Zuweisung im laufenden Projekt mit Vormerkung an sicheren Stellen), Benachrichtigungen (`notify.py`: Telegram, ntfy, Browser; Opt-in, Geheimnisse 0600, nie in Diagnose/Logs), weniger Ping-Pong (Screenplay-Policy 14, Gesprächsblöcke, Reaktions- und Orts-Einstellungen, Layout 18), Titelbild (`cover.py`, Einfügen in `finish()`), Export-Look (Untertitel-Häppchen, CPU-Kamerafahrt, Raumatmo; `edit_policy` 18).
+Feedback: Figurengrenze 8 → 30 (`MAX_CAST`); Restzeit pro Abschnittsart mit Vorab-Schätzung aus früheren Filmen; neue Bildrunden mit eigener Bildgestaltung und Notiz vorn (`note_policy` 18); Lautstärke-Regler, bei fertigem Film „Lautstärke und Ton ändern“ mit Autopilot-Halt (`sound_edit`); Autopilot-Schalter in `factory_switches` (Ursache „nur noch schrittweise“: laufender Schritt schrieb alte Kopie zurück, Test rot auf altem Code); Anrede „Sir Cay“.
+Alte Projekte: alle Neuerungen per Projekt-Pin nur für neue Filme und „Neue Fassung“; `tests/test_compat_016.py` + `tests/fixtures/v17_reference.json` bytegleich.
+Prüfungen: Schlussprüfung Oberfläche (3 Funde, behoben: offene CSS-Klammer, Upload bei Bibliotheksfigur, Restzeit-Text); Gesamtprüfung mit 5 Linsen + Gegenprüfern (23 Funde; Umsetzung siehe unten).
+Nicht geprüft: alles auf Cays GPU (Bildvarianz von FLUX, geschlossene Lippen bei Reaktionen, GPU-Ersparnis des Schnitts), echte Telegram-/ntfy-Server (nur Testserver).
+
 ## Nächster konkreter Schritt
-Cay: 0.17.0 installieren, PC neu starten, SpongeBob-Film 60 s Standard mit Autopilot und Figurenprüfung, Video + Diagnose schicken.
+Cay: 0.18.0 installieren (kein Neustart), kurzer 60-s-Test, dann der große Testlauf (6 Folgen, 13 Figuren); Video + Diagnose schicken. Entscheidung zu Arbeiten von unterwegs (Empfehlung Tailscale).
 
 ## Reihenfolge danach
 Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.
