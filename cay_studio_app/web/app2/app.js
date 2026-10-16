@@ -118,8 +118,9 @@ function busyUI() {
 }
 
 /* ---------- compose a new film ---------- */
+const SEG_LABELS = { duration: 'Länge pro Film', episodes: 'Folgen', look: 'Look', quality: 'Qualität', characters: 'Figuren', cover: 'Titelbild', music: 'Musik' };
 function seg(name, options, value) {
-  return `<div class="segmented" role="group" aria-label="${esc(name)}">${options.map(([v, label]) => `<button type="button" data-set="${esc(name)}" data-value="${esc(v)}" aria-pressed="${String(v) === String(value)}">${esc(label)}</button>`).join('')}</div>`;
+  return `<div class="segmented" role="group" aria-label="${esc(SEG_LABELS[name] || name)}">${options.map(([v, label]) => `<button type="button" data-set="${esc(name)}" data-value="${esc(v)}" aria-pressed="${String(v) === String(value)}">${esc(label)}</button>`).join('')}</div>`;
 }
 function composeView() {
   const d = S.draft;

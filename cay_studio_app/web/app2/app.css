@@ -94,7 +94,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .idea-input::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
 .idea-line { height: 1px; background: var(--hairline); margin: 8px 0 34px; }
 .choices { display: grid; gap: 26px; }
-.choice { display: grid; grid-template-columns: 120px 1fr; gap: 18px; align-items: center; }
+.choice { display: grid; grid-template-columns: 120px 1fr; gap: 6px 18px; align-items: center; }
 .choice > span { color: var(--muted); font-size: 15px; }
 .segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border-radius: 10px; background: var(--fill); justify-self: start; }
 .segmented button { border: 0; background: transparent; padding: 7px 15px; border-radius: 8px; cursor: pointer; font-size: 15px; }
@@ -105,6 +105,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .switch input:checked { background: var(--done); }
 .switch input:checked::after { transform: translateX(20px); }
 .hint { font-size: 14px; color: var(--muted); margin: 6px 0 0; grid-column: 2; }
+.hint:empty { display: none; }
 details.more { margin-top: 34px; border-top: 1px solid var(--hairline); padding-top: 18px; }
 details.more summary { cursor: pointer; color: var(--accent); list-style: none; font-size: 17px; }
 details.more summary::-webkit-details-marker { display: none; }
@@ -178,9 +179,10 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 
 /* Project */
 .project-head { display: grid; gap: 10px; margin-bottom: 30px; }
+.project-head p { margin: 0; }
 .back { font-size: 15px; }
 .project-foot { margin-top: 48px; }
-.steps { display: flex; gap: 0; margin: 26px 0 0; padding: 0; list-style: none; counter-reset: step; flex-wrap: wrap; }
+.steps { display: flex; gap: 0; margin: 16px 0 0; padding: 0; list-style: none; counter-reset: step; flex-wrap: wrap; }
 .steps li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); padding-right: 22px; }
 .steps li::before { counter-increment: step; content: counter(step); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--fill); color: var(--muted); }
 .steps li.done::before { content: "✓"; background: var(--done); color: #fff; }
