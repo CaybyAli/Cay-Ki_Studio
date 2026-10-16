@@ -19,6 +19,7 @@ Starte danach kein älteres Update mehr. Ab 0.18 verweigert das Update-Programm 
 - **Fertige Filme** liegen im jeweiligen Projekt: ansehen, herunterladen, Beschreibung kopieren. Mit Titelbild gibt es zusätzlich `Cover_<Film>.png`.
 - **Lautstärke:** Musik, Geräusche und Umgebung per Regler beim Ton. Bei einem fertigen Film: **Lautstärke und Ton ändern**. Der Autopilot wartet dann auf deine Freigabe.
 - **Titelbild:** Beim Anlegen unter „Figuren, Look-Vorlagen, Titelbild und Musik“: am Anfang, nach dem Einstieg oder aus.
+- **Aussehen pro Folge:** Bei mehreren Folgen wählst du „Gleich in allen Folgen“ oder „Pro Folge anpassen“. Mit „Pro Folge anpassen“ trägt eine Figur je nach Folge andere Kleidung, etwa in Folge 1 zerrissene Sachen und in Folge 6 einen Anzug. Gesicht und Körper bleiben gleich. Beim Figurencheck steht unter jeder Figur, wie sie in welcher Folge aussieht. Antippen, Wunsch eintippen, **Neu gestalten**: Nur die Szenen dieser Folge mit dieser Figur werden neu gezeichnet.
 - **Look-Vorlagen:** Unter „Figuren, Look-Vorlagen und Musik“ bis zu vier Bilder hochladen (JPG, PNG, WebP). Sie bestimmen nur den Stil. Personen daraus kommen nicht in den Film.
 - **Figuren:** Jede Figur wird einmal gestaltet und in allen Szenen genau so verwendet. Bekannte Figuren wie SpongeBob werden als Original angelegt. Am sichersten: bei der Figur ein eigenes Bild hochladen.
 - **Deine Figuren:** Bei der Bildauswahl siehst du oben jede Figur. **Neu gestalten** zeichnet die Figur und alle Szenen mit ihr neu.
