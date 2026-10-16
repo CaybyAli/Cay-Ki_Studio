@@ -351,6 +351,8 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
             # "Lautstärke und Ton ändern" / "Ton bearbeiten" is Cay's own click at the PC: the sound stop
             # it opens is not news. The finished remix after a slider change is announced as usual.
             if d.get('sound_edit') and d.get('state') == 'voice_review' and stored.get('state') in ('done', 'blocked'): return None
+            # Its "Abbrechen, fertigen Film behalten" brings back the film he already had: no news either.
+            if d.get('state') == 'done' and stored.get('sound_edit') and stored.get('state') == 'voice_review': return None
             # The stored trash/pause flags are ignored: restoring or resuming a project is Cay's own
             # click at the PC and must not announce the state it was already in.
             old = signature({**stored, 'deleted': False, 'paused': False}) if found else None

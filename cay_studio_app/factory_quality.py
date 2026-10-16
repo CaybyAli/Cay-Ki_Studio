@@ -13,6 +13,10 @@ from factory_speech import ready as speech_ready
 from factory_timing import POLICY,audio_layout,off_screen,allowed_speakers
 from studio_quality_policy import settings
 from lipsync_shots import silent_by_accident,MISSING_MARK
+# "Lautstärke und Ton ändern" on a finished film can be undone while nothing was re-voiced or re-mixed:
+# these keys are what reopen_output changes, sound_material what the finished sound was made from.
+SOUND_UNDO=('exports','export_generation','export_history','voice_approval','render_segments','render_tracking_version','phase')
+def sound_material(d):return hashlib.sha256(json.dumps([d['idea'],d.get('mix'),d.get('lines'),d.get('plan',{}).get('cast')],sort_keys=True,ensure_ascii=False).encode()).hexdigest()
 class Quality:
     def init_quality(self):self.setup_task=None;self.setup_process=None;self.setup_status={'state':'missing','message':'Stimmenstudio noch nicht eingerichtet.'}
     def voice_ready(self):return all(p.is_file() for p in [self.base/'envs/studio-voices/bereit.json',self.base/'envs/studio-voices/bin/python',self.base/'models/studio-voices/VoiceDesign/config.json'])
@@ -168,10 +172,23 @@ class Quality:
         @app.post('/api/factory/{rid}/reopen-output')
         async def reopen_output(rid:str,body:Review):
             d=self.get(rid);self.revision(d,body,{'done'})
+            d['sound_edit_undo']={'keep':{k:copy.deepcopy(d[k]) for k in SOUND_UNDO if k in d},'audio_revision':d.get('audio_revision'),'material':sound_material(d)}
             d.setdefault('export_history',[]).append({'generation':d.get('export_generation',0),'exports':d.get('exports',[])})
             d['export_generation']=d.get('export_generation',0)+1;d['exports']=[];d.pop('voice_approval',None)
             d['render_segments']={};d['render_tracking_version']=10;d['sound_edit']=True
             d['state']='voice_review';d['phase']='Ton und Export bearbeiten. Fertige Animationen werden bei passenden Vorgaben weiterverwendet.'
+            self.save(d);return self.get(rid)
+        @app.post('/api/factory/{rid}/cancel-sound-edit')
+        async def cancel_sound_edit(rid:str,body:Review):
+            """Back to the finished film, exactly as it was (same export generation: no second 'fertig' message)."""
+            d=self.get(rid);self.revision(d,body,{'voice_review'});undo=d.get('sound_edit_undo')
+            if not undo:raise HTTPException(409,'Hier gibt es keinen fertigen Film zum Zurückholen.')
+            if undo['audio_revision']!=d.get('audio_revision') or undo['material']!=sound_material(d):
+                raise HTTPException(409,'Der Ton wurde schon geändert. Gib ihn frei, dann entsteht der neue Film.')
+            for k in SOUND_UNDO:
+                if k in undo['keep']:d[k]=undo['keep'][k]
+                else:d.pop(k,None)
+            d.pop('sound_edit',None);d.pop('sound_edit_undo',None);d['state']='done'
             self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/reopen-voices')
         async def reopen_voices(rid:str,body:Review):
@@ -184,7 +201,7 @@ class Quality:
                 raise HTTPException(409,'Der laufende Arbeitsschritt wird noch abgeschlossen. Kurz warten.')
             d.setdefault('export_history',[]).append({'generation':d.get('export_generation',0),'exports':d.get('exports',[])})
             d['export_generation']=d.get('export_generation',0)+1;d['exports']=[]
-            for key in ('voice_approval','sample_approval','error','resume_state','uncertain'):d.pop(key,None)
+            for key in ('voice_approval','sample_approval','error','resume_state','uncertain','sound_edit_undo'):d.pop(key,None)
             d['render_segments']={};d['render_tracking_version']=10;d['sound_edit']=True
             d.update(state='voice_review',phase='Dialoge und Ton prüfen. Danach die Produktion erneut freigeben.')
             self.save(d);return self.get(rid)

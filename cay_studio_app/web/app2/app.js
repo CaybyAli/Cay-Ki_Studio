@@ -351,10 +351,14 @@ function nextView(d) {
       <p>${c.chosen} von ${c.total} Szenen gewählt.${cover} Mit dem Autopilot nimmt das Studio überall das erste Bild und macht ohne weitere Stopps fertig.</p>
       <div class="actions"><button class="button" data-action="approve-images" ${c.ready ? '' : 'disabled'}>Bilder übernehmen</button>${autopilotSwitch(d)}</div></section>`;
   }
-  if (d.state === 'voice_review') return `<section class="next wait"><h2 class="headline">Hör dir den Ton an.</h2>
+  if (d.state === 'voice_review') {
+    // Back to the finished film while nothing was re-voiced or re-mixed (the server checks the rest).
+    const undo = d.sound_edit_undo && (d.sound_edit_undo.audio_revision ?? null) === (d.audio_revision ?? null);
+    return `<section class="next wait"><h2 class="headline">Hör dir den Ton an.</h2>
       <p>${d.sound_edit ? `Stell unten Musik, Geräusche und Umgebung ein und hör rein.${d.idea.autopilot ? ' Der Autopilot wartet, bis du freigibst.' : ''} Fertige Animationen werden wiederverwendet, solange die Sätze gleich bleiben.`
         : 'Jede Zeile wurde einzeln auf hörbare Sprache geprüft. Passt alles, startet die Animation.'}</p>
-      <div class="actions"><button class="button" data-action="approve-voices">Ton freigeben und animieren</button>${autopilotSwitch(d)}</div></section>`;
+      <div class="actions"><button class="button" data-action="approve-voices">Ton freigeben und animieren</button>${undo ? '<button class="button quiet" data-action="cancel-sound-edit">Abbrechen, fertigen Film behalten</button>' : ''}${autopilotSwitch(d)}</div></section>`;
+  }
   if (d.state === 'sample_review') return `<section class="next wait"><h2 class="headline">Prüf die kurze Probe.</h2>
       <p>Mundbewegung, Stimme und Figur. Danach rechnet das Studio den Rest ohne Unterbrechung.</p>
       <div class="sample"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/sample#t=0.1"></video></div>
@@ -1120,7 +1124,11 @@ const actions = {
     toast(`Neue Stimme für ${b.dataset.name} wird gestaltet.`);
   },
   async 'reopen-voices'() { await post(`/api/factory/${S.rid}/reopen-voices`, { revision: S.run.revision }); },
-  async 'reopen-output'() { await post(`/api/factory/${S.rid}/reopen-output`, { revision: S.run.revision }); },
+  async 'reopen-output'() {
+    if (!confirm('Lautstärke und Ton ändern? Bis der neue Film fertig ist, sind die Downloads hier weg. Solange du noch nichts geändert hast, holt „Abbrechen, fertigen Film behalten“ ihn zurück. Die Dateien bleiben im Ordner 03_Fertige_Videos.')) return;
+    await post(`/api/factory/${S.rid}/reopen-output`, { revision: S.run.revision });
+  },
+  async 'cancel-sound-edit'() { await post(`/api/factory/${S.rid}/cancel-sound-edit`, { revision: S.run.revision }); toast('Dein fertiger Film ist wieder da.'); },
   async 'new-edition'() { const run = await post(`/api/factory/${S.rid}/new-edition`); toast('Neue Fassung angelegt.'); location.hash = 'p=' + run.id; },
   episode(b) { S.episode = +b.dataset.index; render(); },
   async copy(b) { try { await navigator.clipboard.writeText(b.dataset.text); toast('Beschreibung kopiert.'); } catch (e) { toast('Kopieren nicht möglich. Text bitte markieren.'); } },
@@ -1203,7 +1211,7 @@ function linesSheetFrom(form, lines) {
   const ei = +form.dataset.episode, si = +form.dataset.scene, sc = S.run.episodes[ei].scenes[si];
   const original = sc.dialogues; sc.dialogues = lines.map(l => ({ ...l, text: l.text.trim() || '' })); linesSheet(ei, si); sc.dialogues = original;
 }
-const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'cover-choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output']);
+const NEEDS_REFRESH = new Set(['cast-approve', 'cast-redo', 'pause', 'resume', 'restore', 'autopilot', 'abort-step', 'abort-fast', 'choose', 'cover-choose', 'approve-images', 'approve-voices', 'approve-sample', 'reject-sample', 'rebuild-audio', 'more-dialogue', 'new-voice', 'reopen-voices', 'reopen-output', 'cancel-sound-edit']);
 
 document.addEventListener('click', async event => {
   const nav = event.target.closest('[data-nav]');
