@@ -18,7 +18,6 @@ import cast_design
 import cover
 from cover import TitleCard
 import episode_looks
-from episode_looks import Wardrobe
 import screenplay
 import turbo
 from factory_audio import turns,edit_spec,scene_kinds
@@ -73,7 +72,7 @@ def fit_lengths(schema,raw):
 class Wait(Exception):pass
 class Uncertain(Exception):pass
 
-class Factory(Quality,Editor,PostProduction,Autopilot,Library,TitleCard,Wardrobe):
+class Factory(Quality,Editor,PostProduction,Autopilot,Library,TitleCard):
     def __init__(self,g):
         self.g=g;self.base=g['RUNTIME'].parent;self.busy=None;self.proc=None
         self.comfy=self.base/'apps/ComfyUI';self.init_quality()
@@ -999,9 +998,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         self.quality_routes(app)
         self.library_routes(app)
         self.cover_routes(app)
-        self.look_routes(app)
         from render_routes import add_routes
         add_routes(self,app)
+        episode_looks.add_routes(self,app)
         @app.get('/api/factory')
         def listing():
             result=[]

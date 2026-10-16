@@ -162,34 +162,34 @@ async def render(factory, d, refs, models):
     return True
 
 
-# ---------- factory ----------
+# ---------- routes ----------
 
-class Wardrobe:
-    """Factory mixin: one look variant drawn again (with Cay's wish) and its picture."""
+def add_routes(factory, app):
+    """One look variant drawn again (with Cay's wish) and its picture."""
+    f = factory
 
-    def look_routes(self, app):
-        @app.post('/api/factory/{rid}/look/redo')
-        async def look_redo(rid: str, body: LookRedo):
-            d = self.get(rid); self.image_open(d)
-            if not wanted(d): raise HTTPException(409, 'In diesem Projekt sehen die Figuren in allen Folgen gleich aus.')
-            if not 0 <= body.episode < len(d.get('episodes') or []): raise HTTPException(404, 'Folge fehlt.')
-            if body.name not in [p['name'] for p in d['plan']['cast']]: raise HTTPException(404, 'Figur gehört nicht zu diesem Projekt.')
-            ep = d['episodes'][body.episode]; note = clean(body.note); n = body.episode + 1
-            if body.name not in visible(ep): raise HTTPException(400, f'{body.name} ist in Folge {n} nicht zu sehen.')
-            if not note and not (ep.get('looks') or {}).get(body.name): raise HTTPException(400, f'Beschreib, wie {body.name} in Folge {n} aussehen soll.')
-            # Cay's wish replaces the planned text; his own words are then also what he reads.
-            if note: ep.setdefault('looks', {})[body.name] = note; ep.setdefault('look_labels', {}).pop(body.name, None)
-            rounds = ep.setdefault('look_rounds', {}); rounds[body.name] = rounds.get(body.name, 0) + 1
-            count = invalidate(d, body.episode, body.name)
-            if d['state'] != 'blocked': d['state'] = 'pictures'
-            d['phase'] = f'{body.name} in Folge {n} wird neu gestaltet' + (f' · {count} Szenen folgen' if count > 1 else ' · 1 Szene folgt' if count else ''); self.save(d)
-            return self.get(rid)
+    @app.post('/api/factory/{rid}/look/redo')
+    async def look_redo(rid: str, body: LookRedo):
+        d = f.get(rid); f.image_open(d)
+        if not wanted(d): raise HTTPException(409, 'In diesem Projekt sehen die Figuren in allen Folgen gleich aus.')
+        if not 0 <= body.episode < len(d.get('episodes') or []): raise HTTPException(404, 'Folge fehlt.')
+        if body.name not in [p['name'] for p in d['plan']['cast']]: raise HTTPException(404, 'Figur gehört nicht zu diesem Projekt.')
+        ep = d['episodes'][body.episode]; note = clean(body.note); n = body.episode + 1
+        if body.name not in visible(ep): raise HTTPException(400, f'{body.name} ist in Folge {n} nicht zu sehen.')
+        if not note and not (ep.get('looks') or {}).get(body.name): raise HTTPException(400, f'Beschreib, wie {body.name} in Folge {n} aussehen soll.')
+        # Cay's wish replaces the planned text; his own words are then also what he reads.
+        if note: ep.setdefault('looks', {})[body.name] = note; ep.setdefault('look_labels', {}).pop(body.name, None)
+        rounds = ep.setdefault('look_rounds', {}); rounds[body.name] = rounds.get(body.name, 0) + 1
+        count = invalidate(d, body.episode, body.name)
+        if d['state'] != 'blocked': d['state'] = 'pictures'
+        d['phase'] = f'{body.name} in Folge {n} wird neu gestaltet' + (f' · {count} Szenen folgen' if count > 1 else ' · 1 Szene folgt' if count else ''); f.save(d)
+        return f.get(rid)
 
-        @app.get('/api/factory/{rid}/look-image/{episode}/{index}')
-        def look_image(rid: str, episode: int, index: int):
-            d = self.get(rid); cast = d.get('plan', {}).get('cast', [])
-            path = refs_for(d, episode).get(cast[index]['name']) if 0 <= index < len(cast) else None
-            if not path: raise HTTPException(404, 'Bild für diese Folge noch nicht verfügbar.')
-            p = self.path(path)
-            if p.suffix.lower() != '.png': raise HTTPException(400, 'Kein Figurenbild.')
-            return FileResponse(p, media_type='image/png')
+    @app.get('/api/factory/{rid}/look-image/{episode}/{index}')
+    def look_image(rid: str, episode: int, index: int):
+        d = f.get(rid); cast = d.get('plan', {}).get('cast', [])
+        path = refs_for(d, episode).get(cast[index]['name']) if 0 <= index < len(cast) else None
+        if not path: raise HTTPException(404, 'Bild für diese Folge noch nicht verfügbar.')
+        picture = f.path(path)
+        if picture.suffix.lower() != '.png': raise HTTPException(400, 'Kein Figurenbild.')
+        return FileResponse(picture, media_type='image/png')
