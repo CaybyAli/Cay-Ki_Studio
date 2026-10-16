@@ -29,7 +29,8 @@ from factory_models import MAX_CAST, Outline
 from factory_timing import HEAD, TAIL, REACTION_TAIL, REACTION_MIN, ACTION_BASE, ESTABLISH_BASE
 from story_source import HEADING, manifest
 
-MIN_SECONDS, MAX_SECONDS = 15, 90
+MIN_SECONDS, MAX_SECONDS = 15, 180
+LONG_SECONDS = 90          # above: a hint, not a stop (Cay: keine Textlängen-Sperre); the planned minimum stays at most 90
 MAX_SPOKEN = 240            # screenplay.parse keeps 240 characters of a spoken line
 MAX_ACTION = 400            # … and 400 of an AKTION line
 PDF_MESSAGE = ('PDF kann das Studio nicht zuverlässig lesen. Öffne das PDF, kopiere den Text und füge ihn hier ein, '
@@ -626,19 +627,23 @@ def read(text):
         spoken = [l for l in lines if l['kind'] == 'line']
         cut = screenplay.shots(title2, beat_list, lines, names); seconds = round(_seconds(cut))
         if not spoken: r.problem(ep['line'], f'{label}: kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“', True)
+        wordless = next((l['text'] for l in spoken if not re.search(r'[^\W_]', l['text'])), None)
+        if wordless: r.problem(ep['line'], f'{label}: „{wordless[:40]}“ hat kein einziges Wort zum Sprechen. Bitte als Satz schreiben oder streichen.', True)
         elif seconds < MIN_SECONDS:
             r.problem(ep['line'], f'{label} dauert nach dem Drehbuch nur etwa {seconds} s. Ein Film braucht mindestens {MIN_SECONDS} s: '
                                   'schreib ein paar Sätze oder eine AKTION-Zeile dazu.', True)
         elif seconds > MAX_SECONDS:
             r.problem(ep['line'], f'{label} dauert nach dem Drehbuch etwa {seconds} s, höchstens {MAX_SECONDS} s gehen. Kürze das Drehbuch '
                                   + ('oder teile die Folge auf.' if series else 'oder teile es mit „## Folge 1“, „## Folge 2“ in mehrere Folgen.'), True)
-        if len(cut) > screenplay.MAX_SHOTS:
-            r.problem(ep['line'], f'{label} ergibt {len(cut)} Einstellungen, höchstens {screenplay.MAX_SHOTS}. Weniger AKTION-Zeilen '
+        elif seconds > LONG_SECONDS:
+            r.problem(ep['line'], f'{label} dauert etwa {seconds} s. Das geht, rechnet aber entsprechend länger als ein 90-s-Film.')
+        if len(cut) > screenplay.OWN_MAX_SHOTS:
+            r.problem(ep['line'], f'{label} ergibt {len(cut)} Einstellungen, höchstens {screenplay.OWN_MAX_SHOTS}. Weniger AKTION-Zeilen '
                                   'oder mehr Sätze derselben Figur hintereinander.', True)
         if spoken and not any(b['place'] and b['place'] != 'Ort' for b in beat_list):
             r.problem(ep['line'], ('Kein Ort angegeben' if not series else f'{label}: kein Ort angegeben') + '. Schreib zum Beispiel '
                                   '„### Szene 1 – Küche – Oma steht am Tisch“, dann weiß das Studio, wo es spielt.')
-        if spoken and not problems and seconds <= MAX_SECONDS and len(cut) <= screenplay.MAX_SHOTS and len(names) <= MAX_CAST:
+        if spoken and not problems and seconds <= MAX_SECONDS and len(cut) <= screenplay.OWN_MAX_SHOTS and len(names) <= MAX_CAST:
             for note in advice(title2, beat_list, lines, names): r.problem(None, (f'{label}: ' if series else 'Hinweis: ') + note)
         about = [' '.join(x.split()) for x in r.preface + logline + [b['what'] for b in beat_list] if x.strip()]
         plot = ' '.join(x if x[-1] in '.!?…' else x + '.' for x in about) or ' '.join(l['text'] for l in lines[:4])
@@ -657,7 +662,7 @@ def read(text):
             'words': sum(e['words'] for e in episodes), 'lines': sum(e['lines'] for e in episodes), 'scenes': sum(e['scenes'] for e in episodes),
             'seconds': sum(e['seconds'] for e in episodes),
             # Planned with a little less than the estimate: the minimum length must not make the voices wait.
-            'duration': max(MIN_SECONDS, min(MAX_SECONDS, math.floor(shortest * .9))),
+            'duration': max(MIN_SECONDS, min(LONG_SECONDS, math.floor(shortest * .9))),
             'preview': '\n\n'.join((f'## Folge {e["number"]}\n' if series else '') + e['text'] for e in episodes)}
 
 

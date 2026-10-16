@@ -45,6 +45,7 @@ AMBIENCE = ('room', 'wind', 'forest', 'rain', 'train', 'none')
 
 
 MAX_SHOTS = 44
+OWN_MAX_SHOTS = 90         # Cay's own script (own_script): his episodes may run longer than the planner's
 
 
 def budget(duration, speakers=2, policy=POLICY):
@@ -967,10 +968,10 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
     else:
         remaining = check(title, beats, lines, problems, cast, idea['duration'], policy)
         cut = ensure_action(shots(title, beats, lines, cast, policy), idea['duration'])
-    if own is not None and (not cut or len(cut) > MAX_SHOTS):
+    if own is not None and (not cut or len(cut) > OWN_MAX_SHOTS):
         raise RuntimeError(f'Folge {index + 1} deines Drehbuchs ' + ('hat keine verwertbare Zeile.' if not cut else
-                           f'ergibt {len(cut)} Einstellungen, höchstens {MAX_SHOTS}. Bitte kürzen und als neuen Film anlegen.'))
-    if not cut or len(cut) > MAX_SHOTS:
+                           f'ergibt {len(cut)} Einstellungen, höchstens {OWN_MAX_SHOTS}. Bitte in mehrere Folgen teilen.'))
+    if own is None and (not cut or len(cut) > MAX_SHOTS):
         # Unusable: forget it, so "Neu planen" really writes a new one (it used to parse the same text again).
         d['screenplays'].pop(str(index), None); factory.save(d)
         raise RuntimeError('Das Drehbuch enthält keine verwertbaren Zeilen.' if not cut else

@@ -31,7 +31,7 @@ Starte danach kein älteres Update mehr. Ab 0.18 verweigert das Update-Programm 
 
 Du hast schon ein fertiges Drehbuch? Oben bei **Neu** auf **Mein Drehbuch** tippen, den Text einfügen oder eine **.md**- oder **.txt**-Datei wählen. Das Studio spricht jeden Satz genau so, wie er dasteht. Die KI liest dein Drehbuch, weiß dadurch, was passiert, und gestaltet nur Figuren, Bilder und Bewegung dazu. Sie ändert keinen Satz und erfindet keine Handlung.
 
-Unter dem Textfeld steht sofort, was das Studio liest: Figuren, Szenen, Sätze, Wörter, Folgen und die **Länge nach Drehbuch** (15 bis 90 Sekunden pro Film). Probleme stehen mit Zeilennummer da. Unter „Figuren, Look-Vorlagen, Titelbild und Musik“ kannst du jeder Figur aus dem Drehbuch ein eigenes Bild, eine eigene Stimme oder ein Profil aus deinen Figuren geben. **Vorlage herunterladen** zeigt ein fertiges Beispiel.
+Unter dem Textfeld steht sofort, was das Studio liest: Figuren, Szenen, Sätze, Wörter, Folgen und die **Länge nach Drehbuch** (mindestens 15 Sekunden, bis 3 Minuten pro Folge). Probleme stehen mit Zeilennummer da. Unter „Figuren, Look-Vorlagen, Titelbild und Musik“ kannst du jeder Figur aus dem Drehbuch ein eigenes Bild, eine eigene Stimme oder ein Profil aus deinen Figuren geben. **Vorlage herunterladen** zeigt ein fertiges Beispiel.
 
 So schreibst du es:
 

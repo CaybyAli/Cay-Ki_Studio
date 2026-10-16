@@ -12,7 +12,7 @@ So liest Cay Studio dein Drehbuch:
 - Was im Satz in Klammern steht, wird nicht gesprochen.
 - „AKTION: …“ ist etwas, das ohne Worte passiert. Daraus wird eine stumme Einstellung. Eine Zeile ohne Namen davor zählt auch als Aktion.
 - Für eine Serie schreibst du Überschriften wie „## Folge 1: Titel“ und „## Folge 2: Titel“.
-- Ein Film dauert 15 bis 90 Sekunden. Etwa zweieinhalb Wörter sind eine Sekunde.
+- Eine Folge dauert mindestens 15 Sekunden, bis 3 Minuten gehen. Etwa zweieinhalb Wörter sind eine Sekunde.
 
 ## Figuren
 FIGUR: Oma Hilde – 72 Jahre, graue Dutt-Frisur, geblümte Schürze, streng, aber herzlich

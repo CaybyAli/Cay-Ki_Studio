@@ -175,7 +175,8 @@ def test_problems_carry_line_numbers_and_block_the_film():
     def blocking(text): return [p['text'] for p in own_script.read(text)['problems'] if p['blocking']]
     long = '### Szene 1 – Büro – Lena und Markus am Kaffeeautomaten\n' + ''.join(
         f'{"LENA" if i % 2 else "MARKUS"} (ruhig): Das ist Satz Nummer {i}, und er hat ungefähr zwölf Wörter, damit es lang wird.\n' for i in range(24))
-    assert any('höchstens 90 s gehen' in t and '## Folge 1' in t for t in blocking(long))
+    assert not blocking(long)                                     # 24 long lines (~120 s): a hint, no stop
+    assert any('höchstens 180 s gehen' in t and '## Folge 1' in t for t in blocking(long * 2))
     assert any('nur etwa' in t and 'mindestens 15 s' in t for t in blocking('LENA: Hallo!\nMARKUS: Hallo zurück!'))
     assert any('kein gesprochener Satz' in t for t in blocking('# Nur ein Titel\nEin bisschen Beschreibung ohne Sätze.'))
     before = blocking('# Serie\nLENA: Ich stehe zu früh im Text, noch vor jeder Folge hier.\n## Folge 1: Start\n' + long.split('\n', 1)[1][:400])
@@ -190,7 +191,7 @@ def test_problems_carry_line_numbers_and_block_the_film():
                                                         'MARKUS: Hallo Lena, gleichfalls, wie war denn dein Wochenende so?')['problems'])
     assert 'Hinweis: Wenig Sprecherwechsel: 2, empfohlen sind mindestens 3.' in short and 'nötig' not in short and 'schreiben.' not in short
     # Blocking problems come first in the list the app shows.
-    problems = own_script.read(long + '\nMUSIK: laut')['problems']
+    problems = own_script.read(long * 2 + '\nMUSIK: laut')['problems']
     assert problems[0]['blocking'] and not problems[-1]['blocking']
 
 
@@ -537,3 +538,14 @@ def test_the_long_sentence_hint_reads_as_plain_german():
     assert any(t.startswith('Hinweis: Sätze mit mehr als 22 Wörtern: in zwei kürzere Sätze geteilt klingen sie lebendiger. Das ist mein Satz')
                for t in notes(r)), notes(r)
     assert not any('wirken geteilt' in t for t in notes(r))
+
+
+def test_a_long_own_episode_is_a_hint_not_a_stop():
+    """Cay: 'keine Textlängen-Sperre'. Up to 180 s and 90 shots per own episode; the planned minimum stays at most 90 s."""
+    import own_script
+    lines = '\n'.join(f'{"OMA" if i % 2 else "TIM"}: Das ist Satz Nummer {i}, und er ist ganz normal lang für einen Film.' for i in range(28))
+    result = own_script.read('# Langer Film\n### Szene 1 – Küche – Oma und Tim am Tisch\n' + lines)
+    seconds = result['episodes'][0]['seconds']
+    assert 90 < seconds <= 180, seconds
+    assert result['ok'], [p['text'] for p in result['problems'] if p['blocking']]
+    assert any('rechnet aber entsprechend länger' in p['text'] for p in result['problems'])
