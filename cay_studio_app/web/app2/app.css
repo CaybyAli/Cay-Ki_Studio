@@ -239,8 +239,8 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .cast-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 24px 18px; }
 .cast.compact .cast-row { grid-template-columns: repeat(auto-fill, minmax(112px, 132px)); gap: 20px 16px; }
 .section + .cast { margin-top: 56px; }
-.role { display: grid; gap: 8px; align-content: start; min-width: 0; }
-.role-hit { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.role { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; min-width: 0; }   /* a wide suggestion must not widen the picture */
+.role-hit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; border: 0; padding: 0; margin: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .role-hit:focus-visible { outline: none; }
 .role-hit:focus-visible .figure-pic { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 3px; }
 .role-hit .figure-pic img { transition: transform .3s ease; }
