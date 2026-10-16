@@ -411,7 +411,8 @@ function sectionsView(d) {
   if (d.state === 'done') return filmsSection(d);
   const cast = showsCast(d) ? castPanel(d) : '';
   if (['image_review', 'pictures', 'cast_review'].includes(d.state)) return cast + coverCard(d) + scenesSection(d, d.state !== 'cast_review');
-  if (d.state === 'voice_review') return cast + soundSection(d) + scenesSection(d, false);
+  // The order follows the next card: on 'Hör dir den Ton an' the player comes first.
+  if (d.state === 'voice_review') return soundSection(d) + cast + scenesSection(d, false);
   return cast + scenesSection(d, false);
 }
 /* Casting in a running project: who plays whom, where image and voice come from, and what
@@ -489,7 +490,8 @@ function castPanel(d) {
         <dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
       ${pend ? `<p class="role-pending">Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“</p>` : ''}${suggestion}</article>`;
   }).join('');
-  return `<section class="cast" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>
+  // Large portraits only where the figures are the task (figure check); elsewhere a compact row.
+  return `<section class="cast${d.state === 'cast_review' ? '' : ' compact'}" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>
     <div class="cast-row">${items}</div></section>`;
 }
 function checkLine(d, ep, ei) {

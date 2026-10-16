@@ -220,6 +220,8 @@ video.frame { display: block; width: 100%; height: auto; object-fit: cover; }
 .cast-head { display: grid; gap: 2px; margin-bottom: 16px; }
 .cast-head p { margin: 0; max-width: 46em; }
 .cast-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 24px 18px; }
+.cast.compact .cast-row { grid-template-columns: repeat(auto-fill, minmax(112px, 132px)); gap: 20px 16px; }
+.section + .cast { margin-top: 56px; }
 .role { display: grid; gap: 8px; align-content: start; min-width: 0; }
 .role-hit { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .role-hit:focus-visible { outline: none; }
@@ -454,6 +456,7 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
   .figure-side .role-src { grid-template-columns: max-content minmax(0, 1fr); gap: 4px 10px; align-items: center; }
   .figure-side .role-src dt:not(:first-child) { margin-top: 0; }
   .cast-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; }
+  .cast.compact .cast-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 10px; }
 }
 
 /* Title card (0.18): key art with the film's title, chosen above the scenes like a scene image */
