@@ -367,15 +367,14 @@ function nextView(d) {
 }
 function blockedView(d) {
   const error = d.error || '', silent = error.includes('DIALOG FEHLT'), speech = error.includes('SPRACHPRÜFUNG');
-  const title = silent ? 'Das Drehbuch hat keinen Dialog.' : speech ? 'Einige Sätze sind nicht hörbar.' : d.uncertain ? 'Ein Abschnitt ist nicht mehr auffindbar.' : 'Die Produktion ist angehalten.';
+  const title = silent ? 'Das Drehbuch hat keinen Dialog.' : speech ? 'Einige Sätze sind nicht hörbar.' : d.uncertain ? 'Ein Auftrag muss neu geprüft werden.' : 'Die Produktion ist angehalten.';
   const text = silent ? 'So entstünde ein stummer Film. Es wurde noch keine Animation gerechnet.'
     : speech ? 'Unten steht, welche Folge, Szene und Figur betroffen ist. Fortsetzen spricht nur diese Sätze neu ein.'
-    : d.uncertain ? 'Meist nach einem Neustart. Der Abschnitt wird neu gerechnet, fertige Abschnitte bleiben.'
+    : d.uncertain ? 'Meist nach einem Neustart. „Fortsetzen“ fragt ComfyUI erneut: Läuft der Auftrag noch, wartet das Studio auf ihn. Fehlt er, wird nur er neu gerechnet. Alles Fertige und die Qualität bleiben.'
     : 'Die Ursache steht unten. Fertige Bilder, Stimmen und Abschnitte bleiben gespeichert.';
   const actions = [];
   if (silent && d.resume_state === 'voicing') actions.push('<button class="button" data-action="new-edition">Neue Fassung planen</button>');
-  else if (d.uncertain && d.resume_state === 'rendering') actions.push('<button class="button" data-action="abort-fast">Abschnitt neu starten</button>');
-  else actions.push(`<button class="button" data-action="resume">${d.resume_state === 'planning' ? 'Neu planen' : 'Fortsetzen'}</button>`);
+  else actions.push(`<button class="button" data-action="resume">${d.resume_state === 'planning' ? 'Planung fortsetzen' : 'Fortsetzen'}</button>`);
   if ((d.previews || []).length && ['rendering', 'finishing'].includes(d.resume_state) && !d.uncertain) actions.push('<button class="button quiet" data-action="reopen-voices">Ton bearbeiten</button>');
   actions.push(`<a class="link" href="/api/factory/${esc(d.id)}/diagnostics/download" download>Fehlerbericht speichern</a>`);
   return `<section class="next alert"><h2 class="headline">${title}</h2><p>${text}</p><pre class="error-text">${esc(error)}</pre><div class="actions">${actions.join('')}</div></section>`;
@@ -608,6 +607,8 @@ async function refreshProgress() {
   try { S.progress = await api(`/api/factory/${S.rid}/progress`); } catch (e) { S.progress = null; }
   paintProgress();
 }
+// abort-step {fast:true} switches older 'Hoch'/'Ausgewogen' projects to 'Standard' (fast); the button says so.
+function keepsQuality(d) { return !d || ['fast', 'draft'].includes(d.idea.quality); }
 function paintProgress() {
   const slot = $('#progress-slot'), p = S.progress, d = S.run;
   if (!slot || !p || !d) return;
@@ -627,7 +628,7 @@ function paintProgress() {
     ${a ? `<p class="small muted">${esc(detail.label || 'Animation')}${a.scene != null ? `, Folge ${a.episode + 1}, Szene ${a.scene + 1}` : ''}${node ? `: Schritt ${node.value} von ${node.max}` : ''}</p>
       ${node ? `<progress class="meter" max="${node.max}" value="${node.value}" aria-label="Aktueller Abschnitt"></progress>` : ''}` : ''}
     ${stuck ? `<div class="stall"><p><b>Dieser Abschnitt hängt wahrscheinlich.</b> Seit ${esc(duration(Date.now() / 1000 - p.last_progress))} kein neuer Rechenschritt${g.total_mib ? `, Grafikspeicher ${(g.used_mib / 1024).toFixed(1)} von ${(g.total_mib / 1024).toFixed(0)} GB` : ''}.</p>
-      <div class="actions"><button class="button small" data-action="abort-fast">Abschnitt neu starten</button></div></div>` : ''}`;
+      <div class="actions"><button class="button small" data-action="abort-fast">${keepsQuality(d) ? 'Abschnitt neu starten' : 'Mit „Standard“ neu starten'}</button></div></div>` : ''}`;
 }
 
 /* ---------- figure library ---------- */
@@ -1081,7 +1082,8 @@ const actions = {
   async restore() { await post(`/api/factory/${S.rid}/restore`); toast('Wiederhergestellt. Mit „Fortsetzen“ geht es weiter.'); },
   async autopilot(b) { await post(`/api/factory/${S.rid}/autopilot`, { enabled: b.checked }); toast(b.checked ? 'Autopilot an: der Rest läuft ohne Zwischenstopps.' : 'Autopilot aus.'); },
   async 'abort-step'() { if (confirm('Aktuellen Abschnitt abbrechen und pausieren? Fertige Abschnitte bleiben erhalten.')) { await post(`/api/factory/${S.rid}/abort-step`, { fast: false }); toast('Abgebrochen und pausiert.'); } },
-  async 'abort-fast'() { if (confirm('Abschnitt neu starten? Fertige Bilder, Stimmen und Abschnitte bleiben erhalten.')) { await post(`/api/factory/${S.rid}/abort-step`, { fast: true }); toast('Der Abschnitt wird neu gerechnet.'); } },
+  async 'abort-fast'() { if (confirm(keepsQuality(S.run) ? 'Abschnitt neu starten? Fertige Bilder, Stimmen und Abschnitte bleiben erhalten.'
+    : `Mit „Standard“ neu starten? Die Qualität wechselt von „${QUALITY[S.run.idea.quality] || S.run.idea.quality}“ zu „Standard“. Schon animierte Abschnitte noch nicht fertiger Folgen werden dafür neu gerechnet. Bilder, Stimmen und fertige Folgen bleiben.`)) { await post(`/api/factory/${S.rid}/abort-step`, { fast: true }); toast('Der Abschnitt wird neu gerechnet.'); } },
   async choose(b) { await post(`/api/factory/${S.rid}/choose`, { episode: +b.dataset.episode, scene: +b.dataset.scene, step_id: b.dataset.step }); },
   async revise(b) {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Bilder für Szene ${+b.dataset.scene + 1}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
