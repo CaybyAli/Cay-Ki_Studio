@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from images import Images
 from factory import Factory
 from notify import Notifier
+from remote_access import FUNNEL_HEADER, Remote
 from studio_resources import Resources
 from production import ProductionRequest, Storyboard, issues_for, prompt_for, technical_profile, fit_scene_durations
 
@@ -395,6 +396,7 @@ async def lifespan(app):
     notifier.init()
     remix.init()
     await asyncio.to_thread(scan_media)
+    asyncio.get_running_loop().run_in_executor(None, remote.ensure)     # Unterwegs-Zugriff: is Tailscale still forwarding?
     monitors = [asyncio.create_task(status_loop()), asyncio.create_task(chat_worker()), asyncio.create_task(images.worker()), asyncio.create_task(factory.worker()),asyncio.create_task(factory.progress.listen()),asyncio.create_task(factory.post_worker()),asyncio.create_task(remix.worker()),asyncio.create_task(notifier.worker())]
     yield
     STOPPING = True
@@ -441,13 +443,14 @@ async def german_validation(request: Request, error: RequestValidationError):
 
 @app.middleware('http')
 async def local_guard(request: Request, call_next):
-    host = request.headers.get('host', '').split(':')[0]
-    if host not in ('127.0.0.1', 'localhost', '[::1]'):
+    # Localhost, plus exactly the Tailscale host of the Unterwegs-Zugriff while it is on (remote_access.py).
+    if not remote.accepts_host(request.headers.get('host', '')):
         return JSONResponse({'detail': 'Nur lokaler Zugriff erlaubt.'}, status_code=403)
+    if FUNNEL_HEADER in request.headers:
+        return JSONResponse({'detail': 'Über das öffentliche Internet (Tailscale Funnel) ist das Studio gesperrt.'}, status_code=403)
     if request.method not in ('GET', 'HEAD', 'OPTIONS'):
         origin = request.headers.get('origin')
-        expected = {f'http://localhost:{PORT}', f'http://127.0.0.1:{PORT}'}
-        if origin and origin not in expected:
+        if origin and not remote.accepts_origin(origin):
             return JSONResponse({'detail': 'Unerlaubte Herkunft.'}, status_code=403)
         if not secrets.compare_digest(request.headers.get('x-cay-token', ''), CSRF):
             return JSONResponse({'detail': 'Sitzung neu laden und erneut versuchen.'}, status_code=403)
@@ -850,8 +853,9 @@ def approve_draft(did: str, body: DraftApproval):
 
 @app.post('/api/system/maintenance')
 async def maintenance(request: Request):
-    # Only a loopback, CSRF-authenticated updater can acquire a quiescent app.
+    # Only a loopback, CSRF-authenticated updater can acquire a quiescent app (never a request from on the way).
     global MAINTENANCE
+    remote.require_pc(request)
     body = await request.json()
     if not body.get('enabled'):
         MAINTENANCE = False
@@ -882,6 +886,10 @@ remix.routes(app)
 
 images = Images(globals())
 images.routes(app)
+
+# Unterwegs-Zugriff over Tailscale; off until Cay switches it on at the PC.
+remote = Remote(globals())
+remote.routes(app)
 
 
 if __name__ == '__main__':

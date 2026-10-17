@@ -461,10 +461,17 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
         self.g['execute']('UPDATE notify_outbox SET status=?,error=?,attempts=COALESCE(?,attempts),payload=COALESCE(?,payload),updated=? WHERE id=?',
                           (status, error, attempts, json.dumps(payload, ensure_ascii=False) if payload else None, self.g['now'](), row['id']))
 
+    def studio_link(self, data, payload):
+        """With the Unterwegs-Zugriff on: https://<host>/#p=<id> (opens on the phone and on the PC)."""
+        remote = self.g.get('remote')
+        try: return remote.link(payload.get('run_id')) if remote and data['link'] else None
+        except Exception: return None
+
     def text(self, data, payload):
         lines = list(payload['lines'])
         if data['link'] and payload.get('run_id'):
-            lines.append(f"Am PC öffnen: http://127.0.0.1:{self.g.get('PORT', 8787)}/#p={payload['run_id']}")
+            studio = self.studio_link(data, payload)
+            lines.append(f'Im Studio öffnen: {studio}' if studio else f"Am PC öffnen: http://127.0.0.1:{self.g.get('PORT', 8787)}/#p={payload['run_id']}")
         return lines
 
     # ---------- preview picture ----------
@@ -582,9 +589,9 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
                 payload['sent'].append(part)
 
     # ---------- ntfy ----------
-    async def ntfy(self, topic, head, lines, tag, priority, picture=None):
+    async def ntfy(self, topic, head, lines, tag, priority, picture=None, click=None):
         # Title and message travel as URL-encoded query parameters: headers are ASCII only, umlauts are not.
-        params = {'title': head, 'tags': tag, 'priority': str(priority)}
+        params = {'title': head, 'tags': tag, 'priority': str(priority), **({'click': click} if click else {})}
         try:
             async with client(NTFY, transport=self.transport) as http:
                 if picture:
@@ -608,7 +615,7 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
         if data['ntfy'].get('preview', True) and payload['event'] == 'done':
             picture = await asyncio.to_thread(self.preview, payload)
             if picture and len(picture) > NTFY_ATTACHMENT_LIMIT: picture = None
-        await self.ntfy(data['ntfy']['topic'], payload['head'], self.text(data, payload), tag, priority, picture)
+        await self.ntfy(data['ntfy']['topic'], payload['head'], self.text(data, payload), tag, priority, picture, self.studio_link(data, payload))
 
     # ---------- what the page sees (never a secret except the ntfy topic Cay must type into his app) ----------
     def public(self):
@@ -624,21 +631,25 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
                     'last': status.get('telegram'), 'pending': pending.get('telegram', 0)}
         ntfy = {'state': 'on' if nt.get('topic') else 'off', 'topic': nt.get('topic', ''), 'url': f"{NTFY}/{nt['topic']}" if nt.get('topic') else '',
                 'server': NTFY, 'preview': bool(nt.get('preview', True)), 'last': status.get('ntfy'), 'pending': pending.get('ntfy', 0)}
-        return {'events': data['events'], 'link': data['link'], 'address': data['address'], 'pc': f"http://127.0.0.1:{self.g.get('PORT', 8787)}", 'telegram': telegram, 'ntfy': ntfy}
+        remote = self.g.get('remote')
+        return {'events': data['events'], 'link': data['link'], 'address': data['address'], 'pc': f"http://127.0.0.1:{self.g.get('PORT', 8787)}",
+                'studio': remote.url() if remote else None, 'telegram': telegram, 'ntfy': ntfy}
 
     def feed(self, after):
         """Events for the browser tab after cursor `after`. Without `after`: only the cursor (a newly
         opened tab does not replay what happened while no tab was open)."""
         latest = (self.g['rows']('SELECT MAX(seq) AS s FROM notify_events')[0]['s']) or 0
         if after is None: return {'latest': latest, 'events': []}
-        events = self.load()['events']
+        data = self.load(); events = data['events']
         rows = self.g['rows']('SELECT * FROM notify_events WHERE seq>? ORDER BY seq LIMIT 20', (after,))
         out = []
         for row in rows:
             if not events.get(row['event']): continue
             payload = json.loads(row['payload'])
-            out.append({'seq': row['seq'], 'key': row['key'], 'run_id': row['run_id'], 'event': row['event'],
-                        'title': payload['head'], 'body': '\n'.join(payload['lines'])})
+            # A click opens the project in the tab itself; the line is for reading (Unterwegs-Zugriff on only).
+            link = self.studio_link(data, {'run_id': row['run_id']})
+            out.append({'seq': row['seq'], 'key': row['key'], 'run_id': row['run_id'], 'event': row['event'], 'title': payload['head'],
+                        'body': '\n'.join([*payload['lines'], *([f'Im Studio öffnen: {link}'] if link else [])]), 'link': link})
         return {'latest': rows[-1]['seq'] if len(rows) == 20 else latest, 'events': out}
 
     # ---------- setup steps ----------
@@ -679,18 +690,22 @@ CREATE TABLE IF NOT EXISTS notify_status(channel TEXT PRIMARY KEY,ok INTEGER NOT
         return newest[1] if newest else None
 
     async def send_test(self, channel):
+        await self.send_now(channel, f"🔔 Hallo {self.load()['address']}! Cay Studio meldet sich.",
+                            ['So klingen die Nachrichten: wenn ein Film fertig ist, wenn du dran bist oder wenn etwas angehalten hat. 🎬'], 'Testnachricht gesendet.')
+
+    async def send_now(self, channel, head, lines, done):
+        """One message Cay asked for with a click (test message, the studio address), sent right away."""
         data = self.load()
         if not self.enabled(data).get(channel):
             raise HTTPException(409, 'Dieser Kanal ist noch nicht fertig eingerichtet.')
-        payload = {'run_id': None, 'event': 'done', 'head': f"🔔 Hallo {data['address']}! Cay Studio meldet sich.", 'films': [], 'parts': ['message'], 'sent': [],
-                   'lines': ['So klingen die Nachrichten: wenn ein Film fertig ist, wenn du dran bist oder wenn etwas angehalten hat. 🎬']}
+        payload = {'run_id': None, 'event': 'done', 'head': head, 'films': [], 'parts': ['message'], 'sent': [], 'lines': lines}
         try:
             if channel == 'telegram': await self.deliver_telegram(data, payload)
             else: await self.deliver_ntfy(data, payload)
         except (Retry, Permanent) as error:
             message = scrub(error, *self.hidden(data)); self.note(channel, False, message)
             raise HTTPException(502 if isinstance(error, Retry) else 409, message)
-        self.note(channel, True, 'Testnachricht gesendet.')
+        self.note(channel, True, done)
 
     def disconnect(self, channel):
         def update(data): data[channel] = {}
