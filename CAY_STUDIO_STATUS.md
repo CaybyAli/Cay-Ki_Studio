@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 17.10.2026 (0.18.1) · Branch `claude/new-session-s0p05c`
+Stand: 17.10.2026 (0.18.2) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -148,8 +148,14 @@ Unterwegs-Zugriff über Tailscale (`remote_access.py`): `tailscale serve --bg 87
 Prüfungen: pytest 385 bestanden; `remote_check` mit nachgebautem Tailscale (beide Host-Varianten von Serve).
 Nicht geprüft: echtes Tailscale auf Cays PC (WSL-Interop, Erreichbarkeit des WSL-Ports für den Tailscale-Dienst, Handynetz).
 
+## 0.18.2 (17.10.2026) – Cay: „SPRACHPRÜFUNG … Folge 1, Szene 29, Figur Patrick … Musik/Geräusche übertönen die Stimme (2.1 dB Abstand)“
+Unterwegs-Zugriff funktioniert auf Cays PC: die Benachrichtigung kam mit `https://caybyali.tail422cb0.ts.net/#p=…` [Sicher, Link in Cays Nachricht]. 6 von 6 Folgen geplant (Diagnose: 6 Folgen, 209 Abschnitte).
+Ursache [Wahrscheinlich, Diagnose enthält weder Stems noch Skript]: leise (geflüsterte) Zeile unter einem Geräusch/der Musik; Geräusche werden nicht abgesenkt. Ein Retake spricht dieselbe leise Zeile, der Hintergrund bleibt gleich laut → Endlosschleife.
+Fix: `factory_audio.clear_lines` senkt Musik, Umgebung und Effekte nur unter übertönten Zeilen ab (Ziel 10 dB Abstand, bis 2 Runden), Bericht `cleared_db`/Status „abgesenkt“. Ohne übertönte Zeile bytegleich. Test `tests/test_cay_reports_0181.py` rot auf altem Code (gleiche Meldung), grün neu.
+Prüfungen: pytest 389 bestanden.
+
 ## Nächster konkreter Schritt
-Cay: 0.18.1 installieren (kein Neustart), Tailscale am PC und Handy einrichten, Unterwegs-Zugriff am PC einschalten, am Handy öffnen; kurzer 60-s-Test, dann der große Testlauf (6 Folgen); Video + Diagnose schicken, bei 5 statt 6 Folgen den Fehlerbericht.
+Cay: 0.18.2 installieren (kein Neustart), im Projekt „Die Krone der Ananasstraße“ „Fortsetzen“ (spricht Patricks Zeile neu ein, Mischung senkt den Hintergrund ab). Wenn der Film fertig ist: Video + Diagnose schicken.
 
 ## Reihenfolge danach
 Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.

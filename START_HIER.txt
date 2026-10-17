@@ -1,10 +1,10 @@
-CAY STUDIO 0.18.1 - NUR DIESE SCHRITTE
+CAY STUDIO 0.18.2 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
 2. Laeuft ein Film: fertig werden lassen oder Pausieren.
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
    Kein PC-Neustart noetig.
-4. Im Browser Strg+F5. Unten muss 0.18.1 stehen.
+4. Im Browser Strg+F5. Unten muss 0.18.2 stehen.
 5. Freiwillig: Zahnrad oben rechts > Benachrichtigungen >
    Telegram einrichten. Die Schritte stehen im Fenster.
    NEU in 0.18.1: Zahnrad > Unterwegs-Zugriff. Dann geht das
@@ -15,9 +15,10 @@ CAY STUDIO 0.18.1 - NUR DIESE SCHRITTE
    Qualitaet "Standard", Autopilot AN, Titelbild "Am Anfang".
    Achte auf: Titelbild, Gespraeche in Bloecken, Untertitel,
    Musik-Lautstaerke.
-7. Dein angehaltenes Projekt "Gangster SpongeBob in Bikini Bottom":
-   oeffnen und "Neu planen" druecken. Die doppelten Figurennamen
-   und der Textlaengen-Fehler sind behoben.
+7. Dein angehaltenes Projekt "Gangster SpongeBob - Die Krone der
+   Ananasstrasse" (Patrick zu leise): oeffnen und "Fortsetzen".
+   Die Tonmischung senkt Musik und Geraeusche unter der Zeile jetzt
+   selbst ab.
    Fuer neue Serien: "Aussehen der Figuren" > "Pro Folge anpassen",
    wenn sich Kleidung von Folge zu Folge aendern soll.
    Eigenes Skript: "Mein Drehbuch" waehlen, .md/.txt oder einfuegen.

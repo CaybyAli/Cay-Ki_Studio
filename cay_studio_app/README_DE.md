@@ -1,3 +1,11 @@
+# Cay Studio 0.18.2 – Ton: leise Zeilen halten den Film nicht mehr an (17.10.2026)
+
+- **Cays Meldung:** „Folge 1, Szene 29, Figur Patrick … Musik/Geräusche übertönen die Stimme (2.1 dB Abstand).“ Eine neue Aufnahme derselben leisen Zeile änderte nichts, weil Musik und Geräusche gleich laut blieben. Jetzt senkt die Tonmischung Musik, Umgebung und Geräusche genau unter dieser Zeile ab, bis die Stimme klar darüber liegt. Der Tonbericht nennt, wo und um wie viel.
+- Mischungen ohne übertönte Zeile bleiben bytegleich. Fehlt eine Stimme wirklich, hält das Studio weiter an.
+- Ein angehaltenes Projekt mit dieser Meldung: nach dem Update „Fortsetzen“.
+
+---
+
 # Cay Studio 0.18.1 – Unterwegs-Zugriff (17.10.2026)
 
 - **Unterwegs-Zugriff** (Zahnrad → Unterwegs-Zugriff): das Studio am Handy oder Laptop, zum Beispiel in der Bahn. Filme anlegen, hochladen, freigeben, ansehen und herunterladen wie zu Hause, rechnen tut weiter dein PC. Läuft über Tailscale (kostenlos, ein privates Netz nur aus deinen eigenen Geräten, nicht öffentlich im Internet). Ein- und ausschalten nur am PC. Dann enthalten die Benachrichtigungen den Link „Im Studio öffnen“. Schritte: Cay_Studio_Start_und_Update.md → „Unterwegs arbeiten“.

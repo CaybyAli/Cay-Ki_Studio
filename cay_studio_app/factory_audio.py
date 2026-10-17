@@ -113,6 +113,21 @@ def duck_music(source,target,intervals):
         for i in range(max(0,int((start-attack)*RATE)),min(len(data),math.ceil((end+release)*RATE))):
             t=i/RATE;g=(1-(1-low)*(t-start+attack)/attack) if t<start else (low if t<=end else low+(1-low)*(t-end)/release);envelope[i]=min(envelope[i],max(low,min(1,g)))
     write_wav(target,(v/32768*g for v,g in zip(data,envelope)))
+CLEAR_DB=10.        # a masked line gets the bed this far under it (speech_check: masked < 3, crowded < 8)
+def clear_lines(stems,entries,attack=.08,release=.28):
+    """Lower music, ambience and effects under each masked line until the voice is CLEAR_DB above them.
+    Returns {key: dB lowered}. The speech check compares the same stems, so it sees the change."""
+    lowered={}
+    for path in stems:
+        data,rate=speech_check.read_wav(path);out=array('f',(v/32767 for v in data))
+        for e in entries:
+            lower=min(40.,CLEAR_DB-float(e.get('margin_db',0))+1);gain=10**(-lower/20);start=e['start'];end=start+e['seconds']
+            lowered[e['key'] or e['label']]=round(lower,1)
+            for i in range(max(0,int((start-attack)*rate)),min(len(out),math.ceil((end+release)*rate))):
+                t=i/rate;ramp=(t-start+attack)/attack if t<start else 1 if t<=end else 1-(t-end)/release
+                out[i]*=1-(1-gain)*max(0.,min(1.,ramp))
+        write_wav(path,out)
+    return lowered
 def mix(folder,scenes,mood,music=None,settings=None,policy=17):
     bed=int(policy)>=BED_POLICY
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);settings={'music_mode':'uploaded' if music else 'auto','music_level':1.,'effects_level':1.,'ambience_level':1.,**(settings or {})};duration=sum(s['seconds'] for s in scenes);cursor=0.;args=[];filters=[];labels=[];index=0;intervals=[]
@@ -168,14 +183,26 @@ def mix(folder,scenes,mood,music=None,settings=None,policy=17):
     ff([*args,'-af',exact('loudnorm=I=-24:TP=-5:LRA=7,aresample=24000',duration)+f',volume={gain},afade=t=out:st={max(0,duration-.5)}:d=0.5','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized],folder);duck_music(normalized,ducked,intervals)
     ambience=folder/'Umgebung.wav';effects=folder/'Effekte.wav';synth_environment(ambience,scenes,settings['ambience_level'],bed);synth_effects(effects,bed_cues(scenes) if bed else scenes,settings['effects_level'])
     args=['-i',str(dialogue),'-i',str(ducked),'-i',str(ambience),'-i',str(effects)];graph=f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,alimiter=limit=0.94:level=0:latency=1,atrim=duration={duration},'+exact(f'loudnorm=I={TARGET_LUFS}:TP=-1.5:LRA=11,aresample=48000',duration)+'[sound]';target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav'
-    ff([*args,'-filter_complex',graph,'-map','[sound]','-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
-    with wave.open(str(temp)) as w:
-        if abs(w.getnframes()/w.getframerate()-duration)>.03:raise RuntimeError('Tonmischung unvollständig; keine Freigabe.')
-    # Every planned line must be audible on its own, not only the track as a
-    # whole. The report is written before blocking so the retake knows which
-    # lines to speak again; unaffected lines keep their cached takes.
-    report=speech_check.summary(speech_check.check_lines(samples,RATE,speech_check.placed(scenes),
-        tuple(speech_check.read_wav(p)[0] for p in (ducked,ambience,effects))),'mix')
+    stems=(ducked,ambience,effects);cleared={}
+    for attempt in range(3):
+        ff([*args,'-filter_complex',graph,'-map','[sound]','-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
+        with wave.open(str(temp)) as w:
+            if abs(w.getnframes()/w.getframerate()-duration)>.03:raise RuntimeError('Tonmischung unvollständig; keine Freigabe.')
+        # Every planned line must be audible on its own, not only the track as a
+        # whole. The report is written before blocking so the retake knows which
+        # lines to speak again; unaffected lines keep their cached takes.
+        entries=speech_check.check_lines(samples,RATE,speech_check.placed(scenes),tuple(speech_check.read_wav(p)[0] for p in stems))
+        # Cay 0.18.1: a quiet line under an effect or the music ("übertönen die Stimme") came back after every
+        # retake, because a new take of the same line does not make the bed quieter. Lower the bed under just
+        # that line instead. Mixes without a masked line stay byte-identical.
+        masked=[e for e in entries if e['status']=='überdeckt']
+        if not masked or attempt==2:break
+        for key,lower in clear_lines(stems,masked).items():cleared[key]=round(cleared.get(key,0)+lower,1)
+    for e in entries:
+        lowered=cleared.get(e['key'] or e['label'])
+        if lowered and not e['blocking']:e.update(cleared_db=lowered,note=(e['note']+'; ' if e['note'] else '')+f'Hintergrund hier um {lowered} dB abgesenkt')
+        if lowered and e['status']=='ok':e['status']='abgesenkt'
+    report=speech_check.summary(entries,'mix')
     speech_check.write_report(folder/'Sprachpruefung.json',report)
     if report['blocking']:
         temp.unlink(missing_ok=True)
