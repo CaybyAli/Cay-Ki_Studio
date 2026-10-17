@@ -298,6 +298,13 @@ def notifications(db=None):
         pass
 
 
+def remote_access():
+    """Unterwegs-Zugriff (0.18.1): only on or off; the Tailscale address stays out of the report."""
+    try: data = json.loads((RUNTIME / 'config/unterwegs.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError): data = {}
+    print('Unterwegs-Zugriff:', 'an (Tailscale)' if isinstance(data, dict) and data.get('enabled') and data.get('host') else 'aus')
+
+
 def main():
     print('CAY STUDIO DIAGNOSE (liest nur, ändert nichts)')
     print('Dashboard:', health())
@@ -318,7 +325,8 @@ def main():
     db = sqlite3.connect(f'file:{RUNTIME / "data/cay_studio.sqlite3"}?mode=ro', uri=True); db.row_factory = sqlite3.Row
     pc_team()
     notifications(db)
-    rows = db.execute('SELECT * FROM factory_runs ORDER BY updated DESC LIMIT 3').fetchall()
+    remote_access()
+    rows =db.execute('SELECT * FROM factory_runs ORDER BY updated DESC LIMIT 3').fetchall()
     for row in rows: project(row, root, db)
     for name, count in (('dashboard.log', 25), ('comfyui.log', 40)):
         log = RUNTIME / 'logs' / name

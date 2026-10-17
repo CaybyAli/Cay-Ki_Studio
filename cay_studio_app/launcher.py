@@ -155,6 +155,10 @@ def main():
                 try: print(future.result(), flush=True)
                 except Exception as error: print('Dienststart: ' + str(error), flush=True)
         print('\nDASHBOARD: http://127.0.0.1:' + str(PORT), flush=True)
+        try: remote = json.loads((RUNTIME / 'config/unterwegs.json').read_text(encoding='utf-8'))
+        except (OSError, ValueError): remote = {}
+        if isinstance(remote, dict) and remote.get('enabled') and remote.get('host'):
+            print('UNTERWEGS (Handy mit Tailscale): https://' + str(remote['host']), flush=True)
         print('Ob alle KI-Dienste bereit sind, steht in den Meldungen oben und im Systemstatus.',flush=True)
         print('Browser schließen beendet die Hintergrunddienste nicht.', flush=True)
 
