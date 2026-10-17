@@ -98,9 +98,11 @@ Grundlage: dein Video (Einzelbilder und Tonpausen gemessen), Diagnose 0.16.1, f�
 4. Laufende Projekte behalten den 0.17-Schnitt. Neuerungen gibt es in neuen Filmen und mit „Neue Fassung“.
 5. „Mein Drehbuch“ und „Aussehen pro Folge“ sind nur mit Test-KI geprüft. Wie gut FLUX das Gesicht bei neuer Kleidung hält, zeigt erst dein PC.
 
-## 3e. Geplant für 0.19
+## 3e. Neu in 0.18.1: Arbeiten von unterwegs
 
-1. **Arbeiten von unterwegs:** Wartet auf deine Entscheidung (Datenübertragung nach außen). Empfehlung: Tailscale (kostenlos, privat, nur deine Geräte). Nicht über GitHub: Projekte lägen dann auf fremden Servern.
+1. **Unterwegs-Zugriff** über Tailscale (kostenlos, privates Netz nur aus deinen Geräten). Zahnrad → Unterwegs-Zugriff, nur am PC ein- und ausschaltbar. Das Studio nimmt außer `127.0.0.1` genau die eine Tailscale-Adresse deines PCs an, nie Tailscale Funnel (öffentlich).
+2. **Nicht auf deinem PC geprüft:** ob WSL `tailscale.exe` starten darf, ob Tailscale den Studio-Port in WSL erreicht und wie es übers Handynetz läuft. Geprüft nur mit einem nachgebauten Tailscale.
+3. Nicht über GitHub oder fremde Server: Projekte bleiben auf deinem PC.
 
 ## 4b. Nächste Zeithebel nach deinem Test (alle kostenlos)
 

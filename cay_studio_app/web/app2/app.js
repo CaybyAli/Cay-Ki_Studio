@@ -1278,7 +1278,8 @@ function remoteHtml(r) {
       ${rows ? `<div>${rows}</div>` : ''}${toggle}${error}${address}
       <div class="actions"><button class="button quiet small" data-action="remote">Neu prüfen</button></div>
       <p class="small muted">${esc(r.pc_off)}</p></section>
-    <p class="small muted notify-whatsapp">Nur Geräte, die mit deinem Tailscale-Konto angemeldet sind, erreichen die Adresse. Ohne Tailscale führt sie nirgendwohin. Das öffentliche „Tailscale Funnel“ nutzt das Studio nie.</p>`;
+    <p class="small muted notify-whatsapp">Nur Geräte, die mit deinem Tailscale-Konto angemeldet sind, erreichen die Adresse. Ohne Tailscale führt sie nirgendwohin. Das öffentliche „Tailscale Funnel“ nutzt das Studio nie.</p>
+    <p class="small muted">Gut zu wissen: Für die sichere https-Adresse erlaubt Tailscale beim ersten Mal Zertifikate. Dabei kommt der Name deines PCs mit der Adresse (…ts.net) in eine öffentliche Zertifikatsliste. Erreichbar wird das Studio dadurch nicht. Gib dem PC in Tailscale nur keinen Namen, der etwas über dich verrät.</p>`;
 }
 function remoteRender(r, focus) {
   const before = $('#sheet .sheet-body'), top = before ? before.scrollTop : 0;

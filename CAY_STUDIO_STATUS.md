@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 16.10.2026 (0.18.0) · Branch `claude/new-session-s0p05c`
+Stand: 17.10.2026 (0.18.1) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -143,8 +143,13 @@ Nicht geprüft: alles auf Cays GPU (Bildvarianz von FLUX, geschlossene Lippen be
 Danach: Gesamtprüfung (5 Linsen, 23 Funde: 16 Fehler + 6 Verbesserungen umgesetzt, 1 bewusst nicht), Webseiten-Feinschliff (13 Design-Punkte + Kritikrunde), „Mein Drehbuch“ (`own_script.py`, deterministisch, Wort für Wort, Skeptiker-Runde mit 10 Funden behoben, bis 180 s/90 Einstellungen pro eigener Folge), „Aussehen pro Folge“ (`episode_looks.py`, Look-Varianten aus dem Grunddesign), Cays 0.17-Meldungen (Namensvarianten zusammengeführt, `fit_lengths` statt Abbruch bei zu langen KI-Texten, Folgenzahl-Sicherung, endgültig löschen).
 Prüfungen zuletzt: pytest 365 bestanden; Browser-Prüfungen 11/11 bestanden (ui, autopilot, abort_step, queue, library, library_ui, cover_ui, cut_ui, notify, script_ui, looks).
 
+## 0.18.1 (17.10.2026) – Cay: „in der Bahn auf die Webseite gehen und das gleiche machen, die Arbeit macht mein Computer“
+Unterwegs-Zugriff über Tailscale (`remote_access.py`): `tailscale serve --bg 8787` auf Windows (WSL-Interop zu `tailscale.exe`), uvicorn bleibt auf 127.0.0.1. `local_guard` nimmt außer localhost genau den gespeicherten `*.ts.net`-Host an (Port leer/443), Origin nur lokal oder `https://<host>`, CSRF-Token bleibt Pflicht, Anfragen über Funnel werden abgewiesen. Ein-/Ausschalten und `maintenance` nur vom PC selbst (localhost-Host, keine Proxy-Header, kein fremder Origin). Benachrichtigungen mit Link „Im Studio öffnen“, wenn an. Diagnose zeigt nur an/aus, nie die Adresse. Hinweis auf die öffentliche Zertifikatsliste (HTTPS-Zertifikate von Tailscale).
+Prüfungen: pytest 385 bestanden; `remote_check` mit nachgebautem Tailscale (beide Host-Varianten von Serve).
+Nicht geprüft: echtes Tailscale auf Cays PC (WSL-Interop, Erreichbarkeit des WSL-Ports für den Tailscale-Dienst, Handynetz).
+
 ## Nächster konkreter Schritt
-Cay: 0.18.0 installieren (kein Neustart), kurzer 60-s-Test, dann der große Testlauf (6 Folgen, 13 Figuren); Video + Diagnose schicken. Entscheidung zu Arbeiten von unterwegs (Empfehlung Tailscale).
+Cay: 0.18.1 installieren (kein Neustart), Tailscale am PC und Handy einrichten, Unterwegs-Zugriff am PC einschalten, am Handy öffnen; kurzer 60-s-Test, dann der große Testlauf (6 Folgen); Video + Diagnose schicken, bei 5 statt 6 Folgen den Fehlerbericht.
 
 ## Reihenfolge danach
 Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.

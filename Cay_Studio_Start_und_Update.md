@@ -67,6 +67,7 @@ Gut zu wissen:
 - Ist der PC aus, ist das Studio nicht erreichbar. Die Tailscale-App zeigt, ob dein PC online ist.
 - Aus- und einschalten geht nur am PC selbst. So sperrst du dich unterwegs nicht aus.
 - Ist der Unterwegs-Zugriff an, enthalten die Benachrichtigungen den Link **„Im Studio öffnen“**. Er öffnet das Projekt direkt, am Handy (mit Tailscale) und am PC.
+- Für die sichere https-Adresse erlaubt Tailscale beim ersten Mal Zertifikate. Dabei kommt der Name deines PCs mit der Adresse (…ts.net) in eine öffentliche Zertifikatsliste. Erreichbar wird das Studio dadurch nicht. Gib dem PC in Tailscale nur keinen Namen, der etwas über dich verrät.
 
 ## Turbo
 
