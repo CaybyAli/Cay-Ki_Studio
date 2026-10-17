@@ -1,3 +1,10 @@
+# Cay Studio 0.18.1 – Unterwegs-Zugriff (17.10.2026)
+
+- **Unterwegs-Zugriff** (Zahnrad → Unterwegs-Zugriff): das Studio am Handy oder Laptop, zum Beispiel in der Bahn. Filme anlegen, hochladen, freigeben, ansehen und herunterladen wie zu Hause, rechnen tut weiter dein PC. Läuft über Tailscale (kostenlos, ein privates Netz nur aus deinen eigenen Geräten, nicht öffentlich im Internet). Ein- und ausschalten nur am PC. Dann enthalten die Benachrichtigungen den Link „Im Studio öffnen“. Schritte: Cay_Studio_Start_und_Update.md → „Unterwegs arbeiten“.
+- Kein PC-Neustart nötig. Laufende Projekte laufen einfach weiter.
+
+---
+
 # Cay Studio 0.18.0 – Mein Drehbuch, Figuren-Bibliothek, Titelbild, lebendiger Schnitt, Nachrichten aufs Handy (16.10.2026)
 
 - **Mein Drehbuch:** Beim Anlegen „Die KI schreibt“ oder „Mein Drehbuch“ wählen. Dein fertiges Drehbuch einfügen oder als .md- oder .txt-Datei wählen (PDF geht nicht: dort den Text kopieren oder als .txt speichern). Jeder Satz wird genau so gesprochen, wie er dasteht. Die KI liest das Drehbuch und gestaltet nur Figuren, Bilder und Bewegung dazu, sie ergänzt keine Dialoge und keine Handlung. Beim Tippen prüft das Studio sofort: Figuren, Szenen, Sätze, Wörter, Folgen und „Länge nach Drehbuch“ (mindestens 15 Sekunden, bis 3 Minuten pro Folge), jedes Problem mit Zeilennummer. „Vorlage herunterladen“ zeigt ein Beispiel. Format:

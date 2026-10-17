@@ -1,12 +1,16 @@
-CAY STUDIO 0.18.0 - NUR DIESE SCHRITTE
+CAY STUDIO 0.18.1 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
 2. Laeuft ein Film: fertig werden lassen oder Pausieren.
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
    Kein PC-Neustart noetig.
-4. Im Browser Strg+F5. Unten muss 0.18.0 stehen.
+4. Im Browser Strg+F5. Unten muss 0.18.1 stehen.
 5. Freiwillig: Zahnrad oben rechts > Benachrichtigungen >
    Telegram einrichten. Die Schritte stehen im Fenster.
+   NEU in 0.18.1: Zahnrad > Unterwegs-Zugriff. Dann geht das
+   Studio auch am Handy, z.B. in der Bahn (Tailscale, kostenlos).
+   Die Schritte stehen im Fenster und in
+   Cay_Studio_Start_und_Update.md unter "Unterwegs arbeiten".
 6. Erst ein kurzer Test: "Neu", eine SpongeBob-Idee, 60 s,
    Qualitaet "Standard", Autopilot AN, Titelbild "Am Anfang".
    Achte auf: Titelbild, Gespraeche in Bloecken, Untertitel,

@@ -1,11 +1,11 @@
-# Cay Studio 0.18.0 – so geht es weiter
+# Cay Studio 0.18.1 – so geht es weiter
 
 ## Update installieren
 
 1. ZIP laden, Rechtsklick → **Alle extrahieren** → in einen **neuen** Ordner.
 2. Läuft eine Produktion: **Pausieren** oder fertig werden lassen. Hängt ein Abschnitt: **erst den PC neu starten**.
-3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.18.0 INSTALLIERT** warten. Kein PC-Neustart nötig.
-4. Im Browser **Strg + F5**. Unten muss **0.18.0** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.18.1 INSTALLIERT** warten. Kein PC-Neustart nötig.
+4. Im Browser **Strg + F5**. Unten muss **0.18.1** stehen.
 
 Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er selbst zur vorherigen zurück. Projekte, Bilder, Stimmen und fertige Filme bleiben erhalten.
 
@@ -26,7 +26,7 @@ Starte danach kein älteres Update mehr. Ab 0.18 verweigert das Update-Programm 
 - **Ziel des Films:** Steht über dem Drehbuch: Haken, Wendung, Pointe.
 - **Drehbuch:** Die KI schreibt den Film als durchgehendes Gespräch, prüft Wortzahl und Sprecherwechsel und überarbeitet es einmal. Über dem Drehbuch steht eine Prüfzeile: Wörter, Einstellungen, stumme Aktionen, später Sprachanteil und längste Pause.
 - **Figuren vorher zeigen:** Ein kurzer Stopp vor den Szenenbildern, auch mit Autopilot. „Neu gestalten“ oder „Eigenes Bild“, dann „Figuren passen, weiter“. Abschaltbar beim Anlegen.
-- **Zahnrad oben rechts:** Einrichtung prüfen, **Turbo einrichten**, Stimmen und Animation einrichten, **Benachrichtigungen**, Figurentausch und bisherige Oberfläche.
+- **Zahnrad oben rechts:** Einrichtung prüfen, **Turbo einrichten**, Stimmen und Animation einrichten, **Benachrichtigungen**, **Unterwegs-Zugriff**, Figurentausch und bisherige Oberfläche.
 
 ## Mein Drehbuch
 
@@ -50,6 +50,23 @@ Für eine Serie: Überschriften `## Folge 1: Titel`, `## Folge 2: Titel`. Sprech
 ## Benachrichtigungen aufs Handy
 
 Zahnrad → **Benachrichtigungen**. Am einfachsten mit **Telegram**: In Telegram **@BotFather** öffnen, **/newbot** senden, Namen wählen, den Schlüssel ins Studio kopieren, beim eigenen Bot **Start** tippen, „Verbindung prüfen“. Kostenlos. Das Studio meldet sich, wenn ein Film fertig ist, wenn es auf dich wartet oder anhält. Die Anrede („Sir Cay“) ist änderbar. Telegram speichert die Nachrichten auf seinen Servern.
+
+## Unterwegs arbeiten
+
+Du kannst das Studio auch am Handy oder Laptop benutzen, zum Beispiel in der Bahn: Filme anlegen, Bilder, Stimmen, Drehbücher und Musik hochladen, freigeben, Filme ansehen und herunterladen, deine Figuren. Rechnen tut weiter dein PC. Die Verbindung läuft über **Tailscale**, ein kostenloses privates Netz nur aus deinen eigenen Geräten. Öffentlich im Internet ist das Studio dabei nicht.
+
+1. **Am PC:** Tailscale von **tailscale.com/download/windows** laden, installieren und anmelden (zum Beispiel mit deinem Google-Konto).
+2. **Am Handy:** die App **Tailscale** installieren (App Store oder Google Play) und mit **demselben Konto** anmelden.
+3. **Im Studio am PC:** Zahnrad → **Unterwegs-Zugriff** → **Unterwegs-Zugriff einschalten**. Will Tailscale beim ersten Mal eine Freigabe, zeigt das Studio einen Link: öffnen, bestätigen, dann noch einmal einschalten.
+4. **Am Handy:** Tailscale einschalten und die angezeigte Adresse im Browser öffnen. Sie sieht so aus: `https://dein-pc.tailXXXX.ts.net`. Ist Telegram verbunden, schickt dir **Adresse an Telegram senden** den Link aufs Handy.
+5. Die Adresse als **Lesezeichen** speichern.
+
+Gut zu wissen:
+
+- Der PC muss an bleiben und das Studio laufen. In den Windows-Energieoptionen **„Energiesparmodus: Nie“** wählen, wenn er am Strom hängt. Sperren (Windows-Taste + L) ist in Ordnung, abmelden oder herunterfahren nicht. Nach einem Neustart einmal **Cay_Studio_Starten.cmd** öffnen.
+- Ist der PC aus, ist das Studio nicht erreichbar. Die Tailscale-App zeigt, ob dein PC online ist.
+- Aus- und einschalten geht nur am PC selbst. So sperrst du dich unterwegs nicht aus.
+- Ist der Unterwegs-Zugriff an, enthalten die Benachrichtigungen den Link **„Im Studio öffnen“**. Er öffnet das Projekt direkt, am Handy (mit Tailscale) und am PC.
 
 ## Turbo
 
