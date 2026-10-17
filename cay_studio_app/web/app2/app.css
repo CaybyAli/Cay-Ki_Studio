@@ -596,6 +596,8 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .notify-error { margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 15px; line-height: 1.45; color: var(--ink);
   background: color-mix(in srgb, var(--stop) 12%, var(--surface)); box-shadow: inset 3px 0 0 var(--stop); overflow-wrap: anywhere; }
 .notify-error:focus { outline: none; }
+.notify-error p + p { margin-top: 8px; }
+.switch input:disabled, .switch input:disabled + span { cursor: not-allowed; opacity: .5; }
 .notify-whatsapp { margin: 0; padding-top: 18px; border-top: 1px solid var(--hairline); }
 .notify-channel a { overflow-wrap: anywhere; }
 @media (max-width: 560px) {

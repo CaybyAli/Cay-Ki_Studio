@@ -1064,9 +1064,9 @@ function openSheet(html) { const sheet = $('#sheet'); sheet.innerHTML = `<div cl
 function closeSheet() { const sheet = $('#sheet'); if (sheet.open) sheet.close(); }
 async function settingsSheet() {
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div><p class="muted">Bereitschaft wird geprüft …</p>`);
-  const [check, voices, animation, boost, notify] = await Promise.all([api('/api/factory/check').catch(e => ({ error: e.message })),
+  const [check, voices, animation, boost, notify, remote] = await Promise.all([api('/api/factory/check').catch(e => ({ error: e.message })),
     api('/api/factory/voice-studio/status').catch(() => null), api('/api/factory/render-studio/status').catch(() => null), api('/api/factory/turbo').catch(() => null),
-    api('/api/notify').catch(() => null)]);
+    api('/api/notify').catch(() => null), api('/api/remote?quick=true').catch(() => null)]);
   const rows = (check.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   const anim = (animation && animation.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
   // Sections like the notifications sheet: a 17 px heading with a hairline, its text and buttons close below it.
@@ -1085,6 +1085,9 @@ async function settingsSheet() {
     <section class="sheet-section"><h3 class="group-title">Benachrichtigungen</h3>
       <p class="small muted">${esc(notify ? notifySummary(notify) : 'Status nicht lesbar.')}</p>
       <div class="actions"><button class="button quiet small" data-action="notify">${notify && notifyChannels(notify).length ? 'Ändern' : 'Einrichten'}</button></div></section>
+    <section class="sheet-section"><h3 class="group-title">Unterwegs-Zugriff</h3>
+      <p class="small muted">${esc(remoteSummary(remote))}</p>
+      <div class="actions"><button class="button quiet small" data-action="remote">${remote && remote.enabled ? 'Ändern' : 'Einrichten'}</button></div></section>
     <section class="sheet-section"><h3 class="group-title">Weitere Werkzeuge</h3>
       <p><a href="/classic#remix">Figurentausch</a> öffnet sich in der bisherigen Ansicht. <a href="/classic">Bisherige Oberfläche</a></p>
       <p class="small muted">Cay Studio ${esc(S.version)}. Alles läuft lokal, ohne Abo und ohne kostenpflichtige Dienste.</p></section>`);
@@ -1214,7 +1217,8 @@ function notifyHtml(n) {
       ${notifySwitch('done', 'Film fertig', n.events.done)}
       ${notifySwitch('turn', 'Du bist dran', n.events.turn, 'Wenn eine Freigabe auf dich wartet. Mit Autopilot nur, wenn er nicht allein weiterkommt.')}
       ${notifySwitch('blocked', 'Angehalten', n.events.blocked, 'Wenn ein Projekt wegen eines Fehlers stehen bleibt.')}
-      ${notifySwitch('link', 'Link zum Projekt mitsenden', n.link, 'Der Link öffnet das Projekt nur am PC, nicht am Handy.')}
+      ${notifySwitch('link', 'Link zum Projekt mitsenden', n.link, n.studio ? 'Der Link öffnet das Projekt im Studio, am PC und unterwegs mit Tailscale.'
+        : 'Der Link öffnet das Projekt nur am PC. Mit dem Unterwegs-Zugriff (Einrichtung) auch am Handy.')}
       <label class="field notify-address"><span>So spricht dich das Studio an</span><input class="input" data-notify-text="address" value="${esc(n.address || 'Sir Cay')}" maxlength="40" autocomplete="off"></label>
       <p class="small muted">Zum Beispiel: „🎬 ${esc(n.address || 'Sir Cay')}, dein Film ist fertig!“ mit dem Titelbild als Vorschau.</p></section>
     ${pcBlock()}${telegramBlock(n.telegram)}${ntfyBlock(n.ntfy)}
@@ -1236,6 +1240,64 @@ async function notifySheet() {
 async function notifyStep(channel, fn, focus) {
   try { const n = await fn(); NOTE.error = null; notifyRender(n || await api('/api/notify'), focus); return true; } catch (e) {
     NOTE.error = { channel, text: e.message }; notifyRender(S.notify || await api('/api/notify').catch(() => S.notify)); return false;
+  }
+}
+/* ---------- Unterwegs-Zugriff (0.18.1): the studio on the phone over Tailscale, the PC does the work ----------
+   The server checks Tailscale and words every state in German; switching on or off only works at the PC. */
+const REMOTE = { error: null };
+const LOCAL_NAMES = ['127.0.0.1', 'localhost', '[::1]'];
+function remoteAway(r) { return r.here === 'remote' || !LOCAL_NAMES.includes(location.hostname); }
+function remoteSummary(r) {
+  if (!r) return 'Status nicht lesbar.';
+  return r.enabled ? `An: ${r.url}` : 'Aus. Damit öffnest du das Studio auch am Handy, zum Beispiel in der Bahn. Rechnen tut weiter dein PC.';
+}
+function remoteHtml(r) {
+  const on = r.enabled, away = remoteAway(r), ready = r.tailscale && r.tailscale.state === 'ready';
+  const rows = (r.checks || []).map(c => `<div class="check-row"><span class="dot ${c.ready ? '' : 'bad'}"></span><div><b>${esc(c.name)}</b><div class="small muted">${esc(c.detail)}</div></div></div>`).join('');
+  // A failed switch-on keeps its text (and Tailscale's approval link) until the next try; a problem while on comes from the live check.
+  const failure = r.failure && r.failure.text, text = REMOTE.error || failure || r.problem;
+  const link = failure && text === failure && r.failure.link;
+  const error = text ? `<div class="notify-error" role="alert" tabindex="-1"><p>${esc(text)}</p>${link ? `<p><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Freigabe bei Tailscale öffnen</a></p>` : ''}</div>` : '';
+  const toggle = `<div class="notify-option"><label class="switch"><input type="checkbox" data-remote-switch ${on ? 'checked' : ''} ${away ? 'disabled' : ''}><span>Unterwegs-Zugriff einschalten</span></label>
+    ${away ? `<p class="small muted">Ein- und ausschalten geht nur am PC selbst (dort im Browser: ${esc(r.local)}). So sperrst du dich unterwegs nicht aus.</p>` : ''}</div>`;
+  const buttons = [r.telegram && '<button class="button quiet small" data-action="remote-telegram">Adresse an Telegram senden</button>',
+    !away && r.problem && ready && '<button class="button small" data-action="remote-repair">Neu einrichten</button>'].filter(Boolean).join('');
+  const address = on ? `<div class="notify-topic"><code>${esc(r.url)}</code><button class="button quiet small" data-action="remote-copy" data-text="${esc(r.url)}">Kopieren</button></div>
+      ${buttons ? `<div class="actions">${buttons}</div>` : ''}
+      ${r.telegram ? '' : '<p class="small muted">Tipp: Ist Telegram unter „Benachrichtigungen“ verbunden, schickst du dir die Adresse hier mit einem Tipp aufs Handy.</p>'}` : '';
+  return `<div class="sheet-head"><div class="notify-head"><button class="link small" data-action="settings">‹ Einrichtung</button><h2 class="headline">Unterwegs-Zugriff</h2></div><button class="button quiet small" data-action="close">Fertig</button></div>
+    <p class="muted notify-lede">Öffne das Studio am Handy oder Laptop, zum Beispiel in der Bahn, und mach alles wie zu Hause. Rechnen tut weiter dein PC. Die Verbindung läuft über Tailscale: ein kostenloses, privates Netz nur aus deinen eigenen Geräten. Öffentlich im Internet ist das Studio damit nicht.</p>
+    <section class="notify-channel" aria-labelledby="ra-how"><h3 class="group-title" id="ra-how">So geht’s</h3>
+      <ol class="notify-steps"><li><b>Am PC:</b> Tailscale von <a href="https://tailscale.com/download/windows" target="_blank" rel="noopener noreferrer">tailscale.com/download/windows</a> installieren und anmelden, zum Beispiel mit deinem Google-Konto.</li>
+        <li><b>Am Handy:</b> die App <b>Tailscale</b> installieren (App Store oder Google Play) und mit <b>demselben Konto</b> anmelden.</li>
+        <li><b>Hier am PC:</b> „Unterwegs-Zugriff einschalten“.</li>
+        <li><b>Unterwegs:</b> In der Tailscale-App einschalten und die Adresse unten im Browser öffnen. Am besten als Lesezeichen speichern.</li></ol>
+      <p class="small muted">Der PC muss dafür an bleiben: In den Windows-Energieoptionen „Energiesparmodus: Nie“ wählen, wenn er am Strom hängt. Der Bildschirm darf ausgehen.</p></section>
+    <section class="notify-channel" aria-labelledby="ra-state"><div class="notify-top"><h3 class="group-title" id="ra-state">Status</h3>${chip(on, on ? 'An' : 'Aus')}</div>
+      ${rows ? `<div>${rows}</div>` : ''}${toggle}${error}${address}
+      <div class="actions"><button class="button quiet small" data-action="remote">Neu prüfen</button></div>
+      <p class="small muted">${esc(r.pc_off)}</p></section>
+    <p class="small muted notify-whatsapp">Nur Geräte, die mit deinem Tailscale-Konto angemeldet sind, erreichen die Adresse. Ohne Tailscale führt sie nirgendwohin. Das öffentliche „Tailscale Funnel“ nutzt das Studio nie.</p>`;
+}
+function remoteRender(r, focus) {
+  const before = $('#sheet .sheet-body'), top = before ? before.scrollTop : 0;
+  S.remote = r; openSheet(remoteHtml(r));
+  const body = $('#sheet .sheet-body'); if (body) body.scrollTop = top;
+  const target = (focus && $(focus)) || (REMOTE.error && $('#sheet .notify-error'));
+  if (target) target.focus({ preventScroll: false });
+}
+async function remoteSheet() {
+  REMOTE.error = null;
+  const head = '<div class="sheet-head"><h2 class="headline">Unterwegs-Zugriff</h2><button class="button quiet small" data-action="close">Fertig</button></div>';
+  openSheet(`${head}<p class="muted">Tailscale wird geprüft …</p>`);
+  try { remoteRender(await api('/api/remote')); } catch (e) { openSheet(`${head}<p class="notify-error" role="alert">${esc(e.message)}</p>`); }
+}
+/* Switch on (or set up again) / off at the PC: the server answers with the new status or a German reason. */
+async function remoteStep(path, done) {
+  try {
+    const r = await post(path); REMOTE.error = r.note || null; remoteRender(r, '[data-remote-switch]'); toast(done); return true;
+  } catch (e) {
+    REMOTE.error = e.message; remoteRender(await api('/api/remote').catch(() => S.remote) || S.remote); return false;
   }
 }
 const MAX_LINES = 6;   // same limit as the server (SceneDialogueEdit)
@@ -1283,6 +1345,15 @@ const actions = {
   },
   async settings() { await settingsSheet(); },
   async notify() { await notifySheet(); },
+  async remote() { await remoteSheet(); },
+  async 'remote-repair'() { await remoteStep('/api/remote/enable', 'Neu eingerichtet. Die Adresse gilt wieder.'); },
+  async 'remote-telegram'() {
+    try { await post('/api/remote/telegram'); REMOTE.error = null; remoteRender(S.remote); toast('Adresse an Telegram gesendet. Sie sollte gleich auf dem Handy erscheinen.'); }
+    catch (e) { REMOTE.error = e.message; remoteRender(S.remote); }
+  },
+  async 'remote-copy'(b) {
+    try { await navigator.clipboard.writeText(b.dataset.text); toast('Adresse kopiert.'); } catch (e) { toast('Kopieren nicht möglich. Bitte die Adresse abschreiben.'); }
+  },
   async 'pc-on'() {
     if (!('Notification' in window)) return;
     const answer = await Notification.requestPermission();
@@ -1553,6 +1624,14 @@ document.addEventListener('change', async event => {
   }
   if (el.matches('[data-notify-text]')) {
     await guarded(el, async () => { S.notify = await put('/api/notify', { [el.dataset.notifyText]: el.value.trim() || 'Sir Cay' }); notifyRender(S.notify); });
+    return;
+  }
+  if (el.matches('[data-remote-switch]')) {
+    const on = el.checked;
+    if (!on && !confirm('Unterwegs-Zugriff ausschalten? Handy und Laptop erreichen das Studio dann nicht mehr. Einschalten geht nur hier am PC.')) { el.checked = true; return; }
+    const option = el.closest('.notify-option');
+    if (on && option) option.insertAdjacentHTML('beforeend', '<p class="small muted">Tailscale wird eingerichtet. Das dauert ein paar Sekunden …</p>');
+    await guarded(el, () => remoteStep(on ? '/api/remote/enable' : '/api/remote/disable', on ? 'Unterwegs-Zugriff ist an. Öffne die Adresse am Handy, während Tailscale dort an ist.' : 'Unterwegs-Zugriff ist aus.'));
     return;
   }
   if (el.matches('[data-notify]')) {
