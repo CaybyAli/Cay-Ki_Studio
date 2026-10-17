@@ -1161,7 +1161,8 @@ function pcBlock() {
     : pc === 'on' ? '<div class="actions"><button class="button quiet small" data-action="pc-test">Probe anzeigen</button><button class="button danger small" data-action="pc-off">Ausschalten</button></div>'
     : '<div class="actions"><button class="button small" data-action="pc-on">Am PC einschalten</button></div>';
   return `<section class="notify-channel" aria-labelledby="nc-pc"><div class="notify-top"><h3 class="group-title" id="nc-pc">Am PC</h3>${chip(pc === 'on', pc === 'on' ? 'An' : 'Aus')}</div>
-    <p class="small muted">Eine Meldung am Bildschirm, solange ein Studio-Fenster offen ist. Dabei verlassen keine Daten den PC.</p>${body}${notifyError('pc')}</section>`;
+    <p class="small muted">${LOCAL_NAMES.includes(location.hostname) ? 'Eine Meldung am Bildschirm, solange ein Studio-Fenster offen ist. Dabei verlassen keine Daten den PC.'
+      : 'Eine Meldung in diesem Browser, solange ein Studio-Fenster offen ist. Sie kommt über dein Tailscale-Netz direkt von deinem PC.'}</p>${body}${notifyError('pc')}</section>`;
 }
 function telegramBlock(t) {
   let body;
