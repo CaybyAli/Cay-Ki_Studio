@@ -117,6 +117,22 @@ def caption_chunks(text,start,duration,limit=CAPTION_WORDS):
         end=t+duration*weight/total;out.append((t,end,' '.join(chunk).upper()));t=end
     return out
 
+def shift(offset,frames,fps,exact=False):
+    """Move a part to its film time for the captions. FFmpeg's setpts computes PTS+offset/TB in double
+    precision and truncates (D2TS): with offset/TB just below a whole frame, PTS crossing a power of two
+    jumps by two frames. FFmpeg 7.1+ writes mp4 as VFR, so the jump stays in the part as a one-frame gap;
+    from the third gap on '-t' cut the last frame ("Exportprüfung fehlgeschlagen", Cay 0.18.2, episode 6).
+    Parts without such a jump keep the old text (same cache key, same bytes). TB is 1/fps here
+    (fps, minterpolate and zoompan all set it), so the whole-frame shift is an exact integer."""
+    text=f'{offset:.9f}';c=float(text)/(1/fps)
+    if not exact and all(int(i+c)-int(c)==i for i in range(int(frames))):return f'setpts=PTS+{text}/TB'
+    return f'setpts=PTS+{round(offset*fps)}/(TB*{fps})'
+
+def timeline(path,frames,fps):
+    """Seconds the part's video stream really lasts; a gap inside makes it longer than frames/fps."""
+    info=probe(path);stream=next(s for s in info['streams'] if s['codec_type']=='video')
+    return int(stream.get('nb_frames',0)),float(stream.get('duration',info['format']['duration']))
+
 def camera(scene,t0,fps):
     """Directed camera on the CPU (0.18): no GPU time, no lip-sync risk. A talking shot of 4.5 s or
     more pushes in slowly (1.00 -> 1.06), a second line punches in (x1.12), a reaction pushes in
@@ -184,7 +200,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
                 'scale=1080:1920:flags=lanczos:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,'+
                 # Zoom before the subtitles, so captions never move; centred a bit above the middle (faces).
                 (f"scale={ZOOM_UPSCALE}:flags=bicubic,zoompan=z='{zoom}':x='(iw-iw/zoom)/2':y='(ih-ih/zoom)*0.42':d=1:s=1080x1920:fps={fps},setsar=1," if zoom else '')+
-                f'setpts=PTS+{offset:.9f}/TB,subtitles=Untertitel.ass,setpts=PTS-STARTPTS')
+                shift(offset,expected_frames,fps)+',subtitles=Untertitel.ass,setpts=PTS-STARTPTS')
             key=hashlib.sha256(json.dumps([9,clip['sha256'],filtering,subtitle_hash,expected_frames,'libx264-medium-crf17'],sort_keys=True).encode()).hexdigest()
             name=f'Part_{i:03}_{j:03}_{key[:16]}.mp4';dest=folder/name;metadata=dest.with_suffix('.json')
             cached=False
@@ -197,8 +213,16 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
                 temp_part=dest.with_name(dest.stem+'.'+uuid.uuid4().hex+'.partial.mp4');started=time.monotonic()
                 try:
                     ff(['-i',source,'-an','-vf',filtering,'-frames:v',expected_frames,'-c:v','libx264','-preset','medium','-crf','17','-pix_fmt','yuv420p',temp_part],folder)
-                    stream=next(s for s in probe(temp_part)['streams'] if s['codec_type']=='video')
-                    if int(stream.get('nb_frames',0))!=expected_frames:raise RuntimeError('Ein Schnittabschnitt ist unvollständig. Erzeugte Animationen bleiben erhalten.')
+                    count,length=timeline(temp_part,expected_frames,fps)
+                    if count==expected_frames and abs(length-expected_frames/fps)>.5/fps:
+                        # A gap the prediction did not see (other FFmpeg arithmetic): shift by whole frames once.
+                        exact=filtering.replace(shift(offset,expected_frames,fps),shift(offset,expected_frames,fps,True))
+                        ff(['-y','-i',source,'-an','-vf',exact,'-frames:v',expected_frames,'-c:v','libx264','-preset','medium','-crf','17','-pix_fmt','yuv420p',temp_part],folder)
+                        count,length=timeline(temp_part,expected_frames,fps)
+                    if count!=expected_frames:raise RuntimeError('Ein Schnittabschnitt ist unvollständig. Erzeugte Animationen bleiben erhalten.')
+                    if abs(length-expected_frames/fps)>.5/fps:
+                        raise RuntimeError(f'Schnittabschnitt Szene {i+1} hat eine Lücke: {expected_frames} Bilder, aber {length:.3f} s statt {expected_frames/fps:.3f} s. '
+                                           'Erzeugte Animationen bleiben erhalten; bitte den Fehlerbericht speichern und schicken.')
                     os.replace(temp_part,dest)
                     info={'key':key,'sha256':file_hash(dest)};temp_meta=metadata.with_suffix('.partial.json')
                     temp_meta.write_text(json.dumps(info));os.replace(temp_meta,metadata)
@@ -232,24 +256,27 @@ def finish(spec):
     if card:total=cursor+card['seconds'];sound=cover.splice(audio,folder/'Ton_mit_Titelkarte.wav',card['at'],card['seconds'])
     args=['-f','concat','-safe','1','-i','Clips.txt','-i',str(sound)]
     out=Path(spec['output']);out.parent.mkdir(parents=True,exist_ok=True);tmp=folder/('Export.'+uuid.uuid4().hex+'.partial.mp4');mux_start=time.monotonic()
-    ff([*args,'-map','0:v','-map','1:a','-t',total,'-c:v','copy','-c:a','aac','-ar','48000','-b:a','256k','-movflags','+faststart',tmp],folder)
-    info=probe(tmp);video=next(x for x in info['streams'] if x['codec_type']=='video')
-    if video['width']!=1080 or video['height']!=1920 or abs(float(info['format']['duration'])-total)>.12 or int(video.get('nb_frames',0))!=round(total*fps):raise RuntimeError('Exportprüfung fehlgeschlagen: Bildlänge oder Bildgröße stimmt nicht.')
-    if not any(x['codec_type']=='audio' for x in info['streams']):raise RuntimeError('Export hat keine Tonspur.')
-    if float(video.get('duration',info['format']['duration']))+1e-6<spec.get('minimum_seconds',0):raise RuntimeError('Export ist kürzer als die gewählte Mindestdauer. Tonvorschau neu erzeugen.')
-    # The exported film must contain every line of the approved mix; a muxed
-    # audio stream alone does not prove that speech survived encoding.
-    placed=speech_check.placed(spec['scenes'])
-    if placed:
-        try:
+    try:
+        ff([*args,'-map','0:v','-map','1:a','-t',total,'-c:v','copy','-c:a','aac','-ar','48000','-b:a','256k','-movflags','+faststart',tmp],folder)
+        info=probe(tmp);video=next(x for x in info['streams'] if x['codec_type']=='video')
+        frames,expected=int(video.get('nb_frames',0)),round(total*fps)
+        if video['width']!=1080 or video['height']!=1920 or abs(float(info['format']['duration'])-total)>.12 or frames!=expected:
+            raise RuntimeError(f'Exportprüfung fehlgeschlagen: Bildlänge oder Bildgröße stimmt nicht (erwartet {expected} Bilder in 1080×1920, '
+                               f'erhalten {frames} in {video["width"]}×{video["height"]}, Länge {float(info["format"]["duration"]):.2f} s statt {total:.2f} s).')
+        if not any(x['codec_type']=='audio' for x in info['streams']):raise RuntimeError('Export hat keine Tonspur.')
+        if float(video.get('duration',info['format']['duration']))+1e-6<spec.get('minimum_seconds',0):raise RuntimeError('Export ist kürzer als die gewählte Mindestdauer. Tonvorschau neu erzeugen.')
+        # The exported film must contain every line of the approved mix; a muxed
+        # audio stream alone does not prove that speech survived encoding.
+        placed=speech_check.placed(spec['scenes'])
+        if placed:
             exported=speech_check.decode(tmp);approved=speech_check.decode(audio)
             # With a title card every line after it sits one card later; compared against the approved mix itself.
             if card:placed,approved=cover.shift_check(placed,approved,card)
             report=speech_check.summary(speech_check.compare_export(exported,approved,24000,placed),'export')
             speech_check.write_report(folder/'Exportpruefung.json',report)
             if report['blocking']:raise speech_check.SpeechCheckError(speech_check.message(report,'„Fehlerbericht speichern“ und mitschicken. Die freigegebene Tonvorschau und alle Animationen bleiben erhalten.'),report)
-        except BaseException:
-            tmp.unlink(missing_ok=True);raise
+    except BaseException:
+        tmp.unlink(missing_ok=True);raise
     timings['mux_seconds']=time.monotonic()-mux_start
     # The Linux workspace and Windows project drive may be different filesystems.
     transfer=out.with_name(out.name+'.'+uuid.uuid4().hex+'.partial')

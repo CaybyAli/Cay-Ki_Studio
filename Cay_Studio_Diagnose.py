@@ -309,6 +309,8 @@ def main():
     print('CAY STUDIO DIAGNOSE (liest nur, ändert nichts)')
     print('Dashboard:', health())
     print('Aktives Programm:', (RUNTIME / 'current').resolve() if (RUNTIME / 'current').exists() else 'fehlt')
+    try: print('FFmpeg:', subprocess.run(['ffmpeg', '-version'], capture_output=True, text=True, timeout=10).stdout.split('\n')[0][:80])
+    except (OSError, subprocess.SubprocessError) as error: print('FFmpeg: nicht lesbar', error)
     config = json.loads((RUNTIME / 'config/ablage.json').read_text(encoding='utf-8')); root = Path(config['wsl_root'])
     for label, path in [('Stimmenstudio', BASE / 'envs/studio-voices/bereit.json'), ('Qwen-Dialogmodell', BASE / 'models/studio-voices/Base/bereit.json'),
                         ('Chatterbox', BASE / 'envs/chatterbox/bin/python'), ('Sampler-Adapter', BASE / 'apps/ComfyUI/custom_nodes/cay_studio_sampler/__init__.py')]:
