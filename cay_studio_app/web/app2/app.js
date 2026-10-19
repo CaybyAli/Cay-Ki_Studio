@@ -148,7 +148,8 @@ function storyHead(d) {
       <details class="script-help"><summary>So schreibst du es</summary>
         <pre>${esc(SCRIPT_EXAMPLE)}\n## Folge 2: Titel    (nur für Serien)</pre>
         <p class="small muted">Gesprochen wird genau, was hinter dem Doppelpunkt steht. Klammern im Satz werden nicht gesprochen, sie geben die Sprechhaltung an.
-          Eine Zeile ohne Namen davor ist Handlung ohne Worte. Eine Folge dauert mindestens 15 Sekunden, bis 3 Minuten gehen. Etwa zweieinhalb Wörter sind eine Sekunde.</p></details>
+          Eine Zeile ohne Namen davor ist Handlung ohne Worte. Beschreibt sie nur Ort, Licht oder Kleidung, wird sie das Bild zum nächsten Satz.
+          „(off)“ hinter dem Namen: Die Stimme kommt aus dem Off. Eine Folge dauert mindestens 15 Sekunden, bis 3 Minuten gehen. Etwa zweieinhalb Wörter sind eine Sekunde.</p></details>
       <label class="sr" for="script">Dein Drehbuch</label>
       <textarea id="script" class="script-input" data-field="script" spellcheck="false" placeholder="${esc(SCRIPT_EXAMPLE)}">${esc(d.script)}</textarea>
       <div id="script-check" class="script-check-slot" aria-live="polite"></div>`;
@@ -167,10 +168,21 @@ function checkView(c) {
   return `${notice}<div class="script-check${c.ok ? '' : ' bad'}">
       <p class="script-length"><span>Länge nach Drehbuch</span><strong>${esc(length)}</strong></p>
       <p class="small muted">${esc(facts.join(' · '))}${c.figures.length ? `. Es spielen ${esc(c.figures.map(f => f.name).join(', '))}.` : ''}</p>
+      ${readingView(c.report, eps)}
       ${list(blocking, ' block')}${list(hints, '')}
       ${c.ok ? `<p class="small ok-line">${hints.length ? 'Der Film kann so entstehen. Die Hinweise sind Vorschläge, das Studio ändert nichts daran.' : 'Passt. Der Film kann so entstehen.'}</p>` : ''}
       ${c.preview ? `<details class="script-preview"${S.previewOpen ? ' open' : ''}><summary>So liest das Studio dein Drehbuch</summary><pre>${esc(c.preview)}</pre></details>` : ''}
     </div>`;
+}
+/* 0.19: what became of every row of the script, so nothing disappears without a word. */
+function readingView(r, eps) {
+  if (!r) return '';
+  const kept = r.note + r.skipped, paced = eps.filter(e => e.pacing), share = e => `${Math.round(e.pacing.speech_share * 100)} %`;
+  const line = `So gelesen: ${r.spoken} ${r.spoken === 1 ? 'Zeile' : 'Zeilen'} gesprochen, ${r.action} als stumme Handlung, ${r.picture} als Bild zu Satz oder Szene`
+    + (kept ? `, ${kept} nicht verfilmt (Hinweise, Ton, Gliederung)` : '') + '.'
+    + (paced.length > 1 ? ` Sprache: ${paced.map(e => `Folge ${e.number} etwa ${share(e)}`).join(', ')}.` : paced.length ? ` Sprache: etwa ${share(paced[0])} der Zeit.` : '');
+  const unread = (r.unread || []).map(x => ({ text: `Zeile ${x.line}: „${x.text}“ versteht das Studio nicht, sie wird nicht verfilmt.` }));
+  return `<p class="small muted">${esc(line)}</p>` + (unread.length ? `<ul class="problems">${unread.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '');
 }
 function paintCheck() { const box = $('#script-check'); if (box) box.innerHTML = checkView(S.check); }
 async function checkScript(now) {
@@ -403,7 +415,8 @@ async function createFilm() {
   // Only a series changes its looks; a single film sends 'same', whatever the draft held before.
   const body = { ...d, idea: d.idea.trim(), title: d.title.trim(), looks: seriesCount(d) > 1 && d.looks === 'per_episode' ? 'per_episode' : 'same',
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => participantBody(p, p.name.trim())) };
-  delete body.story; delete body.script;   // the AI writes: exactly the request of before 0.18
+  delete body.story; delete body.script;   // the AI writes: exactly the request of before 0.18 …
+  body.writing = 19;                       // … with the 0.19 dialogue rules (hook, conflict, no filler, length that fits)
   if (d.characters === 'provided' && !body.participants.length) { toast('Für „Nur meine Figuren“ mindestens eine Figur mit Namen eintragen.'); return; }
   if (body.participants.length > MAX_CAST) { toast(`Bis zu ${MAX_CAST} Figuren pro Film. Du hast ${body.participants.length}.`); return; }
   const run = await post('/api/factory', body);

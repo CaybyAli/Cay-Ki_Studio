@@ -1,0 +1,1708 @@
+{
+ "01_template": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen – Nebel, Patrick schleppt Kisten\nAKTION: Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.\nSANDY (ruhig): Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK (fröhlich): Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro – Mr. Krabs zählt Geld\nSPONGEBOB (nervös): Was genau sollen wir eigentlich transportieren?\nMR. KRABS (drohend): Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK (leise): Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB (entschlossen): Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS (schreiend): Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket – dunkel\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPLANKTON (spöttisch): Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "02_bold_names": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n*Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.*\n\n**SANDY:** Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n\n**PATRICK** *(grinst)*: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\n**SpongeBob:** *(nervös)* „Was genau sollen wir eigentlich transportieren?“\n\n**Mr. Krabs:** „Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.“\n\n**Patrick (leise):** Sponge, lass uns gehen. Das riecht nach Ärger.\n\n**SpongeBob:** Nur diese eine Fahrt. Dann hören wir auf.\n\n**Mr. Krabs (brüllt):** Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n*Plankton beobachtet die beiden durch ein Fernglas.*\n\n**Plankton:** Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "03_hollywood": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n1. EXT. HAFEN – MORGEN\n\nNebel. Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.\n\nSANDY\nMontag, sieben Uhr. Arbeit hätte ich für euch beide.\n\nPATRICK\n(grinsend)\nIch wäre dabei. Bin ich zu spät zum Frühstück?\n\n2. INT. KRUSTY KRAB – BÜRO – TAG\n\nMr. Krabs zählt Geldscheine.\n\nSPONGEBOB\nWas genau sollen wir eigentlich transportieren?\n\nMR. KRABS\nFünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\nPATRICK (V.O.)\nSponge, lass uns gehen. Das riecht nach Ärger.\n\nSPONGEBOB (CONT'D)\nNur diese eine Fahrt. Dann hören wir auf.\n\nMR. KRABS\n(brüllt)\nWie du willst. Aber NIEMAND öffnet den Koffer!\n\n3. INT. CHUM BUCKET – NACHT\n\nPlankton beobachtet die beiden durch ein Fernglas.\n\nPLANKTON (O.S.)\nKrabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "04_timewin_headings": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### 0:00–0:04 – Hafen\nBild: Patrick stellt eine schwere Kiste ab.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n\n### 0:04–0:08 – Hafen\nPATRICK (grinst): Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### 0:08–0:14 – Krusty Krab, Büro\nBild: Mr. Krabs zählt Geld.\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\n### 0:14–0:20 – Krusty Krab, Büro\nPATRICK (leise): Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS (brüllt): Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### 0:20–0:26 – Chum Bucket\nBild: Plankton beobachtet die beiden durch ein Fernglas.\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "05_szene_timewin": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 (0:00–0:08) – Hafen\nPatrick stellt eine schwere Kiste ab.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 (0:08–0:20) – Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 (0:20–0:26) – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "06_bild_ton_dialog": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n**0:00–0:04**\nBild: Hafen im Nebel. Patrick stellt eine schwere Kiste ab.\nTon: Möwen, Wellen.\nDialog: SANDY: „Montag, sieben Uhr. Arbeit hätte ich für euch beide.“\n\n**0:04–0:08**\nBild: Nahaufnahme Patrick.\nDialog: PATRICK (grinst): „Ich wäre dabei. Bin ich zu spät zum Frühstück?“\n\n**0:08–0:14**\nBild: Krusty Krab, Büro. Mr. Krabs zählt Geld.\nDialog: SPONGEBOB: „Was genau sollen wir eigentlich transportieren?“\nDialog: MR. KRABS: „Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.“\n\n**0:14–0:20**\nDialog: PATRICK (leise): „Sponge, lass uns gehen. Das riecht nach Ärger.“\nDialog: SPONGEBOB: „Nur diese eine Fahrt. Dann hören wir auf.“\nDialog: MR. KRABS (brüllt): „Wie du willst. Aber NIEMAND öffnet den Koffer!“\n\n**0:20–0:26**\nBild: Chum Bucket. Plankton mit Fernglas.\nTon: (off) PLANKTON: „Krabs weiß, wen er schickt. Jetzt weiß ich es auch.“\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "07_bild_ton_names": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n**0:00–0:04**\nBild: Hafen im Nebel. Patrick stellt eine schwere Kiste ab.\nTon: Möwen, Wellen.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n**0:04–0:08**\nKamera: Nahaufnahme Patrick.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\n**0:08–0:14**\nBild: Mr. Krabs zählt Geld.\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n**0:14–0:20**\nPATRICK (leise): Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS (brüllt): Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n**0:20–0:26**\nBild: Plankton mit Fernglas.\nTon: PLANKTON (off): Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "08_table": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n| Zeit | Bild | Dialog |\n|---|---|---|\n| 0:00–0:04 | Hafen, Patrick stellt eine Kiste ab | SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide. |\n| 0:04–0:08 | Nahaufnahme Patrick | PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück? |\n| 0:08–0:11 | Krusty Krab, Büro | SPONGEBOB: Was genau sollen wir eigentlich transportieren? |\n| 0:11–0:15 | Mr. Krabs zählt Geld | MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. |\n| 0:15–0:18 | Patrick zupft SpongeBob am Ärmel | PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger. |\n| 0:18–0:21 | SpongeBob nickt | SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf. |\n| 0:21–0:24 | Mr. Krabs schlägt auf den Tisch | MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer! |\n| 0:24–0:28 | Chum Bucket, Plankton mit Fernglas | PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch. |\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "09_bullets": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n- *Aktion:* Patrick stellt eine schwere Kiste ab.\n- **Sandy:** Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n- **Patrick** (grinst): Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\n- SpongeBob: Was genau sollen wir eigentlich transportieren?\n- Mr. Krabs: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n- Patrick: Sponge, lass uns gehen. Das riecht nach Ärger.\n- SpongeBob: Nur diese eine Fahrt. Dann hören wir auf.\n- Mr. Krabs (brüllt): Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n1. Plankton beobachtet die beiden durch ein Fernglas.\n2. Plankton: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "10_prose_quotes": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nPatrick stellt eine schwere Kiste ab.\nSandy sagt: „Montag, sieben Uhr. Arbeit hätte ich für euch beide.“\n„Ich wäre dabei. Bin ich zu spät zum Frühstück?“, fragt Patrick.\n\n### Szene 2 – Krusty Krab, Büro\nSpongeBob fragt: „Was genau sollen wir eigentlich transportieren?“\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "11_emoji": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## 🎬 Folge 1: Der erste Auftrag\n\n### 🎥 Szene 1 – Hafen\n🎞️ Patrick stellt eine schwere Kiste ab.\n🗣️ SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n🗣️ PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### 🎥 Szene 2 – Krusty Krab, Büro\n🔊 Ton: Kasse klingelt.\n💬 SPONGEBOB: Was genau sollen wir eigentlich transportieren?\n💬 MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n💬 PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\n💬 SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\n💬 MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### 🎥 Szene 3 – Chum Bucket\n🕵️ PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "12_dash": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nAKTION: Patrick stellt eine schwere Kiste ab.\nSANDY – Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK — Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB – „Was genau sollen wir eigentlich transportieren?“\nMR. KRABS – Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "13_einstellung_shot": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nEinstellung 1 (0:00–0:04): Totale, Patrick stellt eine Kiste ab.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nShot 2: Nahaufnahme Patrick.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nShot 3: Mr. Krabs hinter dem Schreibtisch.\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nShot 4: Patrick zupft SpongeBob am Ärmel.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nShot 5: Plankton mit Fernglas.\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "14_hook_labels": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n**HOOK (0:00–0:03)**\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n\n### Szene 1 – Hafen\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n**Cliffhanger (0:50–0:58):** PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "15_hook_inline": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n**Hook:** SANDY: „Montag, sieben Uhr. Arbeit hätte ich für euch beide.“\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n**Outro:** PLANKTON: „Krabs weiß, wen er schickt. Jetzt weiß ich es auch.“\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "16_name_nextline_quote": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nPatrick stellt eine schwere Kiste ab.\n\nSandy:\n„Montag, sieben Uhr. Arbeit hätte ich für euch beide.“\n\nPatrick (grinsend):\n„Ich wäre dabei. Bin ich zu spät zum Frühstück?“\n\n### Szene 2 – Krusty Krab, Büro\nSpongeBob:\n„Was genau sollen wir eigentlich transportieren?“\n\nMr. Krabs:\n„Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.“\n\nPatrick:\n„Sponge, lass uns gehen. Das riecht nach Ärger.“\n\nSpongeBob:\n„Nur diese eine Fahrt. Dann hören wir auf.“\n\nMr. Krabs:\n„Wie du willst. Aber NIEMAND öffnet den Koffer!“\n\n### Szene 3 – Chum Bucket\nPlankton:\n„Krabs weiß, wen er schickt. Jetzt weiß ich es auch.“\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "17_claude_style": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## FOLGE 1: Der erste Auftrag\n\n**[SZENE 1 – AUSSEN – HAFEN – MORGEN]**\n\n*(Nebel. Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.)*\n\n**SANDY:** Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n\n**PATRICK** *(grinsend)*: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n**[SZENE 2 – INNEN – KRUSTY KRAB, BÜRO – TAG]**\n\n**SPONGEBOB:** Was genau sollen wir eigentlich transportieren?\n\n**MR. KRABS:** Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\n**PATRICK** *(flüsternd)*: Sponge, lass uns gehen. Das riecht nach Ärger.\n\n**SPONGEBOB:** Nur diese eine Fahrt. Dann hören wir auf.\n\n**MR. KRABS** *(brüllt)*: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n**[SZENE 3 – INNEN – CHUM BUCKET – NACHT]**\n\n*(Plankton beobachtet die beiden durch ein Fernglas.)*\n\n**PLANKTON:** Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "18_gemini_style": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n**Folge 1: Der erste Auftrag**\n\n**Szene 1: Der Hafen – Morgen**\n\n*Patrick stellt eine schwere Kiste ab.*\n\n**Sandy:** Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n**Patrick:** (grinst) Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n**Szene 2: Krusty Krab, Büro – Tag**\n\n**SpongeBob:** Was genau sollen wir eigentlich transportieren?\n**Mr. Krabs:** Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n**Patrick:** Sponge, lass uns gehen. Das riecht nach Ärger.\n**SpongeBob:** Nur diese eine Fahrt. Dann hören wir auf.\n**Mr. Krabs:** (brüllt) Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n**Szene 3: Chum Bucket – Nacht**\n\n**Plankton:** Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "19_nicknames": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY CHEEKS: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK STAR: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB SCHWAMMKOPF: Was genau sollen wir eigentlich transportieren?\nKRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nEUGENE KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "20_dialog_block": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nHandlung: Patrick stellt eine schwere Kiste ab.\nDialog:\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nDialog:\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nText: PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "21_numbered_shots": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n1. AUSSEN – HAFEN – MORGEN\nPatrick stellt eine schwere Kiste ab.\n2. SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n3. PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n4. INNEN – KRUSTY KRAB, BÜRO\n5. SPONGEBOB: Was genau sollen wir eigentlich transportieren?\n6. MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n7. PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\n8. SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\n9. MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n10. INNEN – CHUM BUCKET – NACHT\n11. PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "22_sekunden_marks": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSek. 0–4: Patrick stellt eine schwere Kiste ab.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n(4–8 s) PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\n0:08 – SPONGEBOB: Was genau sollen wir eigentlich transportieren?\n00:11–00:15 MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n[0:15] PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\n0:18-0:21 – SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\n0:21 bis 0:24: MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n0:24–0:28 | PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "23_offscreen_vo": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY (O.S.): Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK (zu Sandy): Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB (off): Was genau sollen wir eigentlich transportieren?\nMR. KRABS (aus dem Off): Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK (V.O.): Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB (Off-Stimme): Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS (Telefon): Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nStimme (Plankton): Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "24_slug_no_number": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\nEXT. HAFEN – MORGEN\nPatrick stellt eine schwere Kiste ab.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSCHNITT AUF:\nINT. KRUSTY KRAB – BÜRO\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\nSCHNITT.\nINT. CHUM BUCKET – NACHT\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "25_beat_titles": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n**Beat 1 – Das Angebot**\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n**Beat 2 – Der Auftrag**\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n**Wendepunkt**\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n**Cliffhanger**\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "26_mood_line_before": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY\n*(kühl, ohne aufzusehen)*\nMontag, sieben Uhr. Arbeit hätte ich für euch beide.\n\nPATRICK\n*(mit vollem Mund)*\nIch wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB\nWas genau sollen wir eigentlich transportieren?\nMR. KRABS\nFünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK\nSponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB\nNur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS\nWie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPlankton beobachtet die beiden durch ein Fernglas.\nPLANKTON\nKrabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "27_wrapped_lines": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY: Montag, sieben Uhr.\nArbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei.\nBin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide.\nPlankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "28_ort_zeit_labels": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\nOrt: Hafen\nZeit: Morgen\nStimmung: neblig, angespannt\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\nOrt: Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\nOrt: Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "29_asterisk_actions": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: *kratzt sich am Kopf* Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB: *flüstert* Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. *zählt Scheine* Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer! *haut auf den Tisch*\n\n### Szene 3 – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "30_bold_name_nextline": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n**SANDY:**\nMontag, sieben Uhr. Arbeit hätte ich für euch beide.\n\n**PATRICK** *(grinst)*\nIch wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\n**SpongeBob:**\nWas genau sollen wir eigentlich transportieren?\n\n**Mr. Krabs:**\nFünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\n**Patrick:**\nSponge, lass uns gehen. Das riecht nach Ärger.\n\n**SpongeBob:**\nNur diese eine Fahrt. Dann hören wir auf.\n\n**Mr. Krabs** (brüllt):\nWie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n**Plankton:**\nKrabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "31_blockquote": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n> **SANDY:** Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n> **PATRICK:** Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\n> **SPONGEBOB:** Was genau sollen wir eigentlich transportieren?\n> **MR. KRABS:** Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n> **PATRICK:** Sponge, lass uns gehen. Das riecht nach Ärger.\n> **SPONGEBOB:** Nur diese eine Fahrt. Dann hören wir auf.\n> **MR. KRABS:** Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n> **PLANKTON:** Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "32_table_figur_text": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n| Figur | Text |\n|---|---|\n| SANDY | Montag, sieben Uhr. Arbeit hätte ich für euch beide. |\n| PATRICK | Ich wäre dabei. Bin ich zu spät zum Frühstück? |\n\n### Szene 2 – Krusty Krab, Büro\n| Figur | Text |\n|---|---|\n| SPONGEBOB | Was genau sollen wir eigentlich transportieren? |\n| MR. KRABS | Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. |\n| PATRICK | Sponge, lass uns gehen. Das riecht nach Ärger. |\n| SPONGEBOB | Nur diese eine Fahrt. Dann hören wir auf. |\n| MR. KRABS | Wie du willst. Aber NIEMAND öffnet den Koffer! |\n\n### Szene 3 – Chum Bucket\n| Figur | Text |\n|---|---|\n| PLANKTON | Krabs weiß, wen er schickt. Jetzt weiß ich es auch. |\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "33_dense_cue_wrapped": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n### Szene 1 – Hafen\nSANDY\nMontag, sieben Uhr.\nArbeit hätte ich für euch beide.\nPATRICK\nIch wäre dabei.\nBin ich zu spät zum Frühstück?\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB\nWas genau sollen wir eigentlich transportieren?\nMR. KRABS\nFünfhundert für euch beide.\nPlankton bezahlt euch bei der Übergabe.\nPATRICK\nSponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB\nNur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS\nWie du willst. Aber NIEMAND öffnet den Koffer!\n### Szene 3 – Chum Bucket\nPLANKTON\nKrabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "34_dialog_header_bullets": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\n**Dialog:**\n- SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n- PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\n**Dialog:**\n- SPONGEBOB: Was genau sollen wir eigentlich transportieren?\n- MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n- PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\n- SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\n- MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\n**Dialog:**\n- PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "35_inline_pipe_rows": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n0:00–0:04 | Hafen | SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n0:04–0:08 | Hafen | PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n0:08–0:11 | Krusty Krab, Büro | SPONGEBOB: Was genau sollen wir eigentlich transportieren?\n0:11–0:15 | Krusty Krab, Büro | MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n0:15–0:18 | Krusty Krab, Büro | PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\n0:18–0:21 | Krusty Krab, Büro | SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\n0:21–0:24 | Krusty Krab, Büro | MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n0:24–0:28 | Chum Bucket | PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "36_scene_heading_timewin_bold": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n**Szene 1 | 0:00–0:08 | Hafen**\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n**Szene 2 | 0:08–0:20 | Krusty Krab, Büro**\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n**Szene 3 | 0:20–0:26 | Chum Bucket**\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "37_numbered_scene_headings": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### 1. Hafen – Morgen\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### 2) Krusty Krab, Büro – Tag\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### SZENE 3: CHUM BUCKET (NACHT)\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "38_hook_heading": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Hook (0:00–0:03)\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n\n### Szene 1 – Hafen\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Cliffhanger\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "39_parenthetical_at_end": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide. (verschränkt die Arme)\nPATRICK: Ich wäre dabei. (kaut) Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB (schluckt): Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK (zieht SpongeBob am Ärmel, leise): Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS (haut auf den Tisch, brüllt): Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "40_wrapped_label_lines_after_template": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen – Patrick schleppt Kisten\nSANDY (ruhig): Montag, sieben Uhr.\nArbeit hätte ich für euch beide.\nPATRICK (fröhlich): Ich wäre dabei.\nBin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB (nervös): Was genau sollen wir eigentlich transportieren?\nMR. KRABS (drohend): Fünfhundert für euch beide.\nPlankton bezahlt euch bei der Übergabe.\nMr. Krabs schiebt einen Koffer über den Tisch.\nPATRICK (leise): Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS (schreiend): Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPLANKTON (spöttisch): Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "41_emoji_series_headings": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## 🎬 Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\n## 🎬 Folge 2: Die Übergabe\n\n### Szene 1 – Krusty Krab, Büro\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "42_teil_headings": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Teil 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\n## Teil 2: Die Übergabe\n\n### Szene 1 – Krusty Krab, Büro\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "43_hinweis_mentions_folge": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nFolge 1 endet mit einem Cliffhanger, Folge 2 löst ihn auf. Jede Folge etwa 58 Sekunden.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm\nFIGUR: Patrick – rosa Seestern\nFIGUR: Mr. Krabs – roter Krebs\nFIGUR: Plankton – winzig, grün\nFIGUR: Sandy – Eichhörnchen\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\n## Folge 2: Die Übergabe\n\n### Szene 1 – Krusty Krab, Büro\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "44_erzaehler_vo": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nERZÄHLER (V.O.): Bikini Bottom, sieben Uhr morgens.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "45_kamera_with_dialog_same_line": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Figuren\nFIGUR: SpongeBob – gelber Schwamm, weißes Hemd, rote Krawatte, nervös\nFIGUR: Patrick – rosa Seestern, Trainingsanzug, gutmütig\nFIGUR: Mr. Krabs – roter Krebs, Anzug, gierig\nFIGUR: Plankton – winzig, grün, ein Auge\nFIGUR: Sandy – Eichhörnchen im Taucheranzug\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen\nNahaufnahme: Sandy tritt aus dem Nebel.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nTotale: Patrick lässt die Kiste fallen.\nPATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n\n### Szene 2 – Krusty Krab, Büro\nSPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nSFX: Tür knallt.\nPATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nSPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nMR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!\n\n### Szene 3 – Chum Bucket\nInsert: Planktons Auge im Fernglas.\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei. Bin ich zu spät zum Frühstück?"
+   ],
+   [
+    "Spongebob",
+    "Was genau sollen wir eigentlich transportieren?"
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen. Das riecht nach Ärger."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt. Dann hören wir auf."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ]
+  ]
+ },
+ "46_weisses_gold_f1_reconstructed": {
+  "text": "# SpongeBob – Weißes Gold\n\n## Hinweise\nSechs zusammenhängende Folgen von jeweils ungefähr 58 Sekunden. Die Zeitfenster sind Schnittvorgaben; die genaue Laufzeit hängt von Spiel und Schnitt ab. Bildbeschreibungen werden nicht gesprochen.\n\n## Folge 1: Der erste Auftrag\n\n### Szene 1 – Hafen – 0:00–0:12\nAKTION: Patrick schleppt im Nebel eine schwere Kiste über den Steg.\nAKTION: Sandy tritt aus dem Nebel und mustert ihn.\nSANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPATRICK: Ich wäre dabei.\n\n### Szene 2 – Krusty Krab, Büro – 0:12–0:40\nAKTION: Patrick betritt das Büro, die Kiste noch auf der Schulter.\nAKTION: Mr. Krabs öffnet die Kiste, weißes Pulver glitzert.\nSPONGEBOB: Kokain.\nMR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPATRICK: Sponge, lass uns gehen.\nAKTION: Mr. Krabs schiebt einen Geldstapel über den Tisch.\nSPONGEBOB: Nur diese eine Fahrt.\nMR. KRABS: Wie du willst.\n\n### Szene 3 – Chum Bucket – 0:40–0:58\nAKTION: Patrick stellt die Kiste vor Plankton ab.\nPLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\nAKTION: Plankton grinst und schließt die Tür.\nMR. KRABS: Morgen wieder. Gleiche Bezahlung.\nAKTION: Patrick schaut aufs Meer hinaus.\n",
+  "expected": [
+   [
+    "Sandy",
+    "Montag, sieben Uhr. Arbeit hätte ich für euch beide."
+   ],
+   [
+    "Patrick",
+    "Ich wäre dabei."
+   ],
+   [
+    "Spongebob",
+    "Kokain."
+   ],
+   [
+    "Mr. Krabs",
+    "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+   ],
+   [
+    "Patrick",
+    "Sponge, lass uns gehen."
+   ],
+   [
+    "Spongebob",
+    "Nur diese eine Fahrt."
+   ],
+   [
+    "Mr. Krabs",
+    "Wie du willst."
+   ],
+   [
+    "Plankton",
+    "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+   ],
+   [
+    "Mr. Krabs",
+    "Morgen wieder. Gleiche Bezahlung."
+   ]
+  ]
+ }
+}

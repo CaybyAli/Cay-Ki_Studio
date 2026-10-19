@@ -14,6 +14,7 @@ from factory_timing import POLICY,audio_layout,off_screen,allowed_speakers
 from studio_quality_policy import settings
 from lipsync_shots import silent_by_accident,MISSING_MARK
 import shot_design
+import tts_text   # 0.19: the text the voice model reads (sound_policy 19 only)
 def sample_signature(d,options):
     # Key of the production sample Cay approves: quality options, sound version and chosen images.
     return hashlib.sha256(json.dumps([options,d.get('audio_revision'),[[sc.get('selected') for sc in ep['scenes']] for ep in d['episodes']]],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
@@ -91,7 +92,7 @@ class Quality:
             python=self.base/('envs/studio-voices/bin/python' if engine=='qwen' else 'envs/chatterbox/bin/python')
             if not python.is_file():raise RuntimeError('Die ausgewählte lokale Sprachumgebung fehlt.')
             d['audio_engine']=engine
-            folder=self.folder(d)/'03_Stimmen/Dialoge';job=self.folder(d)/'Sprachauftrag.json';self.atomic(job,json.dumps({'cast':cast,'lines':lines,'voice_policy':policy,'output':str(folder)}).encode());d['phase']=f'{len(lines)} Dialogbeiträge werden eingesprochen';self.save(d)
+            folder=self.folder(d)/'03_Stimmen/Dialoge';job=self.folder(d)/'Sprachauftrag.json';self.atomic(job,json.dumps({'cast':cast,'lines':lines,'voice_policy':policy,'output':str(folder),**tts_text.job_fields(d,lines,d['plan']['cast'])}).encode());d['phase']=f'{len(lines)} Dialogbeiträge werden eingesprochen';self.save(d)
             async with self.measured(d,'Sprache · '+engine):await self.command([python,Path(__file__).with_name('factory_speech.py' if engine=='qwen' else 'factory_tts.py'),'--base',self.base,'--job',job],14400)
             d['lines']=json.loads((folder/'Ergebnis.json').read_text())['lines']
             if len(d['lines'])!=len(lines):raise RuntimeError('Sprachvorschau unvollständig.')

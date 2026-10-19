@@ -2,6 +2,7 @@
 import argparse,hashlib,json,os,random,shutil,sys,time
 from pathlib import Path
 from speech_quality import clean_text,finish_voice,SPEECH_POLICY,performance_key,performance_key_v16,prosody_score
+import tts_text
 
 REPO='Qwen/Qwen3-TTS-12Hz-1.7B-Base'
 
@@ -40,7 +41,9 @@ def generate(base,path):
         ref=Path(person['voice_file'])
         if hashlib.sha256(ref.read_bytes()).hexdigest()!=person['voice_hash']:raise RuntimeError('Stimmreferenz wurde verändert.')
         delivery=performance_key(line.get('emotion',''))
-        signature=hashlib.sha256(json.dumps({'line':line,'voice':person['voice_hash'],'ref_text':person.get('voice_text',''),'model':model_identity,'processing':SPEECH_POLICY,'engine':'qwen-base-11-performance' if legacy else 'qwen-base-17-takes'},sort_keys=True).encode()).hexdigest()
+        # 0.19 (job 'speech_text', projects pinned with sound_policy 19): the model reads tts_text.speakable;
+        # the signature changes only for a line whose spoken text differs from the written one.
+        signature=hashlib.sha256(json.dumps({'line':line,'voice':person['voice_hash'],'ref_text':person.get('voice_text',''),'model':model_identity,'processing':SPEECH_POLICY,'engine':'qwen-base-11-performance' if legacy else 'qwen-base-17-takes',**tts_text.signature_fields(line,job)},sort_keys=True).encode()).hexdigest()
         target=out/(line['key']+'_'+signature[:12]+'.wav');meta=target.with_suffix('.json')
         cached=target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature
         if not cached:
@@ -55,7 +58,7 @@ def generate(base,path):
             for attempt in range(wanted+1):
                 if len(takes)>=wanted:break
                 seed=(line['seed']+attempt)%2**32;random.seed(seed);np.random.seed(seed);torch.manual_seed(seed)
-                options=dict(text=clean_text(line['text']),language='German',voice_clone_prompt=prompts[prompt_key],non_streaming_mode=True,temperature=.7 if legacy else .9,top_p=.9 if legacy else 1.,max_new_tokens=min(650,max(128,len(line['text'].split())*15+80)))
+                options=dict(text=tts_text.spoken(line,job),language='German',voice_clone_prompt=prompts[prompt_key],non_streaming_mode=True,temperature=.7 if legacy else .9,top_p=.9 if legacy else 1.,max_new_tokens=min(650,max(128,len(line['text'].split())*15+80)))
                 if legacy:waves,sr=model.generate_voice_clone(**options)
                 else:
                     try:waves,sr=model.generate_voice_clone(**options,top_k=50)

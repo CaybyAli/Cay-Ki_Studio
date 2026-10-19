@@ -128,7 +128,12 @@ def script(d):
     """0.17 screenplay: words, lines, silent actions, shots, doctor and visual pass."""
     for ei, ep in enumerate(d.get('episodes', [])):
         st = ep.get('screenplay_stats')
-        if st: print(f'Drehbuch Folge {ei + 1}: {st.get("words")} Wörter (Ziel {st.get("budget", {}).get("words")}), {st.get("lines")} Zeilen, '
+        # Cay's own script has no word target (the planned length is only a minimum); 0.19 shows its own pacing estimate.
+        own = ep.get('own_script'); pace = ((d.get('script') or {}).get('episodes') or [{}] * (ei + 1))[ei].get('pacing') if own else None
+        aim = (f'Sprache etwa {round(pace["speech_share"] * 100)} %, erstes Wort {pace["first_word"]} s, längste Stille {pace["longest_silence"]} s'
+               + (f', Länge laut Drehbuch {pace["stated_seconds"]} s' if pace.get('stated_seconds') else '')) if pace else \
+            'eigenes Drehbuch' if own else f'Ziel {(st or {}).get("budget", {}).get("words")}'
+        if st: print(f'Drehbuch Folge {ei + 1}: {st.get("words")} Wörter ({aim}), {st.get("lines")} Zeilen, '
                      f'{st.get("actions")} stumme Aktionen, {st.get("shots")} Einstellungen')
         store = (d.get('screenplays') or {}).get(str(ei), {})
         for key in ('doctor_error', 'visual_error'):

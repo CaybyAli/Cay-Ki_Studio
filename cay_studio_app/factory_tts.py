@@ -2,6 +2,7 @@
 import argparse,copy,hashlib,inspect,json,os,random,subprocess,sys
 from pathlib import Path
 from speech_quality import clean_text,sampling,finish_voice,SPEECH_POLICY
+import tts_text
 os.environ['HF_HUB_OFFLINE']='1'
 os.environ['TRANSFORMERS_OFFLINE']='1'
 os.environ['HF_HUB_DISABLE_TELEMETRY']='1'
@@ -36,16 +37,16 @@ def main():
     policy=int(job.get('voice_policy',17))  # before 0.17: same sampling, so cached lines stay valid
     options={'t3_model':'t3_mtl23ls_v2.safetensors'} if 't3_model' in inspect.signature(ChatterboxMultilingualTTS.from_local).parameters else {}
     model=ChatterboxMultilingualTTS.from_local(ckpt,device='cuda',**options);default=copy.deepcopy(model.conds)
-    def generate(text,ref,emotion,seed):
+    def generate(text,ref,emotion,seed,written):
         random.seed(seed);np.random.seed(seed%2**32);torch.manual_seed(seed)
         model.conds=copy.deepcopy(default)
         if not ref and model.conds is None:raise RuntimeError('Für erfundene Stimmen fehlt die lokale Standardstimme (conds.pt). Bitte eine Stimmprobe im Projekt ergänzen.')
         requested=sampling(emotion,policy)
         accepted=inspect.signature(model.generate).parameters
         requested={k:v for k,v in requested.items() if k in accepted}
-        wave=model.generate(text=clean_text(text),language_id='de',audio_prompt_path=str(ref) if ref else None,**requested)
+        wave=model.generate(text=text,language_id='de',audio_prompt_path=str(ref) if ref else None,**requested)
         data=wave.detach().cpu().numpy().reshape(-1)
-        return finish_voice(data,model.sr,text)
+        return finish_voice(data,model.sr,written)
     voices={}
     for index,person in enumerate(job['cast']):
         name=person['name'];ref=person.get('voice_file');ident=hashlib.sha256(name.encode()).hexdigest()[:12]
@@ -55,11 +56,12 @@ def main():
         raise RuntimeError('Für '+name+' fehlt ein Stimmprofil. Zuerst Stimmenstudio einrichten.')
     result=[]
     for index,line in enumerate(job['lines']):
-        signature=hashlib.sha256(json.dumps({'line':line,'voice_sha256':hashlib.sha256(Path(voices[line['speaker']]).read_bytes()).hexdigest(),'checkpoint':str(ckpt),'processing':SPEECH_POLICY,'sampling':sampling(line['emotion'],policy)},sort_keys=True).encode()).hexdigest()
+        # 0.19 (job 'speech_text', sound_policy 19): the model reads tts_text.speakable; other lines keep their signature.
+        signature=hashlib.sha256(json.dumps({'line':line,'voice_sha256':hashlib.sha256(Path(voices[line['speaker']]).read_bytes()).hexdigest(),'checkpoint':str(ckpt),'processing':SPEECH_POLICY,'sampling':sampling(line['emotion'],policy),**tts_text.signature_fields(line,job)},sort_keys=True).encode()).hexdigest()
         target=out/(line['key']+'_'+signature[:12]+'.wav');meta=target.with_suffix('.json')
         if not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature):
             for attempt in range(2):
-                try:data,quality=generate(line['text'],voices[line['speaker']],line['emotion'],line['seed']+attempt);break
+                try:data,quality=generate(tts_text.spoken(line,job),voices[line['speaker']],line['emotion'],line['seed']+attempt,line['text']);break
                 except RuntimeError as error:
                     if attempt:
                         # Lets "Produktion fortsetzen" retake exactly this line with a new seed.
