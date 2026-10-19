@@ -1,7 +1,7 @@
 """Measured dialogue, original cartoon accompaniment and deterministic ducking."""
 from array import array
 from pathlib import Path
-import hashlib,json,math,os,random,re,subprocess,wave
+import hashlib,json,math,os,random,re,subprocess,sys,wave
 from factory_timing import audio_layout,audio_layout_v16
 import speech_check
 from speech_quality import level_db,performance_key
@@ -112,12 +112,12 @@ def exact(chain,duration):
 def ff(args,cwd):
     r=subprocess.run(['ffmpeg','-nostdin','-y','-v','error',*map(str,args)],cwd=cwd,capture_output=True,timeout=600)
     if r.returncode:raise RuntimeError('Tonmischung: '+r.stderr.decode(errors='replace')[-1500:])
-def duck_music(source,target,intervals):
+def duck_music(source,target,intervals,low=.28,attack=.08,release=.28):
     with wave.open(str(source)) as w:
         if w.getframerate()!=RATE or w.getnchannels()!=1 or w.getsampwidth()!=2:raise RuntimeError('Ungültiges Musikformat.')
         data=array('h',w.readframes(w.getnframes()))
     if __import__('sys').byteorder!='little':data.byteswap()
-    envelope=array('f',[1])*len(data);low=.28;attack=.08;release=.28
+    envelope=array('f',[1])*len(data)
     for start,end in intervals:
         for i in range(max(0,int((start-attack)*RATE)),min(len(data),math.ceil((end+release)*RATE))):
             t=i/RATE;g=(1-(1-low)*(t-start+attack)/attack) if t<start else (low if t<=end else low+(1-low)*(t-end)/release);envelope[i]=min(envelope[i],max(low,min(1,g)))
@@ -218,3 +218,250 @@ def mix(folder,scenes,mood,music=None,settings=None,policy=17,sound=0):
         temp.unlink(missing_ok=True)
         raise speech_check.SpeechCheckError(speech_check.message(report,'„Produktion fortsetzen“ spricht nur diese Beiträge neu ein. Bleibt eine Zeile stumm, ihren Text oder die Stimme der Figur ändern.'),report)
     os.replace(temp,target);(folder/'Tonbericht.json').write_text(json.dumps({'seconds':duration,'lines':len(intervals),'music_mode':settings['music_mode'],'effects':sum(len(s.get('sound_cues',[])) for s in scenes),'dialogue_peak':dialogue_peak,'dialogue_rms':round(dialogue_rms,2),'speech_check':{k:report[k] for k in ('policy','checked','blocking','warnings')},'speech_warnings':[e['label']+' – '+e['note'] for e in report['lines'] if e['status']!='ok']},ensure_ascii=False));return str(target)
+
+# 0.19 sound (projects created with sound_policy 19; the code above stays the mix of every older project).
+# Cay's 0.18 films, measured in the 0.19 diagnosis: a white-noise whoosh opened every silent action shot; the
+# single-pass loudnorm lifted music, room tone and hiss between the lines by up to 12 dB ("Rauschen kommt und
+# geht", music only 3-5 LU under the voices); a quiet reference voice made a quiet figure (Patrick 2.4 LU under
+# the others, speech check stops); the hiss of noisy references came and went with every line.
+DIALOGUE_LUFS=-18.  # dialogue stem after its one measured gain; music and ambience are set relative to it
+SPEECH_DBFS=-20.    # active speech level of every take before its emotion offset
+# Delivery offsets after levelling: a shout clearly louder, a whisper softer but well above the music.
+LEVEL_DB_19={'shout':3.,'angry':2.,'panic':2.,'excited':1.5,'triumph':1.,'threat':-1.,'pleading':-1.,'afraid':-1.,'sad':-2.,'whisper':-5.}
+MAX_BOOST,MAX_CUT=24.,12.
+QUIET_TAKE_DB=12.   # a take lifted more than this is reported: the reference voice is quiet (or noisy)
+DENOISE_NR=15       # afftdn reduction in dB; above ~20 real sibilants turn watery
+MUSIC_LUFS=-26.     # music at level 1.0 between lines: 8 LU under the dialogue (11 LU at the default 0.7)
+DUCK_DB,DUCK_ATTACK,DUCK_RELEASE,DUCK_BRIDGE=7.,.25,.7,1.   # gentle dip; stays down across short gaps
+FINAL_LIMIT=.98     # mono peak; the stereo split puts each channel 3 dB lower (true peak about -2.5 dBTP)
+AMBIENCE_DBFS={'room':-47.,'forest':-43.,'wind':-41.,'rain':-41.,'train':-41.}   # bed RMS at level 1.0
+AMBIENCE_FADE=.4    # crossfade where the location changes, nowhere else
+def loudness(path,fmt=()):
+    """Integrated loudness (LUFS) and true peak (dBTP) per EBU R128 (FFmpeg ebur128); silence reads -70."""
+    r=subprocess.run(['ffmpeg','-nostdin','-hide_banner','-nostats',*fmt,'-i',str(path),'-af','ebur128=peak=true','-f','null','-'],capture_output=True,timeout=600)
+    text=r.stderr.decode(errors='replace');i=re.findall(r'\bI:\s+(-?[\d.]+|-inf) LUFS',text);p=re.findall(r'\bPeak:\s+(-?[\d.]+|-inf) dBFS',text)
+    if r.returncode or not i:raise RuntimeError('Tonmischung: Lautheit nicht messbar. '+text[-600:])
+    return max(-70.,float(i[-1])),(float(p[-1]) if p else 0.)
+def read_f32(path):
+    r=subprocess.run(['ffmpeg','-nostdin','-v','error','-i',str(path),'-map','0:a:0','-ac','1','-ar',str(RATE),'-f','f32le','-'],capture_output=True,timeout=600)
+    if r.returncode:raise RuntimeError('Sprachspur nicht lesbar: '+r.stderr.decode(errors='replace')[-600:])
+    data=array('f');data.frombytes(r.stdout[:len(r.stdout)//4*4])
+    if sys.byteorder!='little':data.byteswap()
+    return data
+def f32_bytes(data):
+    data=array('f',data)
+    if sys.byteorder!='little':data.byteswap()
+    return data.tobytes()
+def power_db(values):
+    return 10*math.log10(max(sum(v*v for v in values)/max(1,len(values)),1e-20))
+def active_level(fr):
+    """Active speech level (dB re full scale) from 10 ms RMS frames: the frames within 25 dB of the loud end
+    (98th percentile, so a single click does not set the reference). None for a take without sound."""
+    loud=sorted(fr)[int(.98*(len(fr)-1))] if fr else 0.
+    if loud<=1e-6:return None
+    return power_db([min(v,2*loud) for v in fr if v>=loud*10**(-25/20)])
+def noise_window(fr,active):
+    """Frames (first, last) to learn this take's hiss from: the 50 ms lead-in finish_voice leaves before the
+    first word when it is as quiet as the take's floor, else the quietest 50 ms pause. None for a clean take
+    (or digital silence) and for a take without any pause."""
+    if active is None or len(fr)<12:return None
+    floor=power_db(sorted(fr)[:max(1,len(fr)//10)])
+    if floor<-80 or floor>active-15:return None
+    if power_db(fr[1:6])<=floor+6:return 1,6,'Vorlauf'
+    level,i=min((power_db(fr[i:i+5]),i) for i in range(1,len(fr)-5))
+    return (i,i+5,'Pause') if level<=floor+6 else None
+def denoise(data,first,last):
+    """Gentle FFT denoise (afftdn) with the noise profile learnt from frames first..last. That stretch is played
+    first (mirrored to 0.1 s), sampled and cut off again, so the take keeps its exact length and timing.
+    Returns None when FFmpeg fails; the caller then mixes the take as it is."""
+    hop=round(RATE*speech_check.HOP);seg=data[first*hop:last*hop];pre=array('f')
+    while len(pre)<.1*RATE:pre.extend(seg if len(pre)//len(seg)%2==0 else seg[::-1])
+    floor=max(-80.,min(-20.,power_db(seg)+6))   # afftdn only reduces noise under its floor setting
+    graph=f"asendcmd=c='0 afftdn sn start;{len(pre)/RATE:.4f} afftdn sn stop',afftdn=nr={DENOISE_NR}:nf={floor:.1f}"
+    try:r=subprocess.run(['ffmpeg','-nostdin','-v','error','-f','f32le','-ar',str(RATE),'-ac','1','-i','pipe:','-af',graph,'-f','f32le','-'],input=f32_bytes(pre+data),capture_output=True,timeout=300)
+    except (OSError,subprocess.SubprocessError):return None
+    out=array('f');out.frombytes(r.stdout[:len(r.stdout)//4*4])
+    if sys.byteorder!='little':out.byteswap()
+    if r.returncode or len(out)!=len(pre)+len(data):return None
+    out=out[len(pre):]
+    return out if all(math.isfinite(v) for v in out) else None
+def level_take(line,path):
+    """Measure one take, denoise it, and return the gain that brings its active speech to SPEECH_DBFS plus the
+    delivery offset. The cleaned take goes to path (raw float, exact length); the line file stays untouched."""
+    data=read_f32(line['file']);hop=round(RATE*speech_check.HOP)
+    fr=speech_check.frames(data,RATE,0,len(data)/RATE);active=active_level(fr);window=noise_window(fr,active);status='sauber'
+    if window:
+        cleaned=denoise(data,window[0],window[1]);status='Fehler'
+        if cleaned is not None:
+            after=speech_check.frames(cleaned,RATE,0,len(cleaned)/RATE);level=active_level(after)
+            # The voice must come through unchanged (level and timing); otherwise mix the take as it is.
+            shift=max(range(-3,4),key=lambda k:sum(a*b for a,b in zip(fr[max(0,k):],after[max(0,-k):])))
+            if level is not None and abs(level-active)<=1 and shift==0:data,active,status=cleaned,level,window[2]
+            else:status='verworfen'
+    elif active is not None and len(fr)>=12:status='ohne' if power_db(sorted(fr)[:max(1,len(fr)//10)])>=-80 else 'sauber'
+    Path(path).parent.mkdir(parents=True,exist_ok=True);Path(path).write_bytes(f32_bytes(data))
+    gain=0. if active is None else max(-MAX_CUT,min(MAX_BOOST,SPEECH_DBFS-active+LEVEL_DB_19.get(performance_key(line.get('emotion','')),0.)))
+    return {'gain':round(gain,2),'level':None if active is None else round(active,1),'denoise':status}
+def places(scenes):
+    """Consecutive shots of one location share one ambience bed; the place sounds like its most frequent kind."""
+    groups=[];cursor=0.
+    for s in scenes:
+        kind=s.get('ambience') or 'room';where=s.get('location') or '#'+kind
+        if groups and groups[-1]['location']==where:groups[-1]['kinds'].append(kind);groups[-1]['end']=cursor+s['seconds']
+        else:groups.append({'location':where,'start':cursor,'end':cursor+s['seconds'],'kinds':[kind]})
+        cursor+=s['seconds']
+    for g in groups:g['kind']=max(g['kinds'],key=g['kinds'].count)
+    return groups
+def unit(x):
+    rms=math.sqrt(sum(v*v for v in x)/len(x)) if x else 0
+    return [v/rms for v in x] if rms>1e-12 else x
+def bed_texture(kind,n,rng):
+    """Band-limited textures at unit RMS: no white noise, nothing that hisses on a phone speaker."""
+    def lowpass(fc,hp=.99,mod=None):
+        out=[0.]*n;a1=a2=dc=prev=0.;k=1-math.exp(-math.tau*fc/RATE)
+        for i in range(n):
+            c=k if mod is None else 1-math.exp(-math.tau*fc*mod[i]/RATE)
+            a1+=c*(rng.uniform(-1,1)-a1);a2+=c*(a1-a2);dc=hp*(dc+a2-prev);prev=a2;out[i]=dc
+        return unit(out)
+    def slow(step,lo,hi):   # smooth random control curve (cosine between points every step seconds)
+        pts=[rng.uniform(lo,hi) for _ in range(int(n/RATE/step)+3)];out=[0.]*n
+        for i in range(n):
+            t=i/RATE/step;j=int(t);u=(1-math.cos(math.pi*(t-j)))/2;out[i]=pts[j]*(1-u)+pts[j+1]*u
+        return out
+    def blips(rate,freqs,taus,length):   # sparse damped sines (drops, clacks, chirps)
+        out=[0.]*n;t=rng.expovariate(rate)
+        while t<n/RATE:
+            f=rng.uniform(*freqs);tau=rng.uniform(*taus);amp=rng.uniform(.3,1);start=int(t*RATE)
+            for j in range(min(int(length*RATE),n-start)):out[start+j]+=amp*math.exp(-j/RATE/tau)*math.sin(math.tau*f*j/RATE)
+            t+=rng.expovariate(rate)
+        return out
+    if kind=='wind':
+        gust=slow(1.3,.2,1.);base=lowpass(1.,.975,[180+520*g for g in gust])
+        return unit([v*(.35+.65*g) for v,g in zip(base,gust)])
+    if kind=='rain':
+        bed=lowpass(1500,.95);drops=unit(blips(28,(900,2800),(.003,.007),.035)) if n else []
+        return unit([b+.45*d for b,d in zip(bed,drops)])
+    if kind=='forest':
+        bed=lowpass(400);birds=[0.]*n;t=rng.uniform(.8,2.5)
+        while t<n/RATE-.5:
+            f0=rng.uniform(2600,3800)
+            for note in range(rng.randint(2,4)):
+                start=int((t+note*.12)*RATE)
+                for j in range(min(int(.07*RATE),n-start)):
+                    u=j/(.07*RATE);birds[start+j]+=math.sin(math.pi*u)*math.sin(math.tau*(f0-600*u)*j/RATE)
+            t+=rng.uniform(2.5,6)
+        return unit([b+.08*c for b,c in zip(bed,birds)])
+    if kind=='train':
+        rumble=lowpass(110,.995);clack=[0.]*n;t=0.
+        while t<n/RATE:
+            for at in (t,t+.11):
+                start=int(at*RATE)
+                for j in range(max(0,min(int(.12*RATE),n-start))):clack[start+j]+=math.exp(-j/RATE/.025)*math.sin(math.tau*150*j/RATE)
+            t+=.72
+        return unit([r+.25*math.sin(math.tau*52*i/RATE)+.35*c for i,(r,c) in enumerate(zip(rumble,clack))])
+    return lowpass(230)   # room tone: about 40-400 Hz
+def synth_ambience(path,scenes,level=1.):
+    """0.19 bed: one continuous texture per location, crossfaded (equal power) only where the location
+    changes; 'none' stays silent. Returns the places for the sound report."""
+    total=math.ceil(sum(s['seconds'] for s in scenes)*RATE);data=array('f',[0])*total;rng=random.Random(173);fade=round(AMBIENCE_FADE*RATE);edge=round(.3*RATE)
+    groups=places(scenes)
+    for g in groups:
+        if g['kind']=='none' or level<=0:continue
+        a=max(0,round(g['start']*RATE)-fade//2);b=min(total,round(g['end']*RATE)+fade//2)
+        if b<=a:continue
+        x=bed_texture(g['kind'] if g['kind'] in AMBIENCE_DBFS else 'room',b-a,rng);gain=10**(AMBIENCE_DBFS.get(g['kind'],AMBIENCE_DBFS['room'])/20)*level
+        fin=fade if a>0 else edge;fout=fade if b<total else edge
+        for j,v in enumerate(x):
+            e=min(1.,(j+.5)/fin,(b-a-j-.5)/fout);data[a+j]+=v*gain*math.sin(math.pi/2*max(0.,e))
+    write_wav(path,data)
+    return [{'location':g['location'],'kind':g['kind'],'start':round(g['start'],3),'seconds':round(g['end']-g['start'],3)} for g in groups]
+def bridged(intervals,gap=DUCK_BRIDGE):
+    out=[]
+    for start,end in sorted(intervals):
+        if out and start-out[-1][1]<gap:out[-1]=(out[-1][0],max(out[-1][1],end))
+        else:out.append((start,end))
+    return out
+def mix19(folder,scenes,mood,music=None,settings=None):
+    """Mix of sound policy 19: every take levelled and gently denoised on its own, measured linear stages
+    (dialogue, then one constant gain on the whole mix to TARGET_LUFS with a peak limiter), music well under the
+    voices with a gentle dip, one ambience bed per location, effects only where the plan asks for one."""
+    folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);settings={'music_mode':'uploaded' if music else 'auto','music_level':1.,'effects_level':1.,'ambience_level':1.,**(settings or {})}
+    duration=sum(s['seconds'] for s in scenes);cursor=0.;args=[];filters=[];labels=[];intervals=[];takes={};index=0
+    for s in scenes:
+        for l in s.get('lines') or ([s['line']] if s.get('line') else []):
+            p=Path(l['file'])
+            if hashlib.sha256(p.read_bytes()).hexdigest()!=l['sha256']:raise RuntimeError('Sprachspur wurde verändert.')
+            start=cursor+l.get('offset',.15)
+            if start+l['duration']>cursor+s['seconds']+.03:raise RuntimeError('Dialog passt nicht zur Szenendauer.')
+            take=folder/'Zeilen'/f'{index:03}.f32';info=level_take(l,take);takes[l.get('key') or speech_check.label(l)]={**info,'label':speech_check.label(l)}
+            args+=['-f','f32le','-ar',str(RATE),'-ac','1','-i',str(take)]
+            filters.append(f'[{index}:a]highpass=f=70,volume={info["gain"]:+.2f}dB,adelay={round(start*1000)}:all=1,apad=whole_dur={duration}[d{index}]');labels.append(f'[d{index}]');index+=1;intervals.append((start,start+l['duration']))
+        cursor+=s['seconds']
+    dialogue=folder/'Dialogschnitt.wav';raw=folder/'Dialog_roh.wav';dialogue_gain=0.
+    if labels:filters.append(''.join(labels)+f'amix=inputs={len(labels)}:normalize=0:duration=longest[voice]')
+    else:args+=['-f','lavfi','-i',f'anullsrc=r=24000:cl=mono:d={duration}'];filters.append(f'[{index}:a]anull[voice]')
+    ff([*args,'-filter_complex',';'.join(filters),'-map','[voice]','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_f32le',raw],folder)
+    if labels:
+        measured=loudness(raw)[0];dialogue_gain=max(-20.,min(20.,DIALOGUE_LUFS-measured)) if measured>-70 else 0.
+    # One constant gain for the whole dialogue (the takes are level already), peaks caught for 16 bit.
+    ff(['-i',raw,'-af',exact(f'volume={dialogue_gain:+.2f}dB,alimiter=limit=0.891:level=0:latency=1',duration),'-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',dialogue],folder)
+    raw.unlink(missing_ok=True)
+    for take in (folder/'Zeilen').glob('*.f32'):take.unlink()
+    samples=speech_check.read_wav(dialogue)[0];dialogue_peak=max((abs(x) for x in samples),default=0);dialogue_rms=math.sqrt(sum(x*x for x in samples)/len(samples)) if samples else 0
+    if labels and (dialogue_peak<500 or dialogue_rms<30):raise RuntimeError('Die Dialogspur ist stumm. Tonvorschau wurde nicht freigegeben; Stimmen bitte erneut erzeugen.')
+    if settings['music_mode']=='uploaded' and not music:raise RuntimeError('Keine eigene Musikdatei vorhanden.')
+    if music and settings['music_mode']=='uploaded':
+        path=Path(music['file'])
+        if hashlib.sha256(path.read_bytes()).hexdigest()!=music['sha256']:raise RuntimeError('Musikdatei wurde verändert.')
+        args=['-stream_loop','-1','-i',str(path)]
+    elif settings['music_mode']=='off':args=['-f','lavfi','-i',f'anullsrc=r=24000:cl=mono:d={duration}']
+    else:path=folder/'Musik.wav';synth_music(path,duration,mood,settings.get('music_variant',0),settings.get('tempo',1));args=['-i',str(path)]
+    source=folder/'Musik_roh.wav';normalized=folder/'Musik_Normalisiert.wav';ducked=folder/'Musik_Dialogabsenkung.wav'
+    ff([*args,'-af',exact('aresample=24000',duration),'-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_f32le',source],folder)
+    level=0. if settings['music_mode']=='off' else float(settings['music_level']);measured=loudness(source)[0]
+    music_gain=min(20.,MUSIC_LUFS-measured) if measured>-70 and level>0 else 0.
+    ff(['-i',source,'-af',exact(f'volume={level*10**(music_gain/20):.6f},alimiter=limit=0.891:level=0:latency=1',duration)+f',afade=t=out:st={max(0,duration-.5)}:d=0.5','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',normalized],folder)
+    source.unlink(missing_ok=True)
+    duck_music(normalized,ducked,bridged(intervals),low=10**(-DUCK_DB/20),attack=DUCK_ATTACK,release=DUCK_RELEASE)
+    ambience=folder/'Umgebung.wav';effects=folder/'Effekte.wav';beds=synth_ambience(ambience,scenes,float(settings['ambience_level']))
+    synth_effects(effects,scenes,settings['effects_level'])   # only cues the plan asks for: no automatic whoosh
+    # Speech check on the stems before the final gain (it scales everything alike). The 0.18.2 safety net
+    # stays: a masked line gets the bed lowered under it, a missing line still stops the mix.
+    stems=(ducked,ambience,effects);cleared={}
+    for attempt in range(3):
+        entries=speech_check.check_lines(samples,RATE,speech_check.placed(scenes),tuple(speech_check.read_wav(p)[0] for p in stems))
+        masked=[e for e in entries if e['status']=='überdeckt']
+        if not masked or attempt==2:break
+        for key,lower in clear_lines(stems,masked).items():cleared[key]=round(cleared.get(key,0)+lower,1)
+    for e in entries:
+        key=e['key'] or e['label'];lowered=cleared.get(key);take=takes.get(key) or {}
+        if take:e['line_gain_db']=take['gain']
+        if lowered and not e['blocking']:e.update(cleared_db=lowered,note=(e['note']+'; ' if e['note'] else '')+f'Hintergrund hier um {lowered} dB abgesenkt')
+        if lowered and e['status']=='ok':e['status']='abgesenkt'
+        if take.get('gain',0)>QUIET_TAKE_DB and not e['blocking']:
+            e['note']=(e['note']+'; ' if e['note'] else '')+f'Stimmprobe sehr leise, um {take["gain"]:.1f} dB angehoben'
+            if e['status']=='ok':e['status']='angehoben'
+    report=speech_check.summary(entries,'mix');speech_check.write_report(folder/'Sprachpruefung.json',report)
+    if report['blocking']:raise speech_check.SpeechCheckError(speech_check.message(report,'„Produktion fortsetzen“ spricht nur diese Beiträge neu ein. Bleibt eine Zeile stumm, ihren Text oder die Stimme der Figur ändern.'),report)
+    premix=folder/'Vormischung.wav';target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav'
+    ff(['-i',dialogue,'-i',ducked,'-i',ambience,'-i',effects,'-filter_complex',f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,atrim=duration={duration}[m]','-map','[m]','-t',duration,'-ac','1','-c:a','pcm_f32le',premix],folder)
+    measured=loudness(premix)[0]
+    # One constant gain to the platform loudness (no dynamic loudnorm: it lifted music and hiss between the
+    # lines). Without speech the music keeps its place relative to where the dialogue would be.
+    final_gain=TARGET_LUFS-measured if labels and measured>-70 else TARGET_LUFS-DIALOGUE_LUFS
+    for attempt in range(2):
+        ff(['-i',premix,'-af',exact(f'volume={final_gain:+.2f}dB,aresample=48000,alimiter=limit={FINAL_LIMIT}:level=0:latency=1',duration),'-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
+        with wave.open(str(temp)) as w:
+            if abs(w.getnframes()/w.getframerate()-duration)>.03:raise RuntimeError('Tonmischung unvollständig; keine Freigabe.')
+        result,peak=loudness(temp)
+        # The limiter takes a little off loud speech: correct once with a constant gain, never per passage.
+        if not labels or attempt or abs(TARGET_LUFS-result)<=.3:break
+        final_gain+=max(-2.,min(2.,TARGET_LUFS-result))
+    os.replace(temp,target)
+    quiet=[f'{t["label"]} (+{t["gain"]:.1f} dB)' for t in takes.values() if t['gain']>QUIET_TAKE_DB]
+    (folder/'Tonbericht.json').write_text(json.dumps({'seconds':duration,'lines':len(intervals),'music_mode':settings['music_mode'],'effects':sum(len(s.get('sound_cues',[])) for s in scenes),
+        'dialogue_peak':dialogue_peak,'dialogue_rms':round(dialogue_rms,2),'speech_check':{k:report[k] for k in ('policy','checked','blocking','warnings')},
+        'speech_warnings':[e['label']+' – '+e['note'] for e in report['lines'] if e['status']!='ok'],'sound_policy':SOUND_POLICY,
+        'line_gain_db':{k:t['gain'] for k,t in takes.items()},'line_level_dbfs':{k:t['level'] for k,t in takes.items()},'denoise':{k:t['denoise'] for k,t in takes.items()},'quiet_takes':quiet,
+        'loudness':{'dialogue_gain_db':round(dialogue_gain,2),'music_gain_db':round(music_gain,2),'premix_lufs':measured,'final_gain_db':round(final_gain,2),'integrated_lufs':result,'true_peak_dbtp':peak},
+        'ambience':beds},ensure_ascii=False));return str(target)
