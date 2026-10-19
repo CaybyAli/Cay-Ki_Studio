@@ -213,15 +213,23 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
                 saved=json.loads(metadata.read_text())
                 cached=saved['key']==key and saved['sha256']==file_hash(dest)
             except (OSError,ValueError,KeyError):pass
+            gap=False
+            if cached:
+                # A cached part is checked like a new one (one ffprobe). A part encoded with a gap keeps its key when
+                # the prediction misses (0.18.2 cache, other FFmpeg arithmetic); reused, it blocked every export again.
+                try:count,length=timeline(dest,expected_frames,fps)
+                except (OSError,ValueError,KeyError,StopIteration,subprocess.SubprocessError):count,length=0,0.
+                gap=count==expected_frames and abs(length-expected_frames/fps)>.5/fps
+                cached=count==expected_frames and not gap
             if cached:timings['cached_parts']+=1
             else:
                 temp_part=dest.with_name(dest.stem+'.'+uuid.uuid4().hex+'.partial.mp4');started=time.monotonic()
+                exact=filtering.replace(shift(offset,expected_frames,fps),shift(offset,expected_frames,fps,True))
                 try:
-                    ff(['-i',source,'-an','-vf',filtering,'-frames:v',expected_frames,'-c:v','libx264','-preset','medium','-crf','17','-pix_fmt','yuv420p',temp_part],folder)
+                    ff(['-i',source,'-an','-vf',exact if gap else filtering,'-frames:v',expected_frames,'-c:v','libx264','-preset','medium','-crf','17','-pix_fmt','yuv420p',temp_part],folder)
                     count,length=timeline(temp_part,expected_frames,fps)
-                    if count==expected_frames and abs(length-expected_frames/fps)>.5/fps:
+                    if not gap and count==expected_frames and abs(length-expected_frames/fps)>.5/fps:
                         # A gap the prediction did not see (other FFmpeg arithmetic): shift by whole frames once.
-                        exact=filtering.replace(shift(offset,expected_frames,fps),shift(offset,expected_frames,fps,True))
                         ff(['-y','-i',source,'-an','-vf',exact,'-frames:v',expected_frames,'-c:v','libx264','-preset','medium','-crf','17','-pix_fmt','yuv420p',temp_part],folder)
                         count,length=timeline(temp_part,expected_frames,fps)
                     if count!=expected_frames:raise RuntimeError('Ein Schnittabschnitt ist unvollständig. Erzeugte Animationen bleiben erhalten.')
