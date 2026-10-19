@@ -117,8 +117,7 @@ def test_weisses_gold_time_windows_are_a_length_hint_and_the_warning_has_numbers
     first = cut_of(r, r['episodes'][0])[0][0]
     assert first == {'place': 'Vor Sandys Werkstatt, früher Abend', 'what': 'Warmes Licht fällt durch ein halb geöffnetes Garagentor'}
     notes = [p['text'] for p in r['problems']]
-    assert ('Folge 1: 50 gesprochene Wörter für ca. 58 s – etwa 65 % ohne Sprache. Für etwa zwei Drittel Sprache wären es rund 100 Wörter. '
-            'Deine Sätze bleiben, wie du sie geschrieben hast.') in notes
+    assert 'Folge 1: 50 gesprochene Wörter für ca. 58 s – etwa 65 % ohne Sprache. Für etwa zwei Drittel Sprache wären es rund 100 Wörter.' in notes
     assert any(n.startswith('Folge 6: 21 gesprochene Wörter für ca. 58 s – etwa 85 % ohne Sprache.') for n in notes)
     assert not any(p['blocking'] for p in r['problems'])
     # The planned minimum never stretches the shorter 0.19 silent shots back up (shot_design.ACTION_FRAMES).

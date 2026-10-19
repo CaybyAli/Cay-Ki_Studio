@@ -560,7 +560,7 @@ class _Reader:
             if voice: name, mood, off = voice, None, True
         if not spoken:
             if directions: self.action(number, f'{_display(name)} {directions[0]}'); return
-            self.problem(number, f'„{name}:“ ohne Text, übersprungen.'); return
+            self.problem(number, f'„{name}:“ ohne Text, übersprungen.'); self.mark(number, 'skipped'); return
         self.spoken.add(name_key(name)); self.mark(number, 'spoken')
         if self.v19:
             # Every part of the parentheses counts: '(off, wütend)'. (V.O.), (Telefon) mean off-screen, (CONT'D), (zu Sandy) nothing.
@@ -580,7 +580,7 @@ class _Reader:
         name, description = _figure_line(text)
         if listed and not _is_name(name, {}, self.figures, keywords=self.kw): self.mark(number, 'note'); return     # prose in a '## Figuren' list
         if not name or len(name) > 60 or name_key(name) in self.kw:
-            self.problem(number, 'FIGUR-Zeile ohne Namen, übersprungen. So geht es: „FIGUR: Oma – 70 Jahre, Schürze, streng“.'); return
+            self.problem(number, 'FIGUR-Zeile ohne Namen, übersprungen. So geht es: „FIGUR: Oma – 70 Jahre, Schürze, streng“.'); self.mark(number, 'skipped'); return
         self.mark(number, 'figure')
         key = name_key(name); old = self.figures.get(key)
         if old: old['description'] = ' '.join(x for x in (old['description'], description) if x)[:1500]; return
@@ -589,7 +589,7 @@ class _Reader:
     def flush_cue(self):
         if self.cue:
             c = self.cue; self.cue = None
-            if not c['text'].strip(): self.problem(c['line'], f'„{c["name"]}“ ohne Text, übersprungen.'); return
+            if not c['text'].strip(): self.problem(c['line'], f'„{c["name"]}“ ohne Text, übersprungen.'); self.mark(c['line'], 'skipped'); return
             if len(c['rows']) > 1:
                 self.problem(c['rows'][0], f'{_display(c["name"])} spricht diese Zeilen in einem Stück. Ist ein Teil davon eine Handlung, '
                                            'setz eine Leerzeile oder „AKTION:“ davor.', last=c['rows'][-1])
@@ -1061,7 +1061,7 @@ def _pace_notes(label, words, pace, line):
         silent = int(round((1 - pace['speech_share']) * 20)) * 5
         need = int(round(.65 * basis * screenplay.SPEECH_RATE / 5)) * 5
         notes.append(f'{label}: {words} gesprochene Wörter für ca. {round(basis)} s – etwa {silent} % ohne Sprache. '
-                     f'Für etwa zwei Drittel Sprache wären es rund {need} Wörter. Deine Sätze bleiben, wie du sie geschrieben hast.')
+                     f'Für etwa zwei Drittel Sprache wären es rund {need} Wörter.')
     if pace['first_word'] > PACE_START:
         notes.append(f'{label}: Das erste Wort fällt erst nach etwa {round(pace["first_word"])} s. Auf TikTok entscheiden die ersten Sekunden, '
                      'ob jemand weiterschaut: lass früher jemanden sprechen.')

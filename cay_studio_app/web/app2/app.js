@@ -167,10 +167,21 @@ function checkView(c) {
   return `${notice}<div class="script-check${c.ok ? '' : ' bad'}">
       <p class="script-length"><span>Länge nach Drehbuch</span><strong>${esc(length)}</strong></p>
       <p class="small muted">${esc(facts.join(' · '))}${c.figures.length ? `. Es spielen ${esc(c.figures.map(f => f.name).join(', '))}.` : ''}</p>
+      ${readingView(c.report, eps)}
       ${list(blocking, ' block')}${list(hints, '')}
       ${c.ok ? `<p class="small ok-line">${hints.length ? 'Der Film kann so entstehen. Die Hinweise sind Vorschläge, das Studio ändert nichts daran.' : 'Passt. Der Film kann so entstehen.'}</p>` : ''}
       ${c.preview ? `<details class="script-preview"${S.previewOpen ? ' open' : ''}><summary>So liest das Studio dein Drehbuch</summary><pre>${esc(c.preview)}</pre></details>` : ''}
     </div>`;
+}
+/* 0.19: what became of every row of the script, so nothing disappears without a word. */
+function readingView(r, eps) {
+  if (!r) return '';
+  const kept = r.note + r.skipped, paced = eps.filter(e => e.pacing), share = e => `${Math.round(e.pacing.speech_share * 100)} %`;
+  const line = `So gelesen: ${r.spoken} ${r.spoken === 1 ? 'Zeile' : 'Zeilen'} gesprochen, ${r.action} als stumme Handlung, ${r.picture} als Bild zu Satz oder Szene`
+    + (kept ? `, ${kept} nicht verfilmt (Hinweise, Ton, Gliederung)` : '') + '.'
+    + (paced.length > 1 ? ` Sprache: ${paced.map(e => `Folge ${e.number} etwa ${share(e)}`).join(', ')}.` : paced.length ? ` Sprache: etwa ${share(paced[0])} der Zeit.` : '');
+  const unread = (r.unread || []).map(x => ({ text: `Zeile ${x.line}: „${x.text}“ versteht das Studio nicht, sie wird nicht verfilmt.` }));
+  return `<p class="small muted">${esc(line)}</p>` + (unread.length ? `<ul class="problems">${unread.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '');
 }
 function paintCheck() { const box = $('#script-check'); if (box) box.innerHTML = checkView(S.check); }
 async function checkScript(now) {
