@@ -148,7 +148,8 @@ function storyHead(d) {
       <details class="script-help"><summary>So schreibst du es</summary>
         <pre>${esc(SCRIPT_EXAMPLE)}\n## Folge 2: Titel    (nur für Serien)</pre>
         <p class="small muted">Gesprochen wird genau, was hinter dem Doppelpunkt steht. Klammern im Satz werden nicht gesprochen, sie geben die Sprechhaltung an.
-          Eine Zeile ohne Namen davor ist Handlung ohne Worte. Eine Folge dauert mindestens 15 Sekunden, bis 3 Minuten gehen. Etwa zweieinhalb Wörter sind eine Sekunde.</p></details>
+          Eine Zeile ohne Namen davor ist Handlung ohne Worte. Beschreibt sie nur Ort, Licht oder Kleidung, wird sie das Bild zum nächsten Satz.
+          „(off)“ hinter dem Namen: Die Stimme kommt aus dem Off. Eine Folge dauert mindestens 15 Sekunden, bis 3 Minuten gehen. Etwa zweieinhalb Wörter sind eine Sekunde.</p></details>
       <label class="sr" for="script">Dein Drehbuch</label>
       <textarea id="script" class="script-input" data-field="script" spellcheck="false" placeholder="${esc(SCRIPT_EXAMPLE)}">${esc(d.script)}</textarea>
       <div id="script-check" class="script-check-slot" aria-live="polite"></div>`;

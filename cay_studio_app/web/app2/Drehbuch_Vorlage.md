@@ -10,9 +10,13 @@ So liest Cay Studio dein Drehbuch:
 - „NAME (Sprechhaltung): Text“ ist ein gesprochener Satz. Er wird genau so gesprochen, wie er dasteht.
 - Sprechhaltungen: ruhig, fröhlich, begeistert, wütend, schreiend, ängstlich, panisch, traurig, flüsternd, drohend, spöttisch, überrascht, triumphierend, flehend, genervt, verwirrt. Ohne Angabe spricht die Figur ruhig.
 - Was im Satz in Klammern steht, wird nicht gesprochen.
-- „AKTION: …“ ist etwas, das ohne Worte passiert. Daraus wird eine stumme Einstellung. Eine Zeile ohne Namen davor zählt auch als Aktion.
+- „AKTION: …“ ist etwas, das ohne Worte passiert. Daraus wird eine stumme Einstellung von gut zwei Sekunden. Eine Zeile ohne Namen davor zählt auch als Aktion.
+- Beschreibt eine AKTION nur Ort, Licht, Kleidung oder wer wo steht, zeigt das Studio sie im Bild des nächsten Satzes, ohne Pause.
+- „NAME (off): Text“ kommt aus dem Off: man hört die Figur, sieht aber eine andere Figur zuhören.
 - Für eine Serie schreibst du Überschriften wie „## Folge 1: Titel“ und „## Folge 2: Titel“.
-- Eine Folge dauert mindestens 15 Sekunden, bis 3 Minuten gehen. Etwa zweieinhalb Wörter sind eine Sekunde.
+- Eine Folge dauert mindestens 15 Sekunden, bis 3 Minuten gehen. Etwa zweieinhalb Wörter sind eine Sekunde. Lebendig wird ein Kurzfilm mit etwa 100 gesprochenen Wörtern pro Minute.
+- Lass gleich am Anfang jemanden sprechen und schreib nie zwei AKTION-Zeilen hintereinander. Zeitangaben wie „00:00 bis 00:15“ brauchst du nicht.
+- Schreib Wörter nicht in GROSSBUCHSTABEN, um sie zu betonen. Dafür gibt es die Sprechhaltung.
 
 ## Figuren
 FIGUR: Oma Hilde – 72 Jahre, graue Dutt-Frisur, geblümte Schürze, streng, aber herzlich
