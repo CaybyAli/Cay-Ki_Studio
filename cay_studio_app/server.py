@@ -412,6 +412,10 @@ async def lifespan(app):
 
 
 app = FastAPI(title='Cay Studio', version=VERSION, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+# 0.19: a read error of the Windows drive (EIO on /mnt/d) while a film streams: read on from the next byte or
+# answer cleanly, one log line instead of a traceback (steady_files.py). Innermost, before every other layer.
+from steady_files import install as steady_files
+finish_steady_files = steady_files(app)
 
 # Form errors in German, naming the field: pydantic's own texts are English and echo the input
 # (a pasted bot key, for example). The app shows `detail` as it is.
@@ -890,6 +894,8 @@ images.routes(app)
 # Unterwegs-Zugriff over Tailscale; off until Cay switches it on at the PC.
 remote = Remote(globals())
 remote.routes(app)
+
+finish_steady_files()     # outermost layer: an answer the Windows drive broke off ends without a traceback
 
 
 if __name__ == '__main__':
