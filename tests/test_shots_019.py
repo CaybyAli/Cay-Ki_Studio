@@ -229,6 +229,7 @@ def test_old_project_renders_exactly_as_before(monkeypatch, tmp_path):
     """Graph keys, render prompts, part and export specs of an unpinned project (digest from 11c4745)."""
     fake, calls = run_movies(monkeypatch, tmp_path, movie_project())
     assert movies_digest(fake, calls, tmp_path) == '6c63209f5dd5ca3f'
+    assert all('suffix' not in kw for _, _, kw in calls['talk']) and all('native' not in kw for _, _, kw in calls['motion'])
     assert all('shot_policy' not in spec for _, spec in fake.posts)
 
 
@@ -338,7 +339,7 @@ def test_new_rounds_vary_the_moment_not_with_the_old_camera_text(monkeypatch):
     scene['image_rounds'] = [1, 1]
     calls = {c['key']: c['prompt'] for c in run_pictures(monkeypatch, d) if c['key'].startswith('image:0:1:1:')}
     shots = {v['key']: v['shot'] for v in scene['variants'] if v['key'].startswith('image:0:1:1:')}
-    assert len(calls) == 2 and set(shots.values()).isdisjoint(set(first.values())) is False or set(shots.values()) != set(first.values())
+    assert len(calls) == 2 and len(set(shots.values())) == 2 and len(first) == 2
     for key, prompt in calls.items():
         assert prompt.startswith(OPENINGS[shots[key]]) and 'Fresh take: a different' in prompt and 'camera angle (slightly low angle)' not in prompt
 
@@ -487,12 +488,17 @@ def test_motion_text_has_no_damping_words_and_concrete_camera(monkeypatch, tmp_p
     assert fake.posts[-1][1]['scenes'][0]['shot'] == 'cu' and 'shot' not in fake.posts[-1][1]['scenes'][1]
 
 
-def test_talk_suffix_only_with_the_pin():
+def test_talk_suffix_only_with_the_pin(monkeypatch):
     import render_studio
-    info = {'CayWanVideoSampler': {'input': {'required': {}, 'optional': {'cay_audio_cfg_steps': ['INT']}}}}
-    source = (ROOT / 'cay_studio_app' / 'render_studio.py').read_text()
-    assert 'SUFFIX if suffix is None else suffix' in source and render_studio.SUFFIX.startswith(' Only the single visible character speaks')
-    assert info and 'body calm' in render_studio.SUFFIX                           # the 0.18 text stays for every older project
+    monkeypatch.setattr(render_studio, 'node', lambda info, kind, **kw: {'class_type': kind, 'inputs': kw})
+    monkeypatch.setattr(render_studio, 'talk_models', lambda info, fast=False: {k: k for k in ('model', 'talk', 'wav', 'vae', 'text', 'vision', 'lora')})
+    monkeypatch.setattr(render_studio, 'validate_graph', lambda info, graph: None)
+    info = {'CayWanVideoSampler': {'input': {'optional': {'cay_audio_cfg_steps': ('INT', {'default': 0})}}}}
+    old = render_studio.audio_graph(info, 'a.png', 'a.wav', 'p', 7, 3.0, 'fast', attention='sdpa')
+    new = render_studio.audio_graph(info, 'a.png', 'a.wav', 'p', 7, 3.0, 'fast', attention='sdpa', suffix=sd.TALK_SUFFIX)
+    assert old['9']['inputs']['positive_prompt'] == 'p' + render_studio.SUFFIX and 'body calm' in render_studio.SUFFIX
+    assert new['9']['inputs']['positive_prompt'] == 'p' + sd.TALK_SUFFIX
+    assert {k: v for k, v in new.items() if k != '9'} == {k: v for k, v in old.items() if k != '9'}   # sampler and windows untouched
 
 
 def test_undamp_keeps_the_action():
