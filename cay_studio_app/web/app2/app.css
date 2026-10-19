@@ -214,6 +214,7 @@ article.tile { position: relative; cursor: default; }
 .head-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .trash-link .count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; margin-left: 2px; border-radius: 980px; background: var(--canvas); font-size: 13px; font-weight: 600; }
 .button.danger-solid { background: var(--stop); color: #fff; }
+.button.danger-text { color: var(--stop); }
 .trash-lede { margin: -26px 0 34px; max-width: 46em; font-size: 15px; }
 .tile.trashed .frame img { filter: saturate(.6); }
 .tile-actions { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 6px; }
@@ -236,7 +237,6 @@ article.tile { position: relative; cursor: default; }
 .project-head p { margin: 0; }
 .back { font-size: 15px; }
 .project-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 32px; }
-.trash-button { color: var(--stop); }
 .trash-button .icon { width: 16px; height: 16px; }
 /* Quiet end of a page: the trash link and the trash list, small and grey, one section below the content. */
 .project-foot { margin-top: 56px; font-size: 14px; }

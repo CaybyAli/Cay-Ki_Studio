@@ -182,22 +182,26 @@ try:
         r.check(f'Tastatur: Bild und Aufnahme einer neuen Figur erreichbar ({found})', {'lib-image', 'lib-voice'} <= set(found) and all(x == 'solid' for x in ring))
         page.click('#sheet [data-action="close"]')
 
-        # 8. Delete a project: asks first, goes to the trash, stays findable and can be restored.
+        # 8. Delete a project: asks first (0.19: in a sheet), goes to the trash page, can be restored there.
         page.goto(studio.url + '/#p=' + voices); page.wait_for_selector('[data-action="delete-project"]')
-        asked = []
-        page.once('dialog', lambda dlg: (asked.append(dlg.message), dlg.accept()))
-        page.click('[data-action="delete-project"]'); page.wait_for_selector('.tile', timeout=10000); page.wait_for_timeout(600)
-        r.check('Löschen fragt zuerst und legt das Projekt in den Papierkorb', asked and 'Papierkorb' in asked[0] and doc(voices)['deleted']
+        page.click('[data-action="delete-project"]'); page.wait_for_selector('[data-action="trash-confirm"]')
+        asked = page.locator('#sheet').inner_text()
+        page.click('[data-action="trash-confirm"]'); page.wait_for_selector('.tile', timeout=10000); page.wait_for_timeout(600)
+        r.check('Löschen fragt zuerst und legt das Projekt in den Papierkorb', 'Papierkorb' in asked and doc(voices)['deleted']
                 and page.locator('.tile', has_text='Stimmprobe').count() == 0)
         page.screenshot(path=str(shots / '08_papierkorb.png'), full_page=True)
-        page.click(f'.project-foot a[href="#p={voices}"]'); page.wait_for_selector('[data-action="restore"]', timeout=10000)
-        r.check('Papierkorb: Projekt über „Projekte“ erreichbar, ohne Löschlink', page.locator('[data-action="delete-project"]').count() == 0)
-        page.click('[data-action="restore"]'); page.wait_for_timeout(1200)
+        page.click('.trash-link'); page.wait_for_selector(f'[data-action="trash-restore"][data-id="{voices}"]', timeout=10000)
+        page.click(f'.tile.trashed:has([data-id="{voices}"]) [data-action="trash-purge"]'); page.wait_for_selector('[data-action="purge-confirm"]')
+        page.click('#sheet [data-action="close"]')
+        r.check('Papierkorb: Projekt dort mit Wiederherstellen, Endgültig löschen fragt erst', bool(doc(voices)['deleted']))
+        page.click(f'[data-action="trash-restore"][data-id="{voices}"]'); page.wait_for_timeout(1200)
         r.check('Wiederherstellen: Projekt wieder da', not doc(voices)['deleted'])
         page.goto(studio.url + '/#p=' + lines); page.wait_for_selector('.steps')
         db.execute("UPDATE factory_control SET paused=0 WHERE id=?", (lines,)); db.execute("UPDATE factory_runs SET state='rendering', document=json_set(document,'$.state','rendering') WHERE id=?", (lines,)); db.commit()
         page.reload(); page.wait_for_selector('.steps'); page.wait_for_timeout(500)
-        r.check('Während gerechnet wird, kein Löschlink', page.locator('[data-action="delete-project"]').count() == 0)
+        page.click('[data-action="delete-project"]'); page.wait_for_selector('[data-action="trash-confirm"]')
+        r.check('Während gerechnet wird: Löschen sagt, dass die Arbeit anhält', 'hält nach dem laufenden Schritt an' in page.locator('#sheet').inner_text())
+        page.click('#sheet [data-action="close"]')
         db.execute("UPDATE factory_control SET paused=1 WHERE id=?", (lines,)); db.commit()
 
         # 9. 'Neue Fassung planen' asks what should change; the wish goes into the new plan.
