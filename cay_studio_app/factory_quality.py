@@ -112,7 +112,10 @@ class Quality:
             d['audio_engine']=engine
             folder=self.folder(d)/'03_Stimmen/Dialoge';job=self.folder(d)/'Sprachauftrag.json';self.atomic(job,json.dumps({'cast':cast,'lines':lines,'voice_policy':policy,'output':str(folder),**tts_text.job_fields(d,lines,d['plan']['cast'])}).encode());d['phase']=f'{len(lines)} Dialogbeiträge werden eingesprochen';self.save(d)
             async with self.measured(d,'Sprache · '+engine):await self.command([python,Path(__file__).with_name('factory_speech.py' if engine=='qwen' else 'factory_tts.py'),'--base',self.base,'--job',job],14400)
-            d['lines']=json.loads((folder/'Ergebnis.json').read_text())['lines']
+            spoken=json.loads((folder/'Ergebnis.json').read_text());d['lines']=spoken['lines']
+            # 0.19: how each figure was cloned (mode, performed references) for the figure card and the diagnosis.
+            for name,how in spoken.get('references',{}).items():
+                if name in d['voice_profiles']:d['voice_profiles'][name]['speech']=how
             if len(d['lines'])!=len(lines):raise RuntimeError('Sprachvorschau unvollständig.')
             if self.apply_pending(d):return        # a voice chosen meanwhile: speak its lines again, then mix
         elif not lines:d['lines']=[];d['voice_profiles']={}

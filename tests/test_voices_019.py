@@ -190,3 +190,116 @@ def test_a_recording_that_cannot_be_cleaned_is_cloned_as_it_is(tmp_path):
     assert job['cast'][0]['voice_file'] == str(broken)
     assert d['voice_profiles']['Tim']['reference'] == {'mode': 'x-vector', 'cleaned': False,
                                                        'notes': ['Die Stimmprobe von Tim ließ sich nicht reinigen. Das Studio klont das Original.']}
+
+
+# --- (2) more emotion: performed references for recordings, more takes, the speaker kept ---------------------------
+def recordings(root, transcript=''):
+    cast = []
+    for i, p in enumerate(vf.CAST):
+        f = root / f'rec{i}.wav'; vf.write_wav(f, vf.take('Na endlich, komm rein, schnell jetzt', i), RATE)
+        cast.append({**p, 'voice_file': str(f), 'voice_hash': hashlib.sha256(f.read_bytes()).hexdigest(), 'voice_text': transcript})
+    return cast
+
+
+def speak(module, root, cast, policy, out='lines'):
+    job = {'cast': cast, 'lines': vf.LINES, 'output': str(root / out), 'voice_policy': policy}
+    (root / f'{out}.json').write_text(json.dumps(job)); vf.Model.calls = []
+    module.generate(root, root / f'{out}.json')
+    result = json.loads((root / out / 'Ergebnis.json').read_text())
+    return result, [c[1] for c in vf.Model.calls if c[0] == 'clone']
+
+
+def test_recordings_get_performed_references_and_every_line_more_takes(monkeypatch, tmp_path):
+    from factory_voice import EMOTION_TEXTS
+    vf.install(monkeypatch); root = vf.base_dir(tmp_path); cast = recordings(root)
+    speech = vf.load(APP, 'factory_speech')
+    old, old_calls = speak(speech, root, cast, 18, 'old')
+    assert len(old_calls) == 7 and 'references' not in old                       # 0.18: 2 takes per emotional line, 1 for 'Natürlich'
+    assert not any(c['text'] in {t for _, t in EMOTION_TEXTS.values()} for c in old_calls)
+    new, calls = speak(speech, root, cast, 19)
+    performed = [c['text'] for c in calls if c['text'] in {t for _, t in EMOTION_TEXTS.values()}]
+    # Mr. Krabs needs 'angry', Plankton 'afraid' and 'whisper': three acted texts, three takes each.
+    assert performed == [EMOTION_TEXTS['angry'][1]] * 3 + [EMOTION_TEXTS['afraid'][1]] * 3 + [EMOTION_TEXTS['whisper'][1]] * 3
+    lines = [c['text'] for c in calls if c['text'] not in performed]
+    assert [lines.count(l['text']) for l in vf.LINES] == [3, 3, 2, 3]            # 0.19: emotional lines 3 takes, 'Natürlich' 2
+    assert new['references'] == {'Mr. Krabs': {'mode': 'x-vector', 'emotions': ['angry'], 'performed': ['angry']},
+                                 'Plankton': {'mode': 'x-vector', 'emotions': ['afraid', 'whisper'], 'performed': ['afraid', 'whisper']}}
+    metas = [json.loads(Path(l['file']).with_suffix('.json').read_text())['quality'] for l in new['lines']]
+    assert [m['takes'] for m in metas] == [3, 3, 2, 3]
+    assert [Path(l['file']).name for l in new['lines']] != [Path(l['file']).name for l in old['lines']]
+    assert all(c['temperature'] == .9 and c['top_k'] == 50 for c in calls)
+    # The performed references and the lines are made once: a second run reads them from the cache.
+    again, calls = speak(speech, root, cast, 19)
+    assert calls == [] and again == new
+    references = sorted((root / 'lines/Gefuehle').glob('*.wav'))
+    assert len(references) == 3 and all(json.loads(f.with_suffix('.json').read_text())['takes'] == 3 for f in references)
+
+
+def test_a_designed_voice_keeps_its_designed_references(monkeypatch, tmp_path):
+    vf.install(monkeypatch)
+    names, profiles, _ = vf.run_design(vf.load(APP, 'factory_voice'), tmp_path, policy=19)
+    assert set(names['Plankton']['moods']) == {'afraid', 'whisper'} and set(names['Mr. Krabs']['moods']) == {'angry'}
+    lines, clone = vf.run_speech(vf.load(APP, 'factory_speech'), tmp_path, profiles, policy=19)
+    from factory_voice import EMOTION_TEXTS
+    assert not any(c[1]['text'] in {t for _, t in EMOTION_TEXTS.values()} for c in clone) and len(clone) == 11
+
+
+class Similar(vf.Model):
+    """Takes alternate between a calm and a very lively one; the lively one is another voice (different embedding)."""
+    def __init__(self): self.model = self
+
+    def generate_voice_clone(self, **kw):
+        vf.Model.calls.append(('clone', {k: v for k, v in kw.items() if k != 'voice_clone_prompt'}))
+        n = len(vf.Model.calls); t = np.arange(int(RATE * (len(kw['text'].split()) * .45 + .4))) / RATE
+        depth = 7 if n % 2 == 0 else 1                                                    # semitones of melody
+        pitch = 160 * 2 ** (depth * np.sin(2 * np.pi * 1.3 * t) / 12); phase = 2 * np.pi * np.cumsum(pitch) / RATE
+        amp = .6 if depth == 7 else .25
+        return [(amp * np.maximum(0, np.sin(np.pi * 4 * t)) ** .6 * np.sin(phase)).astype(np.float32)], RATE
+
+    def extract_speaker_embedding(self, audio, sr):
+        return np.array([0., 1.]) if np.abs(audio).max() > .45 else np.array([1., 0.])
+
+
+def test_the_liveliest_take_wins_only_while_it_sounds_like_the_speaker(monkeypatch, tmp_path):
+    vf.install(monkeypatch); monkeypatch.setitem(sys.modules['qwen_tts'].__dict__, 'Qwen3TTSModel', Similar)
+    root = vf.base_dir(tmp_path); cast = recordings(root)
+    speech = vf.load(APP, 'factory_speech')
+    old, _ = speak(speech, root, cast, 18, 'old')
+    new, _ = speak(speech, root, cast, 19)
+    quality = lambda r: [json.loads(Path(l['file']).with_suffix('.json').read_text())['quality'] for l in r['lines']]
+    # 0.18 keeps the livelier take whoever speaks; 0.19 only takes that sound like the recording (cosine 1.0).
+    assert any(q['prosody'] > 2 for q in quality(old))
+    assert all(q['similarity'] == 1.0 and q['prosody'] < 2 for q in quality(new))
+    for f in (root / 'lines/Gefuehle').glob('*.json'):
+        assert json.loads(f.read_text())['quality']['similarity'] == 1.0
+
+
+def test_chatterbox_gives_every_line_two_takes_only_with_voice_policy_19(monkeypatch, tmp_path):
+    vf.install(monkeypatch); calls = []
+    monkeypatch.setitem(sys.modules, 'perth', type(sys)('perth')); sys.modules['perth'].PerthImplicitWatermarker = object
+    class Wave:
+        def __init__(self, data): self.data = data
+        def detach(self): return self
+        def cpu(self): return self
+        def numpy(self): return self.data
+    class Model:
+        sr = vf.RATE; conds = {'default': 1}
+        @classmethod
+        def from_local(cls, ckpt, device='cuda'): return cls()
+        def generate(self, text, language_id, audio_prompt_path=None, **kw):
+            calls.append(text); return Wave(vf.take(text, len(calls)))
+    mtl = type(sys)('chatterbox.mtl_tts'); mtl.ChatterboxMultilingualTTS = Model
+    monkeypatch.setitem(sys.modules, 'chatterbox', type(sys)('chatterbox')); monkeypatch.setitem(sys.modules, 'chatterbox.mtl_tts', mtl)
+    tts = vf.load(APP, 'factory_tts'); root = vf.base_dir(tmp_path); cast = recordings(root)
+    monkeypatch.setattr(tts, 'checkpoint', lambda base: tmp_path)
+    files = {}
+    for policy in (18, 19):
+        job = {'cast': cast, 'lines': vf.LINES, 'voice_policy': policy, 'output': str(root / str(policy))}
+        (root / f'{policy}.json').write_text(json.dumps(job)); calls.clear()
+        monkeypatch.setattr(sys, 'argv', ['factory_tts.py', '--base', str(root), '--job', str(root / f'{policy}.json')]); tts.main()
+        lines = json.loads((root / str(policy) / 'Ergebnis.json').read_text())['lines']
+        files[policy] = [Path(l['file']).name for l in lines]
+        metas = [json.loads(Path(l['file']).with_suffix('.json').read_text())['quality'] for l in lines]
+        assert len(calls) == (4 if policy == 18 else 8)
+        assert all(('takes' in m) == (policy == 19) for m in metas) and all(m.get('takes', 2) == 2 for m in metas)
+    assert not set(files[18]) & set(files[19])

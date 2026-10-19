@@ -1,8 +1,9 @@
 """Runs only in Cay's existing Chatterbox environment. No downloads."""
 import argparse,copy,hashlib,inspect,json,os,random,subprocess,sys
 from pathlib import Path
-from speech_quality import clean_text,sampling,finish_voice,SPEECH_POLICY
+from speech_quality import clean_text,sampling,finish_voice,prosody_score,SPEECH_POLICY
 import tts_text
+TAKES_19=2   # voice_policy 19: takes per line, the livelier one is kept
 os.environ['HF_HUB_OFFLINE']='1'
 os.environ['TRANSFORMERS_OFFLINE']='1'
 os.environ['HF_HUB_DISABLE_TELEMETRY']='1'
@@ -57,9 +58,25 @@ def main():
     result=[]
     for index,line in enumerate(job['lines']):
         # 0.19 (job 'speech_text', sound_policy 19): the model reads tts_text.speakable; other lines keep their signature.
-        signature=hashlib.sha256(json.dumps({'line':line,'voice_sha256':hashlib.sha256(Path(voices[line['speaker']]).read_bytes()).hexdigest(),'checkpoint':str(ckpt),'processing':SPEECH_POLICY,'sampling':sampling(line['emotion'],policy),**tts_text.signature_fields(line,job)},sort_keys=True).encode()).hexdigest()
+        signature=hashlib.sha256(json.dumps({'line':line,'voice_sha256':hashlib.sha256(Path(voices[line['speaker']]).read_bytes()).hexdigest(),'checkpoint':str(ckpt),'processing':SPEECH_POLICY,'sampling':sampling(line['emotion'],policy),**tts_text.signature_fields(line,job),**({'takes':TAKES_19} if policy>=19 else {})},sort_keys=True).encode()).hexdigest()
         target=out/(line['key']+'_'+signature[:12]+'.wav');meta=target.with_suffix('.json')
-        if not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature):
+        if not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature) and policy>=19:
+            # 0.19 (voice_policy 19): two valid takes of every line, the livelier one is kept (Chatterbox has no
+            # speaker embedding at hand; the reference itself keeps the voice).
+            takes=[];error=None
+            for attempt in range(TAKES_19+1):
+                if len(takes)>=TAKES_19:break
+                try:
+                    data,quality=generate(tts_text.spoken(line,job),voices[line['speaker']],line['emotion'],line['seed']+attempt,line['text'])
+                    takes.append((prosody_score(data,model.sr),data,{**quality,'prosody':prosody_score(data,model.sr),'seed':line['seed']+attempt}))
+                except RuntimeError as failure:error=failure
+            if not takes:
+                (out/'Fehlgeschlagen.json').write_text(json.dumps({'key':line['key']}))
+                raise RuntimeError(f"Folge {line['episode']+1}, Szene {line['scene']+1}, Figur {line['speaker']}: {error}") from error
+            _,data,quality=max(takes,key=lambda x:x[0]);quality['takes']=len(takes)
+            temp=target.with_suffix('.partial.wav');sf.write(temp,data,model.sr,subtype='PCM_16');os.replace(temp,target)
+            meta.write_text(json.dumps({'signature':signature,'quality':quality}))
+        elif not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature):
             for attempt in range(2):
                 try:data,quality=generate(tts_text.spoken(line,job),voices[line['speaker']],line['emotion'],line['seed']+attempt,line['text']);break
                 except RuntimeError as error:
