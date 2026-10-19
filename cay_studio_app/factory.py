@@ -12,7 +12,7 @@ from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality,sample_signature
 from figure_library import drop_library_voice
 from factory_post import PostProduction
-from autopilot import Autopilot
+from autopilot import Autopilot,still_count,second_still
 from figure_library import Library
 import cast_design
 import cover
@@ -829,11 +829,13 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             # 0.19 (shot_policy 19): shot size and angle of every scene image from one rotation per episode.
             shots=shot_design.plan(ep) if shot_design.active(d) else None
             for si,scene in enumerate(ep['scenes']):
-                for variant in range(2):
+                # render_policy 19: one image under the autopilot (it takes the first), the other on demand.
+                stills=still_count(d,scene)
+                for variant in range(stills):
                     if self.paused(d['id']) or self.apply_pending(d):return
                     key=f'image:{ei}:{si}:{image_rounds(scene)[variant]}:{variant}'
                     if any(x.get('key')==key for x in scene['variants']):continue
-                    d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild {variant+1}/2';self.save(d)
+                    d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild'+(f' {variant+1}/2' if stills==2 else '');self.save(d)
                     # Looks per episode: this episode's variants and look texts (else the base designs, as before).
                     names=scene['cast'];references=[self.stage(path) for path in cast_design.scene_references({**refs,**episode_looks.refs_for(d,ei)},names)]
                     kind=shot_design.pick(shots,si,variant,image_rounds(scene)[variant]) if shots else None
@@ -1299,6 +1301,15 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 # 0.18: only the newest wish counts (five piled-up wishes contradicted each other).
                 s['image_note']=body.note.strip()[-1800:];s['note_policy']=18
             regenerate(s,[0,1]);d['state']='pictures';d['phase']='Zwei neue Varianten angefordert';self.save(d);return self.get(rid)
+        @app.post('/api/factory/{rid}/second-still')
+        async def second(rid:str,body:ReviseScene):
+            # 0.19: the other image of a scene the autopilot drew with one; the first one stays.
+            d=self.get(rid)
+            if d['state']!='image_review':raise HTTPException(409,'Nur während der Bildauswahl möglich.')
+            try:s=d['episodes'][body.episode]['scenes'][body.scene]
+            except IndexError:raise HTTPException(404,'Szene fehlt.')
+            if not second_still(s):raise HTTPException(409,'Diese Szene hat schon zwei Bilder. Für andere Bilder „Neue Bilder“ wählen.')
+            d['state']='pictures';d['phase']='Zweites Bild angefordert';self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/cast/approve')
         async def cast_approve(rid:str):
             d=self.get(rid)

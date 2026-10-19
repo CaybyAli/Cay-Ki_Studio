@@ -154,14 +154,84 @@ def render_modes(d, db):
                 modes[key] = modes.get(key, 0) + 1
     if modes: print('Animation lief mit (Aufmerksamkeit, Gewichte):', modes)
     try:
-        nodes = db.execute("SELECT detail FROM factory_metrics WHERE run_id=?", (d.get('id'),)).fetchall()
-        totals = {}
-        for row in nodes:
-            for nid, info in (json.loads(row[0] or '{}').get('nodes') or {}).items():
-                totals[nid] = totals.get(nid, 0) + float(info.get('seconds') or 0)
-        top = sorted(totals.items(), key=lambda x: -x[1])[:6]
-        if top: print('Rechenzeit je Knoten (Summe, Minuten):', ', '.join(f'{k}: {v / 60:.1f}' for k, v in top))
-    except (sqlite3.Error, ValueError, TypeError): pass
+        rows = db.execute('SELECT m.detail, s.graph, m.step_id FROM factory_metrics m LEFT JOIN factory_steps s ON s.id=m.step_id WHERE m.run_id=?', (d.get('id'),)).fetchall()
+    except sqlite3.Error: return
+    seconds = segment_seconds(d)
+    for line in node_report([(r[0], r[1], seconds.get(r[2])) for r in rows]): print(line)
+
+
+# What a node's time really contains. The lip-sync sampler moves the 14B model onto the GPU (block swap)
+# and computes every window; that is why 'node 12' looked like 560 min of one step.
+NODE_LABELS = {'CayWanVideoSampler': 'Lippen-Sampler mit Modell bereitstellen und allen Fenstern',
+               'WanVideoSampler': 'Lippen-Sampler mit Modell bereitstellen und allen Fenstern',
+               'KSamplerAdvanced': 'Bewegungs-Sampler (beide Hälften) mit Modell bereitstellen',
+               'SamplerCustomAdvanced': 'Bild-Sampler', 'WanVideoTextEncodeCached': 'Textmodell laden und Text kodieren',
+               'WanVideoImageToVideoMultiTalk': 'Startbild für die Lippen vorbereiten', 'WanImageToVideo': 'Startbild für die Bewegung vorbereiten',
+               'MultiTalkWav2VecEmbeds': 'Sprache analysieren', 'WanVideoClipVisionEncode': 'Bildmerkmale lesen',
+               'VAEDecode': 'Bilder decodieren', 'VAEDecodeTiled': 'Bilder abschnittsweise decodieren', 'SaveVideo': 'Clip speichern'}
+
+
+def loader(kind):
+    return kind not in ('LoadImage', 'LoadAudio') and ('Loader' in kind or kind.startswith('Load'))
+
+
+def segment_seconds(d):
+    """Seconds of every lip-sync prompt by its step id, split as factory.movies splits a talking shot (15 s)."""
+    fps = int(d.get('idea', {}).get('fps') or 25); out = {}
+    for key, sid in (d.get('render_segments') or {}).items():
+        try:
+            ei, si, seg = (int(x) for x in key.split(':')); scene = d['episodes'][ei]['scenes'][si]
+            frames = round(float(scene.get('render_seconds') or scene.get('seconds')) * fps); count = max(1, math.ceil(frames / (fps * 15)))
+            out[sid] = (frames // count + (seg < frames % count)) / fps
+        except (ValueError, KeyError, IndexError, TypeError): continue
+    return out
+
+
+def windows_of(graph, seconds=None):
+    """(frames per window, windows) of one lip-sync graph, as the wrapper loops (9 frames carried over).
+    It counts the voice's frames; the graph only holds them rounded up to 4k+1, so the prompt's seconds
+    decide where known (3.24 s is one 81-frame window, not two)."""
+    by = {n.get('class_type'): n.get('inputs', {}) for n in graph.values()}
+    size, frames = by.get('WanVideoImageToVideoMultiTalk', {}).get('frame_window_size'), by.get('MultiTalkWav2VecEmbeds', {}).get('num_frames')
+    if not isinstance(size, int) or not isinstance(frames, int) or size <= 9: return None
+    if seconds: frames = math.ceil(seconds * 25 - 1e-9)
+    return size, 1 if size >= frames else 1 + math.ceil((frames - size) / (size - 9))
+
+
+def node_report(rows):
+    """Measured ComfyUI time by node type (not by node number: '12' is the lip-sync sampler in one graph and
+    the second motion half in the other), real model loads (loader nodes ComfyUI executed, not cached) and
+    the lip-sync time per window. rows: (factory_metrics.detail, factory_steps.graph[, prompt seconds])."""
+    kinds = {}; loads = {}; partial = 0; windows = {}; sampler = 0.
+    for detail, graph, *seconds in rows:
+        try: detail = json.loads(detail or '{}'); graph = json.loads(graph or '{}')
+        except (TypeError, ValueError): continue
+        partial += detail.get('coverage') != 'events'
+        plan = windows_of(graph, *seconds[:1])
+        if plan: windows[plan] = windows.get(plan, 0) + 1
+        for nid, info in (detail.get('nodes') or {}).items():
+            kind = (graph.get(str(nid)) or {}).get('class_type') or f'Knoten {nid}'; seconds = float(info.get('seconds') or 0)
+            total, count = kinds.get(kind, (0., 0)); kinds[kind] = (total + seconds, count + 1)
+            if plan and kind in ('CayWanVideoSampler', 'WanVideoSampler'): sampler += seconds
+            # The cached text node skips the 11 GB text model when both prompts were encoded before (well under 1 s).
+            if loader(kind) or (kind == 'WanVideoTextEncodeCached' and seconds >= 1):
+                total, count = loads.get(kind, (0., 0)); loads[kind] = (total + seconds, count + 1)
+    out = []
+    if kinds:
+        top = sorted(kinds.items(), key=lambda x: -x[1][0])[:6]
+        out.append('Rechenzeit je Knotenart (Summe, Minuten, Aufträge): ' + ', '.join(
+            f'{NODE_LABELS.get(k, k)} [{k}] {v / 60:.1f} min/{n}x' for k, (v, n) in top))
+    if rows:
+        out.append('Modell-Ladevorgänge (Lade-Knoten, die ComfyUI wirklich ausgeführt hat): ' + (', '.join(
+            ('11-GB-Textmodell ' if k == 'WanVideoTextEncodeCached' else '') + f'[{k}] {n}x {v / 60:.1f} min'
+            for k, (v, n) in sorted(loads.items(), key=lambda x: -x[1][0])) or 'keine')
+            + (f' | {partial} von {len(rows)} Aufträgen nur teilweise gemessen' if partial else ''))
+    if windows:
+        count = sum(w * n for (_, w), n in windows.items()); sizes = sorted({size for size, _ in windows})
+        size = f'{sizes[0]} Bilder' if len(sizes) == 1 else f'{sizes[0]} bis {sizes[-1]} Bilder (an die Szene angepasst)'
+        out.append(f'Sprech-Rechenfenster laut Graph: {count}, Fenstergröße {size}'
+                   + (f', Lippen-Sampler {sampler / count / 60:.2f} min pro Fenster' if sampler else ''))
+    return out
 
 
 def windows(d, db):
@@ -199,6 +269,45 @@ def meminfo():
 
 
 def gb(n): return f'{n / 1024 ** 3:.1f} GB'
+
+
+def pressure():
+    """Linux memory pressure (PSI): share of time tasks waited for RAM, 'some' and 'full', over 5 min."""
+    try:
+        out = {}
+        for line in Path('/proc/pressure/memory').read_text().splitlines():
+            kind, *fields = line.split(); out[kind] = float(dict(f.split('=') for f in fields)['avg300'])
+        return out
+    except (OSError, ValueError, KeyError): return None
+
+
+def swapped_in():
+    try: return int(next(l.split()[1] for l in Path('/proc/vmstat').read_text().splitlines() if l.startswith('pswpin '))) * 4096
+    except (OSError, ValueError, StopIteration): return None
+
+
+def uptime():
+    try: return float(Path('/proc/uptime').read_text().split()[0])
+    except (OSError, ValueError, IndexError): return None
+
+
+# Real out-of-memory reports of ComfyUI/PyTorch in system RAM (not CUDA, not the cache banner).
+RAM_ERRORS = re.compile(r"(?i)(\bMemoryError|Cannot allocate memory|DefaultCPUAllocator: can't allocate|not enough memory: you tried to allocate)")
+
+
+def ram_pressure(text, psi=None, swap_in=None, seconds=None):
+    """'ja'/'nein' with the reason. Before 0.19 the report said 'ja' whenever the log contained
+    'RAM pressure', and ComfyUI prints that in its start banner ('Using RAM pressure cache.'),
+    which only names its cache mode. Now: a real RAM error in the log, the kernel's memory
+    pressure (PSI, waiting for RAM over 5 min) or swap read back in while running."""
+    errors = len(RAM_ERRORS.findall(text or ''))
+    rate = swap_in / seconds / 1024 ** 2 if swap_in is not None and seconds else None
+    facts = [f'{errors} Speicherfehler im ComfyUI-Protokoll']
+    if psi: facts.append(f"Wartezeit auf RAM (5 min) {psi.get('some', 0):.1f} %, alle blockiert {psi.get('full', 0):.1f} %")
+    if rate is not None: facts.append(f'Wiedereinlagerung im Mittel {rate:.2f} MB/s seit Start')
+    if 'RAM pressure cache' in (text or ''): facts.append('„Using RAM pressure cache“ ist nur ComfyUIs Zwischenspeicher-Modus')
+    high = errors or (psi and (psi.get('full', 0) >= 1 or psi.get('some', 0) >= 5)) or (rate is not None and rate >= 1)
+    return ('ja' if high else 'nein') + ' (' + '; '.join(facts) + ')'
 
 
 def pc_team():
@@ -246,12 +355,15 @@ def pc_team():
             stream.seek(max(0, log.stat().st_size - 3_000_000)); text = stream.read().decode(errors='replace')
         runs = [float(x) for x in re.findall(r'Prompt executed in ([0-9.]+) seconds', text)][-20:]
         speeds = re.findall(r'([0-9.]+)s/it\]', text)[-12:]
-        loads = len(re.findall(r'(?i)(loading model|requested to load|loaded completely|load_model)', text))
         if runs: print('ComfyUI-Aufträge zuletzt (Sekunden):', ', '.join(f'{x:.0f}' for x in runs), f'| schnellster {min(runs):.0f}, langsamster {max(runs):.0f}')
         if speeds: print('Sekunden pro Rechenschritt zuletzt:', ', '.join(speeds))
-        print('Modell-Ladevorgänge im Protokollausschnitt:', loads, '| RAM-Druck gemeldet:', 'ja' if 'RAM pressure' in text else 'nein')
+        # Each project below counts its real model loads; log lines also count every hand-over from memory.
+        print('Modell-Ladevorgänge: je Projekt unten (gemessene Lade-Knoten)')
+    else: text = ''
+    ram = ram_pressure(text, pressure(), swapped_in(), uptime()); print('RAM-Druck gemeldet:', ram)
     advice = []
-    if swap_used > 2 * 1024 ** 3: advice.append('WSL lagert aus. Mehr Arbeitsspeicher für WSL freigeben und andere Programme schließen.')
+    # Swap that is full but hardly read back costs no time (0.19 diagnosis: window time constant over 12 h).
+    if swap_used > 2 * 1024 ** 3 and ram.startswith('ja'): advice.append('WSL lagert aus. Mehr Arbeitsspeicher für WSL freigeben und andere Programme schließen.')
     if total and total < 40 * 1024 ** 3: advice.append(f'WSL hat nur {gb(total)}. Für 14B-Videomodelle sind etwa 48 GB sinnvoll.')
     print('Empfehlung:', ' '.join(advice) or 'Keine Auffälligkeit in den gelesenen Werten.')
 

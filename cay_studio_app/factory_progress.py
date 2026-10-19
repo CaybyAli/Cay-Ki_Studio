@@ -38,12 +38,14 @@ def profile_key(info):
 class RenderProgress:
     def __init__(self,factory):
         self.f=factory;self.connected=asyncio.Event();self.live={};self.last_flush={}
-        self.client_id='cay-studio-factory';self.waiting={}
+        self.client_id='cay-studio-factory';self.waiting={};self.ended=[]
 
     def watch(self,pid):
         """render_policy 19: the prompt render_step now waits for. One at a time (GPU_LOCK); always a
-        fresh event, so a resumed step never waits on an event of an earlier event loop."""
+        fresh event, so a resumed step never waits on an event of an earlier event loop. A prompt that
+        ComfyUI finished before its id came back (all nodes cached) wakes the wait at once."""
         self.waiting={pid:asyncio.Event()}
+        if pid in self.ended:self.waiting[pid].set()
 
     async def settle(self,pid,seconds):
         """Sleep up to `seconds`, but wake at once when ComfyUI reports this prompt finished: the
@@ -110,8 +112,9 @@ class RenderProgress:
         pid=data.get('prompt_id')
         if not pid:return
         # 'executing' without a node comes after ComfyUI wrote the history, success a moment before it.
-        if pid in self.waiting and (kind in ('execution_success','execution_error','execution_interrupted') or (kind=='executing' and data.get('node') is None)):
-            self.waiting[pid].set()
+        if kind in ('execution_success','execution_error','execution_interrupted') or (kind=='executing' and data.get('node') is None):
+            self.ended=[*self.ended[-15:],pid]
+            if pid in self.waiting:self.waiting[pid].set()
         steps=self.f.rows('SELECT * FROM factory_steps WHERE prompt_id=?',(pid,))
         if not steps:return
         step=steps[0]

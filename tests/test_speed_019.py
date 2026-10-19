@@ -140,6 +140,7 @@ RID = 'f' * 32
 
 def image_job(tmp_path, monkeypatch, policy):
     from studio_fakes import factory as studio, project
+    tmp_path.mkdir(parents=True, exist_ok=True)
     f = studio(tmp_path, monkeypatch)
     project(f, RID, 'pictures', {'render_policy': policy} if policy else {})
     return f
@@ -170,7 +171,7 @@ def render_once(f, messages, delay=.3):
 
     async def main():
         started = asyncio.get_running_loop().time()
-        step, _ = await asyncio.gather(f.render_step(f.get(RID), 'image:0:0:0:0', graph), comfy())
+        step, _ = await asyncio.wait_for(asyncio.gather(f.render_step(f.get(RID), 'image:0:0:0:0', graph), comfy()), 10)
         return step, asyncio.get_running_loop().time() - started
     return asyncio.run(main())
 
@@ -187,6 +188,7 @@ def test_pinned_render_is_handed_back_when_comfyui_reports_the_end(tmp_path, mon
     # Success arrives a moment before ComfyUI writes its history: the studio looks again on the next message.
     assert step['status'] == 'done' and seconds < 1.2, seconds
     assert f.progress.waiting.keys() == {step['prompt_id']}
+    monkeypatch.undo()                                     # the second fake ComfyUI gets its own client patch
     old = image_job(tmp_path / 'old', monkeypatch, None)
 
     def forbidden(pid, seconds): raise AssertionError('new polling without the pin')
@@ -220,3 +222,163 @@ def test_settle_only_wakes_for_the_watched_prompt():
         return woke, slept
     woke, slept = asyncio.run(main())
     assert .25 <= woke < 1 and slept >= .04
+
+
+def test_a_prompt_finished_before_its_id_came_back_wakes_at_once():
+    from factory_progress import RenderProgress
+
+    class F:
+        def rows(self, *a): return []
+
+    async def main():
+        progress = RenderProgress(F())
+        progress.event({'type': 'execution_success', 'data': {'prompt_id': 'cached'}})   # all nodes cached: done at once
+        progress.watch('cached')
+        loop = asyncio.get_running_loop(); t = loop.time(); await progress.settle('cached', 2)
+        return loop.time() - t
+    assert asyncio.run(main()) < .5
+
+
+# --- 3. One scene image under the autopilot ---------------------------------------------------
+
+def stills_project(policy=None, autopilot=True, scenes=3):
+    from test_shots_019 import picture_project, blocks_episode
+    episode = blocks_episode(); episode['scenes'] = episode['scenes'][:scenes]
+    d = picture_project(episode, **({'render_policy': policy} if policy else {}))
+    d['idea']['autopilot'] = autopilot
+    return d
+
+
+def scene_keys(monkeypatch, d):
+    from test_shots_019 import run_pictures
+    return [c['key'] for c in run_pictures(monkeypatch, d) if c['key'].startswith('image:')]
+
+
+def test_pinned_autopilot_draws_one_image_per_scene_old_projects_two(monkeypatch):
+    assert scene_keys(monkeypatch, stills_project(19)) == ['image:0:0:0:0', 'image:0:1:0:0', 'image:0:2:0:0']
+    two = [f'image:0:{si}:0:{v}' for si in range(3) for v in (0, 1)]
+    assert scene_keys(monkeypatch, stills_project(18)) == two                 # render_policy 18: as before
+    assert scene_keys(monkeypatch, stills_project(None)) == two               # no pin at all: as before
+    assert scene_keys(monkeypatch, stills_project(19, autopilot=False)) == two  # Cay chooses: both images
+    old = stills_project(None); scene_keys(monkeypatch, old)
+    assert all('stills' not in s for s in old['episodes'][0]['scenes'])       # old documents stay unchanged
+
+
+def test_unpinned_pictures_never_ask_for_the_still_rule(monkeypatch):
+    import factory
+
+    def forbidden(d, scene):
+        if d.get('render_policy', 0) >= 19: raise AssertionError
+        return 2
+    monkeypatch.setattr(factory, 'still_count', forbidden)
+    d = stills_project(None)
+    assert len(scene_keys(monkeypatch, d)) == 6
+
+
+def test_second_image_only_on_demand_and_the_first_stays(monkeypatch):
+    import autopilot
+    from factory_editor import active_variants, regenerate
+    d = stills_project(19)
+    first = scene_keys(monkeypatch, d)
+    scenes = d['episodes'][0]['scenes']
+    assert all(len(active_variants(s)) == 1 and s['stills'] == {'round': 0, 'count': 1} for s in scenes)
+    # The autopilot takes the only image of every scene.
+    trial = copy.deepcopy(d); trial['state'] = 'image_review'
+    assert autopilot.Autopilot().auto_images(trial) and [s['selected'] for s in trial['episodes'][0]['scenes']] == [v['id'] for s in scenes for v in active_variants(s)]
+    # Autopilot off afterwards: nothing is drawn that nobody asked for.
+    d['idea']['autopilot'] = False
+    assert scene_keys(monkeypatch, d) == []
+    # 'Zweites Bild' for scene 2: exactly that image, scene 2 keeps its first one.
+    assert autopilot.second_still(scenes[1]) and not autopilot.second_still(scenes[1])
+    assert scene_keys(monkeypatch, d) == ['image:0:1:0:1']
+    assert [v['key'] for v in active_variants(scenes[1])] == ['image:0:1:0:0', 'image:0:1:0:1']
+    assert not autopilot.second_still(scenes[0] | {'stills': {'round': 0, 'count': 2}})
+    # 'Neue Bilder' starts a new round, decided afresh: Cay chooses, so two new ones.
+    regenerate(scenes[0], [0, 1])
+    assert scene_keys(monkeypatch, d) == ['image:0:0:1:0', 'image:0:0:1:1'] and first[0] == 'image:0:0:0:0'
+
+
+def test_second_still_endpoint(tmp_path, monkeypatch):
+    from studio_fakes import factory as studio, project, client
+    f = studio(tmp_path, monkeypatch)
+    one = {'variants': [{'id': 'a' * 32, 'key': 'image:0:0:0:0'}], 'stills': {'round': 0, 'count': 1}, 'selected': None}
+    two = {'variants': [{'id': 'a' * 32, 'key': 'image:0:1:0:0'}, {'id': 'b' * 32, 'key': 'image:0:1:0:1'}], 'selected': None}
+    project(f, RID, 'image_review', {'render_policy': 19, 'episodes': [{'title': 'F', 'scenes': [one, two]}]})
+    api = client(f)
+    assert api.post(f'/api/factory/{RID}/second-still', json={'episode': 0, 'scene': 1}).status_code == 409
+    assert api.post(f'/api/factory/{RID}/second-still', json={'episode': 0, 'scene': 5}).status_code == 404
+    r = api.post(f'/api/factory/{RID}/second-still', json={'episode': 0, 'scene': 0})
+    assert r.status_code == 200 and r.json()['state'] == 'pictures'
+    assert f.get(RID)['episodes'][0]['scenes'][0]['stills'] == {'round': 0, 'count': 2}
+    assert api.post(f'/api/factory/{RID}/second-still', json={'episode': 0, 'scene': 0}).status_code == 409   # not in the image choice any more
+
+
+# --- 5. Diagnose texts --------------------------------------------------------------------------
+
+def diagnose():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('cay_diagnose_speed', ROOT / 'Cay_Studio_Diagnose.py')
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    return module
+
+
+BANNER = '\x1b[32m[INFO]\x1b[0m Using RAM pressure cache.\n\x1b[32m[INFO]\x1b[0m Prompt executed in 59.12 seconds\n'
+
+
+def test_ram_pressure_is_not_the_cache_banner():
+    diag = diagnose()
+    # Cay's 0.18.2 report: banner in the log, swap full but 1.5 GB read back in since start -> 'ja' before, wrongly.
+    verdict = diag.ram_pressure(BANNER * 50, None, int(1.5 * 1024 ** 3), 2 * 86400)
+    assert verdict.startswith('nein') and 'Zwischenspeicher-Modus' in verdict
+    assert diag.ram_pressure(BANNER, {'some': 12.0, 'full': 3.5}, 0, 100).startswith('ja')
+    assert diag.ram_pressure(BANNER, {'some': .4, 'full': 0.}, 0, 100).startswith('nein')
+    assert diag.ram_pressure(BANNER + "RuntimeError: [enforce fail at alloc_cpu.cpp:121] DefaultCPUAllocator: can't allocate memory\n").startswith('ja')
+    assert diag.ram_pressure('torch.OutOfMemoryError: CUDA out of memory.').startswith('nein')     # graphics memory, not RAM
+    assert diag.ram_pressure('', None, 4 * 1024 ** 3, 1000).startswith('ja')                     # 4 MB/s read back from swap
+
+
+def talk_step(sid, seconds, window=81, sampler=129.7, text=6.3, cached_text=False):
+    graph = {'6': {'class_type': 'MultiTalkWav2VecEmbeds', 'inputs': {'num_frames': 4 * math.ceil(seconds * 25 / 4) + 1}},
+             '9': {'class_type': 'WanVideoTextEncodeCached', 'inputs': {}}, '10': {'class_type': 'WanVideoModelLoader', 'inputs': {}},
+             '11': {'class_type': 'WanVideoImageToVideoMultiTalk', 'inputs': {'frame_window_size': window, 'motion_frame': 9}},
+             '12': {'class_type': 'CayWanVideoSampler', 'inputs': {}}}
+    nodes = {'9': {'seconds': .03 if cached_text else text}, '11': {'seconds': 6.}, '12': {'seconds': sampler}}
+    if sid == 't0': nodes['10'] = {'seconds': 52.}                     # the wrapper's model loader runs once per block
+    return json.dumps({'nodes': nodes, 'coverage': 'events'}), json.dumps(graph)
+
+
+def motion_step():
+    graph = {'2': {'class_type': 'UNETLoader', 'inputs': {}}, '11': {'class_type': 'KSamplerAdvanced', 'inputs': {}},
+             '12': {'class_type': 'KSamplerAdvanced', 'inputs': {}}, '9': {'class_type': 'ModelSamplingSD3', 'inputs': {}}}
+    return json.dumps({'nodes': {'11': {'seconds': 20.2}, '12': {'seconds': 21.5}, '9': {'seconds': .1}}, 'coverage': 'partial'}), json.dumps(graph)
+
+
+def test_node_time_by_kind_real_loads_and_time_per_window():
+    diag = diagnose()
+    rows = [talk_step('t0', 1.5), talk_step('t1', 4.0), talk_step('t2', 2.0, cached_text=True), motion_step()]
+    times, loads, windows = diag.node_report(rows)
+    # Node '12' is the lip-sync sampler in one graph and the second motion half in the other: no longer summed.
+    assert 'Lippen-Sampler mit Modell bereitstellen und allen Fenstern [CayWanVideoSampler] 6.5 min/3x' in times
+    assert 'Bewegungs-Sampler (beide Hälften) mit Modell bereitstellen [KSamplerAdvanced] 0.7 min/2x' in times
+    assert 'Knoten 12' not in times and '12:' not in times
+    # Loads: the text model twice (once from its cache), the wrapper's model loader once; not every log line.
+    assert '11-GB-Textmodell [WanVideoTextEncodeCached] 2x' in loads and '[WanVideoModelLoader] 1x' in loads
+    assert 'UNETLoader' not in loads and '1 von 4 Aufträgen nur teilweise gemessen' in loads
+    assert windows == 'Sprech-Rechenfenster laut Graph: 4, Fenstergröße 81 Bilder, Lippen-Sampler 1.62 min pro Fenster'
+    fitted = diag.node_report([talk_step('t0', 1.5, 41), talk_step('t1', 4.0, 57)])[2]
+    assert fitted.startswith('Sprech-Rechenfenster laut Graph: 3, Fenstergröße 41 bis 57 Bilder (an die Szene angepasst)')
+
+
+def test_window_count_of_the_report_follows_the_wrapper():
+    diag = diagnose()
+    for seconds in (1.4, 3.24, 3.28, 6.08, 8.96, 12.0, 15.0):
+        window, count = render_studio.talk_window_plan(seconds)
+        graph = {'a': {'class_type': 'MultiTalkWav2VecEmbeds', 'inputs': {'num_frames': 4 * math.ceil(seconds * 25 / 4 - 1e-9) + 1}},
+                 'b': {'class_type': 'WanVideoImageToVideoMultiTalk', 'inputs': {'frame_window_size': window}}}
+        assert diag.windows_of(graph, seconds) == (window, count)
+        old = {**graph, 'b': {'class_type': 'WanVideoImageToVideoMultiTalk', 'inputs': {'frame_window_size': 81}}}
+        assert diag.windows_of(old, seconds)[1] == count and diag.windows_of(old)[1] == talk_windows(seconds)   # without seconds: as before
+    # The prompt's seconds come from the shot as factory.movies splits it (a 20 s talking shot = 2 prompts of 10 s).
+    d = {'idea': {'fps': 25}, 'render_segments': {'0:0:0': 'a', '0:0:1': 'b', '0:1:0': 'c'},
+         'episodes': [{'scenes': [{'render_seconds': 20.04}, {'render_seconds': 3.24}]}]}
+    assert diag.segment_seconds(d) == {'a': 10.04, 'b': 10.0, 'c': 3.24}

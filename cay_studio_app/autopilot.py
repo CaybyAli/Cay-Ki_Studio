@@ -8,12 +8,35 @@ retakes of the affected lines, then waits for Cay.
 """
 import copy
 import cover
-from factory_editor import active_variants
+from factory_editor import active_variants, image_rounds
 from factory_timing import POLICY
 from factory_video import file_hash
 from studio_quality_policy import settings
 
 AUTO_RETAKES = 2
+
+
+def still_count(d, scene):
+    """Scene images to draw for this scene and image round: 2 as before, 1 for a render_policy 19
+    project under the autopilot (it always takes the first; the 0.19 diagnosis counted 418 images
+    for 209 scenes). The choice is kept per scene and round ('stills'), so switching the autopilot
+    off later draws nothing nobody asked for; 'Zweites Bild' (second_still) asks for the other one.
+    A new round (Neue Bilder, Text ändern, a figure drawn anew) decides afresh."""
+    if d.get('render_policy', 0) < 19: return 2
+    second = image_rounds(scene)[1]
+    kept = scene.get('stills')
+    if isinstance(kept, dict) and kept.get('round') == second: return kept['count']
+    drawn = any(v.get('key', '').endswith(f':{second}:1') for v in scene.get('variants', []))
+    scene['stills'] = {'round': second, 'count': 1 if d.get('idea', {}).get('autopilot') and not drawn else 2}
+    return scene['stills']['count']
+
+
+def second_still(scene):
+    """The other image of a scene drawn with one under the autopilot. True if one was missing."""
+    kept = scene.get('stills')
+    if not isinstance(kept, dict) or kept.get('round') != image_rounds(scene)[1] or kept.get('count') != 1: return False
+    scene['stills'] = {**kept, 'count': 2}
+    return True
 
 
 class Autopilot:

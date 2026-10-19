@@ -725,7 +725,9 @@ function scenesSection(d, choose) {
         : sc.selected ? `<div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(sc.selected)}" alt="" loading="lazy"></div>`
         : `<div class="frame"><div class="frame-empty">${choose ? 'Bilder entstehen' : ''}</div></div>`;
       const lines = linesOf(sc).map(l => `<p class="line"><b>${esc(l.speaker)}:</b> ${esc(l.text)}</p>`).join('') || '<p class="muted small">Ohne Dialog</p>';
-      const tools = editable ? `<div class="actions">${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
+      // 0.19: the autopilot drew one image here; the second one only when asked for.
+      const single = pickable && variants.length === 1 && sc.stills && sc.stills.count === 1;
+      const tools = editable ? `<div class="actions">${single ? `<button class="button quiet small" data-action="second-still" data-episode="${ei}" data-scene="${si}">Zweites Bild</button>` : ''}${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
       return `<article class="scene">${pictures}<div class="scene-text"><h3>${si + 1}. ${esc(sc.title)}</h3>${sceneRole(sc)}<p>${esc(sc.action)}</p>${lines}${tools}</div></article>`;
     }).join('')}</div>
     ${choose && d.state === 'image_review' ? dock(d) : ''}</div>
@@ -1423,6 +1425,7 @@ const actions = {
   async 'abort-fast'() { if (confirm(keepsQuality(S.run) ? 'Abschnitt neu starten? Fertige Bilder, Stimmen und Abschnitte bleiben erhalten.'
     : `Mit „Standard“ neu starten? Die Qualität wechselt von „${QUALITY[S.run.idea.quality] || S.run.idea.quality}“ zu „Standard“. Schon animierte Abschnitte noch nicht fertiger Folgen werden dafür neu gerechnet. Bilder, Stimmen und fertige Folgen bleiben.`)) { await post(`/api/factory/${S.rid}/abort-step`, { fast: true }); toast('Der Abschnitt wird neu gerechnet.'); } },
   async choose(b) { await post(`/api/factory/${S.rid}/choose`, { episode: +b.dataset.episode, scene: +b.dataset.scene, step_id: b.dataset.step }); },
+  async 'second-still'(b) { await post(`/api/factory/${S.rid}/second-still`, { episode: +b.dataset.episode, scene: +b.dataset.scene }); toast('Ein zweites Bild entsteht. Das erste bleibt.'); },
   async revise(b) {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Bilder für Szene ${+b.dataset.scene + 1}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
       <form id="revise-form" class="sheet-form" data-episode="${b.dataset.episode}" data-scene="${b.dataset.scene}"><label class="field"><span>Was soll anders sein? (optional)</span><textarea class="textarea" name="note" maxlength="700" placeholder="Zum Beispiel: beide Arme sichtbar, Figur steht näher an der Tür"></textarea></label>
