@@ -7,10 +7,10 @@ for many byte ranges while it plays and seeks, so one bad moment of the drive fi
 
 Two layers keep such a read clean (install() adds both):
 - SteadyFiles, innermost (right around the routes, inside the dashboard's guard layers): a failed read is tried once
-  more after a short pause. Before the first bytes went out that is the whole request (a file answer's start waits for
-  its first bytes); while a file streams it is only the rest from the next byte (a Range request whose start is not
-  sent again), so the player gets the whole film. When the same read fails twice: before the first bytes a short German
-  503 that the app shows as it is; during a film the answer ends.
+  more after a short pause. Before the first bytes went out that is the whole request (the start of a film from its
+  first byte waits for those bytes); while a file streams it is only the rest from the next byte (a Range request
+  whose start is not sent again), so the player gets the whole film. When the same read fails twice: before the first
+  bytes a short German 503 that the app shows as it is; during a film the answer ends.
 - QuietEnd, outermost: an answer that had to end early closes the connection, so the player asks again for the rest.
   Without it the guard layers end the answer short as if it were complete, the server refuses that ('Too little data
   for declared Content-Length') and the connection stays stuck, the player waits.
@@ -90,9 +90,11 @@ class SteadyFiles:
 
         async def forward(message):
             if message['type'] == 'http.response.start':
-                # A file answer's start goes out with its first bytes: a drive that fails on the very first read
-                # still gets the whole request once more and, if need be, the 503 with its German text.
-                if span(message): state['held'] = message; return
+                # A film from its first byte: the start goes out with the first bytes, so a drive that fails on the
+                # very first read still gets the whole request once more and, if need be, the 503 with its German
+                # text. A player asking for a later part already plays: it gets the start at once, a closed connection
+                # makes it ask again by itself, where a 503 would stop it (Chromium, film_stream_check.py).
+                if (span(message) or (None,))[0] == 0: state['held'] = message; return
                 state['start'] = message
             elif message['type'] == 'http.response.body':
                 if state['held']: state['start'], state['held'] = state['held'], None; await send(state['start'])

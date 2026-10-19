@@ -412,8 +412,9 @@ async def lifespan(app):
 
 
 app = FastAPI(title='Cay Studio', version=VERSION, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
-# 0.19: a read error of the Windows drive (EIO on /mnt/d) while a film streams: read on from the next byte or
-# answer cleanly, one log line instead of a traceback (steady_files.py). Innermost, before every other layer.
+# 0.19: a read error of the Windows drive (EIO on /mnt/d) while a film streams: tried once more (from the next byte),
+# then a German 503 or a closed connection the player asks again on; one log line instead of a traceback
+# (steady_files.py). Innermost, before every other layer.
 from steady_files import install as steady_files
 finish_steady_files = steady_files(app)
 

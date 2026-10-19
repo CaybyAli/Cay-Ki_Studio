@@ -281,11 +281,14 @@ def test_a_read_error_before_the_answer_is_tried_once_more_then_a_short_german_5
 
 
 def test_a_drive_silent_from_the_first_byte_gets_the_503_too_not_an_empty_film(tmp_path, monkeypatch):
-    """A file answer's start waits for its first bytes, so a drive that fails at once is still 'before the answer'."""
+    """The start of a film from byte 0 waits for its first bytes, so a drive that fails at once is still 'before the
+    answer'. A later part answers at once: Chromium asks again after a closed connection but stops at a 503."""
     http, lines, calls = drive(tmp_path, monkeypatch, silent_from=0)
     answer = http.get('/film', headers={'Range': 'bytes=0-'})
     assert answer.status_code == 503 and 'Laufwerk' in answer.json()['detail'] and calls.count('route') == 2
     assert lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: Antwort 503 mit Hinweis']
+    later = http.get('/film', headers={'Range': 'bytes=100000-'})            # a player that already plays asks again by itself
+    assert later.status_code == 206 and calls.count('route') == 4
     monkeypatch.undo()                                                       # the drive of the first app goes
     http, lines, calls = drive(tmp_path, monkeypatch, fail_at=(0,))                # the first read fails once: the whole film
     answer = http.get('/film')

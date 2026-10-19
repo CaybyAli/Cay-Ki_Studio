@@ -1419,6 +1419,7 @@ async function castProfile(name, f, image, voice) {
 const audioPlayer = new Audio();
 const actions = {
   async create() { await createFilm(); },
+  'reload-films'() { $('#toast').classList.remove('show'); document.querySelectorAll('video.frame').forEach(v => { if (v.error) { delete v.dataset.retried; reloadFilm(v); } }); },
   'add-person'() { S.draft.participants.push({ name: '', traits: '', image: null, voice: null }); saveDraft(); refreshExtras(); },
   'remove-person'(b) { S.draft.participants.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
   'remove-example'(b) { S.draft.examples.splice(+b.dataset.index, 1); saveDraft(); refreshExtras(); },
@@ -1829,6 +1830,17 @@ document.addEventListener('drop', event => {
   event.preventDefault(); guarded(null, () => readScriptFile(file));
 });
 document.addEventListener('toggle', event => { if (event.target.matches && event.target.matches('.script-preview')) S.previewOpen = event.target.open; }, true);
+/* 0.19: a film the drive could not deliver (D: answered a read with an error) is loaded once more after a short
+   pause, then a short note with 'Neu laden' instead of a dead player. The studio's own text (503) when there is one. */
+function reloadFilm(v) { const at = v.currentTime; v.load(); if (at) v.currentTime = at; }
+document.addEventListener('error', async event => {
+  const v = event.target;
+  if (!(v instanceof HTMLVideoElement) || !v.classList.contains('frame')) return;
+  if (!v.dataset.retried) { v.dataset.retried = '1'; setTimeout(() => { if (v.isConnected) reloadFilm(v); }, 3000); return; }
+  const why = await fetch(v.currentSrc.split('#')[0], { headers: { Range: 'bytes=0-0' }, cache: 'no-store' })
+    .then(r => r.ok ? '' : r.json().then(x => x.detail || '', () => ''), () => '');
+  toast(why || 'Der Film lädt gerade nicht.', { label: 'Neu laden', data: { action: 'reload-films' } });
+}, true);
 document.addEventListener('submit', async event => {
   const form = event.target; event.preventDefault();
   if (form.id === 'lib-form' || form.id === 'lib-save-form') {
