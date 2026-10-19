@@ -131,3 +131,92 @@ def test_movies_with_the_pin_fit_each_window(monkeypatch, tmp_path):
 def test_projects_with_0_16_prompts_keep_81_frames_even_with_the_pin(monkeypatch, tmp_path):
     talk, calls = run_movies(monkeypatch, tmp_path, movie(19, prompt_policy=16), forbid_plan=True)
     assert [g['11']['inputs']['frame_window_size'] for _, g in talk] == [81, 81] and all('window' not in kw for _, kw in calls)
+
+
+# --- 2. No idle GPU between jobs ------------------------------------------------------------
+
+RID = 'f' * 32
+
+
+def image_job(tmp_path, monkeypatch, policy):
+    from studio_fakes import factory as studio, project
+    f = studio(tmp_path, monkeypatch)
+    project(f, RID, 'pictures', {'render_policy': policy} if policy else {})
+    return f
+
+
+def finish(f, pid, history=True):
+    from test_episode_looks import png
+    n, _, graph, extra, _ = next(row for row in f.services.pending if row[1] == pid)
+    if not history: return
+    f.services.pending = [row for row in f.services.pending if row[1] != pid]
+    png(f.comfy / 'output' / (pid + '.png'), 'same picture')
+    f.services.history[pid] = {'prompt': [n, pid, graph, extra, []], 'status': {'completed': True, 'status_str': 'success'},
+                               'outputs': {'77': {'images': [{'filename': pid + '.png', 'subfolder': '', 'type': 'output'}]}}}
+
+
+def render_once(f, messages, delay=.3):
+    """render_step for one image; ComfyUI finishes after `delay` s and sends `messages` (kind, history written yet)."""
+    graph = {'77': {'class_type': 'SaveImage', 'inputs': {'images': ['9', 0]}}, '9': {'class_type': 'EmptyImage', 'inputs': {}}}
+
+    async def comfy():
+        while not f.services.pending: await asyncio.sleep(.01)
+        pid = f.services.pending[-1][1]
+        await asyncio.sleep(delay)
+        for kind, written in messages:
+            finish(f, pid, written)
+            f.progress.event({'type': kind, 'data': {'prompt_id': pid, **({'node': None} if kind == 'executing' else {})}})
+            await asyncio.sleep(.05)
+
+    async def main():
+        started = asyncio.get_running_loop().time()
+        step, _ = await asyncio.gather(f.render_step(f.get(RID), 'image:0:0:0:0', graph), comfy())
+        return step, asyncio.get_running_loop().time() - started
+    return asyncio.run(main())
+
+
+def submitted(f):
+    graph = f.services.prompts()[-1][1]['prompt']
+    graph['77']['inputs'].pop('filename_prefix')
+    return graph
+
+
+def test_pinned_render_is_handed_back_when_comfyui_reports_the_end(tmp_path, monkeypatch):
+    f = image_job(tmp_path / 'new', monkeypatch, 19)
+    step, seconds = render_once(f, [('execution_success', False), ('executing', True)])
+    # Success arrives a moment before ComfyUI writes its history: the studio looks again on the next message.
+    assert step['status'] == 'done' and seconds < 1.2, seconds
+    assert f.progress.waiting.keys() == {step['prompt_id']}
+    old = image_job(tmp_path / 'old', monkeypatch, None)
+
+    def forbidden(pid, seconds): raise AssertionError('new polling without the pin')
+    monkeypatch.setattr(old.progress, 'settle', forbidden)
+    old_step, old_seconds = render_once(old, [('execution_success', False), ('executing', True)])
+    assert old_seconds >= 1.9 and old.progress.waiting == {}                       # the plain 2 s poll, as before
+    # Scheduling changes nothing that is rendered or kept.
+    assert submitted(f) == submitted(old) and step['sha256'] == old_step['sha256'] and step['step_key'] == old_step['step_key']
+
+
+def test_pinned_render_falls_back_to_the_poll_without_a_message(tmp_path, monkeypatch):
+    f = image_job(tmp_path, monkeypatch, 19)
+    step, seconds = render_once(f, [('progress', True)], delay=.1)     # socket silent about the end (disconnected)
+    assert step['status'] == 'done' and 1.9 <= seconds < 4
+
+
+def test_settle_only_wakes_for_the_watched_prompt():
+    from factory_progress import RenderProgress
+
+    class F:
+        def rows(self, *a): return []
+
+    async def main():
+        progress = RenderProgress(F()); progress.watch('a')
+        loop = asyncio.get_running_loop()
+        loop.call_later(.05, progress.event, {'type': 'executing', 'data': {'prompt_id': 'b', 'node': None}})
+        loop.call_later(.1, progress.event, {'type': 'executing', 'data': {'prompt_id': 'a', 'node': '12'}})
+        loop.call_later(.3, progress.event, {'type': 'executing', 'data': {'prompt_id': 'a', 'node': None}})
+        t = loop.time(); await progress.settle('a', 2); woke = loop.time() - t
+        t = loop.time(); await progress.settle('unknown', .05); slept = loop.time() - t
+        return woke, slept
+    woke, slept = asyncio.run(main())
+    assert .25 <= woke < 1 and slept >= .04

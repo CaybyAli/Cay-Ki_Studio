@@ -37,7 +37,22 @@ def profile_key(info):
 class RenderProgress:
     def __init__(self,factory):
         self.f=factory;self.connected=asyncio.Event();self.live={};self.last_flush={}
-        self.client_id='cay-studio-factory'
+        self.client_id='cay-studio-factory';self.waiting={}
+
+    def watch(self,pid):
+        """render_policy 19: the prompt render_step now waits for. One at a time (GPU_LOCK); always a
+        fresh event, so a resumed step never waits on an event of an earlier event loop."""
+        self.waiting={pid:asyncio.Event()}
+
+    async def settle(self,pid,seconds):
+        """Sleep up to `seconds`, but wake at once when ComfyUI reports this prompt finished: the
+        0.19 diagnosis measured 1.3 s of idle GPU per job with the plain 2 s poll. History stays
+        the only authority on the result; this only decides when to look."""
+        event=self.waiting.get(pid)
+        if event is None:return await asyncio.sleep(seconds)
+        try:await asyncio.wait_for(event.wait(),seconds)
+        except asyncio.TimeoutError:pass
+        event.clear()
 
     def init(self):
         self.f.sql('''CREATE TABLE IF NOT EXISTS factory_metrics(
@@ -93,6 +108,9 @@ class RenderProgress:
         if not isinstance(data,dict):return
         pid=data.get('prompt_id')
         if not pid:return
+        # 'executing' without a node comes after ComfyUI wrote the history, success a moment before it.
+        if pid in self.waiting and (kind in ('execution_success','execution_error','execution_interrupted') or (kind=='executing' and data.get('node') is None)):
+            self.waiting[pid].set()
         steps=self.f.rows('SELECT * FROM factory_steps WHERE prompt_id=?',(pid,))
         if not steps:return
         step=steps[0]

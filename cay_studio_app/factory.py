@@ -709,6 +709,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             else:pid=s['prompt_id'] or await self.recover(c,s)
             self.sql("UPDATE factory_steps SET status='submitted',prompt_id=? WHERE id=?",(pid,s['id']))
             start=time.monotonic();missing=0
+            # render_policy 19: ComfyUI's own "finished" message ends the wait at once (no idle GPU between jobs);
+            # the history poll below stays the authority and its 2 s cycle the fallback. Without the pin: as before.
+            fast=d.get('render_policy',0)>=19
+            if fast:self.progress.watch(pid)
             while not self.g['STOPPING']:
                 current=self.rows('SELECT status FROM factory_steps WHERE id=?',(s['id'],))
                 if not current or current[0]['status']=='aborted':
@@ -766,7 +770,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         self.progress.queue(s,'running' if running else 'queued' if present else 'unknown')
                         if missing>=3:raise Uncertain('Der Auftrag fehlt in ComfyUIs Warteschlange und Verlauf. Keine automatische Doppelproduktion.')
                 if time.monotonic()-start>14400:raise Uncertain('Der Auftrag braucht ungewöhnlich lange. Der gespeicherte Auftrag wird beim Fortsetzen erneut geprüft.')
-                await asyncio.sleep(2)
+                await (self.progress.settle(pid,2) if fast else asyncio.sleep(2))
         raise Wait('Studio wird beendet; Auftrag bleibt gespeichert.')
     async def object_info(self):
         async with httpx.AsyncClient(trust_env=False,timeout=10) as c:
