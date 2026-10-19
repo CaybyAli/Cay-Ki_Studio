@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 from comfy_socket import messages
 from studio_quality_policy import segments, scene_segments, settings
+import shot_design
 from factory_timing import off_screen
 
 LABELS = {'LoadImage':'Referenzbild laden','UNETLoader':'Animationsmodell bereitstellen',
@@ -242,14 +243,16 @@ class RenderProgress:
             for si,scene in enumerate(episode['scenes']):
                 # A 0.18 reaction carries a voice from off-screen but renders as silent motion.
                 talking=options['lip_sync']=='audio' and not off_screen(scene) and any(l['episode']==ei and l['scene']==si for l in d.get('lines',[]))
-                durations=scene_segments(scene.get('render_seconds',scene.get('seconds',0)),options['fps'],talking)
+                # 0.19 (shot_policy 19): silent clips at the delivery rate, as factory.movies renders them.
+                native=shot_design.active(d) and not talking
+                durations=scene_segments(scene.get('render_seconds',scene.get('seconds',0)),options['fps'],talking,native=native)
                 for seg,duration in enumerate(durations):
                     count+=1;row=by_slot.get(f'{ei}:{si}:{seg}')
                     if row and row['status']=='done':
                         completed+=1;latest={'step_id':row['id'],'episode':ei,'scene':si,'segment':seg}
                     else:
                         is_talk=talking
-                        remaining.append((row,4*math.ceil(duration*(25 if is_talk else 16)/4)+1,is_talk))
+                        remaining.append((row,4*math.ceil(max(1,round(duration*options['fps'])-1)/4)+1 if native else 4*math.ceil(duration*(25 if is_talk else 16)/4)+1,is_talk))
                         if row and active and row['id']==active['step_id']:
                             current={'scene':si,'segment':seg,'segments':len(durations)};active.update(episode=ei,**current)
             status=('done' if export_index is not None else 'exporting' if job and job['status']=='running' else
