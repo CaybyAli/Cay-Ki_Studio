@@ -1,10 +1,10 @@
 """Measured dialogue, original cartoon accompaniment and deterministic ducking."""
 from array import array
 from pathlib import Path
-import hashlib,json,math,os,random,subprocess,wave
+import hashlib,json,math,os,random,re,subprocess,wave
 from factory_timing import audio_layout,audio_layout_v16
 import speech_check
-from speech_quality import level_db
+from speech_quality import level_db,performance_key
 RATE=24000
 TARGET_LUFS=-14  # TikTok/Shorts: phones play quiet mixes thin; measured film before: -23.9 dB mean
 def turns(s):
@@ -37,8 +37,17 @@ def edit_spec(d):
     """0.18 export look (captions, camera, sound bed) only for projects created with it: specs of older
     projects stay byte-identical, so their queued mixes and cached parts keep their keys."""
     return {'edit_policy':d['edit_policy']} if d.get('edit_policy',17)>=18 else {}
+SOUND_POLICY=19     # d['sound_policy'] from which the mix levels every line and follows the place (see mix19)
+def sound_spec(d):
+    """0.19 sound only for projects created with it: older specs stay byte-identical, so their queued mixes
+    keep their keys and approved previews their sound."""
+    return {'sound_policy':d['sound_policy']} if d.get('sound_policy',0)>=SOUND_POLICY else {}
+def place(scene):
+    return ' '.join(str(scene.get('location') or '').lower().split())[:120]
 def scene_kinds(d,scenes):
-    return [{'kind':sc.get('kind','line')} if edit_spec(d) else {} for sc in scenes]
+    # 0.19: the place travels with each shot, so the ambience follows the location instead of the shot.
+    where=bool(sound_spec(d))
+    return [{**({'kind':sc.get('kind','line')} if edit_spec(d) else {}),**({'location':place(sc)} if where else {})} for sc in scenes]
 # 0.18 sound bed: the room tone of 0.17 measured about -58 dBFS in Cay's film (inaudible, silent
 # shots felt dead); his templates keep a continuous bed about 25 dB under the dialogue.
 BED_POLICY=18
@@ -128,7 +137,8 @@ def clear_lines(stems,entries,attack=.08,release=.28):
                 out[i]*=1-(1-gain)*max(0.,min(1.,ramp))
         write_wav(path,out)
     return lowered
-def mix(folder,scenes,mood,music=None,settings=None,policy=17):
+def mix(folder,scenes,mood,music=None,settings=None,policy=17,sound=0):
+    if int(sound or 0)>=SOUND_POLICY:return mix19(folder,scenes,mood,music,settings)
     bed=int(policy)>=BED_POLICY
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);settings={'music_mode':'uploaded' if music else 'auto','music_level':1.,'effects_level':1.,'ambience_level':1.,**(settings or {})};duration=sum(s['seconds'] for s in scenes);cursor=0.;args=[];filters=[];labels=[];index=0;intervals=[]
     for s in scenes:
