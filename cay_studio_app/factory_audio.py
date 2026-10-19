@@ -294,20 +294,40 @@ def noise_window(fr,active):
     if power_db(fr[1:6])<=floor+6:return 1,6,'Vorlauf'
     level,i=min((power_db(fr[i:i+5]),i) for i in range(1,len(fr)-5))
     return (i,i+5,'Pause') if level<=floor+6 else None
-def denoise(data,first,last):
-    """Gentle FFT denoise (afftdn) with the noise profile learnt from frames first..last. That stretch is played
-    first (mirrored to 0.1 s), sampled and cut off again, so the take keeps its exact length and timing.
-    Returns None when FFmpeg fails; the caller then mixes the take as it is."""
-    hop=round(RATE*speech_check.HOP);seg=data[first*hop:last*hop];pre=array('f')
-    while len(pre)<.1*RATE:pre.extend(seg if len(pre)//len(seg)%2==0 else seg[::-1])
-    floor=max(-80.,min(-20.,power_db(seg)+6))   # afftdn only reduces noise under its floor setting
-    graph=f"asendcmd=c='0 afftdn sn start;{len(pre)/RATE:.4f} afftdn sn stop',afftdn=nr={DENOISE_NR}:nf={floor:.1f}"
-    try:r=subprocess.run(['ffmpeg','-nostdin','-v','error','-f','f32le','-ar',str(RATE),'-ac','1','-i','pipe:','-af',graph,'-f','f32le','-'],input=f32_bytes(pre+data),capture_output=True,timeout=300)
+def run_f32(graph,data):
+    """Float samples through an FFmpeg filter chain at RATE (mono); None if FFmpeg fails."""
+    try:r=subprocess.run(['ffmpeg','-nostdin','-v','error',*PIPE,'-af',graph,'-f','f32le','-'],input=f32_bytes(data),capture_output=True,timeout=300)
     except (OSError,subprocess.SubprocessError):return None
     out=array('f');out.frombytes(r.stdout[:len(r.stdout)//4*4])
     if sys.byteorder!='little':out.byteswap()
-    if r.returncode or len(out)!=len(pre)+len(data):return None
-    out=out[len(pre):]
+    return None if r.returncode else out
+DENOISE_PAD=.25     # tail played after a take so afftdn's delay does not cut its end
+afftdn_measured=[]   # per process: [delay in samples or None]
+def afftdn_delay():
+    """afftdn delays its output (25 ms in FFmpeg 6.1) and keeps the length; uncorrected, every denoised line
+    came 25 ms late. Measured once per process: energy centre of a tone burst before and after. None if odd."""
+    if not afftdn_measured:
+        n=RATE;x=array('f',[0.])*n;size=int(.05*RATE);rng=random.Random(5)
+        for i in range(n):x[i]=.001*rng.uniform(-1,1)
+        for j in range(size):x[n//2+j]+=.5*math.sin(math.tau*1000*j/RATE)*math.sin(math.pi*j/size)**2
+        y=run_f32(f'afftdn=nr={DENOISE_NR}:nf=-50',x)
+        def centre(v):
+            part=range(n//2-RATE//10,n//2+RATE//5);return sum(i*v[i]*v[i] for i in part)/max(1e-12,sum(v[i]*v[i] for i in part))
+        delay=round(centre(y)-centre(x)) if y is not None and len(y)==n else -1
+        afftdn_measured.append(delay if 0<=delay<DENOISE_PAD*RATE-RATE//50 else None)
+    return afftdn_measured[0]
+def denoise(data,first,last):
+    """Gentle FFT denoise (afftdn) with the noise profile learnt from frames first..last. That stretch is played
+    first (mirrored to 0.1 s), sampled and cut off again together with afftdn's own delay, so the take keeps its
+    exact length and timing. Returns None when FFmpeg fails; the caller then mixes the take as it is."""
+    delay=afftdn_delay()
+    if delay is None:return None
+    hop=round(RATE*speech_check.HOP);seg=data[first*hop:last*hop];pre=array('f')
+    while len(pre)<.1*RATE:pre.extend(seg if len(pre)//len(seg)%2==0 else seg[::-1])
+    floor=max(-80.,min(-20.,power_db(seg)+6))   # afftdn only reduces noise under its floor setting
+    out=run_f32(f"asendcmd=c='0 afftdn sn start;{len(pre)/RATE:.4f} afftdn sn stop',afftdn=nr={DENOISE_NR}:nf={floor:.1f}",pre+data+array('f',[0.])*round(DENOISE_PAD*RATE))
+    if out is None or len(out)!=len(pre)+len(data)+round(DENOISE_PAD*RATE):return None
+    out=out[len(pre)+delay:len(pre)+delay+len(data)]
     return out if all(math.isfinite(v) for v in out) else None
 def speech_loudness(data,measured):
     """Loudness of the spoken part: BS.1770 gating drops the pauses; a take under 0.5 s has too few blocks,
@@ -322,9 +342,11 @@ def prepare_take(line):
         cleaned=denoise(data,window[0],window[1]);status='Fehler'
         if cleaned is not None:
             after=speech_check.frames(cleaned,RATE,0,len(cleaned)/RATE);level=active_level(after)
-            # The voice must come through unchanged (level and timing); otherwise mix the take as it is.
-            shift=max(range(-3,4),key=lambda k:sum(a*b for a,b in zip(fr[max(0,k):],after[max(0,-k):])))
-            if level is not None and abs(level-active)<=1 and shift==0:data,status=cleaned,window[2]
+            # The voice must come through unchanged (level, first and last word in the same 10 ms frame, give
+            # or take one); otherwise mix the take as it is.
+            def edges(values):
+                loud=[i for i,v in enumerate(values) if v>=10**((active-20)/20)];return (loud[0],loud[-1]) if loud else (-9,-9)
+            if level is not None and abs(level-active)<=1 and all(abs(a-b)<=1 for a,b in zip(edges(fr),edges(after))):data,status=cleaned,window[2]
             else:status='verworfen'
     elif active is not None and len(fr)>=12:status='ohne' if power_db(sorted(fr)[:max(1,len(fr)//10)])>=-80 else 'sauber'
     loud=None if active is None else speech_loudness(data,r128(PIPE,'',data)[0])
