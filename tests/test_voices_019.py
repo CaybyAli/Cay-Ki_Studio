@@ -144,8 +144,8 @@ def test_a_loud_recording_comes_down_and_background_or_a_short_sample_is_reporte
     assert 'afftdn' not in music['steps'] and music['warnings'] == ['noisy'] and abs(music['after']['lufs'] - vr.TARGET_LUFS) <= 1
     assert 'viel Hintergrund' in ' '.join(vr.notes('Oma', music)) and 'Oma' in vr.notes('Oma', music)[1]
     sample(tmp_path / 'short.wav', -25, -80, words=4); short = vr.clean(tmp_path / 'short.wav')
-    assert short['warnings'] == ['short'] and 'Die Stimmprobe von Tim ist kurz' in ' '.join(vr.notes('Tim', short))
-    assert vr.notes('Tim', None) == ['Die Stimmprobe von Tim ließ sich nicht reinigen. Das Studio klont das Original.']
+    assert short['warnings'] == ['short'] and 'Stimmprobe von Tim: nur ' in ' '.join(vr.notes('Tim', short))
+    assert vr.notes('Tim', None) == ['Stimmprobe von Tim ließ sich nicht reinigen. Das Studio klont das Original.']
 
 
 def test_demucs_is_used_only_when_it_is_there_and_the_sample_has_background(tmp_path, monkeypatch):
@@ -189,7 +189,7 @@ def test_a_recording_that_cannot_be_cleaned_is_cloned_as_it_is(tmp_path):
     d, job = voice_job(tmp_path, {'sound_policy': 19}, voices={'a': broken, 'b': broken})
     assert job['cast'][0]['voice_file'] == str(broken)
     assert d['voice_profiles']['Tim']['reference'] == {'mode': 'x-vector', 'cleaned': False,
-                                                       'notes': ['Die Stimmprobe von Tim ließ sich nicht reinigen. Das Studio klont das Original.']}
+                                                       'notes': ['Stimmprobe von Tim ließ sich nicht reinigen. Das Studio klont das Original.']}
 
 
 # --- (2) more emotion: performed references for recordings, more takes, the speaker kept ---------------------------

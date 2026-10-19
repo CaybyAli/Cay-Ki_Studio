@@ -157,18 +157,16 @@ def clean(src, python=None):
 
 def notes(name, info):
     """Short German notes for the figure card and the diagnosis."""
-    if not info: return [f'Die Stimmprobe von {name} ließ sich nicht reinigen. Das Studio klont das Original.']
+    if not info: return [f'Stimmprobe von {name} ließ sich nicht reinigen. Das Studio klont das Original.']
     out = []
     if 'demucs' in info['steps']: out.append('Musik und Geräusche abgetrennt')
     if 'afftdn' in info['steps']: out.append('Rauschen gemindert')
     if abs(info['gain_db']) >= 3: out.append(f'{"+" if info["gain_db"] > 0 else "−"}{abs(round(info["gain_db"]))} dB angeglichen')
     text = [f'Stimmprobe gereinigt: {", ".join(out)}.' if out else 'Stimmprobe geprüft: sauber.']
     if 'noisy' in info['warnings']:
-        text.append(f'In der Stimmprobe von {name} ist viel Hintergrund (Musik oder Rauschen). Der Klon kann Reste davon übernehmen. '
-                    'Am besten eine Aufnahme ohne Musik nehmen.')
+        text.append(f'Stimmprobe von {name}: viel Hintergrund (Musik oder Rauschen). Der Klon kann ihn übernehmen. Besser eine Aufnahme ohne Musik.')
     if 'short' in info['warnings']:
-        text.append(f'Die Stimmprobe von {name} ist kurz ({str(info["after"]["speech_seconds"]).replace(".", ",")} s Sprache). '
-                    'Mit 10 bis 20 s klingt der Klon ähnlicher.')
+        text.append(f'Stimmprobe von {name}: nur {str(info["after"]["speech_seconds"]).replace(".", ",")} s Sprache. Mit 10 bis 20 s klingt der Klon ähnlicher.')
     return text
 
 
