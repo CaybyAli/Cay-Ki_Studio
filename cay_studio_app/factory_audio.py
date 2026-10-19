@@ -225,23 +225,34 @@ def mix(folder,scenes,mood,music=None,settings=None,policy=17,sound=0):
 # geht", music only 3-5 LU under the voices); a quiet reference voice made a quiet figure (Patrick 2.4 LU under
 # the others, speech check stops); the hiss of noisy references came and went with every line.
 DIALOGUE_LUFS=-18.  # dialogue stem after its one measured gain; music and ambience are set relative to it
-SPEECH_DBFS=-20.    # active speech level of every take before its emotion offset
+SPEECH_LUFS=-20.    # active speech loudness of every take (K-weighted) before its emotion offset
 # Delivery offsets after levelling: a shout clearly louder, a whisper softer but well above the music.
 LEVEL_DB_19={'shout':3.,'angry':2.,'panic':2.,'excited':1.5,'triumph':1.,'threat':-1.,'pleading':-1.,'afraid':-1.,'sad':-2.,'whisper':-5.}
 MAX_BOOST,MAX_CUT=24.,12.
+PEAK_OVER_SPEECH=13.  # peak ceiling of a take over its loudness: a -14 LUFS master leaves about 13 dB
 QUIET_TAKE_DB=12.   # a take lifted more than this is reported: the reference voice is quiet (or noisy)
 DENOISE_NR=15       # afftdn reduction in dB; above ~20 real sibilants turn watery
 MUSIC_LUFS=-26.     # music at level 1.0 between lines: 8 LU under the dialogue (11 LU at the default 0.7)
 DUCK_DB,DUCK_ATTACK,DUCK_RELEASE,DUCK_BRIDGE=7.,.25,.7,1.   # gentle dip; stays down across short gaps
-FINAL_LIMIT=.98     # mono peak; the stereo split puts each channel 3 dB lower (true peak about -2.5 dBTP)
+FINAL_LIMIT=-2.     # dBFS sample peak per channel at 48 kHz; lowered once more if the true peak still exceeds
+TRUE_PEAK=-1.       # dBTP
 AMBIENCE_DBFS={'room':-47.,'forest':-43.,'wind':-41.,'rain':-41.,'train':-41.}   # bed RMS at level 1.0
 AMBIENCE_FADE=.4    # crossfade where the location changes, nowhere else
-def loudness(path,fmt=()):
-    """Integrated loudness (LUFS) and true peak (dBTP) per EBU R128 (FFmpeg ebur128); silence reads -70."""
-    r=subprocess.run(['ffmpeg','-nostdin','-hide_banner','-nostats',*fmt,'-i',str(path),'-af','ebur128=peak=true','-f','null','-'],capture_output=True,timeout=600)
+def r128(source,chain='',data=None):
+    """Run FFmpeg with an EBU R128 meter (ebur128) at the end of chain. Returns integrated loudness (LUFS,
+    silence reads -70), true peak (dBTP) and, for float samples piped in (data), the processed samples."""
+    out=['-f','f32le','-'] if data is not None else ['-f','null','-']
+    r=subprocess.run(['ffmpeg','-nostdin','-hide_banner','-nostats',*source,'-af',chain+'ebur128=peak=true',*out],input=None if data is None else f32_bytes(data),capture_output=True,timeout=600)
     text=r.stderr.decode(errors='replace');i=re.findall(r'\bI:\s+(-?[\d.]+|-inf) LUFS',text);p=re.findall(r'\bPeak:\s+(-?[\d.]+|-inf) dBFS',text)
     if r.returncode or not i:raise RuntimeError('Tonmischung: Lautheit nicht messbar. '+text[-600:])
-    return max(-70.,float(i[-1])),(float(p[-1]) if p else 0.)
+    samples=array('f')
+    if data is not None:
+        samples.frombytes(r.stdout[:len(r.stdout)//4*4])
+        if sys.byteorder!='little':samples.byteswap()
+    return max(-70.,float(i[-1])),(float(p[-1]) if p else 0.),samples
+def loudness(path):
+    return r128(['-i',str(path)])[:2]
+PIPE=['-f','f32le','-ar',str(RATE),'-ac','1','-i','pipe:']
 def read_f32(path):
     r=subprocess.run(['ffmpeg','-nostdin','-v','error','-i',str(path),'-map','0:a:0','-ac','1','-ar',str(RATE),'-f','f32le','-'],capture_output=True,timeout=600)
     if r.returncode:raise RuntimeError('Sprachspur nicht lesbar: '+r.stderr.decode(errors='replace')[-600:])
@@ -254,9 +265,22 @@ def f32_bytes(data):
     return data.tobytes()
 def power_db(values):
     return 10*math.log10(max(sum(v*v for v in values)/max(1,len(values)),1e-20))
+def kweight(data):
+    """BS.1770 K-weighting (shelf plus high-pass, coefficients for RATE) by FFmpeg's biquad: a deep voice and a
+    bright one at the same RMS are not equally loud."""
+    k=math.tan(math.pi*1681.974450955533/RATE);vh=10**(3.999843853973347/20);vb=vh**.4996667741545416;q=.7071752369554196;a0=1+k/q+k*k
+    shelf=(vh+vb*k/q+k*k)/a0,2*(k*k-vh)/a0,(vh-vb*k/q+k*k)/a0,1,2*(k*k-1)/a0,(1-k/q+k*k)/a0
+    k=math.tan(math.pi*38.13547087602444/RATE);q=.5003270373238773;a0=1+k/q+k*k;high=1,-2,1,1,2*(k*k-1)/a0,(1-k/q+k*k)/a0
+    graph=','.join('biquad='+':'.join(f'{n}={v:.12g}' for n,v in zip(('b0','b1','b2','a0','a1','a2'),c)) for c in (shelf,high))
+    r=subprocess.run(['ffmpeg','-nostdin','-v','error','-f','f32le','-ar',str(RATE),'-ac','1','-i','pipe:','-af',graph,'-f','f32le','-'],input=f32_bytes(data),capture_output=True,timeout=300)
+    if r.returncode:raise RuntimeError('Tonmischung: '+r.stderr.decode(errors='replace')[-600:])
+    out=array('f');out.frombytes(r.stdout[:len(r.stdout)//4*4])
+    if sys.byteorder!='little':out.byteswap()
+    return out
 def active_level(fr):
     """Active speech level (dB re full scale) from 10 ms RMS frames: the frames within 25 dB of the loud end
-    (98th percentile, so a single click does not set the reference). None for a take without sound."""
+    (98th percentile, so a single click does not set the reference). None for a take without sound.
+    On K-weighted frames, minus 0.691 dB, this is the loudness (LUFS) of the spoken part."""
     loud=sorted(fr)[int(.98*(len(fr)-1))] if fr else 0.
     if loud<=1e-6:return None
     return power_db([min(v,2*loud) for v in fr if v>=loud*10**(-25/20)])
@@ -285,10 +309,14 @@ def denoise(data,first,last):
     if r.returncode or len(out)!=len(pre)+len(data):return None
     out=out[len(pre):]
     return out if all(math.isfinite(v) for v in out) else None
-def level_take(line,path):
-    """Measure one take, denoise it, and return the gain that brings its active speech to SPEECH_DBFS plus the
-    delivery offset. The cleaned take goes to path (raw float, exact length); the line file stays untouched."""
-    data=read_f32(line['file']);hop=round(RATE*speech_check.HOP)
+def speech_loudness(data,measured):
+    """Loudness of the spoken part: BS.1770 gating drops the pauses; a take under 0.5 s has too few blocks,
+    so its active K-weighted frames decide."""
+    if len(data)>=RATE//2 and measured>-70:return measured
+    level=active_level(speech_check.frames(kweight(data),RATE,0,len(data)/RATE));return None if level is None else level-.691
+def prepare_take(line):
+    """Read one take, denoise it gently and measure the loudness of its speech. The line file stays untouched."""
+    data=read_f32(line['file'])
     fr=speech_check.frames(data,RATE,0,len(data)/RATE);active=active_level(fr);window=noise_window(fr,active);status='sauber'
     if window:
         cleaned=denoise(data,window[0],window[1]);status='Fehler'
@@ -296,12 +324,38 @@ def level_take(line,path):
             after=speech_check.frames(cleaned,RATE,0,len(cleaned)/RATE);level=active_level(after)
             # The voice must come through unchanged (level and timing); otherwise mix the take as it is.
             shift=max(range(-3,4),key=lambda k:sum(a*b for a,b in zip(fr[max(0,k):],after[max(0,-k):])))
-            if level is not None and abs(level-active)<=1 and shift==0:data,active,status=cleaned,level,window[2]
+            if level is not None and abs(level-active)<=1 and shift==0:data,status=cleaned,window[2]
             else:status='verworfen'
     elif active is not None and len(fr)>=12:status='ohne' if power_db(sorted(fr)[:max(1,len(fr)//10)])>=-80 else 'sauber'
+    loud=None if active is None else speech_loudness(data,r128(PIPE,'',data)[0])
+    goal=SPEECH_LUFS+LEVEL_DB_19.get(performance_key(line.get('emotion','')),0.)
+    return {'data':data,'loud':loud,'goal':goal,'level':None if loud is None else round(loud,1),'denoise':status,'label':speech_check.label(line)}
+def shape_take(take,peak_over,path):
+    """Level a prepared take to its goal and limit its peaks to peak_over dB above that loudness. Peaks are
+    controlled per take, so the final limiter has (almost) nothing to do: it took up to 1.4 dB more off deep
+    voices than off bright ones and lowered the bed under every loud word. The small rest after the limit is a
+    constant gain, at most +0.5 dB so the peaks stay under the ceiling. Writes raw float with the exact length."""
+    data,goal=take['data'],take['goal'];gain=correction=0.
+    if take['loud'] is not None:
+        gain=first=max(-MAX_CUT,min(MAX_BOOST,goal-take['loud']));tried=[]
+        for attempt in range(4):
+            chain=(f'apad=pad_dur=0.1,highpass=f=60:poles=1,volume={gain:+.2f}dB,alimiter=limit={10**((goal+peak_over)/20):.5f}:release=80:level=0:latency=1,'
+                   f'asetpts=N/SR/TB,atrim=end_sample={len(take["data"])},')
+            measured,_,data=r128(PIPE,chain,take['data'])
+            if len(data)!=len(take['data']):raise RuntimeError('Tonmischung: Sprachspur nach der Pegelung unvollständig.')
+            after=speech_loudness(data,measured)
+            if after is None:correction=0.;break
+            correction=goal-after;tried.append((gain,after))
+            if abs(correction)<=.3:break
+            # The limit takes a little off: more gain, peaks stay at the ceiling. Secant step, bounded.
+            slope=(tried[-1][1]-tried[-2][1])/(tried[-1][0]-tried[-2][0]) if len(tried)>1 and tried[-1][0]!=tried[-2][0] else 1.
+            step=max(-MAX_CUT,min(MAX_BOOST,first+8,gain+correction/max(.25,min(1.,slope))))
+            if abs(step-gain)<.05:break
+            gain=step
+        correction=max(-3.,min(.5,correction))
     Path(path).parent.mkdir(parents=True,exist_ok=True);Path(path).write_bytes(f32_bytes(data))
-    gain=0. if active is None else max(-MAX_CUT,min(MAX_BOOST,SPEECH_DBFS-active+LEVEL_DB_19.get(performance_key(line.get('emotion','')),0.)))
-    return {'gain':round(gain,2),'level':None if active is None else round(active,1),'denoise':status}
+    take.update(gain=round(gain+correction,2),correction=round(correction,2))
+    return take
 def places(scenes):
     """Consecutive shots of one location share one ambience bed; the place sounds like its most frequent kind."""
     groups=[];cursor=0.
@@ -382,33 +436,38 @@ def bridged(intervals,gap=DUCK_BRIDGE):
         else:out.append((start,end))
     return out
 def mix19(folder,scenes,mood,music=None,settings=None):
-    """Mix of sound policy 19: every take levelled and gently denoised on its own, measured linear stages
-    (dialogue, then one constant gain on the whole mix to TARGET_LUFS with a peak limiter), music well under the
-    voices with a gentle dip, one ambience bed per location, effects only where the plan asks for one."""
+    """Mix of sound policy 19: every take denoised gently and levelled on its own, measured linear stages
+    (dialogue, then one constant gain on the whole mix to TARGET_LUFS with a peak limiter that has next to
+    nothing to do), music well under the voices with a gentle dip, one ambience bed per location, effects only
+    where the plan asks for one. Writes the same files and reports as mix(), plus levels per line."""
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);settings={'music_mode':'uploaded' if music else 'auto','music_level':1.,'effects_level':1.,'ambience_level':1.,**(settings or {})}
-    duration=sum(s['seconds'] for s in scenes);cursor=0.;args=[];filters=[];labels=[];intervals=[];takes={};index=0
+    duration=sum(s['seconds'] for s in scenes);cursor=0.;placed=[];takes={};intervals=[]
     for s in scenes:
         for l in s.get('lines') or ([s['line']] if s.get('line') else []):
             p=Path(l['file'])
             if hashlib.sha256(p.read_bytes()).hexdigest()!=l['sha256']:raise RuntimeError('Sprachspur wurde verändert.')
             start=cursor+l.get('offset',.15)
             if start+l['duration']>cursor+s['seconds']+.03:raise RuntimeError('Dialog passt nicht zur Szenendauer.')
-            take=folder/'Zeilen'/f'{index:03}.f32';info=level_take(l,take);takes[l.get('key') or speech_check.label(l)]={**info,'label':speech_check.label(l)}
-            args+=['-f','f32le','-ar',str(RATE),'-ac','1','-i',str(take)]
-            filters.append(f'[{index}:a]highpass=f=70,volume={info["gain"]:+.2f}dB,adelay={round(start*1000)}:all=1,apad=whole_dur={duration}[d{index}]');labels.append(f'[d{index}]');index+=1;intervals.append((start,start+l['duration']))
+            key=l.get('key') or speech_check.label(l);takes[key]=prepare_take(l);placed.append((start,key));intervals.append((start,start+l['duration']))
         cursor+=s['seconds']
-    dialogue=folder/'Dialogschnitt.wav';raw=folder/'Dialog_roh.wav';dialogue_gain=0.
-    if labels:filters.append(''.join(labels)+f'amix=inputs={len(labels)}:normalize=0:duration=longest[voice]')
-    else:args+=['-f','lavfi','-i',f'anullsrc=r=24000:cl=mono:d={duration}'];filters.append(f'[{index}:a]anull[voice]')
-    ff([*args,'-filter_complex',';'.join(filters),'-map','[voice]','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_f32le',raw],folder)
-    if labels:
-        measured=loudness(raw)[0];dialogue_gain=max(-20.,min(20.,DIALOGUE_LUFS-measured)) if measured>-70 else 0.
-    # One constant gain for the whole dialogue (the takes are level already), peaks caught for 16 bit.
-    ff(['-i',raw,'-af',exact(f'volume={dialogue_gain:+.2f}dB,alimiter=limit=0.891:level=0:latency=1',duration),'-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',dialogue],folder)
-    raw.unlink(missing_ok=True)
-    for take in (folder/'Zeilen').glob('*.f32'):take.unlink()
-    samples=speech_check.read_wav(dialogue)[0];dialogue_peak=max((abs(x) for x in samples),default=0);dialogue_rms=math.sqrt(sum(x*x for x in samples)/len(samples)) if samples else 0
-    if labels and (dialogue_peak<500 or dialogue_rms<30):raise RuntimeError('Die Dialogspur ist stumm. Tonvorschau wurde nicht freigegeben; Stimmen bitte erneut erzeugen.')
+    dialogue=folder/'Dialogschnitt.wav';raw=folder/'Dialog_roh.wav'
+    def voices(peak_over):
+        """Dialogue stem: every take shaped and placed, then one measured gain to DIALOGUE_LUFS. Returns the
+        gain and the true peak after it."""
+        args=[];filters=[];gain=0.;peak=-70.
+        for i,(start,key) in enumerate(placed):
+            path=folder/'Zeilen'/f'{i:03}.f32';take=shape_take(takes[key],peak_over,path);args+=['-f','f32le','-ar',str(RATE),'-ac','1','-i',str(path)]
+            filters.append(f'[{i}:a]volume={take["correction"]:+.2f}dB,adelay={round(start*1000)}:all=1,apad=whole_dur={duration}[d{i}]')
+        if placed:filters.append(''.join(f'[d{i}]' for i in range(len(placed)))+f'amix=inputs={len(placed)}:normalize=0:duration=longest[voice]')
+        else:args+=['-f','lavfi','-i',f'anullsrc=r=24000:cl=mono:d={duration}'];filters.append('[0:a]anull[voice]')
+        ff([*args,'-filter_complex',';'.join(filters),'-map','[voice]','-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_f32le',raw],folder)
+        if placed:
+            measured,peak=loudness(raw);gain=max(-20.,min(20.,DIALOGUE_LUFS-measured)) if measured>-70 else 0.;peak+=gain
+        # One constant gain for the whole dialogue (the takes are level already); peaks caught for 16 bit.
+        ff(['-i',raw,'-af',exact(f'volume={gain:+.2f}dB,alimiter=limit=0.891:level=0:latency=1',duration),'-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',dialogue],folder)
+        raw.unlink(missing_ok=True)
+        for path in (folder/'Zeilen').glob('*.f32'):path.unlink()
+        return gain,peak
     if settings['music_mode']=='uploaded' and not music:raise RuntimeError('Keine eigene Musikdatei vorhanden.')
     if music and settings['music_mode']=='uploaded':
         path=Path(music['file'])
@@ -425,9 +484,26 @@ def mix19(folder,scenes,mood,music=None,settings=None):
     duck_music(normalized,ducked,bridged(intervals),low=10**(-DUCK_DB/20),attack=DUCK_ATTACK,release=DUCK_RELEASE)
     ambience=folder/'Umgebung.wav';effects=folder/'Effekte.wav';beds=synth_ambience(ambience,scenes,float(settings['ambience_level']))
     synth_effects(effects,scenes,settings['effects_level'])   # only cues the plan asks for: no automatic whoosh
+    premix=folder/'Vormischung.wav';stems=(ducked,ambience,effects)
+    def premixed():
+        ff(['-i',dialogue,*sum((['-i',str(p)] for p in stems),[]),'-filter_complex',f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,atrim=duration={duration}[m]','-map','[m]','-t',duration,'-ac','1','-c:a','pcm_f32le',premix],folder)
+        measured=loudness(premix)[0]
+        # One constant gain to the platform loudness (no dynamic loudnorm: it lifted music and hiss between the
+        # lines). Without speech the music keeps its place relative to where the dialogue would be.
+        return measured,TARGET_LUFS-measured if placed and measured>-70 else TARGET_LUFS-DIALOGUE_LUFS
+    peak_over=PEAK_OVER_SPEECH
+    for attempt in range(2):
+        dialogue_gain,peak=voices(peak_over);measured,final_gain=premixed()
+        # Speech peaks after the final gain and the stereo split (-3 dB) must stay under the limit, with room
+        # for the bed beneath them. If not, the takes get a lower ceiling (same for all, levels stay).
+        over=peak+final_gain-3-(FINAL_LIMIT-.7)
+        if not placed or attempt or over<=.3 or peak_over<=9:break
+        peak_over=max(9.,peak_over-over-.2)
+    samples=speech_check.read_wav(dialogue)[0];dialogue_peak=max((abs(x) for x in samples),default=0);dialogue_rms=math.sqrt(sum(x*x for x in samples)/len(samples)) if samples else 0
+    if placed and (dialogue_peak<500 or dialogue_rms<30):raise RuntimeError('Die Dialogspur ist stumm. Tonvorschau wurde nicht freigegeben; Stimmen bitte erneut erzeugen.')
     # Speech check on the stems before the final gain (it scales everything alike). The 0.18.2 safety net
     # stays: a masked line gets the bed lowered under it, a missing line still stops the mix.
-    stems=(ducked,ambience,effects);cleared={}
+    cleared={}
     for attempt in range(3):
         entries=speech_check.check_lines(samples,RATE,speech_check.placed(scenes),tuple(speech_check.read_wav(p)[0] for p in stems))
         masked=[e for e in entries if e['status']=='überdeckt']
@@ -443,25 +519,26 @@ def mix19(folder,scenes,mood,music=None,settings=None):
             if e['status']=='ok':e['status']='angehoben'
     report=speech_check.summary(entries,'mix');speech_check.write_report(folder/'Sprachpruefung.json',report)
     if report['blocking']:raise speech_check.SpeechCheckError(speech_check.message(report,'„Produktion fortsetzen“ spricht nur diese Beiträge neu ein. Bleibt eine Zeile stumm, ihren Text oder die Stimme der Figur ändern.'),report)
-    premix=folder/'Vormischung.wav';target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav'
-    ff(['-i',dialogue,'-i',ducked,'-i',ambience,'-i',effects,'-filter_complex',f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,atrim=duration={duration}[m]','-map','[m]','-t',duration,'-ac','1','-c:a','pcm_f32le',premix],folder)
-    measured=loudness(premix)[0]
-    # One constant gain to the platform loudness (no dynamic loudnorm: it lifted music and hiss between the
-    # lines). Without speech the music keeps its place relative to where the dialogue would be.
-    final_gain=TARGET_LUFS-measured if labels and measured>-70 else TARGET_LUFS-DIALOGUE_LUFS
-    for attempt in range(2):
-        ff(['-i',premix,'-af',exact(f'volume={final_gain:+.2f}dB,aresample=48000,alimiter=limit={FINAL_LIMIT}:level=0:latency=1',duration),'-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
+    if cleared:measured,final_gain=premixed()
+    target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav';limit=FINAL_LIMIT
+    for attempt in range(3):
+        # Stereo split first (each channel 3 dB under the mono sum, the loudness stays), then the peak limiter.
+        ff(['-i',premix,'-af',exact(f'volume={final_gain:+.2f}dB,aresample=48000,pan=stereo|c0=0.70710678*c0|c1=0.70710678*c0,alimiter=limit={10**(limit/20):.5f}:level=0:latency=1',duration),
+            '-t',duration,'-ac','2','-c:a','pcm_s16le',temp],folder)
         with wave.open(str(temp)) as w:
             if abs(w.getnframes()/w.getframerate()-duration)>.03:raise RuntimeError('Tonmischung unvollständig; keine Freigabe.')
         result,peak=loudness(temp)
-        # The limiter takes a little off loud speech: correct once with a constant gain, never per passage.
-        if not labels or attempt or abs(TARGET_LUFS-result)<=.3:break
-        final_gain+=max(-2.,min(2.,TARGET_LUFS-result))
+        # A true peak over TRUE_PEAK lowers the limit; a loudness off target moves the one constant gain.
+        retry=False
+        if peak>TRUE_PEAK and limit>-6:limit-=min(3.,peak-TRUE_PEAK+.2);retry=True
+        if placed and abs(TARGET_LUFS-result)>.3:final_gain+=max(-2.,min(2.,TARGET_LUFS-result));retry=True
+        if not retry or attempt==2:break
     os.replace(temp,target)
     quiet=[f'{t["label"]} (+{t["gain"]:.1f} dB)' for t in takes.values() if t['gain']>QUIET_TAKE_DB]
     (folder/'Tonbericht.json').write_text(json.dumps({'seconds':duration,'lines':len(intervals),'music_mode':settings['music_mode'],'effects':sum(len(s.get('sound_cues',[])) for s in scenes),
         'dialogue_peak':dialogue_peak,'dialogue_rms':round(dialogue_rms,2),'speech_check':{k:report[k] for k in ('policy','checked','blocking','warnings')},
         'speech_warnings':[e['label']+' – '+e['note'] for e in report['lines'] if e['status']!='ok'],'sound_policy':SOUND_POLICY,
-        'line_gain_db':{k:t['gain'] for k,t in takes.items()},'line_level_dbfs':{k:t['level'] for k,t in takes.items()},'denoise':{k:t['denoise'] for k,t in takes.items()},'quiet_takes':quiet,
-        'loudness':{'dialogue_gain_db':round(dialogue_gain,2),'music_gain_db':round(music_gain,2),'premix_lufs':measured,'final_gain_db':round(final_gain,2),'integrated_lufs':result,'true_peak_dbtp':peak},
+        'line_gain_db':{k:t['gain'] for k,t in takes.items()},'line_loudness_lufs':{k:t['level'] for k,t in takes.items()},'denoise':{k:t['denoise'] for k,t in takes.items()},'quiet_takes':quiet,
+        'loudness':{'dialogue_gain_db':round(dialogue_gain,2),'peak_over_speech_db':round(peak_over,2),'music_gain_db':round(music_gain,2),'premix_lufs':measured,'final_gain_db':round(final_gain,2),
+                    'limit_dbfs':round(limit,2),'integrated_lufs':result,'true_peak_dbtp':peak},
         'ambience':beds},ensure_ascii=False));return str(target)
