@@ -60,7 +60,8 @@ def main():
         # 0.19 (job 'speech_text', sound_policy 19): the model reads tts_text.speakable; other lines keep their signature.
         signature=hashlib.sha256(json.dumps({'line':line,'voice_sha256':hashlib.sha256(Path(voices[line['speaker']]).read_bytes()).hexdigest(),'checkpoint':str(ckpt),'processing':SPEECH_POLICY,'sampling':sampling(line['emotion'],policy),**tts_text.signature_fields(line,job),**({'takes':TAKES_19} if policy>=19 else {})},sort_keys=True).encode()).hexdigest()
         target=out/(line['key']+'_'+signature[:12]+'.wav');meta=target.with_suffix('.json')
-        if not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature) and policy>=19:
+        cached=target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature
+        if not cached and policy>=19:
             # 0.19 (voice_policy 19): two valid takes of every line, the livelier one is kept (Chatterbox has no
             # speaker embedding at hand; the reference itself keeps the voice).
             takes=[];error=None
@@ -76,7 +77,7 @@ def main():
             _,data,quality=max(takes,key=lambda x:x[0]);quality['takes']=len(takes)
             temp=target.with_suffix('.partial.wav');sf.write(temp,data,model.sr,subtype='PCM_16');os.replace(temp,target)
             meta.write_text(json.dumps({'signature':signature,'quality':quality}))
-        elif not(target.is_file() and meta.is_file() and json.loads(meta.read_text()).get('signature')==signature):
+        elif not cached:
             for attempt in range(2):
                 try:data,quality=generate(tts_text.spoken(line,job),voices[line['speaker']],line['emotion'],line['seed']+attempt,line['text']);break
                 except RuntimeError as error:

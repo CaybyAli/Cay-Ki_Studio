@@ -105,6 +105,28 @@ def shouted(text):
     return round(sum(_upper(w) and not initialism(w) for w in words) / max(1, len(words)), 2)
 
 
+# 0.19 voices (r019 B5e): a line of Cay's own script without a delivery in brackets was always spoken 'ruhig': one
+# take, no level accent, the calm reference. own_script (policy 19) now asks delivery() instead. Only punctuation,
+# capitals and a few unmistakable words decide; the words themselves never change and a written delivery wins.
+HELP = re.compile(r'\b(?:hilfe|rette[tn]?|lauf|lauft|renn|weg hier|schnell weg)\b')
+ANGER = re.compile(r'\b(?:raus|hau ab|verschwinde[tn]?|verdammt|hör auf|lass das|halt die klappe|gib (?:das|es|mir) (?:sofort |jetzt )?her|idiot|mistkerl)\b')
+DENIAL = re.compile(r'\b(?:nein|nicht|nichts|kein|keine|keinen|keiner|nie|niemals)\b')
+HESITANT = re.compile(r'(?:…|\.\.\.)\s*$|(?:…|\.\.\.).*(?:…|\.\.\.)')
+
+
+def delivery(text):
+    """One of screenplay.EMOTIONS for a line written without one: '?!' surprised, mostly capitals or '!!' shouting,
+    '!' emphatic (panicked with a cry for help, angry with an order to go, annoyed with a 'nein'/'nicht', else excited),
+    '?' questioning (verwirrt), trailing or repeated '…' hesitant (ängstlich), anything else 'ruhig'."""
+    text = unicodedata.normalize('NFC', str(text or '')).strip(); low = text.lower()
+    if re.search(r'\?\s*!|!\s*\?', text): return 'überrascht'
+    if shouted(text) >= .6 or '!!' in text.replace(' ', ''): return 'schreiend'
+    if '!' in text: return 'panisch' if HELP.search(low) else 'wütend' if ANGER.search(low) else 'genervt' if DENIAL.search(low) else 'begeistert'
+    if '?' in text: return 'verwirrt'
+    if HESITANT.search(text): return 'ängstlich'
+    return 'ruhig'
+
+
 def job_fields(d, lines, cast):
     """Speech job fields for a project pinned with sound_policy 19, else {} (the job stays as before)."""
     try: pinned = int(d.get('sound_policy', 0) or 0) >= POLICY

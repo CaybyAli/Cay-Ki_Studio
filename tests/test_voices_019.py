@@ -345,3 +345,69 @@ def test_the_diagnosis_shows_mode_cleaning_takes_and_deliveries_per_figure(tmp_p
             'Gefühls-Referenzen angry (aus der Aufnahme gespielt: angry), Zeilen 2, Takes 2–3, Lebendigkeit 2.00, Sprechhaltung wütend 1, ruhig 1') in out
     assert 'Oma: Aufnahme aus deinen Figuren, Modus mit Text (ICL), gereinigt nein (nicht reinigbar), Gefühls-Referenzen keine, Zeilen 1, Takes 3–3' in out
     assert 'Gary: vom Studio gestaltet, Modus ohne Text (x-vector), gereinigt nicht nötig, Gefühls-Referenzen joy, Zeilen 0, Takes -' in out
+
+
+# --- (2) own-script lines without a delivery: one from the text, punctuation reaches the voice model ---------------
+DERIVED = {'Ich hab nichts gemacht!': 'genervt', 'Wir haben es geschafft!': 'begeistert', 'Hilfe! Da ist ein Hai!': 'panisch', 'Raus aus meiner Küche!': 'wütend',
+           'Was?! Das glaub ich nicht.': 'überrascht', 'Echt!? Du auch?': 'überrascht', 'NEIN! NIEMALS! HÖRST DU?': 'schreiend',
+           'Nein!! Das nicht.': 'schreiend', 'Wer war es dann?': 'verwirrt', 'Ich weiß nicht…': 'ängstlich',
+           'Ich... ich hab doch... nur kurz geschaut.': 'ängstlich', 'Na gut, dann eben nicht.': 'ruhig', 'Das FBI kommt gleich.': 'ruhig'}
+
+
+def test_a_delivery_from_the_text_for_lines_written_without_one():
+    import screenplay
+    import tts_text
+    for text, mood in DERIVED.items():
+        assert tts_text.delivery(text) == mood, text
+        assert mood in screenplay.EMOTIONS
+    assert performance_key(tts_text.delivery('Super, komm mit!')) == 'excited' and performance_key(tts_text.delivery('Wer?')) == 'confused'
+
+
+OWN = '''# Kuchen
+### Szene 1 – Küche – Oma steht am leeren Teller
+OMA: Wer hat meinen Kuchen gegessen?
+TIM: Ich war's nicht!
+OMA (ruhig): Komm sofort her!
+TIM (quer gestreift): Na gut.
+OMA: Was?! Das ist doch nicht dein Ernst… Wirklich…
+TIM (zu Oma): Ich... ich hab doch nur probiert...
+OMA: Dann gibt es heute eben keinen Nachtisch mehr für dich, mein Lieber.
+'''
+
+
+def test_own_script_lines_without_a_delivery_get_one_and_a_written_one_wins():
+    import own_script
+    import screenplay
+    def moods(policy):
+        r = own_script.read(OWN, policy)
+        lines = [l for l in screenplay.parse(r['episodes'][0]['text'], ['Oma', 'Tim'], own=bool(policy))[2] if l['kind'] == 'line']
+        return r, [(l['text'], l['emotion']) for l in lines]
+    r, new = moods(own_script.POLICY)
+    assert [m for _, m in new] == ['verwirrt', 'genervt', 'ruhig', 'ruhig', 'überrascht', 'ängstlich', 'ruhig']
+    assert r['report']['delivery'] == {'written': 2, 'derived': 4, 'calm': 1}
+    assert any('Sprechhaltung „quer gestreift“ kennt das Studio nicht' in p['text'] for p in r['problems'])
+    old_r, old = moods(0)                                                        # projects from before 0.19: as before
+    assert [m for _, m in old] == ['ruhig'] * 7 and 'report' not in old_r
+    assert [t for t, _ in new] == [t for t, _ in old]                            # the words never change
+
+
+def test_punctuation_reaches_the_voice_model(tmp_path):
+    import own_script
+    import screenplay
+    import tts_text
+    r = own_script.read(OWN)
+    lines = [l for l in screenplay.parse(r['episodes'][0]['text'], ['Oma', 'Tim'], own=True)[2] if l['kind'] == 'line']
+    job = tts_text.job_fields({'sound_policy': 19}, lines, [{'name': 'Oma'}, {'name': 'Tim'}])
+    said = [tts_text.spoken(l, job) for l in lines]
+    assert said[0].endswith('?') and said[1].endswith('!') and said[4] == 'Was?! Das ist doch nicht dein Ernst… Wirklich…'
+    assert said[5] == 'Ich... ich hab doch nur probiert...'
+    # And through the planned project: quality_voices hands the same text and the derived delivery to the speech job.
+    scenes = [{'kind': 'line', 'cast': ['Oma'], 'seconds': 4, 'dialogues': [{'speaker': l['speaker'], 'text': l['text'], 'emotion': l['emotion']}]}
+              for l in lines[:2]]
+    from factory_quality import Quality
+    d = project({'sound_policy': 19}); d['episodes'][0]['scenes'] = scenes
+    d['idea']['participants'] = [{'name': 'Oma', 'voice': 'a'}, {'name': 'Tim', 'voice': 'b'}]; d['plan']['cast'] = [{'name': 'Oma'}, {'name': 'Tim'}]
+    studio = Speaking(tmp_path / 'p'); asyncio.run(Quality.quality_voices(studio, d))
+    job = studio.jobs[-1]
+    assert [(l['text'], l['emotion']) for l in job['lines']] == [('Wer hat meinen Kuchen gegessen?', 'verwirrt'), ("Ich war's nicht!", 'genervt')]
+    assert [tts_text.spoken(l, job) for l in job['lines']] == ['Wer hat meinen Kuchen gegessen?', "Ich war's nicht!"]
