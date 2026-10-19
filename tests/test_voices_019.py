@@ -303,3 +303,45 @@ def test_chatterbox_gives_every_line_two_takes_only_with_voice_policy_19(monkeyp
         assert len(calls) == (4 if policy == 18 else 8)
         assert all(('takes' in m) == (policy == 19) for m in metas) and all(m.get('takes', 2) == 2 for m in metas)
     assert not set(files[18]) & set(files[19])
+
+
+def test_the_project_keeps_how_each_figure_was_cloned(tmp_path):
+    """quality_voices stores the speech adapter's per-figure result (0.19 'references') next to the cleaning summary."""
+    from factory_quality import Quality
+    voices = {'a': tmp_path / 'tim.wav', 'b': tmp_path / 'oma.wav'}
+    for i, p in enumerate(voices.values()): sample(p, -30, -70, seed=i)
+    class Adapter(Speaking):
+        async def command(self, args, timeout):
+            await Speaking.command(self, args, timeout); job = self.jobs[-1]; out = Path(job['output']) / 'Ergebnis.json'
+            result = json.loads(out.read_text()); result['references'] = {'Tim': {'mode': 'x-vector', 'emotions': ['angry'], 'performed': ['angry']}}
+            out.write_text(json.dumps(result))
+    d = project({'sound_policy': 19}); folder = tmp_path / 'p'; folder.mkdir()
+    asyncio.run(Quality.quality_voices(Adapter(folder, voices), d))
+    assert d['voice_profiles']['Tim']['speech'] == {'mode': 'x-vector', 'emotions': ['angry'], 'performed': ['angry']}
+    assert d['voice_profiles']['Tim']['reference']['cleaned'] and 'speech' not in d['voice_profiles']['Oma']
+
+
+# --- (4) the diagnosis shows it per figure -----------------------------------------------------------------------------
+def test_the_diagnosis_shows_mode_cleaning_takes_and_deliveries_per_figure(tmp_path, capsys):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('cay_diagnose_voices', ROOT / 'Cay_Studio_Diagnose.py')
+    diag = importlib.util.module_from_spec(spec); spec.loader.exec_module(diag)
+    files = []
+    for i, takes in enumerate((3, 2, 3)):
+        f = tmp_path / f'l{i}.wav'; f.write_bytes(b''); f.with_suffix('.json').write_text(json.dumps({'quality': {'takes': takes, 'prosody': 1.5 + i}}))
+        files.append(str(f))
+    d = {'voice_policy': 19, 'audio_engine': 'qwen', 'idea': {'participants': [{'name': 'Tim', 'voice': 'a'}, {'name': 'Oma', 'voice': 'b', 'library_voice': 'x'}]},
+         'voice_profiles': {'Tim': {'file': 't.ref19.wav', 'source': 'upload', 'reference': {'cleaned': True, 'mode': 'x-vector', 'steps': ['highpass', 'afftdn', 'level'],
+                                                                                              'gain_db': 18.2, 'lufs_before': -38.1, 'lufs_after': -20.0, 'snr_before': 31.9,
+                                                                                              'snr_after': 46.8, 'warnings': []},
+                                    'speech': {'mode': 'x-vector', 'emotions': ['angry'], 'performed': ['angry']}},
+                            'Oma': {'file': 'o.wav', 'source': 'upload', 'voice_text': 'Na endlich', 'reference': {'cleaned': False, 'mode': 'icl', 'notes': []}},
+                            'Gary': {'file': 'g.wav', 'source': 'designed', 'emotion_profiles': {'joy': {}}}},
+         'lines': [{'speaker': 'Tim', 'emotion': 'wütend', 'file': files[0]}, {'speaker': 'Tim', 'emotion': 'ruhig', 'file': files[1]},
+                   {'speaker': 'Oma', 'emotion': 'begeistert', 'file': files[2]}]}
+    diag.voices(d); out = capsys.readouterr().out
+    assert 'Stimmen: Stimmregel 19 | Sprachmodell qwen' in out
+    assert ('Tim: Aufnahme, Modus ohne Text (x-vector), gereinigt ja (highpass, afftdn, level, +18.2 dB, -38.1 -> -20.0 LUFS, SNR 31.9 -> 46.8 dB), '
+            'Gefühls-Referenzen angry (aus der Aufnahme gespielt: angry), Zeilen 2, Takes 2–3, Lebendigkeit 2.00, Sprechhaltung wütend 1, ruhig 1') in out
+    assert 'Oma: Aufnahme aus deinen Figuren, Modus mit Text (ICL), gereinigt nein (nicht reinigbar), Gefühls-Referenzen keine, Zeilen 1, Takes 3–3' in out
+    assert 'Gary: vom Studio gestaltet, Modus ohne Text (x-vector), gereinigt nicht nötig, Gefühls-Referenzen joy, Zeilen 0, Takes -' in out

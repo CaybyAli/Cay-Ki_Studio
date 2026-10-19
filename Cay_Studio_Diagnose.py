@@ -105,6 +105,7 @@ def project(row, root, db=None):
         exists = Path(line.get('file', '')).is_file()
         print(f'   F{line.get("episode", 0) + 1} S{line.get("scene", 0) + 1} {line.get("speaker")}: {line.get("duration", 0):.2f} s, '
               f'Datei {"da" if exists else "FEHLT"}, Text: {str(line.get("text", ""))[:60]}')
+    voices(d)
     for t in d.get('timing', []): print('Zeitplan:', {k: t.get(k) for k in ('seconds', 'speech_seconds', 'speech_share', 'longest_speech_gap')})
     print('Fehler:', (d.get('error') or '-')[:600], '| Fortsetzen bei:', d.get('resume_state'))
     if db is not None: timing(db, d, row)
@@ -122,6 +123,40 @@ def figures(d):
     for p in d.get('plan', {}).get('cast', []):
         print(f'   {p.get("name")}: ' + ('eigenes Bild' if p.get('name') in own else 'Original: ' + p['original'] if p.get('original') else 'erfunden')
               + f', neu gestaltet {p.get("design_round", 0)}x, Aussehen: {str(p.get("appearance", ""))[:90]}')
+
+
+def voices(d):
+    """0.19: per figure where its voice comes from and how it was cloned (reference mode, cleaned sample, emotion
+    references, takes per line) and which deliveries its lines have. Reads the project and the lines' .json files."""
+    profiles = d.get('voice_profiles') or {}; lines = d.get('lines', [])
+    if not profiles: return
+    provided = {p.get('name'): p for p in d.get('idea', {}).get('participants', [])}
+    print('Stimmen: Stimmregel', d.get('voice_policy', '-'), '| Sprachmodell', d.get('audio_engine'))
+    for name, p in profiles.items():
+        ref = p.get('reference') or {}; how = p.get('speech') or {}; mine = [l for l in lines if l.get('speaker') == name]
+        source = 'vom Studio gestaltet' if p.get('source') == 'designed' else 'Aufnahme'
+        if (provided.get(name) or {}).get('library_voice'): source += ' aus deinen Figuren'
+        mode = how.get('mode') or ref.get('mode') or ('icl' if p.get('voice_text') else 'x-vector')
+        mode = {'icl': 'mit Text (ICL)', 'x-vector': 'ohne Text (x-vector)'}.get(mode, mode)
+        if source.startswith('vom Studio'): cleaned = 'nicht nötig'
+        elif ref.get('cleaned'):
+            cleaned = (f'ja ({", ".join(ref.get("steps", []))}, {ref.get("gain_db", 0):+} dB, {ref.get("lufs_before")} -> {ref.get("lufs_after")} LUFS, '
+                       f'SNR {ref.get("snr_before")} -> {ref.get("snr_after")} dB' + (f', Warnung: {", ".join(ref["warnings"])}' if ref.get('warnings') else '') + ')')
+        else: cleaned = 'nein' + (' (nicht reinigbar)' if ref else '')
+        emotions = how.get('emotions') or sorted(p.get('emotion_profiles') or {})
+        performed = how.get('performed') or []
+        takes, lively = [], []
+        for line in mine:
+            try: q = json.loads(Path(line.get('file', '')).with_suffix('.json').read_text()).get('quality', {})
+            except (OSError, ValueError, AttributeError): continue
+            takes.append(q.get('takes', 1)); lively += [q['prosody']] if q.get('prosody') is not None else []
+        moods = {}
+        for line in mine: moods[line.get('emotion') or '-'] = moods.get(line.get('emotion') or '-', 0) + 1
+        print(f'   {name}: {source}, Modus {mode}, gereinigt {cleaned}, Gefühls-Referenzen {", ".join(emotions) or "keine"}'
+              + (f' (aus der Aufnahme gespielt: {", ".join(performed)})' if performed else '')
+              + f', Zeilen {len(mine)}, Takes ' + (f'{min(takes)}–{max(takes)}' if takes else '-')
+              + (f', Lebendigkeit {sum(lively) / len(lively):.2f}' if lively else '')
+              + ', Sprechhaltung ' + (', '.join(f'{k} {v}' for k, v in sorted(moods.items(), key=lambda x: -x[1])) or '-'))
 
 
 def script(d):
