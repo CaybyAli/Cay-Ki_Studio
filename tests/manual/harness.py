@@ -28,11 +28,12 @@ class FakeComfy(http.server.BaseHTTPRequestHandler):
 
 
 class Studio:
-    def __init__(self, work, env_extra=None):
+    def __init__(self, work, env_extra=None, ollama='http://127.0.0.1:11434'):
+        # ollama: a check whose worker really draws passes the fake ComfyUI here (it answers /api/ps too).
         work = Path(work); self.runtime = work / 'studio'; self.root = work / 'ablage'
         (self.runtime / 'config').mkdir(parents=True, exist_ok=True); self.root.mkdir(exist_ok=True)
         (self.runtime / 'config/ablage.json').write_text(json.dumps({'wsl_root': str(self.root), 'windows_root': 'D:\\Cay_Studio',
-            'local_services': {'comfyui': f'http://127.0.0.1:{COMFY_PORT}', 'ollama': 'http://127.0.0.1:11434'}}))
+            'local_services': {'comfyui': f'http://127.0.0.1:{COMFY_PORT}', 'ollama': ollama}}))
         self.comfy = http.server.ThreadingHTTPServer(('127.0.0.1', COMFY_PORT), FakeComfy)
         self.url = BASE
         threading.Thread(target=self.comfy.serve_forever, daemon=True).start()
