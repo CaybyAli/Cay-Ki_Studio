@@ -340,10 +340,10 @@ def prepare_take(line):
         cleaned=denoise(data,window[0],window[1]);status='Fehler'
         if cleaned is not None:
             after=speech_check.frames(cleaned,RATE,0,len(cleaned)/RATE);level=active_level(after)
-            # The voice must come through unchanged (level, first and last word in the same 10 ms frame, give
-            # or take one); otherwise mix the take as it is.
+            # The voice must come through unchanged (level, first and last loud frame within 10 ms; 10 dB under
+            # the speech, well above the hiss); otherwise mix the take as it is.
             def edges(values):
-                loud=[i for i,v in enumerate(values) if v>=10**((active-20)/20)];return (loud[0],loud[-1]) if loud else (-9,-9)
+                loud=[i for i,v in enumerate(values) if v>=10**((active-10)/20)];return (loud[0],loud[-1]) if loud else (-9,-9)
             if level is not None and abs(level-active)<=1 and all(abs(a-b)<=1 for a,b in zip(edges(fr),edges(after))):data,status=cleaned,window[2]
             else:status='verworfen'
     loud=None if active is None else speech_loudness(data,r128(PIPE,'',data)[0])
@@ -368,7 +368,7 @@ def shape_take(take,peak_over,path):
             if abs(correction)<=.3 or attempt==3:break
             # The limit takes a little off: more gain, peaks stay at the ceiling. Secant step, bounded.
             slope=(tried[-1][1]-tried[-2][1])/(tried[-1][0]-tried[-2][0]) if len(tried)>1 and tried[-1][0]!=tried[-2][0] else 1.
-            step=max(-MAX_CUT,min(MAX_BOOST,first+8,gain+correction/max(.25,min(1.,slope))))
+            step=max(-MAX_CUT,min(MAX_BOOST,first+6,gain+correction/max(.25,min(1.,slope))))   # at most 6 dB into the limit
             if abs(step-gain)<.05:break
             gain=step
         correction=max(-3.,min(.5,correction))
