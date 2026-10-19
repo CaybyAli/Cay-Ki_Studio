@@ -34,13 +34,13 @@ def generate(base,path):
     model_path=base/'models/studio-voices/Base';model=None;prompts={};cast={p['name']:p for p in job['cast']};result=[]
     model_identity=(model_path/'source.json').read_text() if (model_path/'source.json').is_file() else str(model_path)
     # Projects voiced before 0.17 keep 0.16 references, sampling and cache signatures.
-    legacy=int(job.get('voice_policy',17))<17;key=performance_key_v16 if legacy else performance_key
+    policy=int(job.get('voice_policy',17));legacy=policy<17;key=performance_key_v16 if legacy else lambda e:performance_key(e,policy)
     for i,line in enumerate(job['lines']):
         person=dict(cast[line['speaker']]);performed=person.get('emotion_profiles',{}).get(key(line.get('emotion','')))
         if performed:person.update(voice_file=performed['file'],voice_hash=performed['sha256'],voice_text=performed['voice_text'])
         ref=Path(person['voice_file'])
         if hashlib.sha256(ref.read_bytes()).hexdigest()!=person['voice_hash']:raise RuntimeError('Stimmreferenz wurde verändert.')
-        delivery=performance_key(line.get('emotion',''))
+        delivery=performance_key(line.get('emotion',''),policy)
         # 0.19 (job 'speech_text', projects pinned with sound_policy 19): the model reads tts_text.speakable;
         # the signature changes only for a line whose spoken text differs from the written one.
         signature=hashlib.sha256(json.dumps({'line':line,'voice':person['voice_hash'],'ref_text':person.get('voice_text',''),'model':model_identity,'processing':SPEECH_POLICY,'engine':'qwen-base-11-performance' if legacy else 'qwen-base-17-takes',**tts_text.signature_fields(line,job)},sort_keys=True).encode()).hexdigest()

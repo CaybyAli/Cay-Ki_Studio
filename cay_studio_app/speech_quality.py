@@ -16,7 +16,7 @@ CHATTERBOX = {'natural': (.5, .5), 'firm': (.65, .4), 'threat': (.65, .4), 'mock
 
 def sampling(emotion,policy=17):
     if policy<17:return sampling_v16(emotion)
-    exaggeration, cfg = CHATTERBOX.get(performance_key(emotion), CHATTERBOX['natural'])
+    exaggeration, cfg = CHATTERBOX.get(performance_key(emotion,policy), CHATTERBOX['natural'])
     return {'exaggeration':exaggeration,'cfg_weight':cfg,'temperature':.8,'top_p':.95,'repetition_penalty':1.2}
 
 def sampling_v16(emotion):
@@ -80,8 +80,13 @@ PERFORMANCES = [
 # 'beschreibend' is no shout, 'flach'/'gescheitert' contain 'lach'/'heiter'.
 NOT_STEMS = re.compile(r'neugier|wissbegier|schreib|flach|scheiter')
 
-def performance_key(emotion):
-    text=NOT_STEMS.sub('',str(emotion or '').lower())
+VOICE_POLICY_NFC=19   # voice_policy from which a delivery word in decomposed Unicode (NFD, e.g. from macOS) is read
+
+def performance_key(emotion,policy=0):
+    # 0.19: 'wu\u0308tend' (NFD) fell silently to 'natural'. Only for voice_policy 19: an older project's stored
+    # NFD words keep their category (references, cache signatures and picture expressions stay as they are).
+    text=unicodedata.normalize('NFC',str(emotion or '')) if policy>=VOICE_POLICY_NFC else str(emotion or '')
+    text=NOT_STEMS.sub('',text.lower())
     for key,parts in PERFORMANCES:
         if any(p in text for p in parts):return key
     return 'natural'

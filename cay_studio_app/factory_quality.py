@@ -1,5 +1,5 @@
 """Voice casting, complete audio previews and multi-turn editing."""
-import asyncio,contextlib,copy,hashlib,json,os,signal,sys,uuid
+import asyncio,contextlib,copy,hashlib,json,os,signal,sys,unicodedata,uuid
 from pathlib import Path
 import httpx
 from fastapi import HTTPException
@@ -74,7 +74,11 @@ class Quality:
         # lines (0.16 references, sampling and signatures); new projects get 0.17 voices.
         # 18 = 17 plus the transcript of own and library recordings: a project voiced with 0.17
         # keeps cloning its recordings without transcript, so its approved lines stay cached.
-        policy=d.setdefault('voice_policy',16 if d.get('voice_profiles') or d.get('lines') else 18)
+        # 19 = 18 for projects pinned with sound_policy 19 (0.19): cleaned recordings, performed references for own
+        # recordings, more takes per line, delivery words read in any Unicode form (voice_reference.py, factory_speech.py).
+        policy=d.setdefault('voice_policy',16 if d.get('voice_profiles') or d.get('lines') else 19 if int(d.get('sound_policy',0) or 0)>=19 else 18)
+        if policy>=19:
+            for entry in lines:entry['emotion']=unicodedata.normalize('NFC',str(entry['emotion'] or ''))
         if lines and not audio_only:
             async with httpx.AsyncClient(trust_env=False,timeout=15) as c:await self.idle(c,True)
             speaking={l['speaker'] for l in lines};cast=[p for p in cast if p['name'] in speaking]
