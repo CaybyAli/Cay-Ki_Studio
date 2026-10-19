@@ -191,18 +191,18 @@ def test_a_project_in_the_trash_is_locked_and_comes_back_paused(tmp_path, monkey
 FILM = bytes(range(256)) * 1200                     # 300 KB, five of Starlette's 64 KB chunks
 
 
-def drive_app(tmp_path, monkeypatch, fail_at=(), before=False, silent_from=None):
-    """A file route behind a BaseHTTPMiddleware (like the dashboard's local guard). Reads that reach one of the
-    offsets in `fail_at` raise EIO once, as /mnt/d did in Cay's log; from `silent_from` on every read fails;
-    `before`: the route itself fails first."""
-    import errno
+def drive_app(tmp_path, monkeypatch, fail_at=(), before=0, silent_from=None, swap=False):
+    """A film route behind a BaseHTTPMiddleware (like the dashboard's local guard), layered as in server.py. A read
+    that reaches one of the offsets in `fail_at` raises EIO once, as /mnt/d did in Cay's log; from `silent_from` on
+    every read fails; the route itself fails the first `before` times; `swap`: the film is exported anew (other bytes)
+    right when the first read fails."""
+    import errno, os
     import anyio
     from fastapi import FastAPI
     from fastapi.responses import FileResponse
-    from fastapi.testclient import TestClient
     import steady_files
     film = tmp_path / 'Folge_01.mp4'; film.write_bytes(FILM)
-    pending = set(fail_at); real = anyio.open_file
+    pending, real, calls = set(fail_at), anyio.open_file, []
 
     class Shaky:
         def __init__(self, inner): self.inner = inner; self.at = 0
@@ -212,7 +212,9 @@ def drive_app(tmp_path, monkeypatch, fail_at=(), before=False, silent_from=None)
         async def read(self, size):
             hit = next((x for x in sorted(pending) if self.at <= x < self.at + size), None)
             if hit is not None or (silent_from is not None and self.at + size > silent_from):
-                pending.discard(hit); raise OSError(errno.EIO, 'Input/output error')
+                pending.discard(hit)
+                if swap and 'swap' not in calls: film.write_bytes(FILM[::-1]); os.utime(film, (1e9, 1e9)); calls.append('swap')
+                raise OSError(errno.EIO, 'Input/output error')
             data = await self.inner.read(size); self.at += len(data); return data
 
     async def shaky(path, mode='r', *a, **kw): return Shaky(await real(path, mode, *a, **kw))
@@ -223,47 +225,101 @@ def drive_app(tmp_path, monkeypatch, fail_at=(), before=False, silent_from=None)
     @app.middleware('http')
     async def guard(request, call_next): return await call_next(request)    # the dashboard's local guard
 
-    @app.get('/film')
+    @app.api_route('/film', methods=['GET', 'HEAD'])
     def film_route():
-        if before: raise OSError(errno.EIO, 'Input/output error')
+        calls.append('route')
+        if calls.count('route') <= before: raise OSError(errno.EIO, 'Input/output error')
         return FileResponse(film, media_type='video/mp4')
     finish()
-    for layer in app.user_middleware:
-        if layer.cls in (steady_files.SteadyFiles, steady_files.QuietEnd): layer.kwargs['log'] = lines.append
-    app.user_middleware[-1].kwargs['pause'] = 0
-    return TestClient(app, raise_server_exceptions=True), lines
+    inner = next(m for m in app.user_middleware if m.cls is steady_files.SteadyFiles)
+    inner.kwargs.update(log=lines.append, pause=0)
+    return app, lines, calls
+
+
+def drive(tmp_path, monkeypatch, **shaky):
+    from fastapi.testclient import TestClient
+    app, lines, calls = drive_app(tmp_path, monkeypatch, **shaky)
+    return TestClient(app, raise_server_exceptions=True), lines, calls
 
 
 def test_a_read_error_while_a_film_streams_reads_on_from_the_next_byte(tmp_path, monkeypatch, capsys):
     """Cay's dashboard.log: 'OSError: [Errno 5] Input/output error' with a Starlette traceback per range read."""
-    http, lines = drive_app(tmp_path, monkeypatch, fail_at=(70_000, 200_000))
-    whole = http.get('/film')
-    assert whole.status_code == 200 and whole.content == FILM                             # nothing lost, nothing twice
+    http, lines, calls = drive(tmp_path, monkeypatch, fail_at=(70_000, 200_000))
+    whole = http.get('/film')                                                # two bad moments, each read tried once more
+    assert whole.status_code == 200 and whole.content == FILM and calls.count('route') == 3   # nothing lost, nothing twice
     part = http.get('/film', headers={'Range': 'bytes=1000-150000'})
     assert part.status_code == 206 and part.content == FILM[1000:150001]
-    assert len(lines) == 1 and lines[0].startswith('Laufwerk-Lesefehler (Errno 5) bei /film: ab Byte 65536 neu gelesen')
+    assert lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: ab Byte 65536 und 196608 neu gelesen, Wiedergabe läuft weiter']  # one line
     assert 'Traceback' not in capsys.readouterr().err
 
 
-def test_a_drive_that_stays_silent_ends_only_that_answer_without_a_traceback(tmp_path, monkeypatch, capsys):
-    http, lines = drive_app(tmp_path, monkeypatch, silent_from=70_000)       # every read after 64 KB fails
+def test_a_read_that_fails_twice_ends_only_that_answer(tmp_path, monkeypatch):
+    http, lines, calls = drive(tmp_path, monkeypatch, silent_from=70_000)    # every read after 64 KB fails
     answer = http.get('/film', headers={'Range': 'bytes=0-'})
-    assert answer.status_code == 206 and len(answer.content) == 65536 and answer.content == FILM[:65536]
-    assert lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: diese Antwort endet, der Player fragt neu an']
-    assert 'Traceback' not in capsys.readouterr().err
+    # One more try, not three. The TestClient shows an answer that never ended as empty; the bytes on the wire: below.
+    assert answer.status_code == 206 and len(answer.content) < len(FILM) and calls.count('route') == 2
+    assert lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: diese Antwort endet nach 65536 Byte, der Player fragt neu an']
 
 
-def test_a_read_error_before_the_answer_is_a_short_german_503(tmp_path, monkeypatch):
-    http, lines = drive_app(tmp_path, monkeypatch, before=True)
+def test_a_film_exported_anew_meanwhile_is_never_spliced(tmp_path, monkeypatch):
+    http, lines, calls = drive(tmp_path, monkeypatch, fail_at=(70_000,), swap=True)
     answer = http.get('/film')
-    assert answer.status_code == 503 and answer.json() == {'detail': 'Das Laufwerk mit deinen Filmen antwortet gerade nicht. In ein paar Sekunden noch einmal versuchen.'}
-    assert answer.headers['retry-after'] == '3' and len(lines) == 1
+    assert len(answer.content) < len(FILM) and calls == ['route', 'swap', 'route']    # the rest of another file is not sent
+    assert lines and 'diese Antwort endet' in lines[0]
+
+
+def test_a_read_error_before_the_answer_is_tried_once_more_then_a_short_german_503(tmp_path, monkeypatch):
+    http, lines, calls = drive(tmp_path, monkeypatch, before=1)
+    answer = http.get('/film')
+    assert answer.status_code == 200 and answer.content == FILM and calls.count('route') == 2
+    assert lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: beim zweiten Versuch gelesen']
+    http, lines, calls = drive(tmp_path, monkeypatch, before=5)
+    answer = http.get('/film')
+    assert answer.status_code == 503 and answer.json() == {'detail': 'Das Laufwerk mit deinen Filmen antwortet gerade nicht. Versuch es in ein paar Sekunden noch einmal.'}
+    assert answer.headers['retry-after'] == '3' and calls.count('route') == 2 and len(lines) == 1
 
 
 def test_other_errors_pass_through_unchanged(tmp_path, monkeypatch):
     import steady_files
     assert steady_files.read_error(FileNotFoundError(2, 'x')) is None and steady_files.read_error(ValueError('x')) is None
     assert steady_files.read_error(ExceptionGroup('g', [OSError(5, 'Input/output error')])).errno == 5
+    http, lines, calls = drive(tmp_path, monkeypatch)
+    assert http.head('/film').headers['content-length'] == str(len(FILM)) and http.get('/film').content == FILM and not lines
+    assert http.post('/film').status_code == 405
+
+
+@pytest.mark.parametrize('shaky', [{'fail_at': (70_000,)}, {'silent_from': 70_000}], ids=['once', 'twice'])
+def test_over_the_real_server_the_player_gets_the_film_or_a_closed_connection_never_a_stuck_one(tmp_path, monkeypatch, caplog, capsys, shaky):
+    """Through uvicorn as on Cay's PC: a short answer the guard layer ends 'complete' made h11 refuse it ('Too little
+    data for declared Content-Length') and left the connection open, the player waited. Now it closes at once and the
+    log has the one German line, no traceback and no server error line."""
+    import logging, socket, threading, time
+    import uvicorn
+    app, lines, calls = drive_app(tmp_path, monkeypatch, **shaky)
+    listener = socket.socket(); listener.bind(('127.0.0.1', 0))
+    server = uvicorn.Server(uvicorn.Config(app, http='h11', lifespan='off', log_config=None, access_log=False))
+    runner = threading.Thread(target=server.run, kwargs={'sockets': [listener]}, daemon=True); runner.start()
+    try:
+        for _ in range(200):
+            if server.started: break
+            time.sleep(.02)
+        caplog.set_level(logging.INFO, logger='uvicorn.error')
+        with socket.create_connection(listener.getsockname(), timeout=4) as conn:
+            conn.sendall(b'GET /film HTTP/1.1\r\nHost: 127.0.0.1\r\nRange: bytes=0-\r\nConnection: keep-alive\r\n\r\n')
+            data, began = b'', time.monotonic()
+            while len(data.partition(b'\r\n\r\n')[2]) < len(FILM):
+                chunk = conn.recv(65536)                                     # a stuck connection runs into the timeout here
+                if not chunk: break
+                data += chunk
+    finally:
+        server.should_exit = True; runner.join(5)                             # every answer has ended now, its line is written
+    head, _, body = data.partition(b'\r\n\r\n')
+    assert head.startswith(b'HTTP/1.1 206') and time.monotonic() - began < 3
+    if 'fail_at' in shaky: assert body == FILM and len(lines) == 1 and 'neu gelesen' in lines[0]
+    else: assert body == FILM[:65536] and len(lines) == 1 and 'diese Antwort endet' in lines[0]
+    logged = [r.getMessage() for r in caplog.records if r.name.startswith('uvicorn')]
+    assert not [m for m in logged if 'Exception' in m or 'without completing' in m], logged
+    assert not any(r.exc_info for r in caplog.records) and 'Traceback' not in capsys.readouterr().err
 
 
 def test_the_dashboard_wraps_every_layer_with_it(tmp_path, monkeypatch):
