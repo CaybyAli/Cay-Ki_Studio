@@ -486,6 +486,7 @@ def mix19(folder,scenes,mood,music=None,settings=None):
         ff(['-i',raw,'-af',exact(f'volume={gain:+.2f}dB,alimiter=limit=0.891:level=0:latency=1',duration),'-t',duration,'-ar',RATE,'-ac','1','-c:a','pcm_s16le',dialogue],folder)
         raw.unlink(missing_ok=True)
         for path in (folder/'Zeilen').glob('*.f32'):path.unlink()
+        if (folder/'Zeilen').is_dir():(folder/'Zeilen').rmdir()
         return gain,peak
     if settings['music_mode']=='uploaded' and not music:raise RuntimeError('Keine eigene Musikdatei vorhanden.')
     if music and settings['music_mode']=='uploaded':
