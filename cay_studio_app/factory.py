@@ -20,7 +20,7 @@ from cover import TitleCard
 import episode_looks
 import screenplay
 import turbo
-from factory_audio import turns,edit_spec,scene_kinds
+from factory_audio import turns,edit_spec,sound_spec,scene_kinds
 from factory_timing import plan_seconds, POLICY, off_screen, allowed_speakers
 from factory_editor import Editor, image_rounds, active_variants, regenerate
 from studio_quality_policy import settings,segments,scene_segments,motion_direction,motion_direction_v16,RENDER_POLICY
@@ -950,7 +950,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                   'scenes':spec,'output':str(out),'title':ep['title'],
                   'audio_mix':next((p for p in d.get('previews',[]) if p['episode']==ei),None),
                   'mix':d.get('mix'),'mood':d['plan']['mood'],
-                  'music':{'file':music['path'],'sha256':music['sha256']} if music else None,**edit_spec(d)}
+                  'music':{'file':music['path'],'sha256':music['sha256']} if music else None,**edit_spec(d),**sound_spec(d)}
             if cover.wanted(d):spec['cover']=self.cover_spec(d,ei)
             self.queue_post(d,'export',ei,spec)
             return

@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from figure_library import drop_library_voice
 from fastapi.responses import FileResponse
 from factory_models import Idea,Review,VoiceSettings,SceneDialogueEdit,MixSettings,ProductionSettings,EditionWish
-from factory_audio import turns,layout,mix,edit_spec,scene_kinds
+from factory_audio import turns,layout,mix,edit_spec,sound_spec,scene_kinds
 from factory_video import file_hash
 from factory_editor import regenerate
 from factory_speech import ready as speech_ready
@@ -111,7 +111,7 @@ class Quality:
             d['phase']=f'Folge {ei+1}: Dialog, Musik und Geräusche mischen';self.save(d);scenes=[{'seconds':s['render_seconds'],'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],'ambience':s.get('ambience','room'),'sound_cues':s.get('sound_cues',[]),**kind} for si,(s,kind) in enumerate(zip(ep['scenes'],scene_kinds(d,ep['scenes'])))];folder=self.folder(d)/'03_Stimmen'/f'Mischung_{d["audio_revision"]:03}'/f'Folge_{ei+1:02}'
             self.queue_post(d,'mix',ei,{'folder':str(folder),'scenes':scenes,'mood':d['plan']['mood'],
                 'music':{'file':music['path'],'sha256':music['sha256']} if music else None,
-                'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds'],**edit_spec(d)})
+                'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds'],**edit_spec(d),**sound_spec(d)})
         d['state']='audio_mixing';d['phase']='CPU: Dialog, Musik und Geräusche mischen · GPU wieder frei';self.save(d)
     def image_open(self,d):
         """Own image or redesign: the same window as a library image, but never kept for later."""

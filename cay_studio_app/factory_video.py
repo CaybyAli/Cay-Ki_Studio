@@ -250,7 +250,7 @@ def finish(spec):
         if file_hash(audio)!=preview['sha256']:raise RuntimeError('Freigegebene Tonmischung verändert.')
     else:
         from factory_audio import mix
-        audio=Path(mix(folder/'Ton',spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix'),spec.get('edit_policy',17)))
+        audio=Path(mix(folder/'Ton',spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix'),spec.get('edit_policy',17),spec.get('sound_policy',0)))
     if abs(float(probe(audio)['format']['duration'])-cursor)>.05:raise RuntimeError('Ton und Bild haben unterschiedliche Laufzeiten.')
     total=cursor;sound=audio
     if card:total=cursor+card['seconds'];sound=cover.splice(audio,folder/'Ton_mit_Titelkarte.wav',card['at'],card['seconds'])
