@@ -54,12 +54,39 @@ def talk_models(info,fast=False):
     if fast:names['lora']=option(info,'WanVideoLoraSelect','lora',lambda x:'lightx2v' in x and 'i2v' in x and '480p' in x and 'cfg_step' in x)
     return names
 
+WINDOW=81          # InfiniteTalk's trained window; render_policy < 19 always computes it in full
+MOTION_FRAMES=9    # frames each further window carries over from the one before (motion_frame)
+MIN_WINDOW=33      # shortest fitted window (1.32 s); a talking shot is at least 1.4 s long
+
+def window_output(window,frames):
+    """Frames the wrapper returns for `frames` audio frames (multitalk_loop, 088128b): one window if it
+    is long enough, else further windows of window-MOTION_FRAMES new frames until the audio is covered."""
+    step=window-MOTION_FRAMES
+    return window if window>=frames else window+math.ceil((frames-window)/step)*step
+
+def talk_window_plan(seconds):
+    """render_policy 19: (frames per window, windows) for one lip-sync prompt of `seconds`.
+
+    Before, every window had 81 frames, and a 1.5 s line paid for 3.24 s that the cut threw away
+    (0.19 diagnosis: 22-31 % of all lip-sync frames). Now the window is the shortest valid length
+    (4k+1, at least MIN_WINDOW) with exactly as many windows as 81-frame windows needed: never an
+    extra window or transition, the same 9 carried-over frames. The wrapper counts the audio in
+    frames with float rounding, at times one fewer; for every count the clip still holds all frames
+    the cut uses (else 'Renderclip zu kurz')."""
+    need=max(1,math.ceil(seconds*25-1e-9))
+    count=1+max(0,math.ceil((need-WINDOW)/(WINDOW-MOTION_FRAMES)))
+    for window in range(MIN_WINDOW,WINDOW,4):
+        if window+(count-1)*(window-MOTION_FRAMES)<need:continue
+        if all(window_output(window,t)>=need for t in (max(1,need-1),need)):return window,count
+    return WINDOW,count
+
 V16_SUFFIX=' Only the single visible character speaks to the supplied voice, with lively body language and gestures; between words the body keeps moving naturally. Mouth closed during silence. Stable identity, the same face in every frame.'
 AUDIO_CFG_STEPS=1  # fast/draft: audio guidance in step 1 of 4 only (8 -> 5 transformer passes per window)
 SUFFIX=' Only the single visible character speaks, exactly when the supplied voice speaks. Mouth closed and body calm whenever the voice is silent. Stable identity, the same face in every frame.'
 
-def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',attention='sdpa',legacy_text=False):
-    """25 native FPS, isolated dialogue only, exact onset/pauses; no background music."""
+def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',attention='sdpa',legacy_text=False,window=WINDOW):
+    """25 native FPS, isolated dialogue only, exact onset/pauses; no background music.
+    window: frames per InfiniteTalk window; only render_policy 19 passes a fitted one (talk_window_plan)."""
     if 'CayWanVideoSampler' not in info:
         raise ValueError('Die Sampler-Reparatur ist noch nicht in ComfyUI geladen. Nach dem Update laufende Arbeit pausieren, den PC neu starten und Cay Studio öffnen. Keine neuen Modelle nötig.')
     lite=quality in ('fast','draft')
@@ -80,7 +107,7 @@ def audio_graph(info,image,audio,prompt,seed,seconds,quality='high',prefix='',at
        '8':n('WanVideoClipVisionEncode',clip_vision=['7',0],image_1=['1',0],strength_1=1.,crop='center',force_offload=True),
        '9':n('WanVideoTextEncodeCached',model_name=m['text'],precision='bf16',positive_prompt=prompt+(V16_SUFFIX if legacy_text else SUFFIX),negative_prompt='talking during silence, extra speaker, extra person, identity change, subtitles, text, watermark, lip flapping',quantization='disabled',use_disk_cache=True,device='gpu'),
        '10':n('WanVideoModelLoader',model=m['model'],base_precision='bf16',quantization='fp8_e4m3fn',load_device='offload_device',attention_mode=attention,multitalk_model=['4',0],block_swap_args=['17',0]),
-       '11':n('WanVideoImageToVideoMultiTalk',vae=['3',0],width=size[0],height=size[1],frame_window_size=81,motion_frame=9,force_offload=True,colormatch='disabled',start_image=['1',0],tiled_vae=True,clip_embeds=['8',0],mode='infinitetalk',output_path=''),
+       '11':n('WanVideoImageToVideoMultiTalk',vae=['3',0],width=size[0],height=size[1],frame_window_size=window,motion_frame=MOTION_FRAMES,force_offload=True,colormatch='disabled',start_image=['1',0],tiled_vae=True,clip_embeds=['8',0],mode='infinitetalk',output_path=''),
        '12':n('CayWanVideoSampler',model=['10',0],image_embeds=['11',0],text_embeds=['9',0],multitalk_embeds=['6',0],steps=4 if lite else 40 if quality=='high' else 24,cfg=1.,shift=2. if lite else 5.,seed=seed,force_offload=True,scheduler='euler',riflex_freq_index=0,start_step=0,end_step=-1,
                 **({} if legacy_text or not lite else {'cay_audio_cfg_steps':AUDIO_CFG_STEPS})),
        '13':n('WanVideoPassImagesFromSamples',samples=['12',0]),

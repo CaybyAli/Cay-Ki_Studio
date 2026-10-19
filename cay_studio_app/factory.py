@@ -846,7 +846,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d['state']='voicing';d['previews']=[];d.pop('voice_approval',None)
             d['phase']='Tonfassung für die Mindestdauer aktualisieren; danach bitte erneut anhören.';self.save(d);return
         info=await self.object_info();models=video_models(info,self.comfy)
-        from render_studio import audio_graph,dialogue_window
+        from render_studio import audio_graph,dialogue_window,talk_window_plan
         if 'prompt_policy' not in d:
             # Decided once per project: windows rendered before 0.17 stay cached (key = graph digest).
             d['prompt_policy']=self.prompt_policy_for(d);self.save(d)
@@ -914,8 +914,11 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if talk:
                         # Include actual pauses; never drive lips with the music mix.
                         audio=await asyncio.to_thread(dialogue_window,lines,start,duration,self.folder(d)/'04_Animation'/f'Dialog_{ei}_{si}_{seg}_{d.get("audio_revision",0)}.wav')
+                        # render_policy 19: windows fitted to the shot (same count, no frames only to be cut away).
+                        # Without the pin the argument stays out: same graph, same render key as before.
+                        fitted={'window':talk_window_plan(duration)[0]} if d.get('render_policy',0)>=19 and not legacy else {}
                         graph=audio_graph(info,image,self.stage(audio),prompt,seed,duration,options['quality'],attention=turbo.attention(self.g['RUNTIME'],info),
-                                          legacy_text=legacy)
+                                          legacy_text=legacy,**fitted)
                     else:
                         graph=motion_graph(image,prompt,seed,'',models,duration,options['quality'])
                     key=f'video09:{ei}:{si}:{seg}:'+digest(graph)[:24]
