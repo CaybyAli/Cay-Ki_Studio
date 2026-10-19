@@ -101,7 +101,7 @@ async def from_upload(factory, document, person, upload, upload_sha, models, res
     """Design from Cay's own image (or a library image of another look): one image prompt with
     the upload as reference."""
     names = [p['name'] for p in document['plan'].get('cast', [])]; style = document['plan']['style']
-    prompt = (restyle_prompt if restyle else neutral_prompt)(person, style, names, document.get('shot_policy', 0))
+    prompt = (restyle_prompt if restyle else neutral_prompt)(person, style, names, document.get('shot_policy') or 0)
     sheet = await factory.render(document, upload_key(person, upload_sha, restyle, style),
                                  build_graph(prompt, [factory.stage(upload)],
                                              seed(person['name'], person.get('design_round', 0) + 2000), '', models))
@@ -285,7 +285,7 @@ async def design(factory, document, person, examples, models):
     style = document['plan']['style']; names = [p['name'] for p in document['plan'].get('cast', [])]
     base_key, style_key = keys(person, examples)
     round_ = person.get('design_round', 0)
-    policy = document.get('shot_policy', 0)
+    policy = document.get('shot_policy') or 0
     base = await factory.render(document, base_key, build_graph(identity_prompt(person, style, names, policy), [], seed(person['name'], round_), '', models))
     # Known originals keep their own body; templates turned Mr. Krabs into a human shape.
     if not examples or is_known(person): return base['output']
