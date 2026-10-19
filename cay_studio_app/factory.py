@@ -1160,6 +1160,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             except ValueError as error:raise HTTPException(400,str(error))
             # After the script set the number of episodes: 'looks' stays only for a series that chose it.
             idea=episode_looks.stored(idea)
+            if idea.get('writing')!=screenplay.WRITING_FIELD:idea.pop('writing',None)
             if existing:
                 previous=self.get(existing[0]['id'])
                 if previous['idea']!=idea:raise HTTPException(409,'Diese Anfrage gehört zu einer anderen Idee. Bitte das bereits angelegte Projekt öffnen.')

@@ -174,3 +174,83 @@ def test_the_speech_job_carries_the_flag_only_for_new_projects(tmp_path):
     assert set(old) == {'cast', 'lines', 'voice_policy', 'output'}
     assert {k: v for k, v in new.items() if k not in ('speech_text', 'vocabulary', 'output')} == {k: v for k, v in old.items() if k != 'output'}
     assert new['speech_text'] == 19 and tts_text.spoken(new['lines'][0], new) == 'Das ist mein Kuchen, Oma!'
+
+
+# --- C2, AI mode: writing policy 15 (only for ideas with 'writing': 19, sent by the new app) -------------------
+import screenplay as sp  # noqa: E402
+import plan_fakes  # noqa: E402
+
+WEAK = '''TITEL: Der Koffer
+# 1 | Hafen | Nebel über dem Hafen
+AKTION: Patrick schleppt eine schwere Kiste über den Steg.
+AKTION: SpongeBob schaut sich nervös nach allen Seiten um.
+SPONGEBOB [ruhig]: Patrick, wir sollten den Koffer zu Mr. Krabs bringen, sofort.
+PATRICK [ruhig]: SpongeBob, ich weiß, dass wir den Koffer zu Mr. Krabs bringen sollen.
+SPONGEBOB [ruhig]: Patrick, dann lass uns jetzt den Koffer zu Mr. Krabs bringen.
+PATRICK [ruhig]: SpongeBob, ja, wir bringen jetzt den Koffer zu Mr. Krabs, okay.
+# 2 | Krusty Krab | Büro
+AKTION: Mr. Krabs zählt Geld.
+AKTION: SpongeBob stellt den Koffer auf den Tisch.
+MR. KRABS [ruhig]: SpongeBob, Patrick, danke, dass ihr den Koffer gebracht habt.
+SPONGEBOB [ruhig]: Mr. Krabs, gern geschehen, wir haben den Koffer gerne gebracht.
+MR. KRABS [ruhig]: SpongeBob, ich gebe euch jetzt fünfhundert Dollar für den Koffer.
+PATRICK [ruhig]: Mr. Krabs, danke für die fünfhundert Dollar für den Koffer, wirklich.
+MR. KRABS [ruhig]: Patrick, gern, und jetzt geht bitte wieder an die Arbeit, ihr zwei.
+SPONGEBOB [ruhig]: Mr. Krabs, ja, wir gehen jetzt wieder an die Arbeit, versprochen.
+PATRICK [ruhig]: SpongeBob, dann gehen wir jetzt wieder an die Arbeit, komm mit.
+MR. KRABS [ruhig]: Patrick, SpongeBob, gut so, bis morgen dann, ihr beiden.
+'''
+WEAK_CAST = ['SpongeBob', 'Patrick', 'Mr. Krabs']
+
+
+def test_the_word_budget_of_policy_15_fits_the_chosen_length():
+    assert sp.budget(60, 2, 15) == {'words': 98, 'min_words': 86, 'max_words': 110, 'min_turns': 6, 'max_turns': 15, 'min_actions': 2, 'max_actions': 4}
+    assert sp.budget(90, 2, 15)['words'] == 147 and sp.budget(90, 2, 15)['max_words'] == 165
+    # Policy 14 (every project without the field) keeps its budget.
+    assert sp.budget(60, 2) == {'words': 120, 'min_words': 102, 'max_words': 156, 'min_turns': 6, 'max_turns': 15, 'min_actions': 2, 'max_actions': 5}
+
+
+def test_the_doctor_check_of_policy_15_finds_what_counting_missed():
+    title, beats, lines, problems = sp.parse(WEAK, WEAK_CAST)
+    assert sp.check(title, beats, lines, problems, WEAK_CAST, 60) == []            # policy 14: nothing to fix
+    found = ' | '.join(sp.check(title, beats, lines, problems, WEAK_CAST, 60, 15))
+    for part in ('Zu viel Dialog: 127 Wörter, höchstens 110', 'Die erste Zeile ist gesprochen', '2x zwei AKTION-Zeilen hintereinander',
+                 'Kein Konflikt hörbar', 'Zu gleichförmig: 12 von 12 Zeilen "ruhig"', '12 von 12 Zeilen beginnen mit dem Namen',
+                 'Wiederholungen statt Entwicklung', 'Zu lange ohne Wort: etwa 6.7 s'):
+        assert part in found, (part, found)
+    # The prompt's own crime example passes; Cay's 0.17 lines in capitals and a first line without a hook do not.
+    crime = sp.EXAMPLE_V15.split('nicht übernehmen):\n')[-1]
+    title, beats, lines, problems = sp.parse(crime, ['Boss', 'Kurier'])
+    assert not problems and sp.check15(lines, ['Boss', 'Kurier'], 20, sp.ensure_action(sp.shots(title, beats, lines, ['Boss', 'Kurier'], 15), 20)) == []
+    import cut_samples as cs
+    text, cast = cs.TEXTS['cay_pingpong']; title, beats, lines, _ = sp.parse(text, cast)
+    assert any(e.startswith('Keine Wörter in Großbuchstaben zur Betonung: MEIN, PLANKTON, UNSER, DU, ZURÜCK')
+               for e in sp.check15(lines, cast, 60, sp.shots(title, beats, lines, cast, 15)))
+    text, cast = cs.TEXTS['cay_blocks']; title, beats, lines, _ = sp.parse(text, cast)
+    assert any(e.startswith('Der erste Satz hat keinen Haken') for e in sp.check15(lines, cast, 60, sp.shots(title, beats, lines, cast, 15)))
+
+
+def test_policy_15_sets_no_wide_shot_right_after_a_silent_shot():
+    text = sp.EXAMPLE_BLOCKS.split('\n', 1)[1]; cast = ['Oma', 'Tim', 'Opa']
+    title, beats, lines, _ = sp.parse(text, cast)
+    kinds = lambda policy: [s['kind'] for s in sp.shots(title, beats, lines, cast, policy)]
+    assert 'establish' in kinds(14) and kinds(14)[kinds(14).index('establish') - 1] == 'action'      # 0.18: 5.6 s without a word
+    assert 'establish' not in kinds(15) and [k for k in kinds(14) if k != 'establish'] == kinds(15)
+    assert sp.estimate(sp.shots(title, beats, lines, cast, 15))[2] < sp.estimate(sp.shots(title, beats, lines, cast, 14))[2]
+
+
+def test_only_an_idea_with_the_field_plans_with_policy_15(tmp_path, monkeypatch):
+    body = {'request_key': 'f' * 32, 'idea': 'Lena und Markus streiten um den letzten Keks im Büro.', 'duration': 60, 'episodes': 1,
+            'characters': 'provided', 'participants': [{'name': 'Lena', 'traits': 'Projektleiterin'}, {'name': 'Markus', 'traits': 'Praktikant'}]}
+    f = studio_fakes.factory(tmp_path, monkeypatch); client = studio_fakes.client(f)
+    d, planner = plan_fakes.plan(f, client, {**body, 'writing': 19})
+    assert d['idea']['writing'] == 19 and d['screenplays']['0']['policy'] == 15 and d['episodes'][0]['story_policy'] == 15
+    writes = [c for c in planner.calls if c[0] == 'write']
+    assert 'Die erste Zeile ist gesprochen und ein Haken' in writes[0][2] and 'Gesamt 86 bis 110 gesprochene Wörter' in writes[0][2]
+    assert 'pruefung' in writes[1][3] and 'Ist der erste Satz ein Haken?' in writes[1][2]
+    # An explicit 0 (or no field) is stored like no field at all: policy 14 and the recorded 0.18 plan (test_own_script).
+    case = tmp_path / 'zero'; case.mkdir(); f = studio_fakes.factory(case, monkeypatch); client = studio_fakes.client(f)
+    d, planner = plan_fakes.plan(f, client, {**body, 'request_key': 'e' * 32, 'writing': 0})
+    assert 'writing' not in d['idea'] and d['screenplays']['0']['policy'] == 14
+    first = next(c for c in planner.calls if c[0] == 'write' and c[1] == 'Drehbuch')
+    assert sp.RULES_BLOCKS in first[2] and 'Die erste Zeile ist gesprochen und ein Haken' not in first[2]

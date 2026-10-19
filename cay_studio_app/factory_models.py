@@ -90,6 +90,9 @@ class Idea(Strict):
     # episode (Cay: SpongeBob in rags at the start, in a suit at the end). Stored only when chosen
     # (episode_looks.stored), so every other idea document stays exactly as before.
     looks:Literal['same','per_episode']='same'
+    # Dialogue rules 0.19 (screenplay.WRITING_POLICY): only the new app sends 19; stored only then
+    # (factory.create), so every other idea document and plan stays exactly as before.
+    writing:Literal[0,19]=0
 
 class CastPlan(Strict):
     name:str=Field(min_length=1,max_length=60)

@@ -31,6 +31,12 @@ from factory_cast import name_key, resolve_name
 
 POLICY = 14
 LEGACY_POLICY = 13          # screenplays written before 0.18: one shot per speaker turn
+# 0.19 (r019 diagnosis, C2): AI screenplays of projects whose idea asks for it ('writing': 19, sent by the new
+# app only; factory.create stores it only then): a word budget that fits the chosen length, rules and a
+# script-doctor check against telegram style, filler, missing hook and conflict, long silences. Pinned
+# with the screenplay like 13/14: older projects and requests without the field keep 14.
+WRITING_POLICY = 15
+WRITING_FIELD = 19          # idea['writing'] that asks for WRITING_POLICY
 WORDS_PER_SECOND = 2.0      # target for the script; Qwen speaks ~2.5 words/s
 MAX_LINE_WORDS = 22
 MERGE_WORDS = 24            # policy 13: consecutive lines of one speaker share a shot up to this
@@ -54,6 +60,7 @@ def budget(duration, speakers=2, policy=POLICY):
 
     Policy 13 asked for a speaker change every five seconds (12 for 60 s), so every
     line became its own shot. Policy 14: speech blocks, 6 to 15 changes for 60 s."""
+    if policy >= WRITING_POLICY: return _budget15(duration, speakers)
     target = round(duration * WORDS_PER_SECOND)
     actions = max(2, round(duration / 12))
     if policy >= 14: low, high = max(3, round(duration / 10)), max(6, round(duration / 4))
@@ -117,11 +124,39 @@ RULES_BLOCKS = '''Regeln für das Drehbuch:
 - Nur Figuren aus der Besetzung. Keine Namen anderer Figuren erfinden.'''
 
 
+# Policy 15: the same speech blocks, plus what Cay's films lacked (r019): a spoken hook, conflict, no filler.
+RULES_V15 = RULES_BLOCKS + '''
+- Die erste Zeile ist gesprochen und ein Haken: eine Frage, ein Ausruf oder eine Behauptung, die sofort neugierig macht. Keine AKTION vor dem ersten Satz.
+- Konflikt in jedem Abschnitt: Die Figuren wollen Verschiedenes. Widerspruch, Druck, Ausreden, Drohungen, kein höfliches Einverständnis und kein Wiederholen dessen, was der andere gerade gesagt hat.
+- Keine Füllsätze wie "Ja.", "Okay.", "Hm.", "Na gut." als eigene Zeile. Jede Zeile bringt die Geschichte weiter.
+- Nie zwei AKTION-Zeilen hintereinander: nach einer AKTION spricht jemand. Nie länger als etwa vier Sekunden ohne Wort.
+- Namen nur, wenn sie etwas bewirken; nicht jede Zeile beginnt mit dem Namen des Gegenübers.
+- Keine Wörter in GROSSBUCHSTABEN zur Betonung (Abkürzungen wie USA oder KI sind erlaubt). Betonung kommt über Sprechhaltung und Satzzeichen.
+- Sprechhaltungen wechseln mit der Absicht: höchstens die Hälfte der Zeilen mit derselben Sprechhaltung.
+- Die Länge passt genau zur gewählten Dauer: lieber ein Wortwechsel weniger als zu lang.'''
+
+EXAMPLE_V15 = EXAMPLE_BLOCKS.replace('''AKTION: Tim wischt sich hastig die Nase und versteckt die Hände hinter dem Rücken.
+# 2''', '''AKTION: Tim wischt sich hastig die Nase und versteckt die Hände hinter dem Rücken.
+TIM [verwirrt]: Welche Sahne? Ich sehe hier keine Sahne, du etwa?
+# 2''') + '''
+
+Zweites Beispiel, anderes Genre (Krimi, andere Figuren, nicht übernehmen):
+TITEL: Die Übergabe
+# 1 | Lagerhalle bei Nacht | Ein offener Koffer voller Geld auf einer Kiste
+BOSS [drohend]: Du bist zehn Minuten zu spät. Weißt du, was das heißt?
+KURIER [ängstlich]: Die Brücke war gesperrt, ich schwöre es! Ich bin den ganzen Weg gerannt.
+BOSS [spöttisch]: Gerannt. Mit meinem Koffer. Und trotzdem fehlt ein Bündel.
+AKTION: Der Kurier starrt auf den Koffer und weicht einen Schritt zurück.
+KURIER [flehend]: Das war ich nicht! Jemand hat ihn unterwegs geöffnet, glaub mir doch!'''
+
+
 def rules(policy=POLICY):
+    if policy >= WRITING_POLICY: return RULES_V15
     return RULES_BLOCKS if policy >= 14 else RULES
 
 
 def example(policy=POLICY):
+    if policy >= WRITING_POLICY: return EXAMPLE_V15
     return EXAMPLE_BLOCKS if policy >= 14 else EXAMPLE
 
 
@@ -340,8 +375,84 @@ def check(title, beats, lines, problems, cast, duration, policy=POLICY):
     tiny = sum(1 for l in spoken if words(l['text']) <= 2)
     if spoken and tiny > max(2, len(spoken) // 4): errors.append(f'{tiny} Zeilen haben höchstens zwei Wörter. Höchstens jede vierte Zeile darf ein kurzer Ausruf sein.')
     if cast and len({l['speaker'] for l in spoken}) < min(2, len(cast)): errors.append('Mindestens zwei Figuren müssen miteinander sprechen.')
-    count = len(ensure_action(shots(title, beats, lines, cast, policy), duration))
+    cut = ensure_action(shots(title, beats, lines, cast, policy), duration); count = len(cut)
     if count > MAX_SHOTS: errors.append(f'Zu viele Einstellungen: {count}, höchstens {MAX_SHOTS}. Aufeinander folgende Zeilen derselben Figur zusammenfassen, weniger AKTION-Zeilen.')
+    if policy >= WRITING_POLICY: errors += check15(lines, cast, duration, cut)
+    return errors
+
+
+# --- Policy 15 (0.19): budget and checks ---------------------------------------------------------------
+SPEECH_SHARE = .68          # target share of speech in the film (r019: Cay's films had 30–55 %)
+MEASURED_RATE = 2.4         # words per second Qwen3-TTS really speaks (r019: 2.1–2.85)
+MAX_SILENCE = 4.5           # seconds without a word (one 0.18 action shot is 3.2 s)
+FILLER = re.compile(r'(?i)^(?:ja|nein|ok(?:ay)?|hm+|äh+m?|also|na ja|naja|na gut|gut|genau|stimmt|echt|wow|oh|ach|aha|tja|klar|sicher|super|cool|'
+                    r'na und|und dann|alles klar|ach so|ach ja|oh nein|oh je)(?:[\s,]+(?:ja|nein|okay|gut|klar|so|dann))*[\s.!?,…]*$')
+CONFLICT = re.compile(r'(?i)[?!]|\b(?:nein|nicht|nie|niemals|kein\w*|aber|doch|warum|wieso|lass|hör auf|sofort|gib|her damit|weg|raus|lüg\w*|schuld)\b')
+HOOK = re.compile(r'(?i)[?!]|\b(?:nicht|nie|niemals|kein\w*|sofort|wer|warum|wieso|wo|was|verdammt|endlich|schon wieder|geheimnis|tot|weg|gestohlen)\b')
+
+
+def _budget15(duration, speakers):
+    """Policy 15: about two thirds speech at the rate the voices really speak (60 s: 98 words, 86 to 110);
+    a silent shot every 15 s at most. Policy 14 aimed at 2.0 words/s and allowed 30 % more: films ran
+    15–45 % longer than chosen (r019), and every extra second costs animation time."""
+    target = round(duration * SPEECH_SHARE * MEASURED_RATE)
+    low, high = max(3, round(duration / 10)), max(6, round(duration / 4))
+    actions = max(2, round(duration / 15))
+    return {'words': target, 'min_words': math.floor(target * .88), 'max_words': math.ceil(target * 1.12),
+            'min_turns': low if speakers > 1 else 0, 'max_turns': min(high, MAX_SHOTS - actions - 4) if speakers > 1 else MAX_SHOTS,
+            'min_actions': 1 if duration < 40 else 2, 'max_actions': actions}
+
+
+def estimate(cut):
+    """(seconds, first word, longest stretch without a word) of a cut with the 0.18 shot bases (factory_timing)."""
+    from factory_timing import HEAD, TAIL, REACTION_TAIL, REACTION_MIN, ACTION_BASE, ESTABLISH_BASE
+    t = 0.; first = None; end = 0.; longest = 0.
+    for shot in cut:
+        speech = spoken_seconds(shot['lines']) if shot['lines'] else 0
+        length = {'line': HEAD + speech + TAIL, 'reaction': max(REACTION_MIN, HEAD + speech + REACTION_TAIL),
+                  'establish': ESTABLISH_BASE}.get(shot['kind'], ACTION_BASE)
+        if speech:
+            start = t + HEAD; longest = max(longest, start - end); end = start + speech
+            if first is None: first = start
+        t += length
+    return t, (first if first is not None else t), max(longest, t - end)
+
+
+def check15(lines, cast, duration, cut):
+    """Policy 15: what a counting check missed (r019, weak screenplay without a single finding). German,
+    concrete, for the planner and the Script Doctor."""
+    errors = []; spoken = [l for l in lines if l['kind'] == 'line']
+    if lines and lines[0]['kind'] != 'line':
+        errors.append('Die erste Zeile ist gesprochen: der Haken kommt sofort, keine AKTION vor dem ersten Satz.')
+    elif spoken and not HOOK.search(spoken[0]['text']):
+        errors.append(f'Der erste Satz hat keinen Haken: "{spoken[0]["text"][:60]}". Mit einer Frage, einem Ausruf oder einer überraschenden Behauptung beginnen.')
+    pairs = sum(1 for a, b in zip(lines, lines[1:]) if a['kind'] == b['kind'] == 'action')
+    if pairs: errors.append(f'{pairs}x zwei AKTION-Zeilen hintereinander: dazwischen spricht jemand, sonst entstehen über 6 s ohne Wort.')
+    filler = [l['text'] for l in spoken if FILLER.match(l['text'])]
+    if len(filler) > 1: errors.append('Füllsätze ohne Inhalt streichen oder mit Inhalt füllen: ' + ' | '.join(filler[:4]))
+    if len(spoken) >= 4 and sum(1 for l in spoken if CONFLICT.search(l['text'])) < max(2, len(spoken) // 4):
+        errors.append('Kein Konflikt hörbar: Die Figuren wollen Verschiedenes. Widerspruch, Fragen, Druck oder Ausreden einbauen.')
+    if len(spoken) >= 6:
+        counts = {}
+        for l in spoken: counts[emotion_of(l['emotion'])] = counts.get(emotion_of(l['emotion']), 0) + 1
+        mood, n = max(counts.items(), key=lambda x: x[1])
+        if n / len(spoken) > .6: errors.append(f'Zu gleichförmig: {n} von {len(spoken)} Zeilen "{mood}". Sprechhaltungen passend zur Absicht wechseln.')
+    names = {q for c in cast for q in {c, c.split()[-1]} if len(q) >= 2}
+    vocative = [l['text'] for l in spoken if any(re.match(re.escape(n) + r'\s*[,!]', l['text']) for n in names)]
+    if len(spoken) >= 6 and len(vocative) > len(spoken) / 3:
+        errors.append(f'{len(vocative)} von {len(spoken)} Zeilen beginnen mit dem Namen des Gegenübers. Namen nur, wenn sie etwas bewirken.')
+    grams = {}
+    for l in spoken:
+        w = re.findall(r"[\wÄÖÜäöüß']+", l['text'].lower())
+        for g in {' '.join(w[i:i + 4]) for i in range(len(w) - 3)}: grams[g] = grams.get(g, 0) + 1
+    repeated = [g for g, n in grams.items() if n >= 3]
+    if repeated: errors.append('Wiederholungen statt Entwicklung: "' + '", "'.join(repeated[:3]) + '".')
+    from tts_text import initialism, _upper
+    caps = list(dict.fromkeys(w for l in spoken for w in re.findall(r"(?<![\w'’])[A-ZÄÖÜẞ][A-ZÄÖÜẞß]+(?![\w'’])", l['text']) if _upper(w) and not initialism(w)))
+    if caps: errors.append('Keine Wörter in Großbuchstaben zur Betonung: ' + ', '.join(caps[:6]) + '. Betonung über Sprechhaltung und Satzzeichen.')
+    seconds, first, longest = estimate(cut)
+    if longest > MAX_SILENCE: errors.append(f'Zu lange ohne Wort: etwa {longest:.1f} s am Stück, höchstens {MAX_SILENCE:g} s.')
+    if seconds > duration * 1.1: errors.append(f'Zu lang: geschätzt {round(seconds)} s für {duration} s. Weniger Wörter oder weniger AKTION-Zeilen.')
     return errors
 
 
@@ -358,7 +469,7 @@ def spoken_seconds(entries):
 def shots(title, beats, lines, cast, policy=POLICY):
     """Deterministic cut. Policy 13: one shot per speaker turn, one per AKTION line.
     Policy 14: speech blocks, reaction shots (L-cut) and establishing shots, see block_cut()."""
-    if policy >= 14: return block_cut(beats, lines, cast)
+    if policy >= 14: return block_cut(beats, lines, cast, policy)
     result = []
     for line in lines:
         beat = beats[line['beat']] if line['beat'] < len(beats) else {'place': 'Ort', 'what': ''}
@@ -377,7 +488,7 @@ def shots(title, beats, lines, cast, policy=POLICY):
     return result
 
 
-def block_cut(beats, lines, cast):
+def block_cut(beats, lines, cast, policy=POLICY):
     """Policy 14 cut, in three steps.
 
     1) Blocks: consecutive lines of one speaker in one section share a lip-sync shot while
@@ -422,7 +533,7 @@ def block_cut(beats, lines, cast):
                        'visible': [line['speaker']], 'lines': [entry], **context})
     # Few establishing shots first (a new place matters more than one more reaction), then reactions.
     room = lambda shots: MAX_SHOTS - len(shots) - (0 if any(s['kind'] == 'action' for s in shots) else 1)
-    result = _establishing(result, beats, room(result))
+    result = _establishing(result, beats, room(result), policy)
     return _reactions(result, room(result))
 
 
@@ -474,11 +585,13 @@ def _place_key(place):
     return re.sub(r'[\W_]+', '', str(place).lower())
 
 
-def _establishing(result, beats, room):
+def _establishing(result, beats, room, policy=POLICY):
     out, seen, added = [], set(), 0
     for i, shot in enumerate(result):
         key = _place_key(shot['place'])
         opens = i and result[i - 1]['beat'] != shot['beat']
+        # Policy 15: never a silent wide shot right after a silent shot (5.6 to 6.4 s without a word, r019).
+        if policy >= WRITING_POLICY and opens and not result[i - 1]['lines']: opens = False
         # 0.19 own scripts: a section that opens with the script's own picture of the place needs no wide shot.
         if opens and key and key not in seen and shot['kind'] != 'action' and not shot.get('context') and added < min(MAX_ESTABLISH, room):
             figures = list(dict.fromkeys(n for s in result if s['beat'] == shot['beat'] for n in s['visible']))[:2]
@@ -980,7 +1093,9 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
     # and cut for all its episodes, so a series does not change its cut halfway.
     started = (any(s.get('policy', LEGACY_POLICY if s.get('draft') or s.get('final') else None) == LEGACY_POLICY for s in stores.values())
                or any(ep.get('script') == 'screenplay' and ep.get('story_policy', LEGACY_POLICY) == LEGACY_POLICY for ep in d.get('episodes', [])))
-    policy = store.setdefault('policy', LEGACY_POLICY if started else POLICY)
+    # 0.19: an AI screenplay of a project whose idea asks for it (idea['writing'], new app only) gets policy 15.
+    fresh = WRITING_POLICY if own is None and idea.get('writing') == WRITING_FIELD else POLICY
+    policy = store.setdefault('policy', LEGACY_POLICY if started else fresh)
     # After the pin: a stored text without a policy would read as a screenplay from before 0.18.
     if own is not None: store.update(final=own, own=True)
     b = budget(idea['duration'], len(cast), policy)
@@ -1010,8 +1125,13 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
                   'Antworten, die nicht reagieren, Logikfehler (wer hat was, wo ist wer), fehlende Spannung oder Steigerung, schwache Pointe, '
                   'Telegrammstil, Wiederholungen, Figuren, die nicht wie sie selbst klingen. Verbessere alles davon. Ereignisse aus der Idee und '
                   'das Wortbudget bleiben. Antworte nur mit dem vollständigen überarbeiteten Drehbuch. ' + series + rules(policy) + '\n' + FORMAT)
+        if policy >= WRITING_POLICY:
+            doctor += ('\nPrüfe außerdem genau: Ist der erste Satz ein Haken? Wollen die Figuren in jedem Abschnitt Verschiedenes? '
+                       'Gibt es Füllsätze, Telegrammstil, Namensanreden am Zeilenanfang, GROSSBUCHSTABEN oder Wiederholungen? '
+                       'Passt die Länge zur Dauer (dauer_sekunden)? Die Prüfung in pruefung nennt, was jetzt noch nicht stimmt.')
         try:
-            final = await factory.write(doctor, {**context, 'drehbuch': draft}, label='Drehbuch-Doktor', check=problems)
+            final = await factory.write(doctor, {**context, 'drehbuch': draft, **({'pruefung': problems(draft)} if policy >= WRITING_POLICY else {})},
+                                        label='Drehbuch-Doktor', check=problems)
             # Advisory: a rewrite that breaks more rules than the draft is dropped.
             if len(problems(final)) > len(problems(draft)): store['doctor_error'] = 'Überarbeitung verworfen: ' + '; '.join(problems(final))[:400]; final = draft
         except RuntimeError as error:

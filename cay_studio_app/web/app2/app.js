@@ -403,7 +403,8 @@ async function createFilm() {
   // Only a series changes its looks; a single film sends 'same', whatever the draft held before.
   const body = { ...d, idea: d.idea.trim(), title: d.title.trim(), looks: seriesCount(d) > 1 && d.looks === 'per_episode' ? 'per_episode' : 'same',
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => participantBody(p, p.name.trim())) };
-  delete body.story; delete body.script;   // the AI writes: exactly the request of before 0.18
+  delete body.story; delete body.script;   // the AI writes: exactly the request of before 0.18 …
+  body.writing = 19;                       // … with the 0.19 dialogue rules (hook, conflict, no filler, length that fits)
   if (d.characters === 'provided' && !body.participants.length) { toast('Für „Nur meine Figuren“ mindestens eine Figur mit Namen eintragen.'); return; }
   if (body.participants.length > MAX_CAST) { toast(`Bis zu ${MAX_CAST} Figuren pro Film. Du hast ${body.participants.length}.`); return; }
   const run = await post('/api/factory', body);
