@@ -259,16 +259,29 @@ LINE = re.compile(r'^\s*(?:[-*]\s*)?([^\[\]:#]{1,60}?)\s*(?:\[([^\]]{1,40})\])?\
 BEAT = re.compile(r'^\s*#+\s*(\d+)?\s*\|?\s*([^|]*)\|?\s*(.*)$')
 
 
-def parse(text, cast):
-    """Return (title, beats, lines, problems). Never guesses an unknown speaker."""
-    title = ''; beats = []; lines = []; problems = []
+def parse(text, cast, own=False):
+    """Return (title, beats, lines, problems). Never guesses an unknown speaker.
+    own (0.19): the notation own_script writes for projects from 0.19 on, never in an AI screenplay:
+    'BILD: …' is the picture ('context') of the next line or AKTION of its section, else of the one
+    before; '[mood|off]' is a line heard from off-screen ('off')."""
+    title = ''; beats = []; lines = []; problems = []; pending = []
+    def attach(number):
+        # A picture without anything after it in its section belongs to the shot before it.
+        if not pending: return
+        if lines and lines[-1]['beat'] == len(beats) - 1: lines[-1]['context'] = ' '.join([lines[-1].get('context', '')] + pending).strip()
+        else: problems.append(f'Zeile {number}: Bild ohne Satz oder AKTION in diesem Abschnitt')
+        pending.clear()
     for number, raw in enumerate(str(text).replace('\r', '').split('\n'), 1):
         if raw.strip().startswith('```'): continue
         row = re.sub(r'\*\*|__|`', '', raw).strip().strip('*').strip()
         if not row: continue
         upper = row.upper()
         if upper.startswith('TITEL:'): title = row.split(':', 1)[1].strip()[:100]; continue
+        if own and upper.startswith('BILD:'):
+            if row.split(':', 1)[1].strip(): pending.append(row.split(':', 1)[1].strip()[:1200])
+            continue
         if row.startswith('#'):
+            if own: attach(number)
             m = BEAT.match(row)
             beats.append({'place': (m.group(2) or '').strip()[:250] or (beats[-1]['place'] if beats else 'Ort'),
                           'what': (m.group(3) or '').strip()[:800]})
@@ -276,7 +289,9 @@ def parse(text, cast):
         if not beats: beats.append({'place': 'Ort', 'what': ''})
         if upper.startswith(('AKTION:', 'ACTION:')):
             what = row.split(':', 1)[1].strip()
-            if what: lines.append({'kind': 'action', 'beat': len(beats) - 1, 'speaker': '', 'emotion': '', 'text': what[:400]})
+            if what:
+                lines.append({'kind': 'action', 'beat': len(beats) - 1, 'speaker': '', 'emotion': '', 'text': what[:400]})
+                if pending: lines[-1]['context'] = ' '.join(pending); pending.clear()
             continue
         m = LINE.match(row)
         if not m:
@@ -284,9 +299,13 @@ def parse(text, cast):
         speaker = _resolve(m.group(1).strip(), cast)
         if speaker is None:
             problems.append(f'Zeile {number}: "{m.group(1).strip()[:40]}" gehört nicht zur Besetzung ({", ".join(cast)})'); continue
-        emotion = (m.group(2) or 'ruhig').strip().lower()
+        emotion = (m.group(2) or 'ruhig').strip().lower(); off = False
+        if own and '|' in emotion: emotion, _, flag = emotion.partition('|'); emotion = emotion.strip() or 'ruhig'; off = flag.strip() == 'off'
         spoken = re.sub(r'\([^)]*\)', '', m.group(3)).strip().strip('"„“').strip()
-        if spoken: lines.append({'kind': 'line', 'beat': len(beats) - 1, 'speaker': speaker, 'emotion': emotion[:40], 'text': spoken[:240]})
+        if spoken:
+            lines.append({'kind': 'line', 'beat': len(beats) - 1, 'speaker': speaker, 'emotion': emotion[:40], 'text': spoken[:240], **({'off': True} if off else {})})
+            if pending: lines[-1]['context'] = ' '.join(pending); pending.clear()
+    if own: attach(None)
     return title, beats, lines, problems
 
 
@@ -372,24 +391,52 @@ def block_cut(beats, lines, cast):
        section, else the previous one; nobody from another place.
     Optional shots never push the film over MAX_SHOTS (one place stays free for ensure_action)."""
     result = []
-    for line in lines:
+    for index, line in enumerate(lines):
         beat = beats[line['beat']] if line['beat'] < len(beats) else {'place': 'Ort', 'what': ''}
+        # 0.19 own scripts only (screenplay.parse(own=True)): the picture of a shot and lines from off-screen.
+        context = {'context': line['context']} if line.get('context') else {}
         if line['kind'] == 'action':
             visible = [c for c in cast if _mentions(line['text'], [c], [o for o in cast if o != c])][:2]
+            if not visible and context: visible = [c for c in cast if _mentions(context['context'], [c], [o for o in cast if o != c])][:2]
             result.append({'kind': 'action', 'beat': line['beat'], 'place': beat['place'], 'what': line['text'],
-                           'visible': visible or ([result[-1]['visible'][0]] if result and result[-1]['visible'] else cast[:1]), 'lines': []})
+                           'visible': visible or ([result[-1]['visible'][0]] if result and result[-1]['visible'] else cast[:1]), 'lines': [], **context})
             continue
         entry = {'speaker': line['speaker'], 'text': line['text'], 'emotion': emotion_of(line['emotion'])}
         last = result[-1] if result else None
+        listener = _off_listener(lines, index, result) if line.get('off') else None
+        if listener:
+            if (last and last['kind'] == 'reaction' and last['voice_of'] == line['speaker'] and last['visible'] == [listener[0]]
+                    and last['beat'] == line['beat'] and len(last['lines']) < 3 and spoken_seconds(last['lines'] + [entry]) <= MERGE_SECONDS):
+                last['lines'].append(entry)
+                if context: last['context'] = (last.get('context', '') + ' ' + context['context']).strip()
+                continue
+            result.append({'kind': 'reaction', 'beat': line['beat'], 'place': beat['place'], 'what': beat['what'], 'visible': [listener[0]],
+                           'lines': [entry], 'voice_of': line['speaker'], 'emotion': listener[1], **context})
+            continue
         if (last and last['kind'] == 'line' and last['visible'] == [line['speaker']] and last['beat'] == line['beat']
                 and len(last['lines']) < 3 and spoken_seconds(last['lines'] + [entry]) <= MERGE_SECONDS):
-            last['lines'].append(entry); continue
+            last['lines'].append(entry)
+            if context: last['context'] = (last.get('context', '') + ' ' + context['context']).strip()
+            continue
         result.append({'kind': 'line', 'beat': line['beat'], 'place': beat['place'], 'what': beat['what'],
-                       'visible': [line['speaker']], 'lines': [entry]})
+                       'visible': [line['speaker']], 'lines': [entry], **context})
     # Few establishing shots first (a new place matters more than one more reaction), then reactions.
     room = lambda shots: MAX_SHOTS - len(shots) - (0 if any(s['kind'] == 'action' for s in shots) else 1)
     result = _establishing(result, beats, room(result))
     return _reactions(result, room(result))
+
+
+def _off_listener(lines, index, result):
+    """0.19 own scripts: (listener, emotion) in the frame for a line marked from off-screen: the next other
+    speaker of the same section (with the emotion of the answer), else the one before, else another figure
+    of the shot before in that section; None when nobody else is there (the line is then spoken in the frame)."""
+    line = lines[index]; same = lambda l: l['kind'] == 'line' and l['beat'] == line['beat'] and l['speaker'] != line['speaker'] and not l.get('off')
+    later = next((l for l in lines[index + 1:] if same(l)), None)
+    if later: return later['speaker'], emotion_of(later['emotion'])
+    earlier = next((l for l in reversed(lines[:index]) if same(l)), None)
+    if earlier: return earlier['speaker'], 'ruhig'
+    seen = next((n for s in reversed(result) if s['beat'] == line['beat'] for n in s['visible'] if n != line['speaker']), None)
+    return (seen, 'ruhig') if seen else None
 
 
 def _listener(result, index):
@@ -432,7 +479,8 @@ def _establishing(result, beats, room):
     for i, shot in enumerate(result):
         key = _place_key(shot['place'])
         opens = i and result[i - 1]['beat'] != shot['beat']
-        if opens and key and key not in seen and shot['kind'] != 'action' and added < min(MAX_ESTABLISH, room):
+        # 0.19 own scripts: a section that opens with the script's own picture of the place needs no wide shot.
+        if opens and key and key not in seen and shot['kind'] != 'action' and not shot.get('context') and added < min(MAX_ESTABLISH, room):
             figures = list(dict.fromkeys(n for s in result if s['beat'] == shot['beat'] for n in s['visible']))[:2]
             what = beats[shot['beat']]['what'] if shot['beat'] < len(beats) else ''
             out.append({'kind': 'establish', 'beat': shot['beat'], 'place': shot['place'], 'what': what, 'visible': figures, 'lines': []})
@@ -774,7 +822,9 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLIC
     for i, shot in enumerate(cut):
         v = by_number.get(i + 1, {})
         if policy >= 14 and shot['kind'] in ('reaction', 'establish'):
-            scenes.append(_cut_scene(i, shot, v, cut, cast, continuity)); continue
+            scenes.append(_cut_scene(i, shot, v, cut, cast, continuity))
+            if shot.get('context'): scenes[-1]['context'] = shot['context'][:1200]
+            continue
         visible = shot['visible']
         speaker = shot['lines'][0]['speaker'] if shot['lines'] else ''
         fallback_still = (f'{" and ".join(visible)} in {shot["place"]}, ' + (f'{speaker} speaking, {expression(shot["lines"][0]["emotion"])} expression' if speaker else shot['what']))
@@ -805,6 +855,7 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLIC
             'animation_prompt': motion[:1400],
             'still': still[:600],
             'kind': shot['kind'],
+            **({'context': shot['context'][:1200]} if shot.get('context') else {}),
         })
     spine = spine or {}
     return {'title': (title or outline.get('title') or 'Folge')[:100],
@@ -910,6 +961,12 @@ def shot_listing(entry, shot):
     return entry
 
 
+def _situation(shot):
+    """What the planner reads for one shot; 0.19 own scripts add the script's own picture of it ('context')."""
+    if not shot.get('context'): return shot['what']
+    return ' '.join(x for x in ((shot['context'], shot['what']) if shot['kind'] == 'action' else (shot['what'], shot['context'])) if x.strip())
+
+
 async def write_episode(factory, d, index, outline, source, continuity, spine, own=None):
     """Screenplay -> check -> doctor -> shots -> visuals. Stored drafts survive a restart.
 
@@ -960,7 +1017,7 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
         except RuntimeError as error:
             final = draft; store['doctor_error'] = str(error)[:500]
         store['final'] = final; factory.save(d)
-    title, beats, lines, problems = parse(store['final'], cast)
+    title, beats, lines, problems = parse(store['final'], cast, **({'own': True} if own is not None else {}))
     if own is not None:
         from own_script import advice
         remaining = problems + advice(title, beats, lines, cast)
@@ -978,7 +1035,7 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
                            f'Das Drehbuch ergibt {len(cut)} Einstellungen; höchstens {MAX_SHOTS}.' + ' „Neu planen“ schreibt es neu.')
     if not store.get('visuals'):
         d['phase'] = f'Folge {index + 1}: Bilder und Bewegungen der {len(cut)} Einstellungen beschreiben'; factory.save(d)
-        listing = [{'shot': i + 1, 'visible': s['visible'], 'place': s['place'], 'situation': s['what'],
+        listing = [{'shot': i + 1, 'visible': s['visible'], 'place': s['place'], 'situation': _situation(s),
                     'lines': [{'speaker': l['speaker'], 'emotion': l['emotion'], 'text': l['text']} for l in s['lines']]} for i, s in enumerate(cut)]
         if policy >= 14: listing = [shot_listing(x, s) for x, s in zip(listing, cut)]
         # Cay's own script: the planner reads all of it, so pictures and motion show what it says.

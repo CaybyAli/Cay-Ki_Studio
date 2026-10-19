@@ -430,7 +430,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         if self.paused(d['id']):return
         # 'Mein Drehbuch' (0.18): Cay's own script, read once at creation (own_script). Cast, episodes and
         # every spoken line come from it; no outline, story goal, script writing or doctor. Other ideas never have it.
-        if idea.get('story')=='script' and not d.get('script'):d['script']=own_script.prepare(dict(idea,participants=list(idea['participants'])))
+        if idea.get('story')=='script' and not d.get('script'):d['script']=own_script.prepare(dict(idea,participants=list(idea['participants'])),own_script.POLICY if shot_design.active(d) else 0)
         script=d.get('script') if idea.get('story')=='script' else None
         if not d.get('plan'):
             required=own_script.participants(script,idea['participants']) if script else list(idea['participants'])

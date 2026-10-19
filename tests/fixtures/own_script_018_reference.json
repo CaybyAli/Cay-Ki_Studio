@@ -1,0 +1,3929 @@
+{
+"01_template": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Nebel, Patrick schleppt Kisten\nAKTION: Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | Mr. Krabs zählt Geld\nSpongeBob [ängstlich]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [drohend]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | dunkel\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [spöttisch]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 2,
+"shots": 11,
+"seconds": 38,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Nebel, Patrick schleppt Kisten. Mr. Krabs zählt Geld. dunkel.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 24,
+"text": "Zeile 24: Sprechhaltung „entschlossen“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 38,
+"duration": 34,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Nebel, Patrick schleppt Kisten\nAKTION: Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | Mr. Krabs zählt Geld\nSpongeBob [ängstlich]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [drohend]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | dunkel\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [spöttisch]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"02_bold_names": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ängstlich]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 2,
+"shots": 11,
+"seconds": 38,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Patrick stellt eine schwere Kiste ab und wischt sich die Stirn. Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren?",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 38,
+"duration": 34,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ängstlich]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"03_hollywood": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: 2. INT. KRUSTY KRAB – BÜRO – TAG\nAKTION: Mr. Krabs zählt Geldscheine.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: 3. INT. CHUM BUCKET – NACHT\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 1,
+"lines": 8,
+"words": 68,
+"actions": 4,
+"shots": 12,
+"seconds": 42,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "1. EXT. HAFEN – MORGEN. Nebel. Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 13,
+"text": "Zeile 13: Folge 1: kein Ort angegeben. Schreib zum Beispiel „### Szene 1 – Küche – Oma steht am Tisch“, dann weiß das Studio, wo es spielt.",
+"blocking": false
+},
+{
+"line": 36,
+"text": "Zeile 36: Sprechhaltung „V.O.“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 39,
+"text": "Zeile 39: Sprechhaltung „CONT'D“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 50,
+"text": "Zeile 50: Sprechhaltung „O.S.“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 1,
+"seconds": 42,
+"duration": 37,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: 2. INT. KRUSTY KRAB – BÜRO – TAG\nAKTION: Mr. Krabs zählt Geldscheine.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: 3. INT. CHUM BUCKET – NACHT\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"04_timewin_headings": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | 0:00–0:04 | Hafen Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n# 2 | 0:04–0:08 | Hafen\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 3 | 0:08–0:14 | Krusty Krab, Büro Mr. Krabs zählt Geld.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n# 4 | 0:14–0:20 | Krusty Krab, Büro\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 5 | 0:20–0:26 | Chum Bucket Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 5,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Hafen Patrick stellt eine schwere Kiste ab. Hafen. Krusty Krab, Büro Mr. Krabs zählt Geld. Krusty Krab, Büro. Chum Bucket Plankton beobachtet die beiden durch ein Fernglas.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 5,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | 0:00–0:04 | Hafen Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n# 2 | 0:04–0:08 | Hafen\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 3 | 0:08–0:14 | Krusty Krab, Büro Mr. Krabs zählt Geld.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n# 4 | 0:14–0:20 | Krusty Krab, Büro\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 5 | 0:20–0:26 | Chum Bucket Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"05_szene_timewin": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | (0:00–0:08) | Hafen Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | (0:08–0:20) | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | (0:20–0:26) | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Hafen Patrick stellt eine schwere Kiste ab. Krusty Krab, Büro. Chum Bucket.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | (0:00–0:08) | Hafen Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | (0:08–0:20) | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | (0:20–0:26) | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"06_bild_ton_dialog": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Dialog",
+"description": "",
+"lines": 7,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 |  | Nahaufnahme Patrick. Krusty Krab, Büro. Mr. Krabs zählt Geld. Chum Bucket. Plankton mit Fernglas.\nDialog [ruhig]: SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nDialog [fröhlich]: PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nDialog [ruhig]: SPONGEBOB: Was genau sollen wir eigentlich transportieren?\nDialog [ruhig]: MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nDialog [flüsternd]: PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nDialog [ruhig]: SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nDialog [schreiend]: MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!",
+"scenes": 1,
+"lines": 7,
+"words": 67,
+"actions": 0,
+"shots": 4,
+"seconds": 28,
+"speakers": [
+"Dialog"
+],
+"plot": "Hafen im Nebel. Patrick stellt eine schwere Kiste ab. Nahaufnahme Patrick. Krusty Krab, Büro. Mr. Krabs zählt Geld. Chum Bucket. Plankton mit Fernglas.",
+"ending": "MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!"
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 13,
+"text": "Zeile 13: Folge 1: kein Ort angegeben. Schreib zum Beispiel „### Szene 1 – Küche – Oma steht am Tisch“, dann weiß das Studio, wo es spielt.",
+"blocking": false
+},
+{
+"line": 15,
+"text": "Zeile 15: Zeitangaben wie „0:00–0:04“ setzt das Studio selbst, sie werden übersprungen.",
+"blocking": false
+},
+{
+"line": 17,
+"text": "Zeile 17: Ton-Angaben setzt das Studio selbst, die Zeile wird übersprungen.",
+"blocking": false
+},
+{
+"line": 36,
+"text": "Zeile 36: Ton-Angaben setzt das Studio selbst, die Zeile wird übersprungen.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 67,
+"lines": 7,
+"scenes": 1,
+"seconds": 28,
+"duration": 25,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 |  | Nahaufnahme Patrick. Krusty Krab, Büro. Mr. Krabs zählt Geld. Chum Bucket. Plankton mit Fernglas.\nDialog [ruhig]: SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nDialog [fröhlich]: PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nDialog [ruhig]: SPONGEBOB: Was genau sollen wir eigentlich transportieren?\nDialog [ruhig]: MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nDialog [flüsternd]: PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger.\nDialog [ruhig]: SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf.\nDialog [schreiend]: MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer!"
+},
+"07_bild_ton_names": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Hafen im Nebel. Patrick stellt eine schwere Kiste ab. Nahaufnahme Patrick.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | Mr. Krabs zählt Geld.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nAKTION: Plankton mit Fernglas.",
+"scenes": 3,
+"lines": 7,
+"words": 58,
+"actions": 1,
+"shots": 9,
+"seconds": 30,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs"
+],
+"plot": "Hafen im Nebel. Patrick stellt eine schwere Kiste ab. Nahaufnahme Patrick. Mr. Krabs zählt Geld.",
+"ending": "Plankton mit Fernglas."
+}
+],
+"problems": [
+{
+"line": 16,
+"text": "Zeile 16: Zeitangaben wie „0:00–0:04“ setzt das Studio selbst, sie werden übersprungen.",
+"blocking": false
+},
+{
+"line": 18,
+"text": "Zeile 18: Ton-Angaben setzt das Studio selbst, die Zeile wird übersprungen.",
+"blocking": false
+},
+{
+"line": 34,
+"text": "Zeile 34: Szene ohne Satz und ohne AKTION, ihre Beschreibung wird als stumme Handlung gezeigt.",
+"blocking": false
+},
+{
+"line": 37,
+"text": "Zeile 37: Ton-Angaben setzt das Studio selbst, die Zeile wird übersprungen.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 58,
+"lines": 7,
+"scenes": 3,
+"seconds": 30,
+"duration": 27,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Hafen im Nebel. Patrick stellt eine schwere Kiste ab. Nahaufnahme Patrick.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | Mr. Krabs zählt Geld.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nAKTION: Plankton mit Fernglas."
+},
+"08_table": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag",
+"scenes": 0,
+"lines": 0,
+"words": 0,
+"actions": 0,
+"shots": 0,
+"seconds": 0,
+"speakers": [],
+"plot": "| Zeit | Bild | Dialog |. |---|---|---|. | 0:00–0:04 | Hafen, Patrick stellt eine Kiste ab | SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide. |. | 0:04–0:08 | Nahaufnahme Patrick | PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück? |. | 0:08–0:11 | Krusty Krab, Büro | SPONGEBOB: Was genau sollen wir eigentlich transportieren? |. | 0:11–0:15 | Mr. Krabs zählt Geld | MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. |. | 0:15–0:18 | Patrick zupft SpongeBob am Ärmel | PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger. |. | 0:18–0:21 | SpongeBob nickt | SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf. |. | 0:21–0:24 | Mr. Krabs schlägt auf den Tisch | MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer! |. | 0:24–0:28 | Chum Bucket, Plankton mit Fernglas | PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch. |.",
+"ending": ""
+}
+],
+"problems": [
+{
+"line": 13,
+"text": "Zeile 13: Folge 1: kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“",
+"blocking": true
+},
+{
+"line": 13,
+"text": "Zeile 13: Folge 1 dauert nach dem Drehbuch nur etwa 0 s. Ein Film braucht mindestens 15 s: schreib ein paar Sätze oder eine AKTION-Zeile dazu.",
+"blocking": true
+}
+],
+"ok": false,
+"series": true,
+"words": 0,
+"lines": 0,
+"scenes": 0,
+"seconds": 0,
+"duration": 15,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag"
+},
+"09_bullets": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | 1. Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 1,
+"shots": 11,
+"seconds": 37,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "1. Plankton beobachtet die beiden durch ein Fernglas.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 37,
+"duration": 33,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | 1. Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"10_prose_quotes": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab. Sandy sagt: „Montag, sieben Uhr. Arbeit hätte ich für euch beide.“ „Ich wäre dabei. Bin ich zu spät zum Frühstück?“, fragt Patrick.\n# 2 | Krusty Krab, Büro | SpongeBob fragt: „Was genau sollen wir eigentlich transportieren?“\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 5,
+"words": 44,
+"actions": 1,
+"shots": 8,
+"seconds": 27,
+"speakers": [
+"Mr. Krabs",
+"Patrick",
+"SpongeBob",
+"Plankton"
+],
+"plot": "SpongeBob fragt: „Was genau sollen wir eigentlich transportieren?“.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 15,
+"text": "Zeile 15: Szene ohne Satz und ohne AKTION, ihre Beschreibung wird als stumme Handlung gezeigt.",
+"blocking": false
+},
+{
+"line": 17,
+"text": "Zeile 17: „Sandy sagt: „Montag, sieben Uhr. Arbeit hätte ich für euch b …“ wird nicht gesprochen, sie beschreibt nur die Szene. Soll „Sandy sagt“ eine Figur sein, die das sagt, schreib den Namen in Großbuchstaben: „SANDY SAGT: …“.",
+"blocking": false
+},
+{
+"line": 18,
+"text": "Zeile 18: „„Ich wäre dabei. Bin ich zu spät zum Frühstück?“, fragt Patr …“ wird nicht gesprochen, sie beschreibt nur die Szene. Was in Anführungszeichen steht, spricht nur eine Figur, deren Name davor steht: „OMA: …“.",
+"blocking": false
+},
+{
+"line": 21,
+"text": "Zeile 21: „SpongeBob fragt: „Was genau sollen wir eigentlich transporti …“ wird nicht gesprochen, sie beschreibt nur die Szene. Soll „SpongeBob fragt“ eine Figur sein, die das sagt, schreib den Namen in Großbuchstaben: „SPONGEBOB FRAGT: …“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 44,
+"lines": 5,
+"scenes": 3,
+"seconds": 27,
+"duration": 24,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab. Sandy sagt: „Montag, sieben Uhr. Arbeit hätte ich für euch beide.“ „Ich wäre dabei. Bin ich zu spät zum Frühstück?“, fragt Patrick.\n# 2 | Krusty Krab, Büro | SpongeBob fragt: „Was genau sollen wir eigentlich transportieren?“\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"11_emoji": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "SpongeBob – Weißes Gold",
+"text": "TITEL: SpongeBob – Weißes Gold\n# 1 | Hafen | Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Patrick stellt eine schwere Kiste ab.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Hinweis: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 13,
+"text": "Zeile 13: Überschrift „Folge 1: Der erste Auftrag“ ist keine Folge und keine Szene. Für eine neue Szene schreib „### Szene – Folge 1: Der erste Auftrag“.",
+"blocking": false
+},
+{
+"line": 21,
+"text": "Zeile 21: Ton-Angaben setzt das Studio selbst, die Zeile wird übersprungen.",
+"blocking": false
+}
+],
+"ok": true,
+"series": false,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "TITEL: SpongeBob – Weißes Gold\n# 1 | Hafen | Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"12_dash": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab.\nAKTION: SANDY – Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nAKTION: PATRICK — Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | SPONGEBOB – „Was genau sollen wir eigentlich transportieren?“ MR. KRABS – Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 4,
+"words": 34,
+"actions": 3,
+"shots": 9,
+"seconds": 29,
+"speakers": [
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "SPONGEBOB – „Was genau sollen wir eigentlich transportieren?“ MR. KRABS – Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 21,
+"text": "Zeile 21: „SPONGEBOB – „Was genau sollen wir eigentlich transportieren? …“ wird nicht gesprochen, sie beschreibt nur die Szene. Was in Anführungszeichen steht, spricht nur eine Figur, deren Name davor steht: „OMA: …“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 34,
+"lines": 4,
+"scenes": 3,
+"seconds": 29,
+"duration": 26,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab.\nAKTION: SANDY – Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nAKTION: PATRICK — Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | SPONGEBOB – „Was genau sollen wir eigentlich transportieren?“ MR. KRABS – Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"13_einstellung_shot": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Shot 2",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Shot 3",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Shot 4",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Shot 5",
+"description": "",
+"lines": 1,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Totale, Patrick stellt eine Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nShot 2 [ruhig]: Nahaufnahme Patrick.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nShot 3 [ruhig]: Mr. Krabs hinter dem Schreibtisch.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nShot 4 [ruhig]: Patrick zupft SpongeBob am Ärmel.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nShot 5 [ruhig]: Plankton mit Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 12,
+"words": 83,
+"actions": 0,
+"shots": 14,
+"seconds": 41,
+"speakers": [
+"Sandy",
+"Shot 2",
+"Patrick",
+"Shot 3",
+"SpongeBob",
+"Mr. Krabs",
+"Shot 4",
+"Shot 5",
+"Plankton"
+],
+"plot": "Totale, Patrick stellt eine Kiste ab.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 2. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 18,
+"text": "Zeile 18: „Shot 2“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+},
+{
+"line": 22,
+"text": "Zeile 22: „Shot 3“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+},
+{
+"line": 25,
+"text": "Zeile 25: „Shot 4“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+},
+{
+"line": 31,
+"text": "Zeile 31: „Shot 5“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 83,
+"lines": 12,
+"scenes": 3,
+"seconds": 41,
+"duration": 36,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Totale, Patrick stellt eine Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nShot 2 [ruhig]: Nahaufnahme Patrick.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nShot 3 [ruhig]: Mr. Krabs hinter dem Schreibtisch.\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nShot 4 [ruhig]: Patrick zupft SpongeBob am Ärmel.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nShot 5 [ruhig]: Plankton mit Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"14_hook_labels": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Cliffhanger",
+"description": "",
+"lines": 1,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n# 2 | Hafen\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 3 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nCliffhanger [ruhig]: PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 69,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Cliffhanger"
+],
+"plot": "HOOK (0:00–0:03).",
+"ending": "PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 28,
+"text": "Zeile 28: Sprechhaltung „0:50–0:58“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 28,
+"text": "Zeile 28: „Cliffhanger“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 69,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n# 2 | Hafen\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 3 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nCliffhanger [ruhig]: PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"15_hook_inline": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!",
+"scenes": 2,
+"lines": 6,
+"words": 49,
+"actions": 0,
+"shots": 7,
+"seconds": 23,
+"speakers": [
+"Patrick",
+"SpongeBob",
+"Mr. Krabs"
+],
+"plot": "Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. Sponge, lass uns gehen. Das riecht nach Ärger.",
+"ending": "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: „Hook: SANDY: „Montag, sieben Uhr. Arbeit hätte ich für euch …“ wird nicht verfilmt.",
+"blocking": false
+},
+{
+"line": 27,
+"text": "Zeile 27: „Outro: PLANKTON: „Krabs weiß, wen er schickt. Jetzt weiß ich …“ wird nicht verfilmt.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 49,
+"lines": 6,
+"scenes": 2,
+"seconds": 23,
+"duration": 20,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!"
+},
+"16_name_nextline_quote": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Patrick stellt eine schwere Kiste ab.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"17_claude_style": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1\nAKTION: SZENE 1 – AUSSEN – HAFEN – MORGEN\nAKTION: (Nebel. Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.)\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: SZENE 2 – INNEN – KRUSTY KRAB, BÜRO – TAG\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: SZENE 3 – INNEN – CHUM BUCKET – NACHT\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 1,
+"lines": 8,
+"words": 68,
+"actions": 5,
+"shots": 13,
+"seconds": 45,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "SZENE 1 – AUSSEN – HAFEN – MORGEN (Nebel. Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.) Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück?",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 13,
+"text": "Zeile 13: Folge 1: kein Ort angegeben. Schreib zum Beispiel „### Szene 1 – Küche – Oma steht am Tisch“, dann weiß das Studio, wo es spielt.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 1,
+"seconds": 45,
+"duration": 40,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1\nAKTION: SZENE 1 – AUSSEN – HAFEN – MORGEN\nAKTION: (Nebel. Patrick stellt eine schwere Kiste ab und wischt sich die Stirn.)\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: SZENE 2 – INNEN – KRUSTY KRAB, BÜRO – TAG\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: SZENE 3 – INNEN – CHUM BUCKET – NACHT\nAKTION: Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"18_gemini_style": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Der Hafen | Morgen\nAKTION: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | Tag\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | Nacht\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 1,
+"shots": 11,
+"seconds": 37,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Morgen. Tag. Nacht.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 37,
+"duration": 33,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Der Hafen | Morgen\nAKTION: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | Tag\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | Nacht\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"19_nicknames": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy Cheeks",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Patrick Star",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Spongebob Schwammkopf",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Eugene Krabs",
+"description": "",
+"lines": 1,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy Cheeks [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick Star [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongebob Schwammkopf [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nEugene Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy Cheeks",
+"Patrick Star",
+"Spongebob Schwammkopf",
+"Mr. Krabs",
+"Patrick",
+"SpongeBob",
+"Eugene Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy Cheeks [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick Star [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongebob Schwammkopf [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nEugene Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"20_dialog_block": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!",
+"scenes": 2,
+"lines": 7,
+"words": 58,
+"actions": 1,
+"shots": 9,
+"seconds": 30,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs"
+],
+"plot": "Patrick stellt eine schwere Kiste ab. Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren?",
+"ending": "Wie du willst. Aber NIEMAND öffnet den Koffer!"
+}
+],
+"problems": [
+{
+"line": 17,
+"text": "Zeile 17: „Dialog“ ohne Text, übersprungen.",
+"blocking": false
+},
+{
+"line": 22,
+"text": "Zeile 22: „Dialog“ ohne Text, übersprungen.",
+"blocking": false
+},
+{
+"line": 30,
+"text": "Zeile 30: „Text: PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich e …“ wird nicht verfilmt.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 58,
+"lines": 7,
+"scenes": 2,
+"seconds": 30,
+"duration": 27,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!"
+},
+"21_numbered_shots": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: 4. INNEN – KRUSTY KRAB, BÜRO\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: 10. INNEN – CHUM BUCKET – NACHT\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 1,
+"lines": 8,
+"words": 68,
+"actions": 2,
+"shots": 10,
+"seconds": 35,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "1. AUSSEN – HAFEN – MORGEN. Patrick stellt eine schwere Kiste ab.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 13,
+"text": "Zeile 13: Folge 1: kein Ort angegeben. Schreib zum Beispiel „### Szene 1 – Küche – Oma steht am Tisch“, dann weiß das Studio, wo es spielt.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 1,
+"seconds": 35,
+"duration": 31,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: 4. INNEN – KRUSTY KRAB, BÜRO\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: 10. INNEN – CHUM BUCKET – NACHT\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"22_sekunden_marks": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Sek. 0–4: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nAKTION: (4–8 s) PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | 0:08 – SPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 6,
+"words": 53,
+"actions": 1,
+"shots": 9,
+"seconds": 30,
+"speakers": [
+"Sandy",
+"Mr. Krabs",
+"Patrick",
+"SpongeBob",
+"Plankton"
+],
+"plot": "Sek. 0–4: Patrick stellt eine schwere Kiste ab. 0:08 – SPONGEBOB: Was genau sollen wir eigentlich transportieren?",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 16,
+"text": "Zeile 16: „Sek. 0–4: Patrick stellt eine schwere Kiste ab.“ wird nicht gesprochen, sie beschreibt nur die Szene. Soll „Sek. 0–4“ eine Figur sein, die das sagt, schreib den Namen in Großbuchstaben: „SEK. 0–4: …“.",
+"blocking": false
+},
+{
+"line": 22,
+"text": "Zeile 22: Zeitangaben wie „00:11–00:15“ setzt das Studio selbst, sie werden übersprungen.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 53,
+"lines": 6,
+"scenes": 3,
+"seconds": 30,
+"duration": 27,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Sek. 0–4: Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nAKTION: (4–8 s) PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro | 0:08 – SPONGEBOB: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"23_offscreen_vo": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Stimme",
+"description": "",
+"lines": 1,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nStimme [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Stimme"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: Sprechhaltung „O.S.“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 17,
+"text": "Zeile 17: Sprechhaltung „zu Sandy“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 20,
+"text": "Zeile 20: Sprechhaltung „off“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 21,
+"text": "Zeile 21: Sprechhaltung „aus dem Off“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 22,
+"text": "Zeile 22: Sprechhaltung „V.O.“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 23,
+"text": "Zeile 23: Sprechhaltung „Off-Stimme“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 24,
+"text": "Zeile 24: Sprechhaltung „Telefon“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 27,
+"text": "Zeile 27: Sprechhaltung „Plankton“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 27,
+"text": "Zeile 27: „Stimme“ ist im Film eine sichtbare Figur, die spricht. Eine Stimme ohne Bild gibt es nicht.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nStimme [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"24_slug_no_number": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | MORGEN Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab | BÜRO\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | NACHT\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "MORGEN Patrick stellt eine schwere Kiste ab. BÜRO. NACHT.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 19,
+"text": "Zeile 19: Schnitt-Angaben setzt das Studio selbst, die Zeile wird übersprungen.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | MORGEN Patrick stellt eine schwere Kiste ab.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab | BÜRO\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | NACHT\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"25_beat_titles": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Beat 1 – Das Angebot\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: Beat 2 – Der Auftrag\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nAKTION: Wendepunkt\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: Cliffhanger\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 1,
+"lines": 8,
+"words": 68,
+"actions": 3,
+"shots": 11,
+"seconds": 38,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Beat 1 – Das Angebot.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 1,
+"seconds": 38,
+"duration": 34,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Beat 1 – Das Angebot\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nAKTION: Beat 2 – Der Auftrag\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nAKTION: Wendepunkt\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nAKTION: Cliffhanger\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"26_mood_line_before": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Plankton beobachtet die beiden durch ein Fernglas.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: Sprechhaltung „kühl, ohne aufzusehen“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 20,
+"text": "Zeile 20: Sprechhaltung „mit vollem Mund“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket | Plankton beobachtet die beiden durch ein Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"27_wrapped_lines": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr.\nAKTION: Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\nAKTION: Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide.\nAKTION: Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 50,
+"actions": 3,
+"shots": 13,
+"seconds": 36,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück?",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [],
+"ok": true,
+"series": true,
+"words": 50,
+"lines": 8,
+"scenes": 3,
+"seconds": 36,
+"duration": 32,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr.\nAKTION: Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\nAKTION: Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide.\nAKTION: Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"28_ort_zeit_labels": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Morgen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Morgen.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 17,
+"text": "Zeile 17: „Stimmung: neblig, angespannt“ wird nicht verfilmt.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Morgen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"29_asterisk_actions": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: kratzt sich am Kopf Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: flüstert Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. zählt Scheine Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer! haut auf den Tisch\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 79,
+"actions": 0,
+"shots": 10,
+"seconds": 38,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. kratzt sich am Kopf Ich wäre dabei. Bin ich zu spät zum Frühstück? flüstert Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. zählt Scheine Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 79,
+"lines": 8,
+"scenes": 3,
+"seconds": 38,
+"duration": 34,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: kratzt sich am Kopf Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: flüstert Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. zählt Scheine Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer! haut auf den Tisch\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"30_bold_name_nextline": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"31_blockquote": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"32_table_figur_text": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: | Figur | Text | |---|---| | SANDY | Montag, sieben Uhr. Arbeit hätte ich für euch beide. | | PATRICK | Ich wäre dabei. Bin ich zu spät zum Frühstück? |\n# 2 | Krusty Krab, Büro\nAKTION: | Figur | Text | |---|---| | SPONGEBOB | Was genau sollen wir eigentlich transportieren? | | MR. KRABS | Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. | | PATRICK | Sponge, lass uns gehen. Das riecht nach Ärger. | | SPONGEBOB | Nur diese eine Fahrt. Dann hören wir auf. | | MR. KRABS | Wie du willst. Aber NIEMAND öffnet den Koffer! |\n# 3 | Chum Bucket\nAKTION: | Figur | Text | |---|---| | PLANKTON | Krabs weiß, wen er schickt. Jetzt weiß ich es auch. |",
+"scenes": 3,
+"lines": 0,
+"words": 0,
+"actions": 3,
+"shots": 3,
+"seconds": 10,
+"speakers": [],
+"plot": "| Figur | Text | |---|---| | SANDY | Montag, sieben Uhr. Arbeit hätte ich für euch beide. | | PATRICK | Ich wäre dabei. Bin ich zu spät zum Frühstück? | | Figur | Text | |---|---| | SPONGEBOB | Was genau sollen wir eigentlich transportieren? | | MR. KRABS | Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. | | PATRICK | Sponge, lass uns gehen. Das riecht nach Ärger. | | SPONGEBOB | Nur diese eine Fahrt. Dann hören wir auf. | | MR. KRABS | Wie du willst. Aber NIEMAND öffnet den Koffer! | | Figur | Text | |---|---| | PLANKTON | Krabs weiß, wen er schickt. Jetzt weiß ich es auch. |",
+"ending": "| Figur | Text | |---|---| | PLANKTON | Krabs weiß, wen er schickt. Jetzt weiß ich es auch. |"
+}
+],
+"problems": [
+{
+"line": 13,
+"text": "Zeile 13: Folge 1: kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“",
+"blocking": true
+},
+{
+"line": 13,
+"text": "Zeile 13: Folge 1 dauert nach dem Drehbuch nur etwa 10 s. Ein Film braucht mindestens 15 s: schreib ein paar Sätze oder eine AKTION-Zeile dazu.",
+"blocking": true
+},
+{
+"line": 15,
+"text": "Zeile 15: Szene ohne Satz und ohne AKTION, ihre Beschreibung wird als stumme Handlung gezeigt.",
+"blocking": false
+},
+{
+"line": 21,
+"text": "Zeile 21: Szene ohne Satz und ohne AKTION, ihre Beschreibung wird als stumme Handlung gezeigt.",
+"blocking": false
+},
+{
+"line": 30,
+"text": "Zeile 30: Szene ohne Satz und ohne AKTION, ihre Beschreibung wird als stumme Handlung gezeigt.",
+"blocking": false
+}
+],
+"ok": false,
+"series": true,
+"words": 0,
+"lines": 0,
+"scenes": 3,
+"seconds": 10,
+"duration": 15,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nAKTION: | Figur | Text | |---|---| | SANDY | Montag, sieben Uhr. Arbeit hätte ich für euch beide. | | PATRICK | Ich wäre dabei. Bin ich zu spät zum Frühstück? |\n# 2 | Krusty Krab, Büro\nAKTION: | Figur | Text | |---|---| | SPONGEBOB | Was genau sollen wir eigentlich transportieren? | | MR. KRABS | Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. | | PATRICK | Sponge, lass uns gehen. Das riecht nach Ärger. | | SPONGEBOB | Nur diese eine Fahrt. Dann hören wir auf. | | MR. KRABS | Wie du willst. Aber NIEMAND öffnet den Koffer! |\n# 3 | Chum Bucket\nAKTION: | Figur | Text | |---|---| | PLANKTON | Krabs weiß, wen er schickt. Jetzt weiß ich es auch. |"
+},
+"33_dense_cue_wrapped": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr.\nAKTION: Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\nAKTION: Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide.\nAKTION: Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 50,
+"actions": 3,
+"shots": 13,
+"seconds": 36,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück?",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": 17,
+"text": "Zeile 17: „Arbeit hätte ich für euch beide.“ ist eine stumme Handlung, kein Satz von Sandy. Soll Sandy das sagen, schreib es direkt hinter den Satz darüber.",
+"blocking": false
+},
+{
+"line": 20,
+"text": "Zeile 20: „Bin ich zu spät zum Frühstück?“ ist eine stumme Handlung, kein Satz von Patrick. Soll Patrick das sagen, schreib es direkt hinter den Satz darüber.",
+"blocking": false
+},
+{
+"line": 26,
+"text": "Zeile 26: „Plankton bezahlt euch bei der Übergabe.“ ist eine stumme Handlung, kein Satz von Mr. Krabs. Soll Mr. Krabs das sagen, schreib es direkt hinter den Satz darüber.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 50,
+"lines": 8,
+"scenes": 3,
+"seconds": 36,
+"duration": 32,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr.\nAKTION: Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\nAKTION: Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide.\nAKTION: Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"34_dialog_header_bullets": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: „Dialog“ ohne Text, übersprungen.",
+"blocking": false
+},
+{
+"line": 21,
+"text": "Zeile 21: „Dialog“ ohne Text, übersprungen.",
+"blocking": false
+},
+{
+"line": 29,
+"text": "Zeile 29: „Dialog“ ohne Text, übersprungen.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"35_inline_pipe_rows": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 0,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 0,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag",
+"scenes": 0,
+"lines": 0,
+"words": 0,
+"actions": 0,
+"shots": 0,
+"seconds": 0,
+"speakers": [],
+"plot": "Hafen | SANDY: Montag, sieben Uhr. Arbeit hätte ich für euch beide. Hafen | PATRICK: Ich wäre dabei. Bin ich zu spät zum Frühstück? Krusty Krab, Büro | SPONGEBOB: Was genau sollen wir eigentlich transportieren? Krusty Krab, Büro | MR. KRABS: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. Krusty Krab, Büro | PATRICK: Sponge, lass uns gehen. Das riecht nach Ärger. Krusty Krab, Büro | SPONGEBOB: Nur diese eine Fahrt. Dann hören wir auf. Krusty Krab, Büro | MR. KRABS: Wie du willst. Aber NIEMAND öffnet den Koffer! Chum Bucket | PLANKTON: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"ending": ""
+}
+],
+"problems": [
+{
+"line": 13,
+"text": "Zeile 13: Folge 1: kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“",
+"blocking": true
+},
+{
+"line": 13,
+"text": "Zeile 13: Folge 1 dauert nach dem Drehbuch nur etwa 0 s. Ein Film braucht mindestens 15 s: schreib ein paar Sätze oder eine AKTION-Zeile dazu.",
+"blocking": true
+},
+{
+"line": 15,
+"text": "Zeile 15: Zeitangaben wie „0:00–0:04“ setzt das Studio selbst, sie werden übersprungen.",
+"blocking": false
+}
+],
+"ok": false,
+"series": true,
+"words": 0,
+"lines": 0,
+"scenes": 0,
+"seconds": 0,
+"duration": 15,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag"
+},
+"36_scene_heading_timewin_bold": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | 0:00–0:08 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | 0:08–0:20 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | 0:20–0:26 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Hafen. Krusty Krab, Büro. Chum Bucket.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | 0:00–0:08 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | 0:08–0:20 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | 0:20–0:26 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"37_numbered_scene_headings": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | 1. Hafen | Morgen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | 2) Krusty Krab, Büro | Tag\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | CHUM BUCKET (NACHT)\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Morgen. Tag.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | 1. Hafen | Morgen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | 2) Krusty Krab, Büro | Tag\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | CHUM BUCKET (NACHT)\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"38_hook_heading": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hook (0 | 00–0:03)\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n# 2 | Hafen\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 3 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 4 | Cliffhanger\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 4,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "00–0:03).",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 4,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hook (0 | 00–0:03)\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\n# 2 | Hafen\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 3 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 4 | Cliffhanger\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"39_parenthetical_at_end": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 10,
+"seconds": 34,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: Sprechhaltung „verschränkt die Arme“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 17,
+"text": "Zeile 17: Sprechhaltung „kaut“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 20,
+"text": "Zeile 20: Sprechhaltung „schluckt“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 3,
+"seconds": 34,
+"duration": 30,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"40_wrapped_label_lines_after_template": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | Patrick schleppt Kisten\nSandy [ruhig]: Montag, sieben Uhr.\nAKTION: Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei.\nAKTION: Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ängstlich]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [drohend]: Fünfhundert für euch beide.\nAKTION: Plankton bezahlt euch bei der Übergabe.\nAKTION: Mr. Krabs schiebt einen Koffer über den Tisch.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [spöttisch]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 8,
+"words": 50,
+"actions": 4,
+"shots": 14,
+"seconds": 39,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Patrick schleppt Kisten.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [],
+"ok": true,
+"series": true,
+"words": 50,
+"lines": 8,
+"scenes": 3,
+"seconds": 39,
+"duration": 35,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | Patrick schleppt Kisten\nSandy [ruhig]: Montag, sieben Uhr.\nAKTION: Arbeit hätte ich für euch beide.\nPatrick [fröhlich]: Ich wäre dabei.\nAKTION: Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ängstlich]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [drohend]: Fünfhundert für euch beide.\nAKTION: Plankton bezahlt euch bei der Übergabe.\nAKTION: Mr. Krabs schiebt einen Koffer über den Tisch.\nPatrick [flüsternd]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [schreiend]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [spöttisch]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"41_emoji_series_headings": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "SpongeBob – Weißes Gold",
+"text": "TITEL: SpongeBob – Weißes Gold\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n# 2 | Krusty Krab, Büro\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 2,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 9,
+"seconds": 31,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Hinweis: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 13,
+"text": "Zeile 13: Überschrift „Folge 1: Der erste Auftrag“ ist keine Folge und keine Szene. Für eine neue Szene schreib „### Szene – Folge 1: Der erste Auftrag“.",
+"blocking": false
+},
+{
+"line": 21,
+"text": "Zeile 21: Überschrift „Folge 2: Die Übergabe“ ist keine Folge und keine Szene. Für eine neue Szene schreib „### Szene – Folge 2: Die Übergabe“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": false,
+"words": 68,
+"lines": 8,
+"scenes": 2,
+"seconds": 31,
+"duration": 27,
+"preview": "TITEL: SpongeBob – Weißes Gold\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n# 2 | Krusty Krab, Büro\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"42_teil_headings": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "SpongeBob – Weißes Gold",
+"text": "TITEL: SpongeBob – Weißes Gold\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n# 2 | Krusty Krab, Büro\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 2,
+"lines": 8,
+"words": 68,
+"actions": 0,
+"shots": 9,
+"seconds": 31,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Hinweis: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 13,
+"text": "Zeile 13: Überschrift „Teil 1: Der erste Auftrag“ ist keine Folge und keine Szene. Für eine neue Szene schreib „### Szene – Teil 1: Der erste Auftrag“.",
+"blocking": false
+},
+{
+"line": 21,
+"text": "Zeile 21: Überschrift „Teil 2: Die Übergabe“ ist keine Folge und keine Szene. Für eine neue Szene schreib „### Szene – Teil 2: Die Übergabe“.",
+"blocking": false
+}
+],
+"ok": true,
+"series": false,
+"words": 68,
+"lines": 8,
+"scenes": 2,
+"seconds": 31,
+"duration": 27,
+"preview": "TITEL: SpongeBob – Weißes Gold\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n# 2 | Krusty Krab, Büro\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"43_hinweis_mentions_folge": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen",
+"lines": 1,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "endet mit einem Cliffhanger, Folge 2 löst ihn auf. Jede Folge etwa 58 Sekunden.",
+"text": "TITEL: endet mit einem Cliffhanger, Folge 2 löst ihn auf. Jede Folge etwa 58 Sekunden.",
+"scenes": 0,
+"lines": 0,
+"words": 0,
+"actions": 0,
+"shots": 0,
+"seconds": 0,
+"speakers": [],
+"plot": "",
+"ending": ""
+},
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"scenes": 1,
+"lines": 4,
+"words": 34,
+"actions": 0,
+"shots": 4,
+"seconds": 14,
+"speakers": [
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs"
+],
+"plot": "Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren? Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.",
+"ending": "Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe."
+},
+{
+"number": 2,
+"title": "Die Übergabe",
+"text": "TITEL: Die Übergabe\n# 1 | Krusty Krab, Büro\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 1,
+"lines": 4,
+"words": 34,
+"actions": 0,
+"shots": 4,
+"seconds": 14,
+"speakers": [
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Sponge, lass uns gehen. Das riecht nach Ärger. Nur diese eine Fahrt. Dann hören wir auf. Wie du willst. Aber NIEMAND öffnet den Koffer! Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folgenüberschriften müssen eindeutig und fortlaufend ab Folge 1 nummeriert sein.",
+"blocking": true
+},
+{
+"line": 4,
+"text": "Zeile 4: Folge 1: kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“",
+"blocking": true
+},
+{
+"line": 4,
+"text": "Zeile 4: Folge 1 dauert nach dem Drehbuch nur etwa 0 s. Ein Film braucht mindestens 15 s: schreib ein paar Sätze oder eine AKTION-Zeile dazu.",
+"blocking": true
+},
+{
+"line": 13,
+"text": "Zeile 13: Folge 1 dauert nach dem Drehbuch nur etwa 14 s. Ein Film braucht mindestens 15 s: schreib ein paar Sätze oder eine AKTION-Zeile dazu.",
+"blocking": true
+},
+{
+"line": 21,
+"text": "Zeile 21: Folge 2 dauert nach dem Drehbuch nur etwa 14 s. Ein Film braucht mindestens 15 s: schreib ein paar Sätze oder eine AKTION-Zeile dazu.",
+"blocking": true
+},
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": null,
+"text": "Folge 2: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+}
+],
+"ok": false,
+"series": true,
+"words": 68,
+"lines": 8,
+"scenes": 2,
+"seconds": 28,
+"duration": 15,
+"preview": "## Folge 1\nTITEL: endet mit einem Cliffhanger, Folge 2 löst ihn auf. Jede Folge etwa 58 Sekunden.\n\n## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\n\n## Folge 2\nTITEL: Die Übergabe\n# 1 | Krusty Krab, Büro\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"44_erzaehler_vo": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Erzähler",
+"description": "",
+"lines": 1,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nErzähler [ruhig]: Bikini Bottom, sieben Uhr morgens.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 9,
+"words": 73,
+"actions": 0,
+"shots": 11,
+"seconds": 36,
+"speakers": [
+"Erzähler",
+"Sandy",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Bikini Bottom, sieben Uhr morgens. Montag, sieben Uhr. Arbeit hätte ich für euch beide. Ich wäre dabei. Bin ich zu spät zum Frühstück? Was genau sollen wir eigentlich transportieren?",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 1. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: Sprechhaltung „V.O.“ kennt das Studio nicht, gesprochen wird „ruhig“.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: „Erzähler“ ist im Film eine sichtbare Figur, die spricht. Eine Stimme ohne Bild gibt es nicht.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 73,
+"lines": 9,
+"scenes": 3,
+"seconds": 36,
+"duration": 32,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nErzähler [ruhig]: Bikini Bottom, sieben Uhr morgens.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"45_kamera_with_dialog_same_line": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "SpongeBob",
+"description": "gelber Schwamm, weißes Hemd, rote Krawatte, nervös",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "rosa Seestern, Trainingsanzug, gutmütig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "roter Krebs, Anzug, gierig",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "winzig, grün, ein Auge",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Eichhörnchen im Taucheranzug",
+"lines": 1,
+"declared": true
+},
+{
+"name": "Nahaufnahme",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Totale",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Sfx",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Insert",
+"description": "",
+"lines": 1,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen\nNahaufnahme [ruhig]: Sandy tritt aus dem Nebel.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nTotale [ruhig]: Patrick lässt die Kiste fallen.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nSfx [ruhig]: Tür knallt.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nInsert [ruhig]: Planktons Auge im Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.",
+"scenes": 3,
+"lines": 12,
+"words": 84,
+"actions": 0,
+"shots": 14,
+"seconds": 41,
+"speakers": [
+"Nahaufnahme",
+"Sandy",
+"Totale",
+"Patrick",
+"SpongeBob",
+"Mr. Krabs",
+"Sfx",
+"Insert",
+"Plankton"
+],
+"plot": "Sandy tritt aus dem Nebel. Montag, sieben Uhr. Arbeit hätte ich für euch beide. Patrick lässt die Kiste fallen. Ich wäre dabei. Bin ich zu spät zum Frühstück?",
+"ending": "Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Wenig AKTION-Zeilen: 0, empfohlen sind mindestens 2. Eine stumme Handlung bringt Bewegung in den Film.",
+"blocking": false
+},
+{
+"line": 16,
+"text": "Zeile 16: „Nahaufnahme“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+},
+{
+"line": 18,
+"text": "Zeile 18: „Totale“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+},
+{
+"line": 30,
+"text": "Zeile 30: „Insert“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 84,
+"lines": 12,
+"scenes": 3,
+"seconds": 41,
+"duration": 36,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen\nNahaufnahme [ruhig]: Sandy tritt aus dem Nebel.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nTotale [ruhig]: Patrick lässt die Kiste fallen.\nPatrick [ruhig]: Ich wäre dabei. Bin ich zu spät zum Frühstück?\n# 2 | Krusty Krab, Büro\nSpongeBob [ruhig]: Was genau sollen wir eigentlich transportieren?\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nSfx [ruhig]: Tür knallt.\nPatrick [ruhig]: Sponge, lass uns gehen. Das riecht nach Ärger.\nSpongeBob [ruhig]: Nur diese eine Fahrt. Dann hören wir auf.\nMr. Krabs [ruhig]: Wie du willst. Aber NIEMAND öffnet den Koffer!\n# 3 | Chum Bucket\nInsert [ruhig]: Planktons Auge im Fernglas.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch."
+},
+"46_weisses_gold_f1_reconstructed": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "Sandy",
+"description": "",
+"lines": 1,
+"declared": false
+},
+{
+"name": "Patrick",
+"description": "",
+"lines": 2,
+"declared": false
+},
+{
+"name": "Spongebob",
+"description": "",
+"lines": 2,
+"declared": false
+},
+{
+"name": "Mr. Krabs",
+"description": "",
+"lines": 3,
+"declared": false
+},
+{
+"name": "Plankton",
+"description": "",
+"lines": 1,
+"declared": false
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Der erste Auftrag",
+"text": "TITEL: Der erste Auftrag\n# 1 | Hafen | 0:00–0:12\nAKTION: Patrick schleppt im Nebel eine schwere Kiste über den Steg.\nAKTION: Sandy tritt aus dem Nebel und mustert ihn.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\n# 2 | Krusty Krab, Büro | 0:12–0:40\nAKTION: Patrick betritt das Büro, die Kiste noch auf der Schulter.\nAKTION: Mr. Krabs öffnet die Kiste, weißes Pulver glitzert.\nSpongebob [ruhig]: Kokain.\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen.\nAKTION: Mr. Krabs schiebt einen Geldstapel über den Tisch.\nSpongebob [ruhig]: Nur diese eine Fahrt.\nMr. Krabs [ruhig]: Wie du willst.\n# 3 | Chum Bucket | 0:40–0:58\nAKTION: Patrick stellt die Kiste vor Plankton ab.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\nAKTION: Plankton grinst und schließt die Tür.\nMr. Krabs [ruhig]: Morgen wieder. Gleiche Bezahlung.\nAKTION: Patrick schaut aufs Meer hinaus.",
+"scenes": 3,
+"lines": 9,
+"words": 48,
+"actions": 8,
+"shots": 17,
+"seconds": 47,
+"speakers": [
+"Sandy",
+"Patrick",
+"Spongebob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "0:00–0:12. 0:12–0:40. 0:40–0:58.",
+"ending": "Patrick schaut aufs Meer hinaus."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Sehr knappe Sätze im Telegrammstil: Morgen wieder. Gleiche Bezahlung.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 48,
+"lines": 9,
+"scenes": 3,
+"seconds": 47,
+"duration": 42,
+"preview": "## Folge 1\nTITEL: Der erste Auftrag\n# 1 | Hafen | 0:00–0:12\nAKTION: Patrick schleppt im Nebel eine schwere Kiste über den Steg.\nAKTION: Sandy tritt aus dem Nebel und mustert ihn.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\n# 2 | Krusty Krab, Büro | 0:12–0:40\nAKTION: Patrick betritt das Büro, die Kiste noch auf der Schulter.\nAKTION: Mr. Krabs öffnet die Kiste, weißes Pulver glitzert.\nSpongebob [ruhig]: Kokain.\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe.\nPatrick [ruhig]: Sponge, lass uns gehen.\nAKTION: Mr. Krabs schiebt einen Geldstapel über den Tisch.\nSpongebob [ruhig]: Nur diese eine Fahrt.\nMr. Krabs [ruhig]: Wie du willst.\n# 3 | Chum Bucket | 0:40–0:58\nAKTION: Patrick stellt die Kiste vor Plankton ab.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\nAKTION: Plankton grinst und schließt die Tür.\nMr. Krabs [ruhig]: Morgen wieder. Gleiche Bezahlung.\nAKTION: Patrick schaut aufs Meer hinaus."
+},
+"Weisses_Gold_Drehbuch.md": {
+"title": "SpongeBob – Weißes Gold",
+"figures": [
+{
+"name": "Spongebob",
+"description": "Gelber, rechteckiger Schwamm mit sichtbaren Poren, großen blauen Augen und zwei Vorderzähnen. Ausgeblichene dunkelgraue Arbeitsjacke mit einem Riss am rechten Ellenbogen und ausgefransten Ärmelenden. Cremefarbenes T-Shirt, verwaschene braune Hose und abgetragene schwarze Schuhe; am rechten Schuh löst sich die Sohle. Kein Hut und kein Schmuck.",
+"lines": 16,
+"declared": true
+},
+{
+"name": "Patrick",
+"description": "Kräftiger rosa Seestern mit rundlichem Bauch, kleinen Augen und breitem Gesicht. Ausgewaschener olivgrüner Hoodie, violettes T-Shirt, dunkelgraue Jogginghose und abgenutzte weiße Sneaker. Kein Schmuck.",
+"lines": 9,
+"declared": true
+},
+{
+"name": "Mr. Krabs",
+"description": "Breite rote Krabbe mit großen Scheren und langen Augenstielen. Schwarzer Dreiteiler mit feinen goldbraunen Nadelstreifen, dunkelrotes Seidenhemd, schwarze Krawatte und burgunderrotes Einstecktuch. Massive goldene Armbanduhr und goldener Siegelring an einer Schere. Schwerer schwarzer Mantel über den Schultern.",
+"lines": 11,
+"declared": true
+},
+{
+"name": "Plankton",
+"description": "Winzige grüne Figur mit einem einzigen großen Auge, zwei langen Fühlern und dünnen Armen und Beinen. Mitternachtsblauer Maßanzug mit schwarzem Satinrevers, silbergrauer Weste und schmaler schwarzer Krawatte. Langer schwarzer Mantel mit dunkelrotem Innenfutter. Silberne Krawattennadel und silberne Taschenuhrkette.",
+"lines": 4,
+"declared": true
+},
+{
+"name": "Thaddäus",
+"description": "Schlanker blaugrüner Tintenfisch mit großem kahlem Kopf, langer Nase und schweren Augenlidern. Auberginefarbenes Hemd, graue Weste mit dezenter Karostruktur und anthrazitfarbene Anzughose mit Bügelfalte. Silberne Taschenuhrkette, polierte dunkle Lederschuhe und schmaler grauer Filzhut.",
+"lines": 2,
+"declared": true
+},
+{
+"name": "Larry",
+"description": "Sehr großer, muskulöser roter Hummer mit breitem Oberkörper und kräftigen Scheren. Tiefschwarzer Maßanzug mit betonten Schultern, schwarzes Hemd mit geöffnetem Kragen und langer, offen getragener dunkelgrauer Wollmantel. Breite goldene Armbanduhr und schwere schwarze Lederstiefel. An die Scheren angepasste Anzugärmel.",
+"lines": 5,
+"declared": true
+},
+{
+"name": "Sandy",
+"description": "Athletisches braunes Eichhörnchen mit heller Schnauze, zwei Vorderzähnen und buschigem Schwanz. Schwarzer taillierter Schutzanzug unter einer kurzen dunkelbraunen Lederjacke mit goldenen Reißverschlüssen. Dunkelroter Werkzeuggürtel, schwarze Handschuhe und schwarze Stiefel. Durchsichtiger runder Helm mit dunklem Metallrand und goldenen Verschlüssen. Leichte Ölspuren an Knien und Handschuhen.",
+"lines": 5,
+"declared": true
+}
+],
+"episodes": [
+{
+"number": 1,
+"title": "Das erste Geld",
+"text": "TITEL: Das erste Geld\n# 1 | Vor Sandys Werkstatt, früher Abend | Warmes Licht fällt durch ein halb geöffnetes Garagentor – 00:00 bis 00:15\nAKTION: Ruhiger Beginn. Unter einem rostigen Vordach sitzt SpongeBob auf einer umgedrehten Kiste. Seine dunkelgraue Arbeitsjacke ist am Ellenbogen aufgerissen, an einem Schuh löst sich die Sohle. Patrick hält ihm eine Rolle Klebeband hin. Aus der Werkstatt kommt warmes Licht; draußen schweben feine Sandpartikel durch das Wasser.\nAKTION: Hinter den beiden steht Sandy zwischen Werkzeugwagen und einem zerlegten Bootsmotor.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\nAKTION: SpongeBob sieht auf seinen kaputten Schuh und anschließend zur hell erleuchteten Krossen Krabbe auf der anderen Straßenseite. Er antwortet nicht.\n# 2 | Hinterzimmer der Krossen Krabbe | Krabs sitzt hinter einem schweren Holztisch, Larry steht an der Tür – 00:15 bis 00:37\nAKTION: Thaddäus stellt zwei Gläser vor Krabs ab. Auf dem Tisch liegt eine kleine offene schwarze Reisetasche mit verschlossenen weißen Paketen. Daneben liegen gebündelte Geldscheine. Krabs trägt einen schwarzen Nadelstreifenanzug; seine goldene Uhr fängt das Licht der tief hängenden Lampe. SpongeBob und Patrick bleiben zunächst im Türrahmen stehen.\nSpongebob [ruhig]: Kokain.\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. Larry fährt.\nPatrick [ängstlich]: Sponge, lass uns gehen.\nAKTION: SpongeBob schaut auf das Geld. Krabs schiebt die Scheine ein Stück näher.\nSpongebob [ruhig]: Nur diese eine Fahrt.\nMr. Krabs [ruhig]: Wie du willst.\n# 3 | Lagerhalle am Hafen, nachts | Plankton steht vor einem geöffneten Geldkoffer auf einer Metallkiste – 00:37 bis 00:58\nAKTION: Kaltes blaugrünes Licht fällt durch hohe, verschmutzte Fenster. Larry wartet im Hintergrund. Plankton öffnet die Reisetasche, betrachtet die Pakete und nickt. SpongeBob nimmt seinen Geldumschlag entgegen. Patrick steht dicht neben ihm und hält die Hände in den Taschen seines ausgewaschenen Hoodies.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\nAKTION: SpongeBob steckt das Geld in seine zerrissene Jacke. Sein Telefon klingelt. Er nimmt ab, ohne den Blick von Plankton zu lösen.\nMr. Krabs [ruhig]: Morgen wieder. Gleiche Bezahlung.\nAKTION: Patrick sieht SpongeBob an und wartet auf ein Nein. SpongeBob schweigt. Schwarzbild.",
+"scenes": 3,
+"lines": 9,
+"words": 50,
+"actions": 8,
+"shots": 17,
+"seconds": 48,
+"speakers": [
+"Sandy",
+"Patrick",
+"Spongebob",
+"Mr. Krabs",
+"Plankton"
+],
+"plot": "Warmes Licht fällt durch ein halb geöffnetes Garagentor – 00:00 bis 00:15. Krabs sitzt hinter einem schweren Holztisch, Larry steht an der Tür – 00:15 bis 00:37. Plankton steht vor einem geöffneten Geldkoffer auf einer Metallkiste – 00:37 bis 00:58.",
+"ending": "Patrick sieht SpongeBob an und wartet auf ein Nein. SpongeBob schweigt. Schwarzbild."
+},
+{
+"number": 2,
+"title": "Nicht genug",
+"text": "TITEL: Nicht genug\n# 1 | Krosse Krabbe, vier Wochen später | Ein dunkelroter Anzug hängt dort, wo früher SpongeBobs Arbeitsjacke lag – 00:00 bis 00:18\nAKTION: Kurze Einblendung: „Vier Wochen später“. SpongeBob zieht den dunkelroten Maßanzug über sein schwarzes Seidenhemd. Eine goldene Kette liegt auf seiner Brust. Patrick trägt jetzt einen smaragdgrünen Samt-Trainingsanzug und einen goldenen Seesternanhänger. Hinter ihnen verstaut Larry eine große, prall gefüllte Reisetasche im Schrank des Hinterzimmers.\nPatrick [ruhig]: Sandy hat noch Platz für mich. Ich höre auf.\nSpongebob [ruhig]: Nach heute.\nPatrick [ruhig]: Das hast du letzte Woche auch gesagt.\n# 2 | Planktons Lagerhalle | SpongeBob bleibt nach einer Übergabe allein am Tisch stehen – 00:18 bis 00:38\nAKTION: Patrick wartet draußen hinter der offenen Tür. Im Raum liegt nur ein schmaler Lichtstreifen auf dem Geldkoffer. Plankton schließt ihn, doch SpongeBob legt eine Hand auf den Deckel. Zum ersten Mal hält er Planktons Blick stand.\nSpongebob [ruhig]: Was zahlst du für eine ganze Lieferung?\nPlankton [ruhig]: Du hast keine eigene Ware.\nSpongebob [ruhig]: Heute Nacht schon.\nAKTION: Plankton betrachtet SpongeBobs neue goldene Uhr. Er nimmt die Hand vom Koffer.\nPlankton [ruhig]: Fünfzigtausend. Danach will ich dich hier nicht mehr sehen.\n# 3 | Hinterhof der Krossen Krabbe | Patrick steht vor SpongeBob, die Küchentür ist nur angelehnt – 00:38 bis 00:58\nPatrick [wütend]: Du willst Krabs bestehlen.\nSpongebob [ruhig]: Die Lieferung bezahlt uns den Ausstieg.\nPatrick [ruhig]: Wir haben genug Geld, um zu gehen.\nSpongebob [wütend]: Genug, um wieder für jemanden zu arbeiten.\nAKTION: Patrick weicht zurück. SpongeBob nimmt die schwarze Reisetasche aus der Tür und wartet. Schließlich greift Patrick den zweiten Tragegriff.\nPatrick [ruhig]: Danach verschwinden wir. Zusammen.\nAKTION: Beide gehen durch den Hof. Hinter der Küchenscheibe steht Larry. Er hat alles gesehen. Er hebt sein Telefon. Schwarzbild.",
+"scenes": 3,
+"lines": 12,
+"words": 70,
+"actions": 5,
+"shots": 18,
+"seconds": 49,
+"speakers": [
+"Patrick",
+"Spongebob",
+"Plankton"
+],
+"plot": "Ein dunkelroter Anzug hängt dort, wo früher SpongeBobs Arbeitsjacke lag – 00:00 bis 00:18. SpongeBob bleibt nach einer Übergabe allein am Tisch stehen – 00:18 bis 00:38. Patrick steht vor SpongeBob, die Küchentür ist nur angelehnt – 00:38 bis 00:58.",
+"ending": "Beide gehen durch den Hof. Hinter der Küchenscheibe steht Larry. Er hat alles gesehen. Er hebt sein Telefon. Schwarzbild."
+},
+{
+"number": 3,
+"title": "Erwischt",
+"text": "TITEL: Erwischt\n# 1 | Planktons Lagerhalle, dieselbe Nacht | Die gestohlene Reisetasche steht zwischen SpongeBob und einem Geldkoffer – 00:00 bis 00:18\nAKTION: Plankton öffnet den Koffer. Reihen gebündelter Geldscheine werden sichtbar. SpongeBob beugt sich vor, Patrick bleibt nahe der Tür. Unter der Arbeitslampe wirken ihre neuen Kleider plötzlich auffällig hell. Vom Hof fällt ein breiter Scheinwerferkegel durch die Fenster und bleibt stehen.\nPatrick [ängstlich]: Sponge. Da ist jemand.\nAKTION: SpongeBob richtet sich auf. Plankton klappt den Geldkoffer zu.\n# 2 | Eingang der Lagerhalle | Krabs tritt aus dem Scheinwerferlicht, Larry folgt ihm – 00:18 bis 00:38\nMr. Krabs [ruhig]: Meine Ware. Dein Geld.\nAKTION: Krabs sieht erst Plankton an, dann SpongeBob. Larry bleibt vor der Tür stehen. Plankton zieht seine Hände langsam vom Koffer zurück.\nPlankton [ruhig]: Ich wusste nicht, woher sie das haben.\nMr. Krabs [wütend]: Spar dir das.\nAKTION: Krabs bleibt direkt vor SpongeBob stehen. Die schwarze Tasche liegt zwischen ihren Füßen.\nMr. Krabs [ruhig]: Wer hatte die Idee?\nSpongebob [ängstlich]: Ich. Patrick wollte nicht mitmachen.\n# 3 | Unter der Arbeitslampe | Patrick steht hinter SpongeBob, Krabs zieht eine Pistole – 00:38 bis 00:58\nSpongebob [flehend]: Sie haben alles zurück. Das Geld ist auch noch da.\nAKTION: Krabs schiebt SpongeBob mit seiner freien Schere zur Seite. Er richtet die Pistole auf Patrick. Larry macht einen Schritt nach vorn und bleibt stehen.\nMr. Krabs [ruhig]: Du wolltest entscheiden. Dann sieh hin.\nAKTION: Die Kamera bleibt auf SpongeBobs Gesicht. Ein Schuss. SpongeBob zuckt zusammen. Patrick sinkt außerhalb des Bildes gegen den Tisch. Sein goldener Seesternanhänger schlägt hörbar gegen die Tischkante.\nSpongebob [schreiend]: Patrick!\nAKTION: SpongeBob fängt ihn auf, bevor er den Boden erreicht. Schwarzbild.",
+"scenes": 3,
+"lines": 9,
+"words": 44,
+"actions": 7,
+"shots": 18,
+"seconds": 47,
+"speakers": [
+"Patrick",
+"Mr. Krabs",
+"Plankton",
+"Spongebob"
+],
+"plot": "Die gestohlene Reisetasche steht zwischen SpongeBob und einem Geldkoffer – 00:00 bis 00:18. Krabs tritt aus dem Scheinwerferlicht, Larry folgt ihm – 00:18 bis 00:38. Patrick steht hinter SpongeBob, Krabs zieht eine Pistole – 00:38 bis 00:58.",
+"ending": "SpongeBob fängt ihn auf, bevor er den Boden erreicht. Schwarzbild."
+},
+{
+"number": 4,
+"title": "Zu spät",
+"text": "TITEL: Zu spät\n# 1 | Lagerhalle | SpongeBob kniet neben Patrick, Krabs steht über ihnen – 00:00 bis 00:18\nMr. Krabs [ruhig]: Larry. Den anderen auch.\nAKTION: Larry zieht seine Pistole. Er richtet sie auf Krabs. Plankton bleibt mit erhobenen Händen hinter seinem Koffer stehen.\nLarry [ruhig]: Nein.\nMr. Krabs [drohend]: Überleg dir das gut.\nLarry [ruhig]: Hab ich. Sponge, nimm Patrick.\nAKTION: SpongeBob zieht Patrick hoch. Larry stellt sich zwischen die Freunde und Krabs. Gemeinsam verlassen sie die Halle; Krabs und Plankton bleiben bei der Ware zurück.\n# 2 | Sandys Werkstatt, kurz darauf | Patrick liegt auf einer alten Werkbank unter einer weißen Arbeitslampe – 00:18 bis 00:38\nAKTION: Sandy schiebt Werkzeug zur Seite und beugt sich über Patrick. Larry legt seine Pistole auf einen niedrigen Werkzeugwagen, um ihr zu helfen. SpongeBob hält Patricks Hand. Seine goldene Uhr liegt direkt neben Patricks viel größerer Uhr. Die beiden Metallgehäuse berühren sich.\nPatrick [ängstlich]: Sponge …\nSpongebob [flehend]: Ich bin hier. Ich bin direkt hier.\nAKTION: Patrick versucht, SpongeBobs Hand zu drücken. Dann wird seine Hand still. Sandy prüft seinen Puls. Sie sieht zu Larry und schüttelt langsam den Kopf.\n# 3 | Dieselbe Werkstatt | Sandy steht zwischen SpongeBob und der Werkbank – 00:38 bis 00:58\nAKTION: Sandy legt vorsichtig ein sauberes Tuch über Patrick. SpongeBob hält seine Hand noch einen Moment fest. Erst dann lässt er los. Der Seesternanhänger liegt auf dem Tuch.\nSandy [traurig]: SpongeBob.\nAKTION: SpongeBob blickt an ihr vorbei auf Larrys Pistole. Er nimmt sie vom Werkzeugwagen. Larry sieht es und geht zu ihm.\nLarry [traurig]: Ich hätte früher eingreifen müssen.\nSpongebob [ruhig]: Wo fahren die jetzt hin?\nLarry [ruhig]: Zur Krabbe.\nAKTION: SpongeBob sieht zur Tür. Sandy versteht, was er vorhat. Schwarzbild.",
+"scenes": 3,
+"lines": 10,
+"words": 35,
+"actions": 7,
+"shots": 17,
+"seconds": 39,
+"speakers": [
+"Mr. Krabs",
+"Larry",
+"Patrick",
+"Spongebob",
+"Sandy"
+],
+"plot": "SpongeBob kniet neben Patrick, Krabs steht über ihnen – 00:00 bis 00:18. Patrick liegt auf einer alten Werkbank unter einer weißen Arbeitslampe – 00:18 bis 00:38. Sandy steht zwischen SpongeBob und der Werkbank – 00:38 bis 00:58.",
+"ending": "SpongeBob sieht zur Tür. Sandy versteht, was er vorhat. Schwarzbild."
+},
+{
+"number": 5,
+"title": "Zurück",
+"text": "TITEL: Zurück\n# 1 | SpongeBobs Wohnung, später in derselben Nacht | SpongeBob steht in einem schwarzen Anzug vor einem fleckigen Spiegel – 00:00 bis 00:18\nAKTION: Der Kleiderschrank steht offen. Die dunkelrote Jacke hängt über einem Stuhl; daneben liegen SpongeBobs goldene Kette und seine Uhr. Er trägt jetzt einen schwarzen Anzug mit schwarzem Hemd. Sandy und Larry haben ihn nach Hause begleitet. Sandy steht hinter ihm, ihr Telefon noch in der Hand. Im Spiegel sieht er sie, dreht sich aber nicht um.\nSandy [ruhig]: Ich habe die Polizei gerufen. Bleib hier.\nSpongebob [ruhig]: Ich will, dass er mich ansieht.\nLarry [ruhig]: Ich komme mit.\nAKTION: SpongeBob steckt die Pistole unter sein Sakko. Sandy bleibt vor dem Spiegel zurück.\n# 2 | Krosse Krabbe, Gastraum | Thaddäus steht allein hinter dem dunklen Tresen – 00:18 bis 00:38\nAKTION: SpongeBob und Larry kommen herein. Thaddäus hält ein Glas und ein Geschirrtuch. Als er die beiden sieht, stellt er das Glas vorsichtig ab. Im Hinterzimmer brennt Licht. Dort sind Krabs und Plankton durch einen schmalen Türspalt zu erkennen.\nThaddäus [ängstlich]: Wo ist Patrick?\nAKTION: SpongeBob antwortet nicht. Thaddäus sieht die Pistole unter seinem offenen Sakko. Er legt das Geschirrtuch weg und tritt vom Durchgang zurück.\nThaddäus [ruhig]: Sie sind hinten.\nAKTION: Larry folgt SpongeBob durch den Durchgang. Thaddäus bleibt im leeren Gastraum stehen.\n# 3 | Krabs' Hinterzimmer | Die zurückgeholte Reisetasche steht neben Planktons Geldkoffer auf dem Tisch – 00:38 bis 00:58\nAKTION: SpongeBob tritt ein und richtet die Pistole auf Krabs. Larry bleibt an der Tür. Plankton steht neben dem Koffer und wird von SpongeBobs Rücken verdeckt.\nSpongebob [ruhig]: Er wollte heute aufhören. Ich habe ihn mitgenommen.\nMr. Krabs [ruhig]: Dann weißt du, warum er dort war.\nAKTION: SpongeBobs Hand beginnt zu zittern. Krabs beobachtet sie und bleibt reglos sitzen. Hinter SpongeBob zieht Plankton langsam eine kleine Pistole aus seinem Mantel. Larry sieht die Bewegung.\nAKTION: Plankton hebt die Waffe in Richtung SpongeBobs Rücken. Schwarzbild.",
+"scenes": 3,
+"lines": 7,
+"words": 37,
+"actions": 8,
+"shots": 15,
+"seconds": 42,
+"speakers": [
+"Sandy",
+"Spongebob",
+"Larry",
+"Thaddäus",
+"Mr. Krabs"
+],
+"plot": "SpongeBob steht in einem schwarzen Anzug vor einem fleckigen Spiegel – 00:00 bis 00:18. Thaddäus steht allein hinter dem dunklen Tresen – 00:18 bis 00:38. Die zurückgeholte Reisetasche steht neben Planktons Geldkoffer auf dem Tisch – 00:38 bis 00:58.",
+"ending": "Plankton hebt die Waffe in Richtung SpongeBobs Rücken. Schwarzbild."
+},
+{
+"number": 6,
+"title": "Was übrig bleibt",
+"text": "TITEL: Was übrig bleibt\n# 1 | Krabs' Hinterzimmer | Larry greift nach Plankton, SpongeBob steht noch immer vor Krabs – 00:00 bis 00:18\nAKTION: Larry schlägt Plankton die Pistole aus der Hand und hält ihn mit einer Schere fest. Die Waffe rutscht unter einen Schrank. SpongeBob dreht sich kurz um und richtet den Blick wieder auf Krabs. Dessen goldene Uhr tickt in der plötzlichen Stille.\nMr. Krabs [ängstlich]: Leg die Waffe hin. Wir können reden.\nAKTION: SpongeBob atmet ein. Er senkt die Pistole ein kleines Stück. Krabs lehnt sich erleichtert zurück. Dann hebt SpongeBob die Waffe wieder. Ein Schuss. Die Kamera bleibt auf SpongeBob; sein Gesicht verändert sich kaum.\n# 2 | Eingang der Krossen Krabbe | Blaues Licht wandert über die Fensterscheiben – 00:18 bis 00:38\nAKTION: Krabs sitzt reglos im Hinterzimmer. Larry bewacht Plankton neben der offenen Reisetasche. Im Gastraum steht Thaddäus am Tresen. Draußen wartet Sandy. SpongeBob kommt aus dem Hinterzimmer, legt die Pistole auf den Boden und tritt mit erhobenen Händen zur Eingangstür. Sirenen verstummen außerhalb des Bildes.\nSandy [traurig]: Sponge …\nSpongebob [ruhig]: Es war meine Idee. Mit der Lieferung.\nAKTION: Sandy hält seinen Blick aus. SpongeBob geht langsam ins blaue Licht. Larry bleibt mit Plankton im Hinterzimmer; der Geldkoffer und die Drogen liegen offen auf dem Tisch.\n# 3 | Besuchsraum der Untersuchungshaft, sechs Monate später | SpongeBob und Sandy sitzen sich an einer Glasscheibe gegenüber – 00:38 bis 00:58\nAKTION: Blasses Tageslicht fällt auf einen grauen Tisch. SpongeBob trägt denselben schwarzen Anzug, ohne Schmuck. Sandy legt Patricks goldenen Seesternanhänger auf ihrer Seite vor die Scheibe. SpongeBob hebt die Hand, stoppt aber am Glas.\nSandy [traurig]: Er ist deinetwegen geblieben.\nSpongebob [traurig]: Ich weiß.\nAKTION: SpongeBob lässt die Hand sinken. Im Glas spiegeln sich sein schwarzer Anzug und der goldene Anhänger. Der Stuhl neben ihm ist leer. Die Kamera bleibt stehen. Langsame Abblende. Ende.",
+"scenes": 3,
+"lines": 5,
+"words": 21,
+"actions": 6,
+"shots": 11,
+"seconds": 29,
+"speakers": [
+"Mr. Krabs",
+"Sandy",
+"Spongebob"
+],
+"plot": "Larry greift nach Plankton, SpongeBob steht noch immer vor Krabs – 00:00 bis 00:18. Blaues Licht wandert über die Fensterscheiben – 00:18 bis 00:38. SpongeBob und Sandy sitzen sich an einer Glasscheibe gegenüber – 00:38 bis 00:58.",
+"ending": "SpongeBob lässt die Hand sinken. Im Glas spiegeln sich sein schwarzer Anzug und der goldene Anhänger. Der Stuhl neben ihm ist leer. Die Kamera bleibt stehen. Langsame Abblende. Ende."
+}
+],
+"problems": [
+{
+"line": null,
+"text": "Folge 1: Sehr knappe Sätze im Telegrammstil: Morgen wieder. Gleiche Bezahlung.",
+"blocking": false
+},
+{
+"line": null,
+"text": "Folge 3: Sehr knappe Sätze im Telegrammstil: Meine Ware. Dein Geld.",
+"blocking": false
+},
+{
+"line": null,
+"text": "Folge 4: 4 Sätze haben höchstens zwei Wörter. Viele sehr kurze Sätze wirken abgehackt.",
+"blocking": false
+},
+{
+"line": 31,
+"text": "Zeile 31: Sehr lange Handlung, als 2 stumme Einstellungen gezeigt.",
+"blocking": false
+}
+],
+"ok": true,
+"series": true,
+"words": 257,
+"lines": 52,
+"scenes": 18,
+"seconds": 254,
+"duration": 26,
+"preview": "## Folge 1\nTITEL: Das erste Geld\n# 1 | Vor Sandys Werkstatt, früher Abend | Warmes Licht fällt durch ein halb geöffnetes Garagentor – 00:00 bis 00:15\nAKTION: Ruhiger Beginn. Unter einem rostigen Vordach sitzt SpongeBob auf einer umgedrehten Kiste. Seine dunkelgraue Arbeitsjacke ist am Ellenbogen aufgerissen, an einem Schuh löst sich die Sohle. Patrick hält ihm eine Rolle Klebeband hin. Aus der Werkstatt kommt warmes Licht; draußen schweben feine Sandpartikel durch das Wasser.\nAKTION: Hinter den beiden steht Sandy zwischen Werkzeugwagen und einem zerlegten Bootsmotor.\nSandy [ruhig]: Montag, sieben Uhr. Arbeit hätte ich für euch beide.\nPatrick [ruhig]: Ich wäre dabei.\nAKTION: SpongeBob sieht auf seinen kaputten Schuh und anschließend zur hell erleuchteten Krossen Krabbe auf der anderen Straßenseite. Er antwortet nicht.\n# 2 | Hinterzimmer der Krossen Krabbe | Krabs sitzt hinter einem schweren Holztisch, Larry steht an der Tür – 00:15 bis 00:37\nAKTION: Thaddäus stellt zwei Gläser vor Krabs ab. Auf dem Tisch liegt eine kleine offene schwarze Reisetasche mit verschlossenen weißen Paketen. Daneben liegen gebündelte Geldscheine. Krabs trägt einen schwarzen Nadelstreifenanzug; seine goldene Uhr fängt das Licht der tief hängenden Lampe. SpongeBob und Patrick bleiben zunächst im Türrahmen stehen.\nSpongebob [ruhig]: Kokain.\nMr. Krabs [ruhig]: Fünfhundert für euch beide. Plankton bezahlt euch bei der Übergabe. Larry fährt.\nPatrick [ängstlich]: Sponge, lass uns gehen.\nAKTION: SpongeBob schaut auf das Geld. Krabs schiebt die Scheine ein Stück näher.\nSpongebob [ruhig]: Nur diese eine Fahrt.\nMr. Krabs [ruhig]: Wie du willst.\n# 3 | Lagerhalle am Hafen, nachts | Plankton steht vor einem geöffneten Geldkoffer auf einer Metallkiste – 00:37 bis 00:58\nAKTION: Kaltes blaugrünes Licht fällt durch hohe, verschmutzte Fenster. Larry wartet im Hintergrund. Plankton öffnet die Reisetasche, betrachtet die Pakete und nickt. SpongeBob nimmt seinen Geldumschlag entgegen. Patrick steht dicht neben ihm und hält die Hände in den Taschen seines ausgewaschenen Hoodies.\nPlankton [ruhig]: Krabs weiß, wen er schickt. Jetzt weiß ich es auch.\nAKTION: SpongeBob steckt das Geld in seine zerrissene Jacke. Sein Telefon klingelt. Er nimmt ab, ohne den Blick von Plankton zu lösen.\nMr. Krabs [ruhig]: Morgen wieder. Gleiche Bezahlung.\nAKTION: Patrick sieht SpongeBob an und wartet auf ein Nein. SpongeBob schweigt. Schwarzbild.\n\n## Folge 2\nTITEL: Nicht genug\n# 1 | Krosse Krabbe, vier Wochen später | Ein dunkelroter Anzug hängt dort, wo früher SpongeBobs Arbeitsjacke lag – 00:00 bis 00:18\nAKTION: Kurze Einblendung: „Vier Wochen später“. SpongeBob zieht den dunkelroten Maßanzug über sein schwarzes Seidenhemd. Eine goldene Kette liegt auf seiner Brust. Patrick trägt jetzt einen smaragdgrünen Samt-Trainingsanzug und einen goldenen Seesternanhänger. Hinter ihnen verstaut Larry eine große, prall gefüllte Reisetasche im Schrank des Hinterzimmers.\nPatrick [ruhig]: Sandy hat noch Platz für mich. Ich höre auf.\nSpongebob [ruhig]: Nach heute.\nPatrick [ruhig]: Das hast du letzte Woche auch gesagt.\n# 2 | Planktons Lagerhalle | SpongeBob bleibt nach einer Übergabe allein am Tisch stehen – 00:18 bis 00:38\nAKTION: Patrick wartet draußen hinter der offenen Tür. Im Raum liegt nur ein schmaler Lichtstreifen auf dem Geldkoffer. Plankton schließt ihn, doch SpongeBob legt eine Hand auf den Deckel. Zum ersten Mal hält er Planktons Blick stand.\nSpongebob [ruhig]: Was zahlst du für eine ganze Lieferung?\nPlankton [ruhig]: Du hast keine eigene Ware.\nSpongebob [ruhig]: Heute Nacht schon.\nAKTION: Plankton betrachtet SpongeBobs neue goldene Uhr. Er nimmt die Hand vom Koffer.\nPlankton [ruhig]: Fünfzigtausend. Danach will ich dich hier nicht mehr sehen.\n# 3 | Hinterhof der Krossen Krabbe | Patrick steht vor SpongeBob, die Küchentür ist nur angelehnt – 00:38 bis 00:58\nPatrick [wütend]: Du willst Krabs bestehlen.\nSpongebob [ruhig]: Die Lieferung bezahlt uns den Ausstieg.\nPatrick [ruhig]: Wir haben genug Geld, um zu gehen.\nSpongebob [wütend]: Genug, um wieder für jemanden zu arbeiten.\nAKTION: Patrick weicht zurück. SpongeBob nimmt die schwarze Reisetasche aus der Tür und wartet. Schließlich greift Patrick den zweiten Tragegriff.\nPatrick [ruhig]: Danach verschwinden wir. Zusammen.\nAKTION: Beide gehen durch den Hof. Hinter der Küchenscheibe steht Larry. Er hat alles gesehen. Er hebt sein Telefon. Schwarzbild.\n\n## Folge 3\nTITEL: Erwischt\n# 1 | Planktons Lagerhalle, dieselbe Nacht | Die gestohlene Reisetasche steht zwischen SpongeBob und einem Geldkoffer – 00:00 bis 00:18\nAKTION: Plankton öffnet den Koffer. Reihen gebündelter Geldscheine werden sichtbar. SpongeBob beugt sich vor, Patrick bleibt nahe der Tür. Unter der Arbeitslampe wirken ihre neuen Kleider plötzlich auffällig hell. Vom Hof fällt ein breiter Scheinwerferkegel durch die Fenster und bleibt stehen.\nPatrick [ängstlich]: Sponge. Da ist jemand.\nAKTION: SpongeBob richtet sich auf. Plankton klappt den Geldkoffer zu.\n# 2 | Eingang der Lagerhalle | Krabs tritt aus dem Scheinwerferlicht, Larry folgt ihm – 00:18 bis 00:38\nMr. Krabs [ruhig]: Meine Ware. Dein Geld.\nAKTION: Krabs sieht erst Plankton an, dann SpongeBob. Larry bleibt vor der Tür stehen. Plankton zieht seine Hände langsam vom Koffer zurück.\nPlankton [ruhig]: Ich wusste nicht, woher sie das haben.\nMr. Krabs [wütend]: Spar dir das.\nAKTION: Krabs bleibt direkt vor SpongeBob stehen. Die schwarze Tasche liegt zwischen ihren Füßen.\nMr. Krabs [ruhig]: Wer hatte die Idee?\nSpongebob [ängstlich]: Ich. Patrick wollte nicht mitmachen.\n# 3 | Unter der Arbeitslampe | Patrick steht hinter SpongeBob, Krabs zieht eine Pistole – 00:38 bis 00:58\nSpongebob [flehend]: Sie haben alles zurück. Das Geld ist auch noch da.\nAKTION: Krabs schiebt SpongeBob mit seiner freien Schere zur Seite. Er richtet die Pistole auf Patrick. Larry macht einen Schritt nach vorn und bleibt stehen.\nMr. Krabs [ruhig]: Du wolltest entscheiden. Dann sieh hin.\nAKTION: Die Kamera bleibt auf SpongeBobs Gesicht. Ein Schuss. SpongeBob zuckt zusammen. Patrick sinkt außerhalb des Bildes gegen den Tisch. Sein goldener Seesternanhänger schlägt hörbar gegen die Tischkante.\nSpongebob [schreiend]: Patrick!\nAKTION: SpongeBob fängt ihn auf, bevor er den Boden erreicht. Schwarzbild.\n\n## Folge 4\nTITEL: Zu spät\n# 1 | Lagerhalle | SpongeBob kniet neben Patrick, Krabs steht über ihnen – 00:00 bis 00:18\nMr. Krabs [ruhig]: Larry. Den anderen auch.\nAKTION: Larry zieht seine Pistole. Er richtet sie auf Krabs. Plankton bleibt mit erhobenen Händen hinter seinem Koffer stehen.\nLarry [ruhig]: Nein.\nMr. Krabs [drohend]: Überleg dir das gut.\nLarry [ruhig]: Hab ich. Sponge, nimm Patrick.\nAKTION: SpongeBob zieht Patrick hoch. Larry stellt sich zwischen die Freunde und Krabs. Gemeinsam verlassen sie die Halle; Krabs und Plankton bleiben bei der Ware zurück.\n# 2 | Sandys Werkstatt, kurz darauf | Patrick liegt auf einer alten Werkbank unter einer weißen Arbeitslampe – 00:18 bis 00:38\nAKTION: Sandy schiebt Werkzeug zur Seite und beugt sich über Patrick. Larry legt seine Pistole auf einen niedrigen Werkzeugwagen, um ihr zu helfen. SpongeBob hält Patricks Hand. Seine goldene Uhr liegt direkt neben Patricks viel größerer Uhr. Die beiden Metallgehäuse berühren sich.\nPatrick [ängstlich]: Sponge …\nSpongebob [flehend]: Ich bin hier. Ich bin direkt hier.\nAKTION: Patrick versucht, SpongeBobs Hand zu drücken. Dann wird seine Hand still. Sandy prüft seinen Puls. Sie sieht zu Larry und schüttelt langsam den Kopf.\n# 3 | Dieselbe Werkstatt | Sandy steht zwischen SpongeBob und der Werkbank – 00:38 bis 00:58\nAKTION: Sandy legt vorsichtig ein sauberes Tuch über Patrick. SpongeBob hält seine Hand noch einen Moment fest. Erst dann lässt er los. Der Seesternanhänger liegt auf dem Tuch.\nSandy [traurig]: SpongeBob.\nAKTION: SpongeBob blickt an ihr vorbei auf Larrys Pistole. Er nimmt sie vom Werkzeugwagen. Larry sieht es und geht zu ihm.\nLarry [traurig]: Ich hätte früher eingreifen müssen.\nSpongebob [ruhig]: Wo fahren die jetzt hin?\nLarry [ruhig]: Zur Krabbe.\nAKTION: SpongeBob sieht zur Tür. Sandy versteht, was er vorhat. Schwarzbild.\n\n## Folge 5\nTITEL: Zurück\n# 1 | SpongeBobs Wohnung, später in derselben Nacht | SpongeBob steht in einem schwarzen Anzug vor einem fleckigen Spiegel – 00:00 bis 00:18\nAKTION: Der Kleiderschrank steht offen. Die dunkelrote Jacke hängt über einem Stuhl; daneben liegen SpongeBobs goldene Kette und seine Uhr. Er trägt jetzt einen schwarzen Anzug mit schwarzem Hemd. Sandy und Larry haben ihn nach Hause begleitet. Sandy steht hinter ihm, ihr Telefon noch in der Hand. Im Spiegel sieht er sie, dreht sich aber nicht um.\nSandy [ruhig]: Ich habe die Polizei gerufen. Bleib hier.\nSpongebob [ruhig]: Ich will, dass er mich ansieht.\nLarry [ruhig]: Ich komme mit.\nAKTION: SpongeBob steckt die Pistole unter sein Sakko. Sandy bleibt vor dem Spiegel zurück.\n# 2 | Krosse Krabbe, Gastraum | Thaddäus steht allein hinter dem dunklen Tresen – 00:18 bis 00:38\nAKTION: SpongeBob und Larry kommen herein. Thaddäus hält ein Glas und ein Geschirrtuch. Als er die beiden sieht, stellt er das Glas vorsichtig ab. Im Hinterzimmer brennt Licht. Dort sind Krabs und Plankton durch einen schmalen Türspalt zu erkennen.\nThaddäus [ängstlich]: Wo ist Patrick?\nAKTION: SpongeBob antwortet nicht. Thaddäus sieht die Pistole unter seinem offenen Sakko. Er legt das Geschirrtuch weg und tritt vom Durchgang zurück.\nThaddäus [ruhig]: Sie sind hinten.\nAKTION: Larry folgt SpongeBob durch den Durchgang. Thaddäus bleibt im leeren Gastraum stehen.\n# 3 | Krabs' Hinterzimmer | Die zurückgeholte Reisetasche steht neben Planktons Geldkoffer auf dem Tisch – 00:38 bis 00:58\nAKTION: SpongeBob tritt ein und richtet die Pistole auf Krabs. Larry bleibt an der Tür. Plankton steht neben dem Koffer und wird von SpongeBobs Rücken verdeckt.\nSpongebob [ruhig]: Er wollte heute aufhören. Ich habe ihn mitgenommen.\nMr. Krabs [ruhig]: Dann weißt du, warum er dort war.\nAKTION: SpongeBobs Hand beginnt zu zittern. Krabs beobachtet sie und bleibt reglos sitzen. Hinter SpongeBob zieht Plankton langsam eine kleine Pistole aus seinem Mantel. Larry sieht die Bewegung.\nAKTION: Plankton hebt die Waffe in Richtung SpongeBobs Rücken. Schwarzbild.\n\n## Folge 6\nTITEL: Was übrig bleibt\n# 1 | Krabs' Hinterzimmer | Larry greift nach Plankton, SpongeBob steht noch immer vor Krabs – 00:00 bis 00:18\nAKTION: Larry schlägt Plankton die Pistole aus der Hand und hält ihn mit einer Schere fest. Die Waffe rutscht unter einen Schrank. SpongeBob dreht sich kurz um und richtet den Blick wieder auf Krabs. Dessen goldene Uhr tickt in der plötzlichen Stille.\nMr. Krabs [ängstlich]: Leg die Waffe hin. Wir können reden.\nAKTION: SpongeBob atmet ein. Er senkt die Pistole ein kleines Stück. Krabs lehnt sich erleichtert zurück. Dann hebt SpongeBob die Waffe wieder. Ein Schuss. Die Kamera bleibt auf SpongeBob; sein Gesicht verändert sich kaum.\n# 2 | Eingang der Krossen Krabbe | Blaues Licht wandert über die Fensterscheiben – 00:18 bis 00:38\nAKTION: Krabs sitzt reglos im Hinterzimmer. Larry bewacht Plankton neben der offenen Reisetasche. Im Gastraum steht Thaddäus am Tresen. Draußen wartet Sandy. SpongeBob kommt aus dem Hinterzimmer, legt die Pistole auf den Boden und tritt mit erhobenen Händen zur Eingangstür. Sirenen verstummen außerhalb des Bildes.\nSandy [traurig]: Sponge …\nSpongebob [ruhig]: Es war meine Idee. Mit der Lieferung.\nAKTION: Sandy hält seinen Blick aus. SpongeBob geht langsam ins blaue Licht. Larry bleibt mit Plankton im Hinterzimmer; der Geldkoffer und die Drogen liegen offen auf dem Tisch.\n# 3 | Besuchsraum der Untersuchungshaft, sechs Monate später | SpongeBob und Sandy sitzen sich an einer Glasscheibe gegenüber – 00:38 bis 00:58\nAKTION: Blasses Tageslicht fällt auf einen grauen Tisch. SpongeBob trägt denselben schwarzen Anzug, ohne Schmuck. Sandy legt Patricks goldenen Seesternanhänger auf ihrer Seite vor die Scheibe. SpongeBob hebt die Hand, stoppt aber am Glas.\nSandy [traurig]: Er ist deinetwegen geblieben.\nSpongebob [traurig]: Ich weiß.\nAKTION: SpongeBob lässt die Hand sinken. Im Glas spiegeln sich sein schwarzer Anzug und der goldene Anhänger. Der Stuhl neben ihm ist leer. Die Kamera bleibt stehen. Langsame Abblende. Ende."
+}
+}
