@@ -167,11 +167,13 @@ def fill_target_cut(base, talking, caps, target, weights):
             take=max(0.,caps[i]-times[i]);times[i]+=take;missing-=take;pool.remove(i)
     return _talk_rest(times,order,max(0.,missing),weights)
 
-def audio_layout(episodes, lines, minimum_seconds=None, fps=FPS, version=17):
+def audio_layout(episodes, lines, minimum_seconds=None, fps=FPS, version=17, shots=False):
     """Speech starts on the cut; extra time becomes action, never a pause before the words.
     Version 18 adds the 0.18 cut (reaction and establishing shots, longer silent action);
-    with version 17 every number stays as it was in 0.17."""
-    reports=[];cut=version>=18
+    with version 17 every number stays as it was in 0.17. shots (0.19, projects pinned with
+    shot_policy 19, version 18 only): silent shots last whole Wan clips played 1:1 (shot_design)."""
+    reports=[];cut=version>=18;native=shots and cut
+    if native:import shot_design
     for ei,episode in enumerate(episodes):
         scenes=episode['scenes'];groups=[];base=[];plans=[]
         for si,scene in enumerate(scenes):
@@ -188,14 +190,18 @@ def audio_layout(episodes, lines, minimum_seconds=None, fps=FPS, version=17):
                   for seconds,talk,scene in zip(base,talking,scenes)]
         elif rich:
             base=[seconds if group else 2.5 for seconds,group in zip(base,groups)]
+        if native:base=shot_design.silent_base(scenes,talking,base,fps)
         weights=[scene.get('seconds',4) if not group else sum(float(l['duration']) for l in group) for scene,group in zip(scenes,groups)]
         if cut:
             # Silent shots share the extra time by their own length: an action more than a wide shot.
             weights=[w if talk else seconds for w,talk,seconds in zip(weights,talking,base)]
-            planned=fill_target_cut(base,talking,[REACTION_CAP if off_screen(s) else None for s in scenes],target,weights)
+            # 0.19: a reaction takes extra time only up to one Wan clip played 1:1 (81 frames).
+            cap=shot_design.NATIVE_FRAMES/fps if native else REACTION_CAP
+            planned=fill_target_cut(base,talking,[cap if off_screen(s) else None for s in scenes],target,weights)
         else:planned=fill_target(base,[bool(g) for g in groups],target,weights)
         # Whole frames; rounding only ever adds, the minimum stays met.
         times=distribute_frames(planned,target,weights,fps)
+        if native:times=shot_design.snap_silent(times,talking,fps)
         cursor=0.;speech=0.;intervals=[]
         for scene,group,seconds,natural,plan in zip(scenes,groups,times,base,plans):
             spare=max(0,seconds-natural)

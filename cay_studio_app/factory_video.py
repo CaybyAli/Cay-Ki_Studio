@@ -4,7 +4,7 @@ from pathlib import Path
 from studio_quality_policy import PROFILES, cadence
 from studio_resources_options import cpu_options
 from wan_text_encoder import choose as choose_text
-import speech_check
+import shot_design,speech_check
 
 VIDEO_MODELS={
  'high':('UNETLoader','unet_name','wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors'),
@@ -29,10 +29,11 @@ def video_models(info,comfy=None):
     if missing:raise ValueError('Video-Nodes fehlen: '+', '.join(sorted(missing)))
     return result
 
-def motion_graph(image,prompt,seed,prefix,models,seconds,quality='balanced'):
-    if not .1<=seconds<=5.1:raise ValueError('Ein Bewegungsabschnitt muss höchstens fünf Sekunden dauern.')
+def motion_graph(image,prompt,seed,prefix,models,seconds,quality='balanced',native=0):
+    if not native and not .1<=seconds<=5.1:raise ValueError('Ein Bewegungsabschnitt muss höchstens fünf Sekunden dauern.')
     def n(kind,**inputs):return {'class_type':kind,'inputs':inputs}
-    frames=4*math.ceil(seconds*16/4)+1
+    # native (0.19, shot_policy 19): rendered for the delivery rate and played 1:1, no 16->25 interpolation.
+    frames=shot_design.native_frames(seconds,native) if native else 4*math.ceil(seconds*16/4)+1
     profile=PROFILES[quality];steps=profile['steps'];split=steps//2
     graph={
       '1':n('LoadImage',image=image),
@@ -48,7 +49,7 @@ def motion_graph(image,prompt,seed,prefix,models,seconds,quality='balanced'):
       '11':n('KSamplerAdvanced',model=['9',0],add_noise='enable',noise_seed=seed,steps=steps,cfg=profile['cfg'],sampler_name='euler',scheduler='simple',positive=['8',0],negative=['8',1],latent_image=['8',2],start_at_step=0,end_at_step=split,return_with_leftover_noise='enable'),
       '12':n('KSamplerAdvanced',model=['10',0],add_noise='disable',noise_seed=0,steps=steps,cfg=profile['cfg'],sampler_name='euler',scheduler='simple',positive=['8',0],negative=['8',1],latent_image=['11',0],start_at_step=split,end_at_step=steps,return_with_leftover_noise='disable'),
       '13':n('VAEDecode',samples=['12',0],vae=['5',0]),
-      '14':n('CreateVideo',images=['13',0],fps=16),
+      '14':n('CreateVideo',images=['13',0],fps=native or 16),
       '15':n('SaveVideo',video=['14',0],filename_prefix=prefix,format='mp4',codec='h264')}
     if quality in ('fast','draft'):
         if not models.get('fast_loras'):raise ValueError('Schnellmodus braucht die beiden Wan-2.2-Lightning-Gewichte. Unter Animation einrichten ergänzen oder bewusst ein anderes Profil wählen.')
@@ -98,6 +99,7 @@ EDIT_POLICY=18   # d['edit_policy'] from which the export has 0.18 captions, cam
 CAPTION_WORDS=4  # TikTok-style captions: 2-4 words at a time (measured in Cay's templates)
 CAPTION_STYLE='Style: Caption,DejaVu Sans,78,&H00FFFFFF,&H00FFFFFF,&H00101010,&H96000000,-1,0,0,0,100,100,1,0,1,6,3,2,140,180,430,1'
 ZOOM_UPSCALE='4320:7680'  # zoompan rounds to whole input pixels: at 4x the rest jitter is ~0.05 px (2x: ~0.27 px)
+PAN=('(iw-iw/zoom)/2','(ih-ih/zoom)*0.42')   # 0.18 zoom centre: a bit above the middle (faces)
 
 def caption_chunks(text,start,duration,limit=CAPTION_WORDS):
     """Split one spoken line into 2-4 word captions, timed by their share of characters.
@@ -150,6 +152,8 @@ def prepare(spec):
     """Encode available sections while the GPU produces subsequent animation."""
     folder=Path(spec['folder']);folder.mkdir(parents=True,exist_ok=True);fps=spec['fps'];parts=[];cursor=0;events=[]
     look=int(spec.get('edit_policy',17))>=EDIT_POLICY
+    # 0.19 (shot_policy 19): a camera move on every talking shot; specs without the pin keep the 0.18 camera.
+    moving=look and shot_design.active(spec)
     cover=spec.get('cover');cover_first=bool(cover) and (cover.get('position') if isinstance(cover,dict) else cover)=='start'
     timings={'encode_seconds':0.,'mux_seconds':0.,'cached_parts':0,'lossy_passes':1,'encoder':'libx264','cpu_options':cpu_options()}
     for scene in spec['scenes']:
@@ -185,7 +189,8 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     for i,scene in enumerate(spec['scenes']):
         offset=scene_offset;scene_offset+=scene['seconds'];within=0.
         for j,clip in enumerate(scene['clips']):
-            zoom=camera(scene,within,fps) if look else None;within+=clip['seconds']
+            move=shot_design.camera(spec['scenes'],i,within,fps) if moving else None
+            zoom,(pan_x,pan_y)=move or (camera(scene,within,fps) if look else None,PAN);within+=clip['seconds']
             if spec.get('_only_part') is not None and spec['_only_part']!=[i,j]:
                 offset+=round(clip['seconds']*fps)/fps;continue
             source=Path(clip['file'])
@@ -199,7 +204,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
                 f',trim=end_frame={expected_frames},setpts=PTS-STARTPTS,'+
                 'scale=1080:1920:flags=lanczos:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,'+
                 # Zoom before the subtitles, so captions never move; centred a bit above the middle (faces).
-                (f"scale={ZOOM_UPSCALE}:flags=bicubic,zoompan=z='{zoom}':x='(iw-iw/zoom)/2':y='(ih-ih/zoom)*0.42':d=1:s=1080x1920:fps={fps},setsar=1," if zoom else '')+
+                (f"scale={ZOOM_UPSCALE}:flags=bicubic,zoompan=z='{zoom}':x='{pan_x}':y='{pan_y}':d=1:s=1080x1920:fps={fps},setsar=1," if zoom else '')+
                 shift(offset,expected_frames,fps)+',subtitles=Untertitel.ass,setpts=PTS-STARTPTS')
             key=hashlib.sha256(json.dumps([9,clip['sha256'],filtering,subtitle_hash,expected_frames,'libx264-medium-crf17'],sort_keys=True).encode()).hexdigest()
             name=f'Part_{i:03}_{j:03}_{key[:16]}.mp4';dest=folder/name;metadata=dest.with_suffix('.json')
@@ -250,7 +255,7 @@ def finish(spec):
         if file_hash(audio)!=preview['sha256']:raise RuntimeError('Freigegebene Tonmischung verändert.')
     else:
         from factory_audio import mix
-        audio=Path(mix(folder/'Ton',spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix'),spec.get('edit_policy',17)))
+        audio=Path(mix(folder/'Ton',spec['scenes'],spec['mood'],spec.get('music'),spec.get('mix'),spec.get('edit_policy',17),spec.get('sound_policy',0)))
     if abs(float(probe(audio)['format']['duration'])-cursor)>.05:raise RuntimeError('Ton und Bild haben unterschiedliche Laufzeiten.')
     total=cursor;sound=audio
     if card:total=cursor+card['seconds'];sound=cover.splice(audio,folder/'Ton_mit_Titelkarte.wav',card['at'],card['seconds'])

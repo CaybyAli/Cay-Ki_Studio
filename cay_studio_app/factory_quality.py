@@ -6,13 +6,14 @@ from fastapi import HTTPException
 from figure_library import drop_library_voice
 from fastapi.responses import FileResponse
 from factory_models import Idea,Review,VoiceSettings,SceneDialogueEdit,MixSettings,ProductionSettings,EditionWish
-from factory_audio import turns,layout,mix,edit_spec,scene_kinds
+from factory_audio import turns,layout,mix,edit_spec,sound_spec,scene_kinds
 from factory_video import file_hash
 from factory_editor import regenerate
 from factory_speech import ready as speech_ready
 from factory_timing import POLICY,audio_layout,off_screen,allowed_speakers
 from studio_quality_policy import settings
 from lipsync_shots import silent_by_accident,MISSING_MARK
+import shot_design
 def sample_signature(d,options):
     # Key of the production sample Cay approves: quality options, sound version and chosen images.
     return hashlib.sha256(json.dumps([options,d.get('audio_revision'),[[sc.get('selected') for sc in ep['scenes']] for ep in d['episodes']]],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
@@ -104,14 +105,14 @@ class Quality:
         # Only the volume or the music changed (same lines): an approved production sample still holds
         # if the timing is the same, so a remix of a finished film does not stop at the sample again.
         carry=audio_only and d.get('sample_approval') and d['sample_approval']==sample_signature(d,options);before=d.get('timing')
-        d['timing']=(audio_layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version=version) if version>=18 else layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version));d['timing_policy']=POLICY;d['timing_fps']=options['fps'];d['audio_revision']=d.get('audio_revision',0)+1;d['previews']=[];music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
+        d['timing']=(audio_layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version=version,**({'shots':True} if shot_design.active(d) else {})) if version>=18 else layout(d['episodes'],d['lines'],d['idea']['duration'],options['fps'],version));d['timing_policy']=POLICY;d['timing_fps']=options['fps'];d['audio_revision']=d.get('audio_revision',0)+1;d['previews']=[];music=self.asset(d['idea']['music'],'music') if d['idea'].get('music') else None
         if carry and d['timing']==before:d['sample_approval']=sample_signature(d,options)
         for ei,ep in enumerate(d['episodes']):
             if self.paused(d['id']):return
             d['phase']=f'Folge {ei+1}: Dialog, Musik und Geräusche mischen';self.save(d);scenes=[{'seconds':s['render_seconds'],'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],'ambience':s.get('ambience','room'),'sound_cues':s.get('sound_cues',[]),**kind} for si,(s,kind) in enumerate(zip(ep['scenes'],scene_kinds(d,ep['scenes'])))];folder=self.folder(d)/'03_Stimmen'/f'Mischung_{d["audio_revision"]:03}'/f'Folge_{ei+1:02}'
             self.queue_post(d,'mix',ei,{'folder':str(folder),'scenes':scenes,'mood':d['plan']['mood'],
                 'music':{'file':music['path'],'sha256':music['sha256']} if music else None,
-                'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds'],**edit_spec(d)})
+                'mix':d.get('mix'),'seconds':d['timing'][ei]['seconds'],**edit_spec(d),**sound_spec(d)})
         d['state']='audio_mixing';d['phase']='CPU: Dialog, Musik und Geräusche mischen · GPU wieder frei';self.save(d)
     def image_open(self,d):
         """Own image or redesign: the same window as a library image, but never kept for later."""
