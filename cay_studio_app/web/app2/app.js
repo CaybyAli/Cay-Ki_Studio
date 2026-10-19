@@ -188,7 +188,9 @@ function readingView(r, eps) {
   const kept = r.note + r.skipped, paced = eps.filter(e => e.pacing), share = e => `${Math.round(e.pacing.speech_share * 100)} %`;
   const line = `So gelesen: ${r.spoken} ${r.spoken === 1 ? 'Zeile' : 'Zeilen'} gesprochen, ${r.action} als stumme Handlung, ${r.picture} als Bild zu Satz oder Szene`
     + (kept ? `, ${kept} nicht verfilmt (Hinweise, Ton, Gliederung)` : '') + '.'
-    + (paced.length > 1 ? ` Sprache: ${paced.map(e => `Folge ${e.number} etwa ${share(e)}`).join(', ')}.` : paced.length ? ` Sprache: etwa ${share(paced[0])} der Zeit.` : '');
+    + (paced.length > 1 ? ` Sprache: ${paced.map(e => `Folge ${e.number} etwa ${share(e)}`).join(', ')}.` : paced.length ? ` Sprache: etwa ${share(paced[0])} der Zeit.` : '')
+    // 0.19 voices: lines without a delivery in brackets sound like their punctuation.
+    + (r.delivery && r.delivery.derived ? ` ${r.delivery.derived} ${r.delivery.derived === 1 ? 'Satz' : 'Sätze'} ohne Sprechhaltung klingen nach ihrem Satzzeichen (! lebhaft, ? fragend, … zögernd). Eine Angabe in Klammern hat Vorrang.` : '');
   const unread = (r.unread || []).map(x => ({ text: `Zeile ${x.line}: „${x.text}“ versteht das Studio nicht, sie wird nicht verfilmt.` }));
   return `<p class="small muted">${esc(line)}</p>` + (unread.length ? `<ul class="problems">${unread.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '');
 }
@@ -681,9 +683,15 @@ function imageSource(d, p) {
 }
 function voiceSource(d, p) {
   const e = participantOf(d, p.name), lib = libraryFigure(e.library_voice);
-  if (e.library_voice) return lib ? lib.label : 'Aus deinen Figuren';
-  if (e.voice) return 'Deine Aufnahme';
+  const clean = ((((d.voice_profiles || {})[p.name] || {}).reference || {}).cleaned) ? ' · gereinigt' : '';
+  if (e.library_voice) return (lib ? lib.label : 'Aus deinen Figuren') + clean;
+  if (e.voice) return 'Deine Aufnahme' + clean;
   return (d.voice_profiles || {})[p.name] ? 'Vom Studio gestaltet' : 'Entsteht mit dem Ton';
+}
+/* 0.19: what the studio says about a recording (too short, music behind it, could not be cleaned). */
+function voiceNotes(d, name) {
+  const r = ((d.voice_profiles || {})[name] || {}).reference;
+  return r ? (r.cleaned ? (r.notes || []).slice(1) : (r.notes || [])) : [];
 }
 /* The reference voice itself: a chosen recording first (a designed profile may be outdated after a change). */
 function voiceUrl(d, p) {
@@ -732,7 +740,7 @@ function castPanel(d) {
         <span class="role-name">${esc(p.name)}</span></button>
       <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd>
         <dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
-      ${roleLooks(d, p.name)}${pend ? `<p class="role-pending">Vorgemerkt: ${esc(pend.text)}</p>` : ''}${suggestion}</article>`;
+      ${voiceNotes(d, p.name).map(n => `<p class="small warn-line">${esc(n)}</p>`).join('')}${roleLooks(d, p.name)}${pend ? `<p class="role-pending">Vorgemerkt: ${esc(pend.text)}</p>` : ''}${suggestion}</article>`;
   }).join('');
   // Large portraits only where the figures are the task (figure check); elsewhere a compact row.
   return `<section class="cast${d.state === 'cast_review' ? '' : ' compact'}" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>

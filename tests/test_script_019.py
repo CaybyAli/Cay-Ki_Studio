@@ -172,7 +172,9 @@ def test_the_speech_job_carries_the_flag_only_for_new_projects(tmp_path):
         assert [l['text'] for l in d['lines']] == ['Das ist MEIN Kuchen, OMA!', 'Dann iss ihn doch, Tim.']      # captions as written
     old, new = jobs[False], jobs[True]
     assert set(old) == {'cast', 'lines', 'voice_policy', 'output'}
-    assert {k: v for k, v in new.items() if k not in ('speech_text', 'vocabulary', 'output')} == {k: v for k, v in old.items() if k != 'output'}
+    # The pinned project also voices with voice_policy 19 (test_voices_019.py); everything else in the job is the same.
+    assert old['voice_policy'] == 18 and new['voice_policy'] == 19
+    assert {k: v for k, v in new.items() if k not in ('speech_text', 'vocabulary', 'output', 'voice_policy')} == {k: v for k, v in old.items() if k not in ('output', 'voice_policy')}
     assert new['speech_text'] == 19 and tts_text.spoken(new['lines'][0], new) == 'Das ist mein Kuchen, Oma!'
 
 

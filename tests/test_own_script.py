@@ -158,7 +158,8 @@ ENDE
     assert beats[0]['place'] == 'Bäckerei' and 'Kühltheke leuchtet' in beats[0]['what'] and 'Nahaufnahme' in beats[0]['what']
     assert [(l['kind'], l['speaker'], l['text'], l['emotion']) for l in lines] == [
         ('line', 'Max', 'Pssst! Hier drüben ist der Tresor. Mach bloß keinen Lärm.', 'flüsternd'),
-        ('line', 'Lena', 'Ich mach doch gar nichts!', 'ruhig'),
+        # 0.19 (read() reads with own_script.POLICY): a line without a delivery gets one from its text (tts_text.delivery).
+        ('line', 'Lena', 'Ich mach doch gar nichts!', 'genervt'),
         ('action', '', 'Lena stolpert über einen Mehlsack. Eine weiße Wolke steigt auf.', ''),
         ('line', 'Max', 'Lena! Das ganze Mehl!', 'panisch'),
         ('action', '', 'Plötzlich: Das Licht geht an.', ''),
@@ -169,6 +170,9 @@ ENDE
     texts = ' '.join(p['text'] for p in r['problems'])
     assert 'Zeile 21: Musik-Angaben setzt das Studio selbst' in texts and '„Erzähler“ ist im Film eine sichtbare Figur' in texts
     assert 'Eine kleine Komödie' in r['episodes'][0]['plot']
+    # A project from before 0.19 reads its script again exactly as 0.18 did: 'ruhig' for a line without a delivery.
+    old = parsed(own_script.read(text, 0)['episodes'][0]['text'], names)[2]
+    assert [l['emotion'] for l in old if l['speaker'] == 'Lena'] == ['ruhig']
 
 
 def test_problems_carry_line_numbers_and_block_the_film():

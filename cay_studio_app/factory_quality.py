@@ -1,5 +1,5 @@
 """Voice casting, complete audio previews and multi-turn editing."""
-import asyncio,contextlib,copy,hashlib,json,os,signal,sys,uuid
+import asyncio,contextlib,copy,hashlib,json,os,signal,sys,unicodedata,uuid
 from pathlib import Path
 import httpx
 from fastapi import HTTPException
@@ -15,6 +15,7 @@ from studio_quality_policy import settings
 from lipsync_shots import silent_by_accident,MISSING_MARK
 import shot_design
 import tts_text   # 0.19: the text the voice model reads (sound_policy 19 only)
+import voice_reference   # 0.19: cleaned recordings (voice_policy 19 only)
 def sample_signature(d,options):
     # Key of the production sample Cay approves: quality options, sound version and chosen images.
     return hashlib.sha256(json.dumps([options,d.get('audio_revision'),[[sc.get('selected') for sc in ep['scenes']] for ep in d['episodes']]],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
@@ -22,6 +23,17 @@ def sample_signature(d,options):
 # these keys are what reopen_output changes, sound_material what the finished sound was made from.
 SOUND_UNDO=('exports','export_generation','export_history','voice_approval','render_segments','render_tracking_version','phase')
 def sound_material(d):return hashlib.sha256(json.dumps([d['idea'],d.get('mix'),d.get('lines'),d.get('plan',{}).get('cast')],sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+async def clean_references(studio,d,cast):
+    """voice_policy 19: every own or library recording without a design recipe is cloned from its cleaned copy
+    (voice_reference.py; the original stays as it is). A sample that cannot be cleaned is cloned as it is, with a note."""
+    found={};recordings=[p for p in cast if p.get('voice_file') and not p.get('voice_design')]
+    if recordings:d['phase']='Stimmproben reinigen';studio.save(d)
+    for p in recordings:
+        try:info=await asyncio.to_thread(voice_reference.clean,p['voice_file'],studio.base/'envs/studio-voices/bin/python')
+        except Exception as error:print('Stimmprobe nicht gereinigt:',type(error).__name__,str(error)[-300:],flush=True);info=None
+        if info:p.update(voice_file=info['file'],voice_hash=info['sha256'])
+        found[p['name']]=voice_reference.summary(p['name'],info,p.get('voice_text'))
+    return found
 class Quality:
     def init_quality(self):self.setup_task=None;self.setup_process=None;self.setup_status={'state':'missing','message':'Stimmenstudio noch nicht eingerichtet.'}
     def voice_ready(self):return all(p.is_file() for p in [self.base/'envs/studio-voices/bereit.json',self.base/'envs/studio-voices/bin/python',self.base/'models/studio-voices/VoiceDesign/config.json'])
@@ -74,10 +86,15 @@ class Quality:
         # lines (0.16 references, sampling and signatures); new projects get 0.17 voices.
         # 18 = 17 plus the transcript of own and library recordings: a project voiced with 0.17
         # keeps cloning its recordings without transcript, so its approved lines stay cached.
-        policy=d.setdefault('voice_policy',16 if d.get('voice_profiles') or d.get('lines') else 18)
+        # 19 = 18 for projects pinned with sound_policy 19 (0.19): cleaned recordings, performed references for own
+        # recordings, more takes per line, delivery words read in any Unicode form (voice_reference.py, factory_speech.py).
+        policy=d.setdefault('voice_policy',16 if d.get('voice_profiles') or d.get('lines') else 19 if int(d.get('sound_policy',0) or 0)>=19 else 18)
+        if policy>=19:
+            for entry in lines:entry['emotion']=unicodedata.normalize('NFC',str(entry['emotion'] or ''))
         if lines and not audio_only:
             async with httpx.AsyncClient(trust_env=False,timeout=15) as c:await self.idle(c,True)
             speaking={l['speaker'] for l in lines};cast=[p for p in cast if p['name'] in speaking]
+            references=await clean_references(self,d,cast) if policy>=19 else {}
             if any(not p.get('voice_file') or p.get('voice_design') for p in cast):
                 if not self.voice_ready():raise RuntimeError('Für verschiedene erfundene Stimmen einmalig „Stimmenstudio einrichten“ wählen. Danach dieses Projekt fortsetzen. Die alte Einheitsstimme wird nicht mehr verwendet.')
                 job=self.folder(d)/'Stimmgestaltung.json';out=self.folder(d)/'03_Stimmen/Profile';self.atomic(job,json.dumps({'run_id':d['id'],'cast':cast,'lines':lines,'performances':options['speech_engine']=='qwen' or options['speech_engine']=='auto' and speech_ready(self.base),'look':d['plan'].get('visual',''),'voice_policy':policy,'output':str(out)}).encode());d['phase']='Eigene Stimmen für die Figuren gestalten';self.save(d)
@@ -86,6 +103,7 @@ class Quality:
                 for p in cast:
                     profile=profiles[p['name']];p.update(voice_file=profile['file'],voice_hash=profile['sha256'],voice_text=profile.get('voice_text',''),emotion_profiles=profile.get('emotion_profiles',{}))
             else:d['voice_profiles']={p['name']:{'file':p['voice_file'],'sha256':p['voice_hash'],'source':'upload'} for p in cast}
+            for name,reference in references.items():d['voice_profiles'][name]['reference']=reference
             engine=options['speech_engine']
             if engine=='auto':engine='qwen' if speech_ready(self.base) else 'chatterbox'
             if engine=='qwen' and not speech_ready(self.base):raise RuntimeError('Für Qwen-Dialoge unter „Stimmenqualität“ einmal das Dialogmodell einrichten. Danach dieses Projekt fortsetzen.')
@@ -94,7 +112,10 @@ class Quality:
             d['audio_engine']=engine
             folder=self.folder(d)/'03_Stimmen/Dialoge';job=self.folder(d)/'Sprachauftrag.json';self.atomic(job,json.dumps({'cast':cast,'lines':lines,'voice_policy':policy,'output':str(folder),**tts_text.job_fields(d,lines,d['plan']['cast'])}).encode());d['phase']=f'{len(lines)} Dialogbeiträge werden eingesprochen';self.save(d)
             async with self.measured(d,'Sprache · '+engine):await self.command([python,Path(__file__).with_name('factory_speech.py' if engine=='qwen' else 'factory_tts.py'),'--base',self.base,'--job',job],14400)
-            d['lines']=json.loads((folder/'Ergebnis.json').read_text())['lines']
+            spoken=json.loads((folder/'Ergebnis.json').read_text());d['lines']=spoken['lines']
+            # 0.19: how each figure was cloned (mode, performed references) for the figure card and the diagnosis.
+            for name,how in spoken.get('references',{}).items():
+                if name in d['voice_profiles']:d['voice_profiles'][name]['speech']=how
             if len(d['lines'])!=len(lines):raise RuntimeError('Sprachvorschau unvollständig.')
             if self.apply_pending(d):return        # a voice chosen meanwhile: speak its lines again, then mix
         elif not lines:d['lines']=[];d['voice_profiles']={}

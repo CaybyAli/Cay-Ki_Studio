@@ -89,7 +89,7 @@ def generate(base,job_path,probe=False):
         # bring their design recipe and get emotion takes in the same designed voice.
         recipe=p.get('voice_design') if p.get('voice_file') and not legacy else None
         if (p.get('voice_file') and not recipe) or not job.get('performances'):continue
-        key=performance_key_v16 if legacy else performance_key
+        key=performance_key_v16 if legacy else lambda e:performance_key(e,int(job.get('voice_policy',17)))
         moods=sorted({key(line.get('emotion','Natürlich')) for line in job.get('lines',[]) if line['speaker']==p['name']})
         profiles[p['name']]['emotion_profiles']={}
         for emotion in moods:

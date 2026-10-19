@@ -29,6 +29,7 @@ from factory_models import MAX_CAST, Outline
 from factory_timing import HEAD, TAIL, REACTION_TAIL, REACTION_MIN, ACTION_BASE, ESTABLISH_BASE, FPS
 from story_source import HEADING, manifest
 import shot_design
+import tts_text
 
 # 0.19 (r019 diagnosis, area 'Drehbuch und Dialog'): read() reads with POLICY by default, the rules for every
 # project created from 0.19 on (pinned with sound/shot/render policy 19). policy=0 reads exactly as 0.18, for an
@@ -454,6 +455,7 @@ class _Reader:
         self.section = None; self.cue = None; self.folgen = any(HEADING.match(r) for r in rows); self.counts = {}; self.stamped = False; self.notes = None
         self.v19 = policy >= POLICY; self.kw = KEYWORDS_19 if self.v19 else KEYWORDS
         self.last = None; self.table = None; self.spoken = set(); self.used = {}; self.text = '\n'.join(rows)
+        self.moods = {'written': 0, 'derived': 0, 'calm': 0}     # 0.19: where each line's delivery comes from (report)
         self.clean = [_unstamp(_clean(r), TIMESTAMP_19 if self.v19 else TIMESTAMP) for r in rows]
         for row, _ in self.clean:
             m = LABEL.match(row)
@@ -574,7 +576,10 @@ class _Reader:
         if not known: self.problem(number, f'Sprechhaltung „{wish}“ kennt das Studio nicht, gesprochen wird „ruhig“.')
         pieces = _pieces(spoken, MAX_SPOKEN)
         if len(pieces) > 1: self.problem(number, f'Sehr langer Satz, in {len(pieces)} Teile geteilt. Die Wörter bleiben gleich.')
-        scene['items'] += [{'kind': 'line', 'name': name, 'emotion': emotion, 'text': p, 'line': number, **({'off': True} if off else {})} for p in pieces]
+        # 0.19 voices (r019 B5e): no delivery written: one from the line's punctuation (tts_text.delivery), not always 'ruhig'.
+        derive = self.v19 and not wish.strip(); moods = [tts_text.delivery(p) if derive else emotion for p in pieces]
+        if self.v19: self.moods['written' if not derive else 'calm' if set(moods) == {'ruhig'} else 'derived'] += 1
+        scene['items'] += [{'kind': 'line', 'name': name, 'emotion': m, 'text': p, 'line': number, **({'off': True} if off else {})} for p, m in zip(pieces, moods)]
 
     def figure(self, number, text, listed=False):
         name, description = _figure_line(text)
@@ -1081,7 +1086,7 @@ def _report(r):
         if kind: counts[kind] += 1
         if kind == 'skipped': skipped.append({'line': n, 'text': _short(row, 80)})
         elif not kind: unread.append({'line': n, 'text': _short(row, 80)})
-    return {'rows': len(rows), **counts, 'skipped_rows': skipped[:40], 'unread': unread[:40], 'unread_count': len(unread)}
+    return {'rows': len(rows), **counts, 'skipped_rows': skipped[:40], 'unread': unread[:40], 'unread_count': len(unread), 'delivery': dict(r.moods)}
 
 
 def prepare(idea, policy=POLICY):
