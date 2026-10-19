@@ -1,0 +1,176 @@
+"""0.19 script and dialogue (diagnosis r019, area 'Drehbuch und Dialog', complaints C1 and C2).
+
+C1: a word in capitals ('DIR') reached Qwen3-TTS / Chatterbox as written and was spelled D-I-R.
+Projects created with sound_policy 19 hand the voice model tts_text.speakable(text); initialisms
+(USA, FBI, PC, KI, OK, LKW …) stay, subtitles keep the writer's text, and a project without the pin
+gets exactly the job, text and cache signature it got before."""
+import asyncio
+import contextlib
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'tests'))
+import studio_fakes  # noqa: E402,F401  (puts cay_studio_app on the path)
+import voice_fakes as vf  # noqa: E402
+import tts_text  # noqa: E402
+
+VOCAB = tts_text.vocabulary(['Wer hat meinen Kuchen gegessen?', 'Der Koffer bleibt zu.'], ['SpongeBob', 'Patrick', 'Mr. Krabs'])
+CAPS = [('Ich sag es DIR zum letzten Mal!', 'Ich sag es dir zum letzten Mal!'),
+        ('NIE wieder, hörst du? NIE!', 'Nie wieder, hörst du? Nie!'),
+        ('JETZT oder nie.', 'Jetzt oder nie.'),
+        ('WER HAT MEINEN KUCHEN GEGESSEN?!', 'Wer hat meinen Kuchen gegessen?!'),
+        ('Aber NIEMAND öffnet den KOFFER!', 'Aber niemand öffnet den Koffer!'),
+        ('GELD. JETZT. SOFORT.', 'Geld. Jetzt. Sofort.'),
+        ('PATRICK, HILF MIR!', 'Patrick, hilf mir!'),
+        ('SPONGEBOB! Komm sofort her!', 'SpongeBob! Komm sofort her!'),
+        ('Mr. KRABS zahlt fünfhundert.', 'Mr. Krabs zahlt fünfhundert.'),
+        ('Das ist eine ENTSCHEIDUNG!', 'Das ist eine Entscheidung!'),
+        ('ÄRGER gibt es GROß!', 'Ärger gibt es groß!'),
+        ('ICH? Niemals.', 'Ich? Niemals.'),
+        ('NEEEIN!', 'Neeein!'),
+        ("WAR'S das?", "War's das?"),
+        ('PSST! Hier drüben.', 'Psst! Hier drüben.'),
+        ('Ein UFO über der NASA.', 'Ein Ufo über der Nasa.'),
+        # Initialisms stay exactly as written.
+        ('Die USA, das FBI und die CIA suchen dich.', 'Die USA, das FBI und die CIA suchen dich.'),
+        ('Mach den PC und den TV aus, DJ!', 'Mach den PC und den TV aus, DJ!'),
+        ('OK, die KI ist schuld.', 'OK, die KI ist schuld.'),
+        ('Der CEO ist ein VIP, sein GPS kaputt.', 'Der CEO ist ein VIP, sein GPS kaputt.'),
+        ('Die DNA, eine SMS, das WLAN, der LKW und der PKW.', 'Die DNA, eine SMS, das WLAN, der LKW und der PKW.'),
+        ('Ludwig XIV und sein MP3-Player.', 'Ludwig XIV und sein MP3-Player.'),
+        # Emoji and emphasis marks go, no word changes.
+        ('Kokain. 😏', 'Kokain.'),
+        ('Das ist *wirklich* wichtig.', 'Das ist wirklich wichtig.'),
+        ('Wo ist mein Geld?', 'Wo ist mein Geld?')]
+
+
+@pytest.mark.parametrize('written,spoken', CAPS)
+def test_capitals_are_spoken_as_words_and_initialisms_stay(written, spoken):
+    assert tts_text.speakable(written, VOCAB) == spoken
+    # Not a single word added, removed or moved.
+    assert [w.lower() for w in tts_text.LETTERS.findall(spoken)] == [w.lower() for w in tts_text.LETTERS.findall(written)]
+
+
+def test_a_word_seen_only_at_a_sentence_start_says_nothing_about_its_casing():
+    vocab = tts_text.vocabulary(['Nie wieder sag ich das.', 'Komm her, Patrick.'], ['Patrick'])
+    assert 'nie' not in vocab and vocab['patrick'] == 'Patrick'
+    assert tts_text.speakable('Das sag ich NIE.', vocab) == 'Das sag ich nie.'
+
+
+def test_only_pinned_projects_get_the_spoken_text_in_their_speech_job():
+    lines = [{'text': 'Das ist MEIN Geld!'}]
+    assert tts_text.job_fields({}, lines, []) == {} and tts_text.job_fields({'sound_policy': 18}, lines, []) == {}
+    fields = tts_text.job_fields({'sound_policy': 19}, lines, [{'name': 'Mr. Krabs'}])
+    assert fields['speech_text'] == 19 and fields['vocabulary']['krabs'] == 'Krabs'
+    line = {'text': 'Das ist MEIN Geld!'}
+    assert tts_text.spoken(line, {}) == 'Das ist MEIN Geld!' and tts_text.signature_fields(line, {}) == {}
+    assert tts_text.spoken(line, fields) == 'Das ist mein Geld!' and tts_text.signature_fields(line, fields) == {'spoken': 'Das ist mein Geld!'}
+    # A line without capitals reads the same and keeps its signature under the pin as well.
+    assert tts_text.signature_fields({'text': 'Wo ist mein Geld?'}, fields) == {}
+
+
+def caps_lines():
+    lines = [dict(line) for line in vf.LINES]
+    lines[0].update(text='Wo ist MEIN Geld geblieben?', text_de='Wo ist MEIN Geld geblieben?')
+    return lines
+
+
+@pytest.mark.parametrize('engine', ['factory_speech', 'factory_tts'])
+def test_the_speech_adapters_read_the_spoken_text_only_with_the_flag(tmp_path, monkeypatch, engine):
+    """Both adapters with fake models: without the flag the model gets the written text and every file
+    name (cache signature) is the one of the unchanged formula; with it only the line in capitals
+    differs, and the result keeps the written text for the subtitles."""
+    vf.install(monkeypatch)
+    calls = []
+    if engine == 'factory_tts':
+        monkeypatch.setitem(sys.modules, 'perth', type(sys)('perth')); sys.modules['perth'].PerthImplicitWatermarker = object
+        class Wave:
+            def __init__(self, data): self.data = data
+            def detach(self): return self
+            def cpu(self): return self
+            def numpy(self): return self.data
+        class Model:
+            sr = vf.RATE; conds = {'default': 1}
+            @classmethod
+            def from_local(cls, ckpt, device='cuda'): return cls()
+            def generate(self, text, language_id, audio_prompt_path=None, **kw):
+                calls.append(text); return Wave(vf.take(text))
+        chatterbox = type(sys)('chatterbox'); mtl = type(sys)('chatterbox.mtl_tts'); mtl.ChatterboxMultilingualTTS = Model
+        monkeypatch.setitem(sys.modules, 'chatterbox', chatterbox); monkeypatch.setitem(sys.modules, 'chatterbox.mtl_tts', mtl)
+        monkeypatch.setattr(sys.modules['torch'], 'cuda', type('C', (), {'is_available': staticmethod(lambda: True)}), raising=False)
+    module = vf.load(ROOT / 'cay_studio_app', engine)
+    root = vf.base_dir(tmp_path)
+    if engine == 'factory_tts': monkeypatch.setattr(module, 'checkpoint', lambda base: tmp_path)
+    voice = tmp_path / 'voice.wav'; vf.write_wav(voice, vf.take('Stimme'), vf.RATE)
+    import hashlib
+    sha = hashlib.sha256(voice.read_bytes()).hexdigest()
+    cast = [{'name': p['name'], 'voice_file': str(voice), 'voice_hash': sha, 'voice_text': ''} for p in vf.CAST]
+
+    def run(flag, out):
+        job = {'cast': cast, 'lines': caps_lines(), 'voice_policy': 18, 'output': str(tmp_path / out)}
+        if flag: job.update(tts_text.job_fields({'sound_policy': 19}, job['lines'], vf.CAST))
+        (tmp_path / f'{out}.json').write_text(json.dumps(job))
+        vf.Model.calls = []; calls.clear()
+        if engine == 'factory_speech': module.generate(root, tmp_path / f'{out}.json')
+        else:
+            monkeypatch.setattr(sys, 'argv', ['factory_tts.py', '--base', str(root), '--job', str(tmp_path / f'{out}.json')]); module.main()
+        said = [c[1]['text'] for c in vf.Model.calls if c[0] == 'clone'] if engine == 'factory_speech' else list(calls)
+        result = json.loads((tmp_path / out / 'Ergebnis.json').read_text())['lines']
+        return said, [Path(l['file']).name for l in result], result
+
+    old_said, old_files, old_result = run(False, 'old')
+    new_said, new_files, new_result = run(True, 'new')
+    # (an emotional line gets two takes: the same text twice)
+    assert {t for t in old_said if 'Geld' in t} == {'Wo ist MEIN Geld geblieben?'} and {t for t in new_said if 'Geld' in t} == {'Wo ist mein Geld geblieben?'}
+    assert [t for t in old_said if 'Geld' not in t] == [t for t in new_said if 'Geld' not in t]
+    assert old_files[0] != new_files[0] and old_files[1:] == new_files[1:]
+    assert new_result[0]['text'] == new_result[0]['text_de'] == 'Wo ist MEIN Geld geblieben?'
+    # The old signature formula, recomputed: a project without the pin keeps every cached line.
+    if engine == 'factory_speech':
+        identity = (root / 'models/studio-voices/Base/source.json').read_text()
+        line = caps_lines()[0]
+        signature = hashlib.sha256(json.dumps({'line': line, 'voice': sha, 'ref_text': '', 'model': identity, 'processing': module.SPEECH_POLICY,
+                                               'engine': 'qwen-base-17-takes'}, sort_keys=True).encode()).hexdigest()
+        assert old_files[0] == line['key'] + '_' + signature[:12] + '.wav'
+
+
+class Speaking:
+    """Quality.quality_voices() with a fake speech run: records the speech job."""
+    def __init__(self, folder):
+        self.posts = []; self.jobs = []; self.base = folder / 'base'; self.g = {}; self.folder_path = folder
+        (self.base / 'envs/chatterbox/bin').mkdir(parents=True); (self.base / 'envs/chatterbox/bin/python').write_text('')
+    def apply_pending(self, d): return False
+    def paused(self, rid): return False
+    def save(self, d): pass
+    def folder(self, d): return self.folder_path
+    def asset(self, aid, kind=None): return {'path': str(self.folder_path.parent / 'voice.wav'), 'sha256': 'x' * 64}
+    def queue_post(self, d, kind, ei, spec): self.posts.append(spec)
+    def atomic(self, path, data): Path(path).parent.mkdir(parents=True, exist_ok=True); Path(path).write_bytes(data)
+    async def idle(self, client, wait): pass
+    def measured(self, d, stage): return contextlib.nullcontext()
+    async def command(self, args, timeout):
+        args = [str(a) for a in args]; job = json.loads(Path(args[args.index('--job') + 1]).read_text()); self.jobs.append(job)
+        out = Path(job['output']); out.mkdir(parents=True, exist_ok=True)
+        (out / 'Ergebnis.json').write_text(json.dumps({'lines': [{**l, 'file': 'x.wav', 'duration': 1.5, 'sha256': 'y'} for l in job['lines']]}))
+
+
+def test_the_speech_job_carries_the_flag_only_for_new_projects(tmp_path):
+    from factory_quality import Quality
+    jobs = {}
+    for pin in ({}, {'sound_policy': 19}):
+        folder = tmp_path / str(bool(pin)); folder.mkdir()
+        scenes = [{'kind': 'line', 'cast': ['Tim'], 'seconds': 4, 'dialogues': [{'speaker': 'Tim', 'text': 'Das ist MEIN Kuchen, OMA!', 'emotion': 'wütend'}]},
+                  {'kind': 'line', 'cast': ['Oma'], 'seconds': 4, 'dialogues': [{'speaker': 'Oma', 'text': 'Dann iss ihn doch, Tim.', 'emotion': 'ruhig'}]}]
+        d = {'id': 'v' * 32, 'idea': {'duration': 15, 'episodes': 1, 'fps': 25, 'lip_sync': 'audio', 'speech_engine': 'chatterbox',
+                                      'participants': [{'name': 'Tim', 'voice': 'a'}, {'name': 'Oma', 'voice': 'b'}]},
+             'plan': {'cast': [{'name': 'Tim'}, {'name': 'Oma'}], 'mood': 'playful'}, 'episodes': [{'scenes': scenes, 'dialogue_mode': 'rich'}], **pin}
+        studio = Speaking(folder); asyncio.run(Quality.quality_voices(studio, d)); jobs[bool(pin)], = studio.jobs
+        assert [l['text'] for l in d['lines']] == ['Das ist MEIN Kuchen, OMA!', 'Dann iss ihn doch, Tim.']      # captions as written
+    old, new = jobs[False], jobs[True]
+    assert set(old) == {'cast', 'lines', 'voice_policy', 'output'}
+    assert {k: v for k, v in new.items() if k not in ('speech_text', 'vocabulary', 'output')} == {k: v for k, v in old.items() if k != 'output'}
+    assert new['speech_text'] == 19 and tts_text.spoken(new['lines'][0], new) == 'Das ist mein Kuchen, Oma!'
