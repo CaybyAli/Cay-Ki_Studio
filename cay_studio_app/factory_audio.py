@@ -271,11 +271,8 @@ def kweight(data):
     k=math.tan(math.pi*1681.974450955533/RATE);vh=10**(3.999843853973347/20);vb=vh**.4996667741545416;q=.7071752369554196;a0=1+k/q+k*k
     shelf=(vh+vb*k/q+k*k)/a0,2*(k*k-vh)/a0,(vh-vb*k/q+k*k)/a0,1,2*(k*k-1)/a0,(1-k/q+k*k)/a0
     k=math.tan(math.pi*38.13547087602444/RATE);q=.5003270373238773;a0=1+k/q+k*k;high=1,-2,1,1,2*(k*k-1)/a0,(1-k/q+k*k)/a0
-    graph=','.join('biquad='+':'.join(f'{n}={v:.12g}' for n,v in zip(('b0','b1','b2','a0','a1','a2'),c)) for c in (shelf,high))
-    r=subprocess.run(['ffmpeg','-nostdin','-v','error','-f','f32le','-ar',str(RATE),'-ac','1','-i','pipe:','-af',graph,'-f','f32le','-'],input=f32_bytes(data),capture_output=True,timeout=300)
-    if r.returncode:raise RuntimeError('Tonmischung: '+r.stderr.decode(errors='replace')[-600:])
-    out=array('f');out.frombytes(r.stdout[:len(r.stdout)//4*4])
-    if sys.byteorder!='little':out.byteswap()
+    out=run_f32(','.join('biquad='+':'.join(f'{n}={v:.12g}' for n,v in zip(('b0','b1','b2','a0','a1','a2'),c)) for c in (shelf,high)),data)
+    if out is None:raise RuntimeError('Tonmischung: K-Bewertung in FFmpeg fehlgeschlagen.')
     return out
 def active_level(fr):
     """Active speech level (dB re full scale) from 10 ms RMS frames: the frames within 25 dB of the loud end
@@ -337,7 +334,8 @@ def speech_loudness(data,measured):
 def prepare_take(line):
     """Read one take, denoise it gently and measure the loudness of its speech. The line file stays untouched."""
     data=read_f32(line['file'])
-    fr=speech_check.frames(data,RATE,0,len(data)/RATE);active=active_level(fr);window=noise_window(fr,active);status='sauber'
+    fr=speech_check.frames(data,RATE,0,len(data)/RATE);active=active_level(fr);window=noise_window(fr,active)
+    status='ohne' if active is not None and len(fr)>=12 and power_db(sorted(fr)[:max(1,len(fr)//10)])>=-80 else 'sauber'   # hiss, no pause
     if window:
         cleaned=denoise(data,window[0],window[1]);status='Fehler'
         if cleaned is not None:
@@ -348,7 +346,6 @@ def prepare_take(line):
                 loud=[i for i,v in enumerate(values) if v>=10**((active-20)/20)];return (loud[0],loud[-1]) if loud else (-9,-9)
             if level is not None and abs(level-active)<=1 and all(abs(a-b)<=1 for a,b in zip(edges(fr),edges(after))):data,status=cleaned,window[2]
             else:status='verworfen'
-    elif active is not None and len(fr)>=12:status='ohne' if power_db(sorted(fr)[:max(1,len(fr)//10)])>=-80 else 'sauber'
     loud=None if active is None else speech_loudness(data,r128(PIPE,'',data)[0])
     goal=SPEECH_LUFS+LEVEL_DB_19.get(performance_key(line.get('emotion','')),0.)
     return {'data':data,'loud':loud,'goal':goal,'level':None if loud is None else round(loud,1),'denoise':status,'label':speech_check.label(line)}
@@ -368,7 +365,7 @@ def shape_take(take,peak_over,path):
             after=speech_loudness(data,measured)
             if after is None:correction=0.;break
             correction=goal-after;tried.append((gain,after))
-            if abs(correction)<=.3:break
+            if abs(correction)<=.3 or attempt==3:break
             # The limit takes a little off: more gain, peaks stay at the ceiling. Secant step, bounded.
             slope=(tried[-1][1]-tried[-2][1])/(tried[-1][0]-tried[-2][0]) if len(tried)>1 and tried[-1][0]!=tried[-2][0] else 1.
             step=max(-MAX_CUT,min(MAX_BOOST,first+8,gain+correction/max(.25,min(1.,slope))))
@@ -393,10 +390,10 @@ def unit(x):
     return [v/rms for v in x] if rms>1e-12 else x
 def bed_texture(kind,n,rng):
     """Band-limited textures at unit RMS: no white noise, nothing that hisses on a phone speaker."""
-    def lowpass(fc,hp=.99,mod=None):
-        out=[0.]*n;a1=a2=dc=prev=0.;k=1-math.exp(-math.tau*fc/RATE)
+    def lowpass(fc,hp=.99):   # noise through two one-pole low-passes (fc in Hz or one per sample), DC blocked
+        out=[0.]*n;a1=a2=dc=prev=0.;fixed=not isinstance(fc,list);c=1-math.exp(-math.tau*fc/RATE) if fixed else 0.
         for i in range(n):
-            c=k if mod is None else 1-math.exp(-math.tau*fc*mod[i]/RATE)
+            if not fixed:c=1-math.exp(-math.tau*fc[i]/RATE)
             a1+=c*(rng.uniform(-1,1)-a1);a2+=c*(a1-a2);dc=hp*(dc+a2-prev);prev=a2;out[i]=dc
         return unit(out)
     def slow(step,lo,hi):   # smooth random control curve (cosine between points every step seconds)
@@ -412,7 +409,7 @@ def bed_texture(kind,n,rng):
             t+=rng.expovariate(rate)
         return out
     if kind=='wind':
-        gust=slow(1.3,.2,1.);base=lowpass(1.,.975,[180+520*g for g in gust])
+        gust=slow(1.3,.2,1.);base=lowpass([180+520*g for g in gust],.975)
         return unit([v*(.35+.65*g) for v,g in zip(base,gust)])
     if kind=='rain':
         bed=lowpass(700,.97);drops=unit(blips(28,(900,2800),(.003,.007),.035)) if n else []
