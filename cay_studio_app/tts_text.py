@@ -3,13 +3,16 @@
 Cay: "DIR" was spelled D-I-R. The line went to the voice model exactly as written, and both models
 read a word in capitals like an initialism. In his 0.17 film 6 of 13 AI lines had such words
 (MEIN, UNSER, DU, ZURÜCK, PLANKTON?!). Now, for projects created with sound_policy 19 only, the
-speech job carries 'speech_text' and the project's 'vocabulary', and the two speech adapters
+speech job carries 'speech_text' and the figure names as 'vocabulary', and the two speech adapters
 (factory_speech.py, factory_tts.py) read speakable(text) instead of the plain text:
 
 - a word written in capitals for emphasis is read as a word: 'DIR' -> 'dir', 'KOFFER' -> 'Koffer',
-  'SPONGEBOB' -> 'SpongeBob'. Its casing comes from the project (the same word elsewhere in mixed
-  case, or a figure's name), else capitalised after an article or with a noun ending, else lower
-  case; capitalised at the start of a sentence;
+  'SPONGEBOB' -> 'SpongeBob'. Its casing comes from a figure's name or the same word elsewhere in
+  the line in mixed case, else capitalised after an article or with a noun ending, else lower
+  case; capitalised at the start of a sentence. Never from other lines: a line's spoken text and
+  cache signature depend on that line and the names only, so 'Text ändern' on one line never
+  gives another line a new take (with the project's words, 'KOFFER' in an untouched line turned
+  into 'koffer' once the edit removed the last 'Koffer');
 - real initialisms stay: a list (USA, FBI, CIA, DNA, KI, OK, CEO, VIP, GPS, WLAN …) and every word
   in capitals without a vowel (PC, TV, DJ, LKW, PKW, SMS, BMW); interjections without a vowel
   ('PSST', 'HMM', 'GRRR') and Roman numerals after a name ('Ludwig XIV') are no initialisms;
@@ -132,12 +135,12 @@ def job_fields(d, lines, cast):
     try: pinned = int(d.get('sound_policy', 0) or 0) >= POLICY
     except (TypeError, ValueError): pinned = False
     if not pinned: return {}
-    return {'speech_text': POLICY, 'vocabulary': vocabulary([l['text'] for l in lines], [p['name'] for p in cast])}
+    return {'speech_text': POLICY, 'vocabulary': vocabulary([], [p['name'] for p in cast])}
 
 
 def spoken(line, job):
-    """What the adapter hands to the model for one line of `job`."""
-    if int(job.get('speech_text', 0) or 0) >= POLICY: return speakable(line['text'], job.get('vocabulary'))
+    """What the adapter hands to the model for one line of `job`: from that line and the job's names alone."""
+    if int(job.get('speech_text', 0) or 0) >= POLICY: return speakable(line['text'], {**vocabulary([line['text']]), **(job.get('vocabulary') or {})})
     return clean_text(line['text'])
 
 

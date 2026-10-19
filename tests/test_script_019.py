@@ -73,6 +73,22 @@ def test_only_pinned_projects_get_the_spoken_text_in_their_speech_job():
     assert tts_text.signature_fields({'text': 'Wo ist mein Geld?'}, fields) == {}
 
 
+def test_editing_one_line_never_changes_what_another_line_says():
+    """Review 0.19: with one vocabulary from every line of the project, 'Text ändern' on the third line turned
+    'KOFFER' and 'GELD' in two untouched lines into 'koffer' and 'geld': new signatures, new takes, new timing."""
+    cast = [{'name': 'SpongeBob'}, {'name': 'Patrick'}]
+    untouched = [{'text': 'Gib mir sofort den SCHLÜSSEL, nicht KOFFER!'}, {'text': 'Wir brauchen GELD, Patrick!'}, {'text': 'SPONGEBOB, komm!'}]
+    said = {}
+    for third in ('Mein Koffer ist rot und das Geld liegt drin.', 'Meine Tasche ist rot.', 'Der KOFFER? Welcher Koffer, SpongeBob?'):
+        lines = untouched + [{'text': third}]; job = tts_text.job_fields({'sound_policy': 19}, lines, cast)
+        said[third] = [(tts_text.spoken(l, job), tts_text.signature_fields(l, job)) for l in untouched]
+    assert len({json.dumps(v) for v in said.values()}) == 1, said
+    assert [s for s, _ in said['Meine Tasche ist rot.']] == ['Gib mir sofort den Schlüssel, nicht koffer!', 'Wir brauchen geld, Patrick!', 'SpongeBob, komm!']
+    # The line's own words and the names still give the casing.
+    job = tts_text.job_fields({'sound_policy': 19}, untouched, cast)
+    assert tts_text.spoken({'text': 'Der Koffer? Nicht der rote, nein: KOFFER!'}, job) == 'Der Koffer? Nicht der rote, nein: Koffer!'
+
+
 def caps_lines():
     lines = [dict(line) for line in vf.LINES]
     lines[0].update(text='Wo ist MEIN Geld geblieben?', text_de='Wo ist MEIN Geld geblieben?')
