@@ -23,6 +23,8 @@ IMAGE_LATE = 'Die Szenenbilder sind schon gewählt. Bilder lassen sich bis zur B
 VOICE_LATE = 'Die Animation hat begonnen. Bild und Stimme lassen sich jetzt nur in einer neuen Fassung tauschen.'
 BLOCKED_FIRST = 'Die Produktion ist angehalten. Erst „Fortsetzen“ wählen, danach kannst du Bild und Stimme tauschen.'
 WORKER_STATES = ('planning', 'pictures', 'voicing', 'rendering', 'correcting')
+# 0.19: Cay's own picture kept while the studio draws (factory_cast_pending.library_id = 'own:<asset>:<mode>').
+OWN = 'own:'
 
 
 def drop_library_voice(participant):
@@ -211,13 +213,30 @@ class Library:
             lines = sum(1 for ep in d.get('episodes', []) for sc in ep['scenes'] for l in turns(sc) if l.get('speaker') == name)
         return scenes, lines
 
+    def assign_own_image(self, d, name, asset_id, mode):
+        """Cay's own picture for one figure (in place, no save). Returns the scenes drawn again."""
+        import cast_design
+        participants = d['idea'].setdefault('participants', [])
+        person = next((p for p in participants if p['name'] == name), None)
+        if person is None:
+            person = {'name': name, 'traits': '', 'image': None, 'voice': None}; participants.append(person)
+        if person.get('image') != asset_id:
+            # A new picture replaces a library image; the same picture in another mode keeps its source.
+            person.pop('library_image', None); person.pop('image_look', None)
+            if not person.get('library_voice'): person.pop('library_id', None)
+        person['image'] = asset_id; person['image_mode'] = mode
+        count = cast_design.invalidate(d, name)
+        if d['state'] != 'blocked': d['state'] = 'pictures'
+        return count
+
     def pending_cast(self, rid):
         rows = self.rows('SELECT name,part,library_id,created FROM factory_cast_pending WHERE run_id=? ORDER BY created', (rid,))
         out = []
         for r in rows:
-            try: label = self.library_figure(r['library_id'], deleted=True)['label']
+            own = r['library_id'].startswith(OWN)
+            try: label = 'dein Bild' if own else self.library_figure(r['library_id'], deleted=True)['label']
             except HTTPException: label = ''
-            out.append({'name': r['name'], 'part': r['part'], 'library_id': r['library_id'], 'label': label})
+            out.append({'name': r['name'], 'part': r['part'], 'library_id': r['library_id'], 'label': label, **({'own': True} if own else {})})
         return out
 
     def apply_pending(self, d):
@@ -230,13 +249,22 @@ class Library:
             window = self.cast_window(d, r['part'], owner=True)
             if window == 'later': continue
             self.sql('DELETE FROM factory_cast_pending WHERE run_id=? AND name=? AND part=?', (d['id'], r['name'], r['part']))
-            try: fig = self.library_figure(r['library_id'])
-            except HTTPException: fig = None
+            own = r['library_id'].startswith(OWN)
+            if own:
+                asset, _, mode = r['library_id'][len(OWN):].partition(':')
+                try: self.asset(asset, 'image'); fig = {'label': 'dein Bild', 'image': asset}
+                except HTTPException: fig = None
+            else:
+                try: fig = self.library_figure(r['library_id'])
+                except HTTPException: fig = None
             person = next((p for p in d.get('plan', {}).get('cast', []) if p['name'] == r['name']), None)
             what = 'Bild' if r['part'] == 'image' else 'Stimme'
             if window != 'now' or not fig or not fig.get(r['part']) or person is None:
-                notes.append(f'{what} für {r["name"]} nicht übernommen: ' + (window if window != 'now' else 'Bibliotheksfigur fehlt.'))
+                notes.append(f'{what} für {r["name"]} nicht übernommen: ' + (window if window != 'now' else 'Dein Bild fehlt.' if own else 'Bibliotheksfigur fehlt.'))
                 continue
+            if own:
+                self.assign_own_image(d, r['name'], asset, mode if mode in ('neutral', 'exact') else 'neutral'); changed = True
+                notes.append(f'Dein Bild für {r["name"]} übernommen'); continue
             self.assign_profile(d, r['name'], fig, r['part'] == 'image', r['part'] == 'voice'); changed = True
             notes.append(f'{what} von „{fig["label"]}“ für {r["name"]} übernommen')
         if notes: d['phase'] = ' · '.join(notes)[:600]

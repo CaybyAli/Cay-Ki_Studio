@@ -10,7 +10,7 @@ from factory_models import MAX_CAST,Shot,Idea,SeriesPlan,EpisodePlan,Choice,Revi
 from image_workflow import build_graph,validate_nodes,png_info
 from factory_video import video_models,motion_graph,finish,probe,file_hash,ff
 from factory_quality import Quality,sample_signature
-from figure_library import drop_library_voice
+from figure_library import drop_library_voice,OWN
 from factory_post import PostProduction
 from autopilot import Autopilot,still_count,second_still
 from figure_library import Library
@@ -1319,20 +1319,19 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             d['cast_approval']=cast_design.signature(d);d['state']='pictures';d['phase']='Figuren übernommen · Szenenbilder entstehen';self.save(d);return self.get(rid)
         @app.post('/api/factory/{rid}/cast/image')
         async def cast_image_upload(rid:str,body:CastImage):
-            d=self.get(rid);self.image_open(d)
+            # 0.19 (B4): while the studio draws, Cay's picture is kept like a library choice and the worker takes it at its
+            # next safe point (a refusal here was invisible behind the figure sheet). A kept choice for this picture never
+            # comes back over it later.
+            d=self.get(rid);window=self.cast_window(d,'image')
+            if window not in ('now','later'):raise HTTPException(409,window)
             if body.name not in [p['name'] for p in d.get('plan',{}).get('cast',[])]:raise HTTPException(404,'Figur gehört nicht zu diesem Projekt.')
             self.asset(body.asset_id,'image')
-            person=next((p for p in d['idea']['participants'] if p['name']==body.name),None)
-            if person is None:
-                person={'name':body.name,'traits':'','image':None,'voice':None};d['idea']['participants'].append(person)
-            if person.get('image')!=body.asset_id:
-                # A new picture replaces a library image; the same picture in another mode keeps its source.
-                person.pop('library_image',None);person.pop('image_look',None)
-                if not person.get('library_voice'):person.pop('library_id',None)
-            person['image']=body.asset_id;person['image_mode']=body.image_mode
-            count=cast_design.invalidate(d,body.name)
-            if d['state']!='blocked':d['state']='pictures'
-            d['phase']=f'Dein Bild für {body.name} wird verwendet · {count} Szenen folgen';self.save(d);return self.get(rid)
+            self.sql('DELETE FROM factory_cast_pending WHERE run_id=? AND name=? AND part=?',(rid,body.name,'image'))
+            if window=='later':
+                self.sql('INSERT INTO factory_cast_pending(run_id,name,part,library_id,created) VALUES(?,?,?,?,?)',(rid,body.name,'image',f'{OWN}{body.asset_id}:{body.image_mode}',self.g['now']()))
+                return self.view(rid)
+            count=self.assign_own_image(d,body.name,body.asset_id,body.image_mode)
+            d['phase']=f'Dein Bild für {body.name} wird verwendet · {count} Szenen folgen';self.save(d);return self.view(rid)
         @app.post('/api/factory/{rid}/cast/redo')
         async def cast_redo(rid:str,body:CastRedo):
             d=self.get(rid);self.image_open(d)
@@ -1343,6 +1342,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                    for p in d['idea']['participants']):
                 raise HTTPException(400,'Diese Figur nutzt dein Bild genau so. Für ein anderes Aussehen ein neues Bild wählen oder das Gesicht neutral nachzeichnen lassen.')
             person['design_round']=person.get('design_round',0)+1
+            self.sql('DELETE FROM factory_cast_pending WHERE run_id=? AND name=? AND part=?',(rid,body.name,'image'))
             count=cast_design.invalidate(d,body.name)
             if d['state']!='blocked':d['state']='pictures'
             d['phase']=f'{body.name} wird neu gestaltet · {count} Szenen folgen';self.save(d);return self.get(rid)

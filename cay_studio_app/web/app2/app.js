@@ -46,8 +46,15 @@ async function api(path, { method = 'GET', body, raw } = {}) {
 const post = (path, body = {}) => api(path, { method: 'POST', body });
 const put = (path, body) => api(path, { method: 'PUT', body });
 
+function toastHome(inSheet) {
+  // An open sheet is a modal dialog: everything outside it lies under its backdrop. The toast moves into it
+  // while it is open (0.19, B4: upload errors were blurred or hidden) and back to the page when it closes.
+  const el = $('#toast'), sheet = $('#sheet'), home = inSheet && sheet.open ? sheet : document.body;
+  if (el.parentElement !== home) home.append(el);
+  return el;
+}
 function toast(text, action) {
-  const el = $('#toast'); el.textContent = text; el.classList.add('show');
+  const el = toastHome(true); el.textContent = text; el.classList.add('show');
   // Optional button (e.g. Rückgängig): its data-action runs through the normal click handler; stays longer.
   if (action) { const b = document.createElement('button'); b.type = 'button'; b.className = 'toast-action'; b.textContent = action.label; Object.assign(b.dataset, action.data); el.append(b); }
   clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), action ? 8000 : 4200);
@@ -649,13 +656,21 @@ function castImageUrl(d, name) {
   return i >= 0 && refs[name] ? `/api/factory/${encodeURIComponent(d.id)}/cast-image/${i}?v=${encodeURIComponent(String(refs[name]).slice(-48))}-${cast[i].design_round || 0}` : '';
 }
 function castPicture(d, name) {
-  const url = castImageUrl(d, name);
-  return url ? `<img src="${esc(url)}" alt="" loading="lazy">`
-    : `<div class="frame-empty">${['pictures', 'cast_review'].includes(d.state) ? 'entsteht' : ''}</div>`;
+  const url = castImageUrl(d, name), e = participantOf(d, name);
+  if (url) return `<img src="${esc(url)}" alt="" loading="lazy">`;
+  // 0.19 (B4): Cay's own picture shows at once while the studio draws it (or waits for 'Fortsetzen'), never an empty frame.
+  if (e.image && !e.library_image && ['pictures', 'cast_review', 'blocked'].includes(d.state)) {
+    return `<img src="/api/factory/assets/${esc(e.image)}" alt="" loading="lazy"><span class="pic-note">${imageMode(e) === 'exact' ? 'Dein Bild' : 'Wird nachgezeichnet'}</span>`;
+  }
+  return `<div class="frame-empty">${['pictures', 'cast_review'].includes(d.state) ? 'entsteht' : ''}</div>`;
 }
 function pendingFor(d, name) {
   const mine = (d.pending_cast || []).filter(x => x.name === name);
-  return mine.length ? { label: mine[0].label || 'deine Figur', parts: mine.map(x => x.part).sort() } : null;
+  if (!mine.length) return null;
+  // 0.19: Cay's own picture can be kept too, next to a voice from the library.
+  const own = mine.some(x => x.own), lib = mine.filter(x => !x.own);
+  const text = [own && 'dein eigenes Bild', lib.length && `${partsText(lib.map(x => x.part).sort())} von „${lib[0].label || 'deine Figur'}“`].filter(Boolean).join(' und ');
+  return { label: mine[0].label || 'deine Figur', parts: mine.map(x => x.part).sort(), text };
 }
 function castIntro(d) {
   const w = d.cast_windows || {};
@@ -676,7 +691,7 @@ function castPanel(d) {
         <span class="role-name">${esc(p.name)}</span></button>
       <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd>
         <dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(p.name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
-      ${roleLooks(d, p.name)}${pend ? `<p class="role-pending">Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“</p>` : ''}${suggestion}</article>`;
+      ${roleLooks(d, p.name)}${pend ? `<p class="role-pending">Vorgemerkt: ${esc(pend.text)}</p>` : ''}${suggestion}</article>`;
   }).join('');
   // Large portraits only where the figures are the task (figure check); elsewhere a compact row.
   return `<section class="cast${d.state === 'cast_review' ? '' : ' compact'}" aria-labelledby="cast-title"><div class="cast-head"><h3 class="label" id="cast-title">Besetzung</h3><p class="muted small">${esc(castIntro(d))}</p></div>
@@ -1025,13 +1040,16 @@ function figureSheet(name) {
         <span>${esc(partsText(usableParts(d, f)))}${usableParts(d, f).some(part => w[part] === 'later') ? `, wird übernommen, ${esc(laterText(d))}` : ''}.</span></button>`).join('')}
       ${row(`data-action="lib-pick-project" data-name="${esc(name)}"`, 'Aus deinen Figuren wählen', `Bild und Stimme aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(name)}.`)}</div>` : '';
   const ownImage = e.image && !e.library_image;
+  // 0.19 (B4): an own picture is also taken while the studio draws: kept and applied after the current image.
+  const upload = `<label class="menu-row" data-upload-row><b>Eigenes Bild hochladen</b><span>${w.image === 'later' ? `Wird vorgemerkt und übernommen, ${esc(laterText(d))}.` : 'Mit neutralem Gesicht übernommen, jede Szene bestimmt den Ausdruck.'}</span><input type="file" accept="image/*" data-upload="cast" data-name="${esc(name)}"></label>`;
   const image = w.image === 'now' ? `<div class="menu-section"><p class="label menu-title">Bild</p>
       ${imageMode(e) !== 'exact' ? row(`data-action="cast-redo" data-name="${esc(name)}"`, 'Neu gestalten', `Das Studio zeichnet ${esc(name)} noch einmal.`) : ''}
-      <label class="menu-row"><b>Eigenes Bild hochladen</b><span>Mit neutralem Gesicht übernommen, jede Szene bestimmt den Ausdruck.</span><input type="file" accept="image/*" data-upload="cast" data-name="${esc(name)}"></label>
+      ${upload}
       ${e.image ? (imageMode(e) === 'exact'
         ? row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="neutral"`, 'Gesicht neutral nachzeichnen', `${ownImage ? 'Dein Bild' : 'Das Bild'} wird einmal mit neutralem Gesicht gezeichnet, damit ${esc(name)} in jeder Szene passend schaut.`)
         : row(`data-action="cast-mode" data-name="${esc(name)}" data-mode="exact"`, 'Bild genau so verwenden', 'Richtig für fertige Figurenblätter. Der Gesichtsausdruck aus dem Bild bleibt dann in allen Szenen.')) : ''}</div>`
-    : `<div class="menu-section"><p class="label menu-title">Bild</p><p class="menu-note">${esc(w.image === 'later' ? `Figuren aus deiner Bibliothek kannst du schon jetzt vormerken. Zum Neu-Gestalten oder für ein eigenes Bild das Projekt kurz pausieren.` : w.image || '')}</p></div>`;
+    : w.image === 'later' ? `<div class="menu-section"><p class="label menu-title">Bild</p>${upload}<p class="menu-note">Figuren aus deiner Bibliothek kannst du auch schon vormerken. Zum Neu-Gestalten das Projekt kurz pausieren.</p></div>`
+    : `<div class="menu-section"><p class="label menu-title">Bild</p><p class="menu-note">${esc(w.image || '')}</p></div>`;
   const voice = w.voice === 'now' ? `<div class="menu-section"><p class="label menu-title">Stimme</p>
       ${row(`data-action="figure-voice-new" data-name="${esc(name)}"`, 'Andere Stimme gestalten', `Das Studio gestaltet eine neue Stimme für ${esc(name)}. Die Sätze werden neu eingesprochen.`)}
       <label class="menu-row"><b>Eigene Aufnahme hochladen</b><span>Eine Sprachaufnahme dieser Figur, 5 bis 20 Sekunden.</span><input type="file" accept="audio/*" data-upload="cast-voice" data-name="${esc(name)}"></label></div>`
@@ -1044,7 +1062,7 @@ function figureSheet(name) {
   const keep = refs[name] || e.voice || (d.voice_profiles || {})[name]
     ? `<div class="menu-section">${row(`data-action="lib-save" data-name="${esc(name)}"`, 'In deine Figuren aufnehmen', 'Bild und Stimme für andere Filme sichern. An diesem Film ändert sich nichts.')}</div>` : '';
   openSheet(`<div class="sheet-head"><h2 class="headline">${esc(name)}</h2><button class="button quiet small" data-action="close">Fertig</button></div>
-    ${pend ? `<div class="notice"><span>Vorgemerkt: ${esc(partsText(pend.parts))} von „${esc(pend.label)}“. Wird übernommen, ${esc(laterText(d))}.</span><button class="button quiet small" data-action="cast-cancel" data-name="${esc(name)}">Vormerkung aufheben</button></div>` : ''}
+    ${pend ? `<div class="notice"><span>Vorgemerkt: ${esc(pend.text)}. Wird übernommen, ${esc(laterText(d))}.</span><button class="button quiet small" data-action="cast-cancel" data-name="${esc(name)}">Vormerkung aufheben</button></div>` : ''}
     <div class="figure-sheet"><div class="figure-side"><div class="figure-pic">${castPicture(d, name)}</div>
         <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd><dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
         <p class="small muted">In ${scenes} ${scenes === 1 ? 'Szene' : 'Szenen'} zu sehen.</p></div>
@@ -1075,8 +1093,8 @@ function saveToLibrarySheet(name) {
 }
 
 /* ---------- sheets ---------- */
-function openSheet(html) { const sheet = $('#sheet'); sheet.innerHTML = `<div class="sheet-body">${html}</div>`; if (!sheet.open) sheet.showModal(); }
-function closeSheet() { const sheet = $('#sheet'); if (sheet.open) sheet.close(); }
+function openSheet(html) { const sheet = $('#sheet'), el = toastHome(false); sheet.innerHTML = `<div class="sheet-body">${html}</div>`; if (!sheet.open) sheet.showModal(); if (el.classList.contains('show')) toastHome(true); }
+function closeSheet() { const sheet = $('#sheet'); if (sheet.open) sheet.close(); toastHome(false); }
 async function settingsSheet() {
   openSheet(`<div class="sheet-head"><h2 class="headline">Einrichtung</h2><button class="button quiet small" data-action="close">Fertig</button></div><p class="muted">Bereitschaft wird geprüft …</p>`);
   const [check, voices, animation, boost, notify, remote] = await Promise.all([api('/api/factory/check').catch(e => ({ error: e.message })),
@@ -1688,9 +1706,18 @@ document.addEventListener('change', async event => {
         closeSheet(); toast(`Deine Aufnahme für ${el.dataset.name} wird verwendet. Die Sätze werden neu eingesprochen.`); await refreshRun(true); return;
       }
       if (kind === 'cast') {
-        const png = await upload('image', files[0]);
-        await post(`/api/factory/${S.rid}/cast/image`, { name: el.dataset.name, asset_id: png });
-        closeSheet(); toast(`Dein Bild für ${el.dataset.name} wird verwendet.`); await refreshRun(true); return;
+        // 0.19 (B4): progress in the row itself; an error stays readable in the open sheet (toast above it).
+        const row = el.closest('[data-upload-row]'), note = row && row.querySelector('span'), before = note && note.textContent;
+        if (row) { row.classList.add('busy'); row.setAttribute('aria-busy', 'true'); note.textContent = 'Dein Bild wird vorbereitet und gesendet …'; }
+        try {
+          const png = await upload('image', files[0]), name = el.dataset.name;
+          const d = await post(`/api/factory/${S.rid}/cast/image`, { name, asset_id: png });
+          closeSheet();
+          toast((d.pending_cast || []).some(x => x.name === name && x.own) ? `Dein Bild für ${name} ist vorgemerkt. Es wird übernommen, ${laterText(d)}.`
+            : d.state === 'blocked' || d.paused ? `Dein Bild für ${name} ist gespeichert. Es wird gezeichnet, sobald du „Fortsetzen“ wählst.`
+            : `Dein Bild für ${name} wird verwendet. Das Studio zeichnet ${name} jetzt danach.`);
+          await refreshRun(true); return;
+        } finally { if (row && row.isConnected) { row.classList.remove('busy'); row.removeAttribute('aria-busy'); note.textContent = before; } el.value = ''; }
       }
       if (kind === 'example') {
         for (const file of files.slice(0, 4 - S.draft.examples.length)) S.draft.examples.push(await upload('image', file));
@@ -1803,6 +1830,7 @@ async function start() {
   await refreshLibrary().catch(() => { S.library = []; });
   route(); await load(); health(); notifyPoll();
   window.addEventListener('hashchange', () => { route(); load(); });
+  $('#sheet').addEventListener('close', () => toastHome(false));        // also Esc: the toast goes back to the page
   setInterval(tick, 2500); setInterval(health, 15000); setInterval(tickClocks, 1000);
 }
 start().catch(e => { $('#main').innerHTML = `<div class="empty"><h2 class="headline">Das Studio antwortet nicht.</h2><p class="muted">${esc(e.message)} Cay_Studio_Starten.cmd erneut öffnen.</p></div>`; });
