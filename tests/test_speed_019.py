@@ -133,6 +133,17 @@ def test_projects_with_0_16_prompts_keep_81_frames_even_with_the_pin(monkeypatch
     assert [g['11']['inputs']['frame_window_size'] for _, g in talk] == [81, 81] and all('window' not in kw for _, kw in calls)
 
 
+def test_new_projects_get_fitted_windows_and_the_0_19_talk_text_together(monkeypatch, tmp_path):
+    # New projects carry all three pins: picture dynamics (talk suffix) and fitted windows apply side by side
+    # (the first call is movies()' schema probe).
+    import shot_design
+    from test_shots_019 import movie_project, run_movies as shots_movies
+    _, calls = shots_movies(monkeypatch, tmp_path, movie_project(shot_policy=19, render_policy=19))
+    assert [(kw.get('window'), kw.get('suffix')) for _, _, kw in calls['talk'][1:]] == [(57, shot_design.TALK_SUFFIX), (77, shot_design.TALK_SUFFIX)]
+    _, calls = shots_movies(monkeypatch, tmp_path, movie_project(shot_policy=19))
+    assert all('window' not in kw for _, _, kw in calls['talk'])
+
+
 # --- 2. No idle GPU between jobs ------------------------------------------------------------
 
 RID = 'f' * 32
