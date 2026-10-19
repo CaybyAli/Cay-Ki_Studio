@@ -311,16 +311,19 @@ def snap_silent(times, talking_flags, fps):
 
 # Damping words in the motion text slow Wan down further (4-step LoRA, cfg 1: the text is the
 # only steering). 'stop-motion' in the clay look asks for choppy, slow movement.
-DAMPING = re.compile(r'(?i)\b(?:calm(?:ly)?|stead(?:y|ily)|subtl(?:e|y)|slow(?:ly)?(?:[- ]motion)?|gentl(?:e|y)|smooth(?:ly)?|soft(?:ly)?|'
-                     r'leisurely|relaxed|stop[- ]motion)\b')
+DAMP = (r'\b(?:calm(?:ly)?|stead(?:y|ily)|subtl(?:e|y)|slow(?:ly)?(?:[- ]motion)?|gentl(?:e|y)|smooth(?:ly)?|soft(?:ly)?|'
+        r'leisurely|relaxed|stop[- ]motion)\b')
+DAMPING = re.compile(DAMP, re.I)
+PAIR = re.compile(DAMP + r'\s+(?:and|or)\s+(?=' + DAMP + ')', re.I)      # 'slowly and gently grabs' -> 'grabs'
+LISTED = re.compile(DAMP + r'(?:\s*,(?=\s*\w))?', re.I)                  # 'a slow, angry turn' -> 'an angry turn'
 
 
 def undamp(text):
-    out = DAMPING.sub('', str(text or ''))
+    out = LISTED.sub('', PAIR.sub('', str(text or '')))
     out = re.sub(r'\b(an?|the)\s+(?=[,.;]|$)', '', out)
     out = re.sub(r'\b([Aa])\s+(?=[aeiouAEIOU])', r'\1n ', out)
     out = re.sub(r'(?:\s*,){2,}', ',', re.sub(r'\s+([,.;:])', r'\1', re.sub(r'\s{2,}', ' ', out)))
-    return re.sub(r'\b(an?|and|with)\s*([,.;]|$)', r'\2', out).strip(' ,;')
+    return re.sub(r'^[\s,.;:]+', '', re.sub(r'\b(an?|and|with)\s*([,.;]|$)', r'\2', out)).rstrip(' ,;')
 
 
 # The lip-sync split (lipsync_shots.CAMERAS) opens animation text with a framing; the still decides it now.

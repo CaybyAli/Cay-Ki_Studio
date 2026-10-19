@@ -367,7 +367,7 @@ def talk_scenes(count=8, tight=()):
 
 
 def test_every_talking_shot_moves_and_faces_stay_in_the_frame():
-    scenes = talk_scenes(tight=(5,)); moves = []
+    scenes = talk_scenes(tight=(5,)); moves = []; talks = []
     for i, scene in enumerate(scenes):
         move = sd.camera(scenes, i, 0., 25)
         if scene['kind'] != 'line': assert move is None; continue
@@ -381,8 +381,12 @@ def test_every_talking_shot_moves_and_faces_stay_in_the_frame():
         if len(scene['lines']) >= 2:
             at = math.ceil(scene['lines'][1]['offset'] * 25 - 1e-9)
             assert values[at] > values[at - 1] * 1.03                                                   # the second line punches in
-        moves.append(('drift' if 'iw-iw/zoom)*(' in x else 'pull' if values[0] > values[-1] else 'punch' if max(b - a for a, b in zip(values, values[1:])) > .03 else 'push'))
-    assert len(set(moves[:4])) == 4 and moves[:4] == moves[4:8]
+        if len(scene['lines']) == 1:
+            moves.append(('drift' if 'iw-iw/zoom)*(' in x else 'pull' if values[0] > values[-1] else
+                          'punch' if max(b - a for a, b in zip(values, values[1:])) > .03 else 'push', sd.MOVES[(len(moves) + len(talks)) % len(sd.MOVES)]))
+        else: talks.append(i)
+    # Push-in, pull-back, lateral drift and punch-in rotate over the talking shots.
+    assert all(seen == planned for seen, planned in moves) and {seen for seen, _ in moves} == set(sd.MOVES)
 
 
 def test_camera_works_across_clips_of_one_shot():
@@ -474,7 +478,7 @@ def test_motion_text_has_no_damping_words_and_concrete_camera(monkeypatch, tmp_p
     assert 'grabs SpongeBob' in silent[2] and 'Camera:' in silent[2] and 'Full real-time speed' in silent[2]
     # The reaction (6.0 s) is two whole native clips; the action and wide shot one each.
     assert [round(dur * 25) for _, dur, _ in calls['motion']] == [77, 73, 53, 49]
-    assert all(kw['suffix'] == sd.TALK_SUFFIX for _, _, kw in calls['talk'])
+    assert calls['talk'][0][0] == 'check' and all(kw['suffix'] == sd.TALK_SUFFIX for _, _, kw in calls['talk'][1:])   # [0]: the node probe
     assert 'big expressive' in sd.TALK_SUFFIX and 'calm' not in sd.TALK_SUFFIX and 'mouth stays closed' in sd.TALK_SUFFIX
     # The next clip of the reaction starts from its last native frame.
     assert any('select=eq(n\\,76)' in ' '.join(args) for args in calls['ff'])
@@ -492,8 +496,9 @@ def test_talk_suffix_only_with_the_pin():
 
 
 def test_undamp_keeps_the_action():
-    assert sd.undamp('Mr. Krabs slowly and gently grabs SpongeBob, calm steady movement') == 'Mr. Krabs and grabs SpongeBob, movement'
+    assert sd.undamp('Mr. Krabs slowly and gently grabs SpongeBob, calm steady movement') == 'Mr. Krabs grabs SpongeBob, movement'
     assert sd.undamp('claymation stop-motion look') == 'claymation look'
     assert sd.undamp('a subtle push-in') == 'a push-in' and sd.undamp('a slow, angry turn') == 'an angry turn'
+    assert sd.undamp('talks calmly, then jumps') == 'talks then jumps' and sd.undamp('stays calm.') == 'stays.'
     prompt = sd.motion_prompt('claymation stop-motion look', 'Medium shot of Patrick alone, talking: he slams the door', {'kind': 'line', 'cast': ['Patrick']}, [{'speaker': 'Patrick'}], 0)
     assert prompt.startswith('claymation look. He slams the door') or prompt.startswith('claymation look. Patrick alone')
