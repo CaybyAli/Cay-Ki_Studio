@@ -133,3 +133,54 @@ def test_own_picture_still_refused_once_the_pictures_are_chosen(tmp_path, monkey
     aid, _ = upload(http, tmp_path, 'Cays Markus')
     answer = http.post(f'/api/factory/{RID}/cast/image', json={'name': 'Markus', 'asset_id': aid})
     assert answer.status_code == 409 and not f.pending_cast(RID) and not entry(f.get(RID))
+
+
+# ---------- B1: the trash ----------
+
+def trashed(f, http, rid, title, films=0, picture=None):
+    scenes = [{**scene(['Lena']), 'selected': picture, 'variants': [{'id': picture, 'key': 'image:0:0:0:0'}] if picture else []}]
+    project(f, rid, 'done', {'title': title, 'episodes': [{'title': title, 'scenes': scenes}],
+                             'exports': [{'file': f'Folge_{i + 1:02}.mp4', 'episode': i} for i in range(films)]}, paused=1)
+    root = f.g['ROOT']
+    (root / '01_Projekte/Studio' / rid / '02_Bilder').mkdir(parents=True); (root / '01_Projekte/Studio' / rid / '02_Bilder/1.png').write_bytes(b'png')
+    if films:
+        (root / '03_Fertige_Videos/Studio' / rid).mkdir(parents=True); (root / '03_Fertige_Videos/Studio' / rid / 'Folge_01.mp4').write_bytes(b'mp4')
+    assert http.post(f'/api/factory/{rid}/delete').status_code == 200
+
+
+def test_trash_lists_a_card_per_project_not_whole_documents(tmp_path, monkeypatch):
+    """Cay's trash was a run-on line of blue links; the trash page shows picture, title, date and films."""
+    f, http = figures(tmp_path, monkeypatch)
+    trashed(f, http, 'c' * 32, 'Butterblitz', films=2, picture='s' * 32)
+    trashed(f, http, 'd' * 32, 'Der Döner-Detektiv')
+    cards = http.get('/api/factory/trash').json()['runs']
+    assert [c['title'] for c in cards] == ['Der Döner-Detektiv', 'Butterblitz']           # newest first
+    butter = cards[1]
+    assert butter['films'] == 2 and butter['picture'] == f'/api/factory/{"c" * 32}/picture/{"s" * 32}' and butter['deleted_at'] and butter['state'] == 'done'
+    assert cards[0]['picture'] is None and 'episodes' in cards[0] and 'idea' not in cards[0] and 'plan' not in cards[0]
+    listed = [r['id'] for r in http.get('/api/factory').json()['runs']]
+    assert 'c' * 32 not in listed and RID in listed                                       # hidden from the projects
+
+
+def test_empty_trash_keeps_films_by_default_and_a_project_still_computing(tmp_path, monkeypatch):
+    f, http = figures(tmp_path, monkeypatch)
+    root = f.g['ROOT']; keep = root / '00_Eingang/Studio_Referenzen/figur.png'; keep.parent.mkdir(parents=True, exist_ok=True); keep.write_bytes(b'library')
+    for rid, title in (('c' * 32, 'Butterblitz'), ('d' * 32, 'Harry Butter'), ('e' * 32, 'Säure & Glanz')):
+        trashed(f, http, rid, title, films=1)
+    f.busy = 'e' * 32                                                                     # its step still runs
+    answer = http.post('/api/factory/trash/empty', json={})
+    assert answer.json() == {'ok': True, 'purged': 2, 'kept': ['Säure & Glanz'], 'films_kept': True}
+    assert [c['id'] for c in http.get('/api/factory/trash').json()['runs']] == ['e' * 32]
+    assert not (root / '01_Projekte/Studio' / ('c' * 32)).exists() and (root / '03_Fertige_Videos/Studio' / ('c' * 32) / 'Folge_01.mp4').exists()
+    assert f.get(RID)['state'] == 'cast_review' and keep.read_bytes() == b'library'       # outside the trash nothing changes
+    f.busy = None
+    assert http.post('/api/factory/trash/empty', json={'films': True}).json()['films_kept'] is False
+    assert not (root / '03_Fertige_Videos/Studio' / ('e' * 32)).exists() and http.get('/api/factory/trash').json()['runs'] == []
+
+
+def test_a_project_in_the_trash_is_locked_and_comes_back_paused(tmp_path, monkeypatch):
+    f, http = figures(tmp_path, monkeypatch)
+    assert http.post(f'/api/factory/{RID}/delete').json()['deleted'] is True
+    d = http.post(f'/api/factory/{RID}/restore', json={}).json()
+    assert d['deleted'] is False and d['paused'] is True and d['state'] == 'cast_review'
+    assert http.post(f'/api/factory/{RID}/resume').json()['paused'] is False              # 'Rückgängig' of a project that ran

@@ -12,6 +12,7 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const hex = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
 const PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg>';
 const PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zm4.5 0h2.5v9H7z" fill="currentColor"/></svg>';
+const TRASH = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
 
 /* ---------- data ---------- */
 function defaults() {
@@ -102,12 +103,12 @@ function estimate(draft, seconds) {
 function route() {
   const hash = decodeURIComponent(location.hash.slice(1));
   if (hash.startsWith('p=')) { S.page = 'project'; if (S.rid !== hash.slice(2)) { S.rid = hash.slice(2); S.run = null; S.progress = null; S.clock = null; S.sig = ''; S.episode = 0; } }
-  else S.page = ['projects', 'library'].includes(hash) ? hash : 'new';
+  else S.page = ['projects', 'library', 'trash'].includes(hash) ? hash : 'new';
 }
 function render() {
-  document.querySelectorAll('[data-nav]').forEach(b => b.setAttribute('aria-current', (b.dataset.nav === S.page || (S.page === 'project' && b.dataset.nav === 'projects')) ? 'page' : 'false'));
+  document.querySelectorAll('[data-nav]').forEach(b => b.setAttribute('aria-current', (b.dataset.nav === S.page || (['project', 'trash'].includes(S.page) && b.dataset.nav === 'projects')) ? 'page' : 'false'));
   const main = $('#main');
-  main.innerHTML = S.page === 'project' ? projectView() : S.page === 'projects' ? projectsView() : S.page === 'library' ? libraryView() : composeView();
+  main.innerHTML = S.page === 'project' ? projectView() : S.page === 'projects' ? projectsView() : S.page === 'trash' ? trashView() : S.page === 'library' ? libraryView() : composeView();
   S.deferred = false;
   if (S.page === 'new') updateCompose();
   if (S.page === 'new' && S.draft.story === 'script') { paintCheck(); if (S.checkFor !== S.draft.script) checkScript(true); }
@@ -117,7 +118,7 @@ async function load() {
   render();
   try {
     if (S.page === 'project') await refreshRun(true);
-    else if (S.page === 'projects') await refreshRuns();
+    else if (S.page === 'projects' || S.page === 'trash') await refreshRuns();
     else if (S.page === 'library') { await refreshLibrary(); render(); }
   } catch (e) { toast(e.message); }
 }
@@ -476,18 +477,57 @@ function tickClocks() {
 }
 function projectsView() {
   if (!S.runs) return '<p class="muted">Projekte werden geladen …</p>';
-  const head = `<div class="page-head"><h1 class="title">Projekte</h1><a class="button" href="#new">Neuer Film</a></div>`;
-  // Projects in the trash stay reachable: their page has 'Wiederherstellen'.
-  const trash = (S.trash || []).length ? `<p class="small muted project-foot">Im Papierkorb: ${S.trash.map(t => `<a href="#p=${esc(t.id)}">${esc(t.title)}</a>`).join(', ')}</p>` : '';
-  if (!S.runs.length) return head + `<div class="empty"><h2 class="headline">Noch kein Projekt.</h2><p class="muted">Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.</p><a class="button" href="#new">Ersten Film starten</a></div>` + trash;
+  // 0.19 (B1): the trash is its own page; a quiet button with its count instead of a run-on line of links.
+  const count = (S.trash || []).length;
+  const head = `<div class="page-head"><h1 class="title">Projekte</h1><div class="head-actions"><a class="button quiet trash-link" href="#trash">${TRASH}<span>Papierkorb${count ? ` <span class="count">${count}</span>` : ''}</span></a><a class="button" href="#new">Neuer Film</a></div></div>`;
+  if (!S.runs.length) return head + `<div class="empty"><h2 class="headline">Noch kein Projekt.</h2><p class="muted">Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.</p><a class="button" href="#new">Ersten Film starten</a></div>`;
   const order = { you: 0, stop: 1, run: 2, '': 3, done: 4 };
   const runs = [...S.runs].sort((a, b) => order[status(a)[0]] - order[status(b)[0]] || String(b.updated).localeCompare(String(a.updated)));
   return head + `<div class="grid">${runs.map(r => {
     const [cls, label] = status(r);
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     const badge = r.episodes > 1 ? `<span class="frame-badge">${r.finished}/${r.episodes} Folgen</span>` : '';
-    return `<a class="tile" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span><span class="status ${cls}">${esc(label)}</span>${clockTag(r.clock, r.state === 'done')}</a>`;
-  }).join('')}</div>` + trash;
+    // The trash button sits on the card, not in the link: one tap deletes without opening the project.
+    return `<article class="tile"><a class="tile-link" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span><span class="status ${cls}">${esc(label)}</span>${clockTag(r.clock, r.state === 'done')}</a>
+      <button class="tile-trash" data-action="trash-ask" data-id="${esc(r.id)}" aria-label="${esc(r.title)} in den Papierkorb legen" title="In den Papierkorb">${TRASH}</button></article>`;
+  }).join('')}</div>`;
+}
+/* ---------- trash (0.19, B1) ---------- */
+function deletedText(iso) { const t = when(iso); return t ? `am ${t}` : ''; }
+function trashView() {
+  if (!S.trash) return '<p class="muted">Papierkorb wird geladen …</p>';
+  const items = S.trash, films = items.reduce((n, t) => n + (t.films || 0), 0);
+  const head = `<div class="project-head"><a class="back" href="#projects">Alle Projekte</a></div>
+    <div class="page-head"><h1 class="title">Papierkorb</h1>${items.length ? '<button class="button danger-solid" data-action="trash-empty">Papierkorb leeren</button>' : ''}</div>
+    <p class="muted trash-lede">Projekte im Papierkorb sind ausgeblendet und pausiert. Bilder, Stimmen und Animationen bleiben, bis du sie endgültig löschst.${films ? ' Fertige Videos bleiben dabei im Ordner 03_Fertige_Videos, außer du wählst es anders.' : ''}</p>`;
+  if (!items.length) return head + '<div class="empty"><h2 class="headline">Der Papierkorb ist leer.</h2><p class="muted">Gelöschte Projekte landen zuerst hier. Von hier holst du sie zurück.</p><a class="button quiet" href="#projects">Zu den Projekten</a></div>';
+  return head + `<div class="grid">${items.map(t => `<article class="tile trashed">
+      <div class="frame">${t.picture ? `<img src="${esc(t.picture)}" alt="" loading="lazy">` : `<span class="frame-title">${esc(t.title)}</span>`}${t.films ? `<span class="frame-badge">${t.films} ${t.films === 1 ? 'fertiger Film' : 'fertige Filme'}</span>` : ''}</div>
+      <span class="tile-title">${esc(t.title)}</span><span class="small muted">Gelöscht ${esc(deletedText(t.deleted_at))}</span>
+      <div class="tile-actions"><button class="button small" data-action="trash-restore" data-id="${esc(t.id)}">Wiederherstellen</button><button class="button small quiet danger" data-action="trash-purge" data-id="${esc(t.id)}">Endgültig löschen</button></div></article>`).join('')}</div>`;
+}
+/* Waiting at a stop the autopilot left for Cay (resuming would skip it). */
+function stoppedForCay(doc) { return !!(doc && doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state); }
+function trashAsk(id) {
+  const r = (S.run && S.run.id === id ? S.run : null) || (S.runs || []).find(x => x.id === id);
+  if (!r) return;
+  const doc = S.run && S.run.id === id ? S.run : S.docs[id] && S.docs[id].doc, running = WORKING.has(r.state) && !r.paused;
+  // 'Rückgängig' brings it back as it was: what ran or waited for Cay goes on (a restore alone stays paused).
+  const goesOn = !r.paused && r.state !== 'blocked' && !stoppedForCay(doc);
+  openSheet(`<div class="sheet-head"><h2 class="headline">In den Papierkorb legen?</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+    <p>„${esc(r.title)}“ verschwindet aus deinen Projekten.${running ? ' Die Arbeit daran hält nach dem laufenden Schritt an.' : ''} Bilder, Stimmen und fertige Filme bleiben erhalten. Im Papierkorb kannst du es jederzeit wiederherstellen.</p>
+    <div class="sheet-foot"><button class="button danger-solid" data-action="trash-confirm" data-id="${esc(id)}" data-title="${esc(r.title)}" data-resume="${goesOn ? 1 : 0}">In den Papierkorb</button></div>`);
+}
+function purgeAsk(ids) {
+  // ids: one project (its page or its trash card); none: the whole trash.
+  const fallback = S.run && ids && ids.includes(S.run.id) ? [{ id: S.run.id, title: S.run.title, films: (S.run.exports || []).length }] : [];
+  const items = ids ? ((S.trash || []).filter(t => ids.includes(t.id)).length ? (S.trash || []).filter(t => ids.includes(t.id)) : fallback) : (S.trash || []);
+  if (!items.length) return;
+  const films = items.reduce((n, t) => n + (t.films || 0), 0), all = !ids;
+  openSheet(`<div class="sheet-head"><h2 class="headline">${all ? 'Papierkorb leeren?' : 'Endgültig löschen?'}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
+    <p>${all ? `${items.length} ${items.length === 1 ? 'Projekt wird' : 'Projekte werden'}` : `„${esc(items[0].title)}“ wird`} endgültig gelöscht: Bilder, Stimmen und Animationen. Das lässt sich nicht rückgängig machen. Deine Figuren und hochgeladenen Dateien bleiben.</p>
+    ${films ? `<label class="check"><input type="checkbox" id="purge-films"><span><b>Auch ${films === 1 ? 'das fertige Video' : `die ${films} fertigen Videos`} löschen</b><span class="small muted">Ohne Haken bleiben sie im Ordner 03_Fertige_Videos.</span></span></label>` : ''}
+    <div class="sheet-foot"><button class="button danger-solid" data-action="purge-confirm" data-ids="${esc(ids ? ids.join(',') : '')}">${all ? 'Papierkorb leeren' : 'Endgültig löschen'}</button></div>`);
 }
 async function refreshRuns() {
   const list = await api('/api/factory');
@@ -498,13 +538,13 @@ async function refreshRuns() {
     }
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     r.autopilot = !!(doc && doc.idea && doc.idea.autopilot);
-    r.waiting = !!(doc && ((doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state) || (doc.sound_edit && doc.state === 'voice_review')));
+    r.waiting = !!(doc && (stoppedForCay(doc) || (doc.sound_edit && doc.state === 'voice_review')));
     r.deleted = false;
   }));
-  const trash = (await api('/api/factory/trash').catch(() => ({ runs: S.trash || [] }))).runs.map(t => ({ id: t.id, title: t.title }));
+  const trash = (await api('/api/factory/trash').catch(() => ({ runs: S.trash || [] }))).runs;
   const changed = JSON.stringify([list.runs, trash]) !== JSON.stringify([S.runs, S.trash]);
   S.runs = list.runs; S.trash = trash;
-  if (changed && S.page === 'projects' && !busyUI()) render();
+  if (changed && ['projects', 'trash'].includes(S.page) && !busyUI()) render();
 }
 
 /* ---------- one project ---------- */
@@ -524,15 +564,16 @@ function settingsLine(d) {
 function projectView() {
   const d = S.run;
   if (!d) return '<p class="muted">Projekt wird geladen …</p>';
+  // 0.19 (B1): deleting is a visible button at the top, also while the studio works (it pauses first).
   return `<div class="project-head">
-      <a class="back" href="#projects">Alle Projekte</a>
+      <div class="project-top"><a class="back" href="${d.deleted ? '#trash' : '#projects'}">${d.deleted ? 'Papierkorb' : 'Alle Projekte'}</a>${d.deleted ? ''
+        : `<button class="button quiet small trash-button" data-action="delete-project">${TRASH}<span>In den Papierkorb</span></button>`}</div>
       <h1 class="title">${esc(d.title)}</h1>
       <p class="muted">${esc(settingsLine(d))} <span id="clock-slot">${clockTag(S.clock, d.state === 'done')}</span></p>
       ${stepsView(d)}
     </div>
     ${nextView(d)}
-    ${sectionsView(d)}
-    ${!d.deleted && (!WORKING.has(d.state) || d.paused) ? '<div class="project-foot"><button class="link quiet" data-action="delete-project">In den Papierkorb</button></div>' : ''}`;
+    ${sectionsView(d)}`;
 }
 function autopilotSwitch(d) {
   return `<label class="switch"><input type="checkbox" data-action="autopilot" ${d.idea.autopilot ? 'checked' : ''}><span>Autopilot${d.idea.autopilot ? ': ohne Zwischenstopps' : ''}</span></label>`;
@@ -541,7 +582,7 @@ function nextView(d) {
   const pause = d.paused ? '<button class="button" data-action="resume">Fortsetzen</button>' : '<button class="button quiet" data-action="pause">Pausieren</button>';
   // Paused: say so, and where it goes on; never 'Das Studio arbeitet.' while nothing runs.
   const phase = d.paused ? `${d.phase ? `Zuletzt: ${esc(d.phase.replace(/[.\s]+$/, ''))}. ` : ''}Fortsetzen macht dort weiter.` : esc(d.phase || '');
-  if (d.deleted) return `<section class="next wait"><h2 class="headline">Im Papierkorb.</h2><p>Dateien bleiben erhalten.</p><div class="actions"><button class="button" data-action="restore">Wiederherstellen</button><button class="button quiet danger" data-action="purge-project">Endgültig löschen</button></div></section>`;
+  if (d.deleted) return `<section class="next wait"><h2 class="headline">Im Papierkorb.</h2><p>Dateien bleiben erhalten. Wiederhergestellt bleibt das Projekt pausiert, bis du „Fortsetzen“ wählst.</p><div class="actions"><button class="button" data-action="restore">Wiederherstellen</button><button class="button quiet danger" data-action="purge-project">Endgültig löschen</button></div></section>`;
   if (d.state === 'blocked') return blockedView(d);
   if (d.state === 'done') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie ist fertig.' : 'Dein Film ist fertig.'}</h2>
       <p>Unten ansehen, herunterladen und mit der fertigen Beschreibung hochladen.</p>
@@ -1439,17 +1480,42 @@ const actions = {
   async pause() { await post(`/api/factory/${S.rid}/pause`); toast('Pausiert, sobald der aktuelle Schritt fertig ist.'); },
   async resume() { await post(`/api/factory/${S.rid}/resume`); toast('Geht weiter.'); },
   async restore() { await post(`/api/factory/${S.rid}/restore`); toast('Wiederhergestellt. Mit „Fortsetzen“ geht es weiter.'); },
-  async 'purge-project'() {
-    const title = S.run.title;
-    if (!confirm(`„${title}“ endgültig löschen? Bilder, Stimmen und Animationen dieses Projekts werden gelöscht. Das lässt sich nicht rückgängig machen.`)) return;
-    const films = (S.run.exports || []).length > 0 && confirm('Die fertigen Videos auch löschen?\n\nOK: ja, auch die Videos löschen.\nAbbrechen: Die Videos bleiben im Ordner 03_Fertige_Videos.');
-    await post(`/api/factory/${S.rid}/purge`, { films });
-    toast(films ? 'Endgültig gelöscht.' : 'Endgültig gelöscht. Die fertigen Videos bleiben im Ordner 03_Fertige_Videos.');
-    location.hash = 'projects';
+  // 0.19 (B1): delete asks in a sheet (also from a project card), then offers 'Rückgängig'; deleting for good asks
+  // in a sheet whose box for the finished films starts unticked (they stay, as before).
+  'purge-project'() { purgeAsk([S.rid]); },
+  'delete-project'() { trashAsk(S.rid); },
+  'trash-ask'(b) { trashAsk(b.dataset.id); },
+  'trash-empty'() { purgeAsk(null); },
+  'trash-purge'(b) { purgeAsk([b.dataset.id]); },
+  async 'trash-confirm'(b) {
+    const id = b.dataset.id;
+    await post(`/api/factory/${id}/delete`); closeSheet();
+    toast(`„${b.dataset.title}“ liegt im Papierkorb.`, { label: 'Rückgängig', data: { action: 'trash-undo', id, resume: b.dataset.resume } });
+    if (S.page === 'project') location.hash = 'projects'; else { await refreshRuns(); render(); }
   },
-  async 'delete-project'() {
-    if (!confirm(`„${S.run.title}“ in den Papierkorb legen? Die Dateien bleiben erhalten. Unter „Projekte“ kannst du es wiederherstellen.`)) return;
-    await post(`/api/factory/${S.rid}/delete`); toast('In den Papierkorb gelegt.'); location.hash = 'projects';
+  async 'trash-undo'(b) {
+    await post(`/api/factory/${b.dataset.id}/restore`);
+    if (b.dataset.resume === '1') await post(`/api/factory/${b.dataset.id}/resume`);
+    $('#toast').classList.remove('show'); toast(b.dataset.resume === '1' ? 'Zurückgeholt.' : 'Zurückgeholt. Mit „Fortsetzen“ geht es weiter.');
+    if (['projects', 'trash'].includes(S.page)) { await refreshRuns(); render(); } else if (S.page === 'project') await refreshRun(true);
+  },
+  async 'trash-restore'(b) {
+    const t = (S.trash || []).find(x => x.id === b.dataset.id);
+    await post(`/api/factory/${b.dataset.id}/restore`);
+    toast(`„${t ? t.title : 'Projekt'}“ ist wieder unter „Projekte“. Mit „Fortsetzen“ geht es weiter.`);
+    await refreshRuns(); render();
+  },
+  async 'purge-confirm'(b) {
+    const ids = b.dataset.ids ? b.dataset.ids.split(',') : null, films = !!($('#purge-films') && $('#purge-films').checked);
+    const kept = films ? '' : ' Fertige Videos bleiben im Ordner 03_Fertige_Videos.';
+    if (ids) {
+      for (const id of ids) await post(`/api/factory/${id}/purge`, { films });
+      closeSheet(); toast('Endgültig gelöscht.' + kept);
+    } else {
+      const r = await post('/api/factory/trash/empty', { films });
+      closeSheet(); toast((r.kept.length ? `${r.purged} gelöscht. Noch in Arbeit und deshalb geblieben: ${r.kept.join(', ')}.` : 'Papierkorb geleert.') + kept);
+    }
+    if (S.page === 'project') location.hash = 'trash'; else { await refreshRuns(); render(); }
   },
   async autopilot(b) { await post(`/api/factory/${S.rid}/autopilot`, { enabled: b.checked }); toast(b.checked ? 'Autopilot an: der Rest läuft ohne Zwischenstopps.' : 'Autopilot aus.'); },
   async 'abort-step'() { if (confirm('Aktuellen Abschnitt abbrechen und pausieren? Fertige Abschnitte bleiben erhalten.')) { await post(`/api/factory/${S.rid}/abort-step`, { fast: false }); toast('Abgebrochen und pausiert.'); } },
@@ -1810,7 +1876,7 @@ async function tick() {
     if (S.page === 'project' && S.rid) {
       const before = S.run && S.run.state;
       if (!S.run || WORKING.has(S.run.state) || (REVIEW.has(S.run.state) && S.run.idea.autopilot) || S.deferred || before === 'blocked') await refreshRun(false);
-    } else if (S.page === 'projects') await refreshRuns();
+    } else if (S.page === 'projects' || S.page === 'trash') await refreshRuns();
   } catch (e) { /* next tick */ }
 }
 async function health() {

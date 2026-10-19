@@ -3,6 +3,7 @@ import copy
 import shutil
 import sqlite3
 from typing import Literal
+from urllib.parse import quote
 from pydantic import Field
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -68,6 +69,23 @@ class EffectsCorrection(Strict):
     sound_cues: list[SoundCue] = Field(max_length=8)
 
 
+def trash_card(d, deleted_at):
+    """One project in the trash as the trash page shows it: its picture, title, when it was deleted, its films."""
+    picture = None
+    for ep in d.get('episodes') or []:
+        for scene in ep.get('scenes') or []:
+            sid = scene.get('selected') or next((v['id'] for v in scene.get('active_variants') or []), None)
+            if sid: picture = f"/api/factory/{d['id']}/picture/{sid}"; break
+        if picture: break
+    cast = (d.get('plan') or {}).get('cast') or []; refs = d.get('cast_refs') or {}
+    if not picture:
+        i = next((i for i, p in enumerate(cast) if p.get('name') in refs), None)
+        if i is not None: picture = f"/api/factory/{d['id']}/cast-image/{i}?v={quote(str(refs[cast[i]['name']])[-48:])}"
+    idea = d.get('idea') or {}
+    return {'id': d['id'], 'title': d.get('title') or '', 'deleted_at': deleted_at, 'state': d.get('state'), 'created': d.get('created'),
+            'episodes': idea.get('episodes', 1), 'films': len(d.get('exports') or []), 'picture': picture}
+
+
 class Editor:
     def init_editor(self):
         self.sql('CREATE TABLE IF NOT EXISTS studio_trash(id TEXT PRIMARY KEY, deleted_at TEXT NOT NULL)')
@@ -81,6 +99,20 @@ class Editor:
             except Exception: switch = []          # remix runs and databases before 0.18 have none
             if switch: d['idea']['autopilot'] = bool(switch[0]['autopilot'])
         return d
+
+    def running(self, rid):
+        """A step of this project still computes (GPU or post-production): it may not be deleted for good yet."""
+        return getattr(self, 'busy', None) == rid or bool(self.rows("SELECT id FROM factory_post WHERE run_id=? AND status='running'", (rid,)))
+
+    def purge_run(self, d, films):
+        folders = [self.folder(d)] + ([self.path(self.g['ROOT'] / '03_Fertige_Videos' / 'Studio' / d['id'])] if films else [])
+        with self.g['conn']() as db:
+            for table, column in (('factory_steps', 'run_id'), ('factory_post', 'run_id'), ('factory_cast_pending', 'run_id'),
+                                  ('notify_outbox', 'run_id'), ('notify_events', 'run_id'), ('factory_control', 'id'),
+                                  ('factory_switches', 'id'), ('studio_trash', 'id'), ('factory_runs', 'id')):
+                try: db.execute(f'DELETE FROM {table} WHERE {column}=?', (d['id'],))
+                except sqlite3.OperationalError: pass          # table of a feature this studio has not started yet
+        for folder in folders: shutil.rmtree(folder, ignore_errors=True)
 
     def editor_routes(self, app, kind='factory'):
         prefix = '/api/' + kind
@@ -98,8 +130,22 @@ class Editor:
 
         @app.get(prefix + '/trash')
         def trash():
-            return {'runs': [self.get(row['id']) for row in self.rows(
-                f'SELECT r.id FROM {table} r JOIN studio_trash t ON r.id=t.id ORDER BY t.deleted_at DESC')]}
+            rows = self.rows(f'SELECT r.id, t.deleted_at FROM {table} r JOIN studio_trash t ON r.id=t.id ORDER BY t.deleted_at DESC')
+            if kind != 'factory': return {'runs': [self.get(row['id']) for row in rows]}
+            # 0.19 (B1): the trash page needs a card per project, not whole documents (polled every 2.5 s).
+            return {'runs': [trash_card(self.get(row['id']), row['deleted_at']) for row in rows]}
+
+        if kind == 'factory':
+            @app.post(prefix + '/trash/empty')
+            def empty(body: Purge):
+                """Empty the trash: every project in it for good, finished films only when Cay says so.
+                A project whose step still runs stays and is named."""
+                purged, kept = 0, []
+                for row in self.rows(f'SELECT r.id FROM {table} r JOIN studio_trash t ON r.id=t.id'):
+                    d = self.get(row['id'])
+                    if self.running(d['id']): kept.append(d.get('title') or d['id']); continue
+                    self.purge_run(d, body.films); purged += 1
+                return {'ok': True, 'purged': purged, 'kept': kept, 'films_kept': not body.films}
 
         @app.post(prefix + '/{rid}/delete')
         def delete(rid: str):
@@ -127,16 +173,8 @@ class Editor:
             00_Eingang and stay; timing samples stay for the remaining-time estimate."""
             d = self.get(rid)
             if not d.get('deleted'): raise HTTPException(409, 'Zuerst in den Papierkorb legen.')
-            if getattr(self, 'busy', None) == rid or self.rows("SELECT id FROM factory_post WHERE run_id=? AND status='running'", (rid,)):
-                raise HTTPException(409, 'Ein Arbeitsschritt dieses Projekts läuft noch. In einer Minute erneut versuchen.')
-            folders = [self.folder(d)] + ([self.path(self.g['ROOT'] / '03_Fertige_Videos' / 'Studio' / d['id'])] if body.films else [])
-            with self.g['conn']() as db:
-                for table, column in (('factory_steps', 'run_id'), ('factory_post', 'run_id'), ('factory_cast_pending', 'run_id'),
-                                      ('notify_outbox', 'run_id'), ('notify_events', 'run_id'), ('factory_control', 'id'),
-                                      ('factory_switches', 'id'), ('studio_trash', 'id'), ('factory_runs', 'id')):
-                    try: db.execute(f'DELETE FROM {table} WHERE {column}=?', (d['id'],))
-                    except sqlite3.OperationalError: pass          # table of a feature this studio has not started yet
-            for folder in folders: shutil.rmtree(folder, ignore_errors=True)
+            if self.running(rid): raise HTTPException(409, 'Ein Arbeitsschritt dieses Projekts läuft noch. In einer Minute erneut versuchen.')
+            self.purge_run(d, body.films)
             return {'ok': True, 'films_kept': not body.films}
 
         @app.post(prefix + '/{rid}/correction')
