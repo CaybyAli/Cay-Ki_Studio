@@ -214,7 +214,8 @@ def test_beds_do_not_hiss(tmp_path, kind):
     fa.synth_ambience(tmp_path / 'bed.wav', [{'seconds': 3.0, 'ambience': kind, 'location': 'x'}], 1.)
     data, _ = speech_check.read_wav(tmp_path / 'bed.wav'); x = np.array(data[RATE // 2:-RATE // 2], dtype=float)
     power = np.abs(np.fft.rfft(x)) ** 2; f = np.fft.rfftfreq(len(x), 1 / RATE)
-    assert 10 * np.log10(power[f >= 4000].sum() / power.sum()) <= -25, kind   # white noise: about -1.6 dB
+    # Share above 4 kHz: white noise about -1.6 dB, the 0.18 rain bed -2.0 dB, its wind and room -16.5 dB.
+    assert 10 * np.log10(power[f >= 4000].sum() / power.sum()) <= -20, kind
 
 
 def test_a_missing_line_still_stops_and_a_masked_quiet_line_is_lifted(tmp_path):

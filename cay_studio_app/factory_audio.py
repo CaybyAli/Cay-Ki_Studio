@@ -415,7 +415,7 @@ def bed_texture(kind,n,rng):
         gust=slow(1.3,.2,1.);base=lowpass(1.,.975,[180+520*g for g in gust])
         return unit([v*(.35+.65*g) for v,g in zip(base,gust)])
     if kind=='rain':
-        bed=lowpass(1500,.95);drops=unit(blips(28,(900,2800),(.003,.007),.035)) if n else []
+        bed=lowpass(700,.97);drops=unit(blips(28,(900,2800),(.003,.007),.035)) if n else []
         return unit([b+.45*d for b,d in zip(bed,drops)])
     if kind=='forest':
         bed=lowpass(400);birds=[0.]*n;t=rng.uniform(.8,2.5)
