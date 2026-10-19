@@ -21,10 +21,17 @@ def segments(seconds, fps, maximum=5):
 
 TALK_SEGMENT = 15  # seconds of lip-sync per ComfyUI prompt
 
-def scene_segments(seconds, fps, talking):
+def scene_segments(seconds, fps, talking, native=False):
     """One rule for production and progress: InfiniteTalk computes full 81-frame
     windows, so a talking scene is one prompt (up to TALK_SEGMENT); silent motion
-    clips stay at the 5 s limit of the image-to-video model."""
+    clips stay at the 5 s limit of the image-to-video model.
+    native (0.19, shot_policy 19): silent Wan frames play 1:1 at the delivery rate,
+    so one clip holds at most 81 delivered frames (3.24 s at 25 fps)."""
+    if native and not talking:
+        from shot_design import NATIVE_FRAMES
+        frames = round(seconds * fps); count = max(1, math.ceil(frames / NATIVE_FRAMES))
+        segments(seconds, fps)          # same fps check
+        return [(frames // count + (i < frames % count)) / fps for i in range(count)]
     return segments(seconds, fps, TALK_SEGMENT if talking else 5)
 
 def cadence(fps, smooth=False, source_fps=16):
