@@ -26,6 +26,7 @@ from factory_editor import Editor, image_rounds, active_variants, regenerate
 from studio_quality_policy import settings,segments,scene_segments,motion_direction,motion_direction_v16,RENDER_POLICY
 from story_source import manifest,validate_count,prepare_notes,episode_source,SeriesHeader
 import own_script
+import shot_design
 
 ACTIVE={'planning','pictures','voicing','rendering','correcting'}
 
@@ -821,6 +822,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         # 0.18 title card: two key-art variants with the approved figures, before the scene images.
         if cover.wanted(d) and not await self.cover_pictures(d,refs,models):return
         for ei,ep in enumerate(d['episodes']):
+            # 0.19 (shot_policy 19): shot size and angle of every scene image from one rotation per episode.
+            shots=shot_design.plan(ep) if shot_design.active(d) else None
             for si,scene in enumerate(ep['scenes']):
                 for variant in range(2):
                     if self.paused(d['id']) or self.apply_pending(d):return
@@ -829,13 +832,16 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild {variant+1}/2';self.save(d)
                     # Looks per episode: this episode's variants and look texts (else the base designs, as before).
                     names=scene['cast'];references=[self.stage(path) for path in cast_design.scene_references({**refs,**episode_looks.refs_for(d,ei)},names)]
-                    prompt=cast_design.scene_prompt(scene,episode_looks.cast_for(d,ei),names,d['plan']['style'])+cast_design.scene_text(scene,d['plan']['cast'])
+                    kind=shot_design.pick(shots,si,variant,image_rounds(scene)[variant]) if shots else None
+                    if kind:prompt=cast_design.shot_prompt(scene,episode_looks.cast_for(d,ei),names,d['plan']['style'],d['plan']['cast'],kind,shots[si]['role'])
+                    else:prompt=cast_design.scene_prompt(scene,episode_looks.cast_for(d,ei),names,d['plan']['style'])+cast_design.scene_text(scene,d['plan']['cast'])
                     note=cast_design.strip_names(scene.get('image_note',''),[p['name'] for p in d['plan']['cast'] if p['name'] not in names],names,screenplay.figure_aliases(d['plan']['cast'])) if scene.get('image_note') else ''
                     # A new round must look new (the 4-step model barely changes with the seed alone) and
                     # Cay's newest wish leads the prompt. Image keys carry no prompt: finished images stay.
-                    prompt=cast_design.revision_prompt(prompt,note,image_rounds(scene)[variant],variant,scene.get('note_policy',0))
+                    prompt=cast_design.revision_prompt(prompt,note,image_rounds(scene)[variant],variant,scene.get('note_policy',0),bool(kind))
                     s=await self.render(d,key,build_graph(prompt,references,int(digest(d['id']+key)[:12],16),'',models))
-                    scene['variants'].append({'id':s['id'],'key':key});self.save(d)
+                    # Under the pin the variant keeps its shot type: the export camera keeps a close-up's face in the frame.
+                    scene['variants'].append({'id':s['id'],'key':key,**({'shot':kind} if kind else {})});self.save(d)
         if self.apply_pending(d):return
         d['state']='image_review';d['phase']='Deine Szenen sind bereit. Wähle pro Szene ein Bild.';self.save(d)
     async def voices(self,d):
@@ -877,8 +883,10 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 continue
             spec=[{'clips':[],'seconds':sc['render_seconds'],
                    'lines':[l for l in d['lines'] if l['episode']==ei and l['scene']==si],
-                   'ambience':sc.get('ambience','room'),'sound_cues':sc.get('sound_cues',[]),**kind}
+                   'ambience':sc.get('ambience','room'),'sound_cues':sc.get('sound_cues',[]),**kind,**shot_design.export_fields(d,sc)}
                   for si,(sc,kind) in enumerate(zip(ep['scenes'],scene_kinds(d,ep['scenes'])))]
+            # 0.19 (shot_policy 19): silent Wan clips at the delivery rate, played 1:1; livelier motion and lip-sync text.
+            pinned=shot_design.active(d)
             # All lip-sync shots first, then all silent motion shots. render() unloads
             # every model when the family changes; alternating cost a full reload
             # of the 14B models per scene. Scenes are independent (own start image).
@@ -893,7 +901,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 lines=[l for l in d['lines'] if l['episode']==ei and l['scene']==si]
                 # Lip-sync only where the voice belongs to the figure in the frame (not in a 0.18 reaction).
                 talk=bool(lines) and options['lip_sync']=='audio' and not off_screen(scene)
-                durations=scene_segments(seconds,fps,talk);count=len(durations)
+                durations=scene_segments(seconds,fps,talk,native=pinned);count=len(durations)
                 for seg,duration in enumerate(durations):
                     if self.paused(d['id']):return
                     # Cache includes model/profile, timing and direction. Old degraded
@@ -905,6 +913,12 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if legacy:
                         # Started before 0.17: same text, so finished windows stay cached (key = graph digest).
                         prompt=d['plan']['style']+'. '+(scene.get('animation_prompt') or action+'. '+scene['camera'])+'. '+motion_direction_v16(scene,talking,start,duration)+' '+identities
+                    elif pinned:
+                        # The still decides the framing now; the planner's camera words stay out of the motion text.
+                        names=[p['name'] for p in d['plan']['cast']];hidden=[n for n in names if n not in scene['cast']]
+                        aliases=screenplay.figure_aliases(d['plan']['cast'])
+                        movement=screenplay.sanitize(scene.get('animation_prompt') or action,scene['cast'],names,aliases)
+                        prompt=shot_design.motion_prompt(cast_design.strip_names(d['plan']['style'],hidden,scene['cast'],aliases),movement,scene,talking,si+seg)+' '+identities
                     else:
                         names=[p['name'] for p in d['plan']['cast']];hidden=[n for n in names if n not in scene['cast']]
                         aliases=screenplay.figure_aliases(d['plan']['cast'])
@@ -915,9 +929,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         # Include actual pauses; never drive lips with the music mix.
                         audio=await asyncio.to_thread(dialogue_window,lines,start,duration,self.folder(d)/'04_Animation'/f'Dialog_{ei}_{si}_{seg}_{d.get("audio_revision",0)}.wav')
                         graph=audio_graph(info,image,self.stage(audio),prompt,seed,duration,options['quality'],attention=turbo.attention(self.g['RUNTIME'],info),
-                                          legacy_text=legacy)
+                                          legacy_text=legacy,**({'suffix':shot_design.TALK_SUFFIX} if pinned else {}))
                     else:
-                        graph=motion_graph(image,prompt,seed,'',models,duration,options['quality'])
+                        graph=motion_graph(image,prompt,seed,'',models,duration,options['quality'],**({'native':fps} if pinned else {}))
                     key=f'video09:{ei}:{si}:{seg}:'+digest(graph)[:24]
                     clip=await self.render(d,key,graph,True)
                     d.setdefault('render_segments',{})[f'{ei}:{si}:{seg}']=clip['id'];self.save(d)
@@ -930,14 +944,14 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     clips.append({'file':clip['output'],'sha256':clip['sha256'],'seconds':duration})
                     spec[si]['clips']=list(clips)
                     self.queue_post(d,f'prepare:{si}:{seg}',ei,{'fps':fps,'smooth':options['smooth'],
-                        'title':ep['title'],'scenes':spec,'_only_part':[si,seg],**part_label(ei,len(d['episodes'])),**edit_spec(d),
+                        'title':ep['title'],'scenes':spec,'_only_part':[si,seg],**part_label(ei,len(d['episodes'])),**edit_spec(d),**shot_design.spec(d),
                         # Same captions as the final export (a card first hides the part label), so parts are reused.
                         **({'cover':{'position':d['idea']['cover']}} if cover.wanted(d) else {})})
                     start+=duration
                     if seg<count-1:
                         next_image=self.folder(d)/'04_Animation'/('Anschluss_'+clip['sha256'][:20]+'.png')
                         if not next_image.exists():
-                            await asyncio.to_thread(ff,['-i',clip['output'],'-vf',f'select=eq(n\\,{max(0,round(duration*(25 if talk else 16))-1)})','-frames:v','1',next_image])
+                            await asyncio.to_thread(ff,['-i',clip['output'],'-vf',f'select=eq(n\\,{max(0,round(duration*(25 if talk else fps if pinned else 16))-1)})','-frames:v','1',next_image])
                         image=self.stage(next_image)
                 spec[si]['clips']=clips
             if self.paused(d['id']):return
@@ -950,7 +964,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                   'scenes':spec,'output':str(out),'title':ep['title'],
                   'audio_mix':next((p for p in d.get('previews',[]) if p['episode']==ei),None),
                   'mix':d.get('mix'),'mood':d['plan']['mood'],
-                  'music':{'file':music['path'],'sha256':music['sha256']} if music else None,**edit_spec(d)}
+                  'music':{'file':music['path'],'sha256':music['sha256']} if music else None,**edit_spec(d),**shot_design.spec(d)}
             if cover.wanted(d):spec['cover']=self.cover_spec(d,ei)
             self.queue_post(d,'export',ei,spec)
             return

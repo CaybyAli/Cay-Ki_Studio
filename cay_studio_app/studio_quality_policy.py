@@ -25,13 +25,12 @@ def scene_segments(seconds, fps, talking, native=False):
     """One rule for production and progress: InfiniteTalk computes full 81-frame
     windows, so a talking scene is one prompt (up to TALK_SEGMENT); silent motion
     clips stay at the 5 s limit of the image-to-video model.
-    native (0.19, shot_policy 19): silent Wan frames play 1:1 at the delivery rate,
-    so one clip holds at most 81 delivered frames (3.24 s at 25 fps)."""
+    native (0.19, shot_policy 19 only): silent Wan frames play 1:1 at the delivery rate,
+    so one clip holds at most 81 delivered frames (3.24 s at 25 fps), whole Wan clips where possible."""
     if native and not talking:
-        from shot_design import NATIVE_FRAMES
-        frames = round(seconds * fps); count = max(1, math.ceil(frames / NATIVE_FRAMES))
-        segments(seconds, fps)          # same fps check
-        return [(frames // count + (i < frames % count)) / fps for i in range(count)]
+        if fps not in (25,30):raise ValueError('25 oder 30 FPS wählen.')
+        from shot_design import clip_frames
+        return [n / fps for n in clip_frames(round(seconds * fps))]
     return segments(seconds, fps, TALK_SEGMENT if talking else 5)
 
 def cadence(fps, smooth=False, source_fps=16):

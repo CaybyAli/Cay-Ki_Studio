@@ -165,11 +165,15 @@ def lead(kind, names, speaker='', r='talk'):
             'dutch': f'Dutch-angle shot, the camera tilted about 15 degrees: {who} from the waist up, tense energy'}[kind]
 
 
-def pose(r, names):
+def pose(r, names, kind=''):
     """The pose comes from the moment, never from the design sheet (frontal, standing, arms down).
-    Phrased positively: at cfg 1 a 'not standing' can draw the standing pose."""
+    Phrased positively: at cfg 1 a 'not standing' can draw the standing pose. A close-up gets a
+    head-and-hands pose, so the text does not pull the camera back to the whole body."""
     who = ' and '.join(names)
     if not names: return ''
+    if kind in TIGHT and r in ('talk', 'react'):
+        return (f'{who} in the middle of the line: the head tilted, eyebrows raised, a hand gesture entering the frame. ' if r == 'talk' else
+                f'{who} reacts: the head snapped toward the voice, the eyes wide or narrowed, the eyebrows high. ')
     return {'talk': f'{who} acts out the line with a big expressive gesture: leaning into it, the head turned, one hand raised, weight on one leg. ',
             'react': f'{who} reacts with the whole body: the head turned toward the voice, shoulders drawn up, hands caught mid-gesture. ',
             'establish': f'{who} busy in the place, caught in the middle of a movement. '}.get(

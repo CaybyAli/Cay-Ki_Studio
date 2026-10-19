@@ -150,27 +150,27 @@ def scene_prompt(scene, cast, names, style):
     return prompt + 'Never swap, blend or redesign identities. No screenshot interfaces, captions, logos, watermarks or phone controls. '
 
 
-def shot_prompt(scene, cast, names, style, plan_cast, shot, variant=0):
-    """0.19 (shot_policy 19): the camera leads, then the moment and the pose, then the identities.
-    FLUX.2 klein at cfg 1 follows the start of the text and copied the design sheet's frontal,
-    standing, full-body pose (with its pedestal); the reference now gives the identity only.
-    Variant 1 takes the other angle of shot_design.plan, so the two images really differ."""
+def shot_prompt(scene, cast, names, style, plan_cast, kind, r):
+    """0.19 (shot_policy 19): the camera leads (shot type `kind` from shot_design.pick, role `r`),
+    then the moment and the pose, then the look and the identities. FLUX.2 klein at cfg 1 follows
+    the start of the text and copied the design sheet's frontal, standing, full-body pose (with its
+    pedestal in Cay's clay film); the reference images now give the identity only."""
     import shot_design
     from screenplay import figure_aliases
     hidden = [p['name'] for p in cast if p['name'] not in names]; aliases = figure_aliases(cast)
     speaker = next((l.get('speaker') for l in scene.get('dialogues') or [] if l.get('speaker') in names), '')
-    prompt = (shot_design.lead(shot['alt'] if variant else shot['type'], names, speaker) + '. Vertical 9:16 film frame, one coherent image, no text or panels. '
-              + scene_text(scene, plan_cast, unframed=True) + ' ' + shot_design.pose(shot['role'], names)
+    prompt = (shot_design.lead(kind, names, speaker, r) + '. Vertical 9:16 film frame, one coherent image, no text or panels. '
+              + scene_text(scene, plan_cast, unframed=True) + ' ' + shot_design.pose(r, names, kind)
               + strip_names(style, hidden, names, aliases).strip().rstrip('.') + '. ')
     for i, name in enumerate(names, 1):
         person = next(p for p in cast if p['name'] == name)
         prompt += (f'Reference image {i} shows {name}: take only the identity from it (head and face shape, colours, materials, body shape, size and outfit); '
-                   'ignore its pose, framing, camera angle, background and any pedestal, stand or display base. '
+                   'its pose, framing, camera angle and background come from this scene instead. '
                    f'{strip_names(person["appearance"], hidden, names, aliases).rstrip(".")}. ')
     if len(names) == 1: prompt += f'{names[0]} is the only character in the whole picture; the background shows only the location and its props. '
     elif not names: prompt += 'Only the location and its props, no characters. '
     else: prompt += f'Only {" and ".join(names)} are in the picture, nobody else. '
-    return prompt + ('Never swap, blend or redesign identities. No pedestal, display base or turntable. '
+    return prompt + ('Never swap, blend or redesign identities. No pedestal, display base, stand or turntable under any figure. '
                      'No screenshot interfaces, captions, logos, watermarks or phone controls. ')
 
 
@@ -217,12 +217,17 @@ VARIATIONS = ('Fresh take: a different camera angle (slightly low angle) and a d
               'Fresh take: a different composition with clear foreground and background depth.')
 
 
-def revision_prompt(prompt, note, round_, variant, policy=0):
+def revision_prompt(prompt, note, round_, variant, policy=0, shots=False):
     """Prompt for one image round. Round 0 is the plan as written. Later rounds vary camera and pose;
-    a wish from Cay (policy 18) leads the prompt as the main instruction. Older notes keep their place."""
+    a wish from Cay (policy 18) leads the prompt as the main instruction. Older notes keep their place.
+    shots (0.19, shot_policy 19): the leading camera sentence already took the round's new angle
+    (shot_design.pick), so a later round only varies the moment and the pose."""
     if note and policy >= 18: prompt = f'Most important, requested by the director: {note.strip().rstrip(".")}. ' + prompt
     elif note: prompt += ' Specific correction: ' + note
-    if round_ > 0: prompt += ' ' + VARIATIONS[(round_ * 2 + variant) % len(VARIATIONS)]
+    if round_ > 0 and shots:
+        from shot_design import fresh
+        prompt += ' ' + fresh(round_, variant)
+    elif round_ > 0: prompt += ' ' + VARIATIONS[(round_ * 2 + variant) % len(VARIATIONS)]
     return prompt
 
 
