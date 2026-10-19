@@ -273,10 +273,23 @@ def test_a_read_error_before_the_answer_is_tried_once_more_then_a_short_german_5
     answer = http.get('/film')
     assert answer.status_code == 200 and answer.content == FILM and calls.count('route') == 2
     assert lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: beim zweiten Versuch gelesen']
+    monkeypatch.undo()
     http, lines, calls = drive(tmp_path, monkeypatch, before=5)
     answer = http.get('/film')
     assert answer.status_code == 503 and answer.json() == {'detail': 'Das Laufwerk mit deinen Filmen antwortet gerade nicht. Versuch es in ein paar Sekunden noch einmal.'}
     assert answer.headers['retry-after'] == '3' and calls.count('route') == 2 and len(lines) == 1
+
+
+def test_a_drive_silent_from_the_first_byte_gets_the_503_too_not_an_empty_film(tmp_path, monkeypatch):
+    """A file answer's start waits for its first bytes, so a drive that fails at once is still 'before the answer'."""
+    http, lines, calls = drive(tmp_path, monkeypatch, silent_from=0)
+    answer = http.get('/film', headers={'Range': 'bytes=0-'})
+    assert answer.status_code == 503 and 'Laufwerk' in answer.json()['detail'] and calls.count('route') == 2
+    assert lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: Antwort 503 mit Hinweis']
+    monkeypatch.undo()                                                       # the drive of the first app goes
+    http, lines, calls = drive(tmp_path, monkeypatch, fail_at=(0,))                # the first read fails once: the whole film
+    answer = http.get('/film')
+    assert answer.status_code == 200 and answer.content == FILM and lines == ['Laufwerk-Lesefehler (Errno 5) bei /film: beim zweiten Versuch gelesen']
 
 
 def test_other_errors_pass_through_unchanged(tmp_path, monkeypatch):
