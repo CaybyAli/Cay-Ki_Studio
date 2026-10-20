@@ -133,6 +133,36 @@ def test_music_stays_well_under_speech_and_no_automatic_whoosh(mixed):
     assert any(s['kind'] == 'action' for s in scenes) and max(map(abs, effects)) == 0
 
 
+def test_sparse_speech_keeps_the_voices_unlimited_and_the_music_down(tmp_path):
+    """Review 0.19: Cay's episodes speak 30-55 % of the time (Diagnose_latest.txt); the episode above about
+    56 %. At 28 % the music and the beds decided the integrated loudness, the final gain went to +11 dB, the
+    limiter took 4 dB off every line and the music came back up to 7.8 LU under the voices. The final gain is
+    capped on the dialogue now; such an episode integrates under -14 LUFS instead."""
+    talk = {8: ('Patrick', .31, 144.), 10: ('Mr. Krabs', .24, 150.), 11: ('SpongeBob', .57, 236.), 15: ('Sandy', .52, 232.)}
+    scenes = []
+    for si in range(18):
+        lines = []
+        if si in talk:                                       # a lively take: rough amplitude, more crest
+            speaker, level, pitch = talk[si]; rng = random.Random(si)
+            samples = [0.] * int(.07 * RATE) + [v * (1 + .3 * rng.uniform(-1, 1)) for v in fx.speech(3.33, level=level, pitch=pitch)]
+            lines = [fx.line(tmp_path / 'lines', f'E01_S{si + 1:02}_T01', 0, si, 0, speaker, 'Text', samples, offset=.1)]
+        scenes.append({'seconds': 3.8 if lines else 2.4, 'lines': lines, 'ambience': 'room', 'sound_cues': [],
+                       'kind': 'line' if lines else 'action', 'location': 'krosse krabbe'})
+    spans = windows(scenes); total = sum(s['seconds'] for s in scenes)
+    assert .25 <= sum(b - a for who, a, b in spans if who) / total <= .32
+    out = Path(fa.mix(tmp_path / 'mix', scenes, 'suspense', None, SETTINGS, 18, 19)); folder = tmp_path / 'mix'
+    report = json.loads((folder / 'Tonbericht.json').read_text())['loudness']
+    gains = [(who, lufs(out, a, b) - lufs(folder / 'Vormischung.wav', a, b)) for who, a, b in spans]
+    taken = [report['final_gain_db'] - g for who, g in gains if who]
+    assert max(taken) <= 1, (report, taken)                 # the final limiter leaves the lines alone
+    assert max(g for _, g in gains) - min(g for _, g in gains) <= .5, gains
+    speech = statistics.median(lufs(out, a, b) for who, a, b in spans if who)
+    pauses = statistics.median(lufs(out, a, b) for who, a, b in spans if not who)
+    assert speech - pauses >= 8, (speech, pauses)
+    assert report['final_gain_db'] <= fa.DIALOGUE_MASTER_LUFS - fa.DIALOGUE_LUFS + .01 and report['true_peak_dbtp'] <= -1.
+    assert report['integrated_lufs'] < -14.5 and abs(report['integrated_lufs'] - report['goal_lufs']) <= .5
+
+
 def test_an_explicit_cue_still_sounds(tmp_path):
     scenes = [{'seconds': 2.4, 'lines': [take(tmp_path, 'E01_S01_T01', 0, 'SpongeBob', 2.)], 'ambience': 'room', 'sound_cues': [], 'kind': 'line'},
               {'seconds': 2.0, 'lines': [], 'ambience': 'room', 'sound_cues': [{'kind': 'door', 'position': .3}], 'kind': 'action'}]

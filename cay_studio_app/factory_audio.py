@@ -225,6 +225,7 @@ def mix(folder,scenes,mood,music=None,settings=None,policy=17,sound=0):
 # geht", music only 3-5 LU under the voices); a quiet reference voice made a quiet figure (Patrick 2.4 LU under
 # the others, speech check stops); the hiss of noisy references came and went with every line.
 DIALOGUE_LUFS=-18.  # dialogue stem after its one measured gain; music and ambience are set relative to it
+DIALOGUE_MASTER_LUFS=-12.   # the final gain lifts the dialogue at most this far (dense speech lands near it anyway)
 SPEECH_LUFS=-20.    # active speech loudness of every take (K-weighted) before its emotion offset
 # Delivery offsets after levelling: a shout clearly louder, a whisper softer but well above the music.
 LEVEL_DB_19={'shout':3.,'angry':2.,'panic':2.,'excited':1.5,'triumph':1.,'threat':-1.,'pleading':-1.,'afraid':-1.,'sad':-2.,'whisper':-5.}
@@ -351,7 +352,8 @@ def prepare_take(line):
     return {'data':data,'loud':loud,'goal':goal,'level':None if loud is None else round(loud,1),'denoise':status,'label':speech_check.label(line)}
 def shape_take(take,peak_over,path):
     """Level a prepared take to its goal and limit its peaks to peak_over dB above that loudness. Peaks are
-    controlled per take, so the final limiter has (almost) nothing to do: it took up to 1.4 dB more off deep
+    controlled per take, so the final limiter has (almost) nothing to do (the final gain is capped on the
+    dialogue, see mix19): it took up to 1.4 dB more off deep
     voices than off bright ones and lowered the bed under every loud word. The small rest after the limit is a
     constant gain, at most +0.5 dB so the peaks stay under the ceiling. Writes raw float with the exact length."""
     data,goal=take['data'],take['goal'];gain=correction=0.
@@ -456,8 +458,8 @@ def bridged(intervals,gap=DUCK_BRIDGE):
     return out
 def mix19(folder,scenes,mood,music=None,settings=None):
     """Mix of sound policy 19: every take denoised gently and levelled on its own, measured linear stages
-    (dialogue, then one constant gain on the whole mix to TARGET_LUFS with a peak limiter that has next to
-    nothing to do), music well under the voices with a gentle dip, one ambience bed per location, effects only
+    (dialogue, then one constant gain on the whole mix toward TARGET_LUFS, capped on the dialogue, with a peak
+    limiter that has next to nothing to do), music well under the voices with a gentle dip, one ambience bed per location, effects only
     where the plan asks for one. Writes the same files and reports as mix(), plus levels per line."""
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);settings={'music_mode':'uploaded' if music else 'auto','music_level':1.,'effects_level':1.,'ambience_level':1.,**(settings or {})}
     duration=sum(s['seconds'] for s in scenes);cursor=0.;placed=[];takes={};intervals=[]
@@ -509,8 +511,13 @@ def mix19(folder,scenes,mood,music=None,settings=None):
         ff(['-i',dialogue,*sum((['-i',str(p)] for p in stems),[]),'-filter_complex',f'[0:a][1:a][2:a][3:a]amix=inputs=4:normalize=0:duration=longest,atrim=duration={duration}[m]','-map','[m]','-t',duration,'-ac','1','-c:a','pcm_f32le',premix],folder)
         measured=loudness(premix)[0]
         # One constant gain to the platform loudness (no dynamic loudnorm: it lifted music and hiss between the
-        # lines). Without speech the music keeps its place relative to where the dialogue would be.
-        return measured,TARGET_LUFS-measured if placed and measured>-70 else TARGET_LUFS-DIALOGUE_LUFS
+        # lines), anchored on the dialogue: it never lifts the voices over DIALOGUE_MASTER_LUFS. With little speech
+        # the music and the beds decide the integrated loudness; reaching TARGET_LUFS there took the final gain to
+        # +11 dB at 28 % speech, the limiter took 4 dB off every line and the music came back up to 4-8 LU under
+        # the voices. Such an episode integrates under TARGET_LUFS instead. Without speech the music keeps its
+        # place relative to where the dialogue would be.
+        if not placed or measured<=-70:return measured,TARGET_LUFS-DIALOGUE_LUFS
+        return measured,min(TARGET_LUFS-measured,DIALOGUE_MASTER_LUFS-DIALOGUE_LUFS)
     peak_over=PEAK_OVER_SPEECH
     for attempt in range(2):
         dialogue_gain,peak=voices(peak_over);measured,final_gain=premixed()
@@ -540,6 +547,7 @@ def mix19(folder,scenes,mood,music=None,settings=None):
     report=speech_check.summary(entries,'mix');speech_check.write_report(folder/'Sprachpruefung.json',report)
     if report['blocking']:raise speech_check.SpeechCheckError(speech_check.message(report,'„Produktion fortsetzen“ spricht nur diese Beiträge neu ein. Bleibt eine Zeile stumm, ihren Text oder die Stimme der Figur ändern.'),report)
     if cleared:measured,final_gain=premixed()
+    goal=measured+final_gain   # TARGET_LUFS unless the dialogue cap holds the gain back
     target=folder/'Tonmischung.wav';temp=folder/'Tonmischung.partial.wav';limit=FINAL_LIMIT
     for attempt in range(3):
         # Stereo split first (each channel 3 dB under the mono sum, the loudness stays), then the peak limiter.
@@ -548,10 +556,12 @@ def mix19(folder,scenes,mood,music=None,settings=None):
         with wave.open(str(temp)) as w:
             if abs(w.getnframes()/w.getframerate()-duration)>.03:raise RuntimeError('Tonmischung unvollständig; keine Freigabe.')
         result,peak=loudness(temp)
-        # A true peak over TRUE_PEAK lowers the limit; a loudness off target moves the one constant gain.
+        # A true peak over TRUE_PEAK lowers the limit; a loudness off its goal moves the one constant gain (never
+        # over the dialogue cap: more gain there would only go into the limiter).
         retry=False
         if peak>TRUE_PEAK and limit>-6:limit-=min(3.,peak-TRUE_PEAK+.2);retry=True
-        if placed and abs(TARGET_LUFS-result)>.3:final_gain+=max(-2.,min(2.,TARGET_LUFS-result));retry=True
+        step=min(final_gain+max(-2.,min(2.,goal-result)),DIALOGUE_MASTER_LUFS-DIALOGUE_LUFS)
+        if placed and abs(goal-result)>.3 and abs(step-final_gain)>=.05:final_gain=step;retry=True
         if not retry or attempt==2:break
     os.replace(temp,target)
     quiet=[f'{t["label"]} (+{t["gain"]:.1f} dB)' for t in takes.values() if t['gain']>QUIET_TAKE_DB]
@@ -559,6 +569,6 @@ def mix19(folder,scenes,mood,music=None,settings=None):
         'dialogue_peak':dialogue_peak,'dialogue_rms':round(dialogue_rms,2),'speech_check':{k:report[k] for k in ('policy','checked','blocking','warnings')},
         'speech_warnings':[e['label']+' – '+e['note'] for e in report['lines'] if e['status']!='ok'],'sound_policy':SOUND_POLICY,
         'line_gain_db':{k:t['gain'] for k,t in takes.items()},'line_loudness_lufs':{k:t['level'] for k,t in takes.items()},'denoise':{k:t['denoise'] for k,t in takes.items()},'quiet_takes':quiet,
-        'loudness':{'dialogue_gain_db':round(dialogue_gain,2),'peak_over_speech_db':round(peak_over,2),'music_gain_db':round(music_gain,2),'premix_lufs':measured,'final_gain_db':round(final_gain,2),
+        'loudness':{'dialogue_gain_db':round(dialogue_gain,2),'peak_over_speech_db':round(peak_over,2),'music_gain_db':round(music_gain,2),'premix_lufs':measured,'final_gain_db':round(final_gain,2),'goal_lufs':round(goal,2),
                     'limit_dbfs':round(limit,2),'integrated_lufs':result,'true_peak_dbtp':peak},
         'ambience':beds},ensure_ascii=False));return str(target)

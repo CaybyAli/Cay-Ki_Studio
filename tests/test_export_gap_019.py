@@ -94,3 +94,26 @@ def test_an_unpredicted_gap_is_repaired_once(tmp_path, newer_ffmpeg, monkeypatch
     spec = series_episode(tmp_path)
     result = finish(spec)
     assert int(next(s for s in probe(result['file'])['streams'] if s['codec_type'] == 'video')['nb_frames']) == sum(SHOTS) + FPS
+
+
+def test_a_cached_gap_part_is_encoded_again(tmp_path, newer_ffmpeg, monkeypatch):
+    # Review 0.19: 0.18.2 had cached the episode-6 parts with their gaps. When the prediction misses, the key stays
+    # the same; reused without a timeline check, "Fortsetzen" built the same export and blocked again.
+    old = lambda offset, frames, fps, exact=False: f'setpts=PTS+{round(offset * fps)}/(TB*{fps})' if exact else f'setpts=PTS+{offset:.9f}/TB'
+    monkeypatch.setattr(factory_video, 'shift', old)
+    real = factory_video.timeline
+    monkeypatch.setattr(factory_video, 'timeline', lambda path, frames, fps: (frames, frames / fps))   # 0.18.2: no timeline check
+    spec = series_episode(tmp_path)
+    with pytest.raises(RuntimeError, match='Exportprüfung fehlgeschlagen'):
+        finish(spec)
+    work = Path(spec['folder']); cached = sorted(p.name for p in work.glob('Part_*.mp4'))
+    gaps = [name for name in cached if abs(float(probe(work / name)['streams'][0]['duration']) - int(probe(work / name)['streams'][0]['nb_frames']) / FPS) > .5 / FPS]
+    assert len(cached) == len(SHOTS) and len(gaps) >= 3
+    monkeypatch.setattr(factory_video, 'timeline', real)
+    result = finish(spec)
+    assert int(next(s for s in probe(result['file'])['streams'] if s['codec_type'] == 'video')['nb_frames']) == sum(SHOTS) + FPS
+    assert result['performance']['cached_parts'] == len(SHOTS) - len(gaps)   # only the gap parts are encoded again
+    assert sorted(p.name for p in work.glob('Part_*.mp4')) == cached         # same keys, same names
+    for name in gaps:
+        stream = probe(work / name)['streams'][0]
+        assert abs(float(stream['duration']) - int(stream['nb_frames']) / FPS) < 1e-3, name
