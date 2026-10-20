@@ -822,7 +822,9 @@ function scenesSection(d, choose) {
       const pickable = d.state === 'image_review';
       // 0.19: the autopilot drew one image here; the second one only when asked for, in the slot where it will appear.
       const single = pickable && variants.length === 1 && sc.stills && sc.stills.count === 1;
-      const second = single ? `<button class="variant-add" data-action="second-still" data-episode="${ei}" data-scene="${si}" title="Ein zweites Bild für diese Szene zeichnen. Das erste bleibt.">${PLUS}<span>Zweites Bild</span></button>` : '';
+      const drawing = d.state === 'pictures' && variants.length === 1 && sc.stills && sc.stills.count === 2;   // asked for, on its way
+      const second = single ? `<button class="variant-add" data-action="second-still" data-episode="${ei}" data-scene="${si}" title="Ein zweites Bild für diese Szene zeichnen. Das erste bleibt.">${PLUS}<span>Zweites Bild</span></button>`
+        : drawing ? '<div class="frame"><div class="frame-empty">Zweites Bild entsteht</div></div>' : '';
       const pictures = choose && variants.length ? `<div class="variants">${variants.map(v => `<button class="variant" data-action="choose" data-episode="${ei}" data-scene="${si}" data-step="${esc(v.id)}" aria-pressed="${sc.selected === v.id}" aria-label="Bild wählen" ${pickable ? '' : 'disabled'}><div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(v.id)}" alt="" loading="lazy"></div></button>`).join('')}${second}</div>`
         : sc.selected ? `<div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(sc.selected)}" alt="" loading="lazy"></div>`
         : `<div class="frame"><div class="frame-empty">${choose ? 'Bilder entstehen' : ''}</div></div>`;
