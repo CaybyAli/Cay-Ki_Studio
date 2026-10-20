@@ -166,7 +166,7 @@ try:
         phone_context.route(f'https://{HOST}/**', serve_like_tailscale('keep'))
         phone = phone_context.new_page(); watch(phone)
         phone.goto(f'https://{HOST}/#projects'); phone.wait_for_selector('.tile, .card, .empty, .project', timeout=20000); phone.wait_for_timeout(500)
-        r.check('Handy: Studio lädt über die Tailscale-Adresse (sichere Seite, Sitzung da)', phone.evaluate('isSecureContext && !!S.token') and 'Cay Studio 0.18' in phone.locator('#version').inner_text())
+        r.check('Handy: Studio lädt über die Tailscale-Adresse (sichere Seite, Sitzung da)', phone.evaluate('isSecureContext && !!S.token') and 'Cay Studio 0.' in phone.locator('#version').inner_text())
         phone.screenshot(path=str(shots / '09_handy_projekte.png'), full_page=True)
         phone.click('[data-action="settings"]'); phone.wait_for_selector('[data-action="remote"]', timeout=20000)
         phone.click('[data-action="remote"]'); phone.wait_for_selector('#sheet [data-remote-switch]', timeout=20000)

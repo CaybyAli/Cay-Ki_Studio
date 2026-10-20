@@ -113,7 +113,11 @@ try:
             page.goto(studio.url + '/#p=' + A); page.wait_for_selector('.cast .role'); page.wait_for_timeout(800)
             r.check('Vorher: Markus grün', page.evaluate(COLOUR, 'Markus') == [30, 200, 60])
             page.click('.cast [data-action="figure-menu"][data-name="Markus"]'); page.wait_for_selector('.menu-row')
-            page.set_input_files('.menu input[data-upload="cast"][data-name="Markus"]', str(picture)); page.wait_for_timeout(500)
+            page.set_input_files('.menu input[data-upload="cast"][data-name="Markus"]', str(picture))
+            for _ in range(25):                                                         # the upload answer, then the toast's fade-in
+                page.wait_for_timeout(200)
+                if page.evaluate("() => document.querySelector('#toast').classList.contains('show') && document.querySelector('#toast').innerText.includes('wird verwendet')"): break
+            page.wait_for_timeout(300)
             r.check('Bestätigung lesbar, Blatt geschlossen', page.evaluate(ON_TOP) and 'wird verwendet' in page.locator('#toast').inner_text()
                     and not page.evaluate("document.querySelector('#sheet').open"))
             for _ in range(40):
