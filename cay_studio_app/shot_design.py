@@ -17,7 +17,8 @@ without any camera move, every silent shot 3.20 s of 16 fps Wan frames interpola
    (sample cuts with a 60 s minimum: about +30 to +50 % Wan frames for the silent shots); a reaction
    longer than one native clip keeps the 0.18 cadence (native()).
 4) Motion text without damping words, with one concrete fast camera move per silent shot, and a
-   lip-sync text that asks for big gestures while the voice speaks.
+   lip-sync text that asks for gestures while the voice speaks (no head turns, a calm body in every
+   pause, as render_studio.SUFFIX; the gestures are a GPU A/B item).
 
 The Wan sampler, its LoRAs and steps stay as they are. Projects without the pin never take any of
 these paths (same prompts, graphs, specs, cache keys and bytes; tests/test_shots_019.py).
@@ -390,10 +391,13 @@ def undamp(text):
 OPENING = re.compile(r'(?i)^(?:dynamic\s+|low-angle\s+)?medium\s+(?:close-up|shot)(?:\s+with\s+a\s+(?:slow\s+)?push-in)?\s+of\s+')
 CAMERA_MOVES = ('whip pan following the move', 'fast dolly in toward the action', 'crash zoom onto the action',
                 'handheld camera following the action closely', 'fast tracking shot alongside the movement', 'quick low-angle push-in')
-# InfiniteTalk's text after the shot text (render_studio.SUFFIX asked for a calm body in every pause).
-TALK_SUFFIX = (' Only the single visible character speaks, exactly when the supplied voice speaks. While the voice speaks: big expressive '
-               'head turns, nods, shoulder and hand gestures. Whenever the voice is silent the mouth stays closed and the eyes and head keep '
-               'reacting. Stable identity, the same face in every frame.')
+# InfiniteTalk's text after the shot text: livelier while the voice speaks, render_studio.SUFFIX's silence clause kept word for
+# word. Big head turns turn the mouth away from the lip-sync model and a body moving in the pauses brought back mouth movement
+# in silence (Cay's 0.17 complaint); the diagnosis wanted a GPU A/B first (r019 infinitetalk-sway). So: gestures, face toward
+# the camera, mouth closed and body calm when silent. Still a GPU A/B item: only Cay's GPU shows how lips and gestures come out.
+TALK_SUFFIX = (' Only the single visible character speaks, exactly when the supplied voice speaks. While the voice speaks: an expressive '
+               'face, nods and lively shoulder and hand gestures, the face toward the camera. Mouth closed and body calm whenever the voice '
+               'is silent. Stable identity, the same face in every frame.')
 
 
 def direction(scene, lines, index):
@@ -415,8 +419,10 @@ def direction(scene, lines, index):
         return base + ('A fast, dynamic reveal of the location' + (f', {who} moving with purpose, lips closed. ' if names else ', the place and its props in motion. ')
                        + 'Camera: fast crane down and dolly in into the location.')
     if lines:
-        return base + (f'{lines[0]["speaker"]} talks with big expressive cartoon acting while the voice speaks: the head turns and nods, '
-                       'leans toward the camera, shoulders and hands move with the rhythm of the words. Mouth closed whenever the voice is silent.')
+        # Lip-sync safe (see TALK_SUFFIX): no head turns, the face stays toward the camera.
+        return base + (f'{lines[0]["speaker"]} talks with expressive cartoon acting while the voice speaks: lively eyes and eyebrows, nods, '
+                       'leans toward the camera, shoulders and hands move with the rhythm of the words, the face stays toward the camera. '
+                       'Mouth closed whenever the voice is silent.')
     return base + ('Fast, energetic, clearly visible physical action at full speed with anticipation and overshoot, big readable poses, '
                    f'things in the scene react to the movement. Every mouth stays closed the whole time, faces show the feeling with the eyes and eyebrows. Camera: {move}.')
 

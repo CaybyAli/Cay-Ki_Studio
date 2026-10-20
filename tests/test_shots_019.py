@@ -583,7 +583,10 @@ def test_motion_text_has_no_damping_words_and_concrete_camera(monkeypatch, tmp_p
     assert 'grabs SpongeBob' in silent[2] and 'Camera:' in silent[2] and 'Full real-time speed' in silent[2]
     assert [round(dur * 25) for _, dur, _ in calls['motion']] == [75, 75, 53, 49]
     assert calls['talk'][0][0] == 'check' and all(kw['suffix'] == sd.TALK_SUFFIX for _, _, kw in calls['talk'][1:])   # [0]: the node probe
-    assert 'big expressive' in sd.TALK_SUFFIX and 'calm' not in sd.TALK_SUFFIX and 'mouth stays closed' in sd.TALK_SUFFIX
+    # Lip-sync safe: gestures while the voice speaks, no head turns, render_studio.SUFFIX's silence clause word for word.
+    import render_studio
+    assert 'gestures' in sd.TALK_SUFFIX and 'turn' not in sd.TALK_SUFFIX and 'Mouth closed and body calm whenever the voice is silent.' in render_studio.SUFFIX
+    assert 'Mouth closed and body calm whenever the voice is silent.' in sd.TALK_SUFFIX and 'head turns' not in ' '.join(p for p, _, _ in calls['talk'][1:])
     # The next clip of the reaction starts from the last frame of the first one (16 fps: frame 47).
     assert any('select=eq(n\\,47)' in ' '.join(args) for args in calls['ff'])
     # Specs carry the pin and the chosen shot type; the 0.18 project above does not.
