@@ -60,7 +60,9 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }   /* no sideways jump between short and long pages */
+html { -webkit-text-size-adjust: 100%; }
+/* PC: no sideways jump between short and long pages. Phones draw scrollbars over the page; there the gutter would only cost width. */
+@media (min-width: 561px) { html { scrollbar-gutter: stable; } }
 body { margin: 0; background: var(--canvas); color: var(--ink); font: 17px/1.47 var(--font); letter-spacing: -.022em; -webkit-font-smoothing: antialiased; }
 button, input, textarea, select { font: inherit; letter-spacing: inherit; color: inherit; }
 button, a, label, summary { -webkit-tap-highlight-color: transparent; }   /* the pressed state shows instead of a grey flash */
@@ -383,7 +385,7 @@ article.tile { position: relative; cursor: default; }
 /* Film goal and cast (identity check before the scenes) */
 .check-line { margin: -6px 0 14px; }
 .warn-line { margin: -8px 0 14px; color: var(--muted); border-left: 3px solid color-mix(in srgb, var(--wait) 70%, transparent); padding-left: 10px; }
-.role .warn-line, .figure-side .warn-line { margin: 0; padding-left: 8px; border-left-width: 2px; font-size: var(--t-caption); line-height: 1.4; overflow-wrap: anywhere; }
+.role .warn-line, .figure-side .warn-line { margin: 0; padding-left: 8px; border-left-width: 2px; font-size: var(--t-caption); line-height: 1.4; overflow-wrap: break-word; hyphens: auto; }
 .spine, .cast { background: var(--surface); border-radius: var(--radius); padding: var(--s5) var(--s6); margin: 0 0 var(--s8); }
 .spine p { margin: 0 0 10px; font-size: 17px; }
 .spine dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 15px; }
@@ -410,7 +412,7 @@ article.tile { position: relative; cursor: default; }
 .role-src dt { color: var(--muted); font-size: 12px; }
 .role-src dt:not(:first-child) { margin-top: 6px; }
 .role-src dd { margin: 0; display: flex; align-items: center; gap: 6px; min-width: 0; }
-.role-src dd span { overflow-wrap: anywhere; }
+.role-src dd span { overflow-wrap: break-word; hyphens: auto; min-width: 0; }   /* "Auf-nahme", not "Aufnahm|e" in a narrow card */
 .role-src .play { width: 26px; height: 26px; flex: none; }
 .role-pending { margin: 0; font-size: 13px; line-height: 1.35; color: var(--wait); }
 .role-suggest { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 5px 10px 5px 5px; border: 0; border-radius: 12px;
