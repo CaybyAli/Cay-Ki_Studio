@@ -13,6 +13,14 @@ const hex = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.
 const PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg>';
 const PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zm4.5 0h2.5v9H7z" fill="currentColor"/></svg>';
 const TRASH = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+// 0.19 design pass: the same line icons as the bar (24 px grid, round ends), for placeholders and empty pages.
+const icon = (d, cls = 'glyph') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const FILM = icon('<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 9.5v5l4-2.5z"/>');
+const PERSON = icon('<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20.5c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>');
+const PLUS = icon('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
+function emptyState(glyph, title, text, action, compact) {
+  return `<div class="empty${compact ? ' compact' : ''}"><span class="empty-icon">${glyph}</span><h2 class="headline">${title}</h2><p class="muted">${text}</p>${action}</div>`;
+}
 
 /* ---------- data ---------- */
 function defaults() {
@@ -186,15 +194,16 @@ function checkView(c) {
 function readingView(r, eps) {
   if (!r) return '';
   const kept = r.note + r.skipped, paced = eps.filter(e => e.pacing), share = e => `${Math.round(e.pacing.speech_share * 100)} %`;
-  const line = `So gelesen: ${r.spoken} ${r.spoken === 1 ? 'Zeile' : 'Zeilen'} gesprochen, ${r.action} als stumme Handlung, ${r.picture} als Bild zu Satz oder Szene`
-    + (kept ? `, ${kept} nicht verfilmt (Hinweise, Ton, Gliederung)` : '') + '.'
-    + (paced.length > 1 ? ` Sprache: ${paced.map(e => `Folge ${e.number} etwa ${share(e)}`).join(', ')}.` : paced.length ? ` Sprache: etwa ${share(paced[0])} der Zeit.` : '')
+  const stats = [[r.spoken, r.spoken === 1 ? 'Zeile gesprochen' : 'Zeilen gesprochen'], [r.action, 'als stumme Handlung'], [r.picture, 'als Bild zu Satz oder Szene'],
+    ...(kept ? [[kept, 'nicht verfilmt (Hinweise, Ton, Gliederung)']] : []), ...(paced.length === 1 ? [[`etwa ${share(paced[0])}`, 'der Zeit gesprochen']] : [])];
+  const notes = [paced.length > 1 ? `Sprache: ${paced.map(e => `Folge ${e.number} etwa ${share(e)}`).join(', ')}.` : '',
     // 0.19 voices: a line without a delivery in brackets gets one only from marks that say one thing (tts_text.delivery).
-    + (r.delivery && r.delivery.derived ? ` ${r.delivery.derived} ${r.delivery.derived === 1 ? 'Satz' : 'Sätze'} ohne Sprechhaltung bekommen eine aus den Satzzeichen: `
+    r.delivery && r.delivery.derived ? `${r.delivery.derived} ${r.delivery.derived === 1 ? 'Satz' : 'Sätze'} ohne Sprechhaltung bekommen eine aus den Satzzeichen: `
       + '?! überrascht (mit Großbuchstaben oder einem zweiten ! schreiend), !! oder fast nur Großbuchstaben schreiend, … am Ende zögernd. '
-      + 'Ein einfaches ! oder ? bleibt ruhig. Eine Angabe in Klammern hat Vorrang.' : '');
+      + 'Ein einfaches ! oder ? bleibt ruhig. Eine Angabe in Klammern hat Vorrang.' : ''].filter(Boolean);
   const unread = (r.unread || []).map(x => ({ text: `Zeile ${x.line}: „${x.text}“ versteht das Studio nicht, sie wird nicht verfilmt.` }));
-  return `<p class="small muted">${esc(line)}</p>` + (unread.length ? `<ul class="problems">${unread.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '');
+  return `<div class="reading"><p class="label">So gelesen</p><ul class="reading-stats">${stats.map(([n, t]) => `<li><b>${esc(n)}</b> ${esc(t)}</li>`).join('')}</ul>
+      ${notes.length ? `<p class="small muted">${esc(notes.join(' '))}</p>` : ''}</div>` + (unread.length ? `<ul class="problems">${unread.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '');
 }
 function paintCheck() { const box = $('#script-check'); if (box) box.innerHTML = checkView(S.check); }
 async function checkScript(now) {
@@ -444,12 +453,16 @@ async function upload(kind, file) {
 }
 
 /* ---------- projects ---------- */
-/* Tile picture: a scene picture, else the first figure design (figure check), else the title as a title card. */
+/* Tile picture: the chosen title card (the film's own cover, 0.19 design pass), else a scene picture, else the first
+   figure design (figure check), else a quiet placeholder. */
 function frameFor(rid, doc, extra = '') {
+  const cover = doc && coverWanted(doc) && coverChosen(doc) && doc.cover.selected;
   const pic = doc && thumbnail(doc);
   const figure = !pic && doc && ((doc.plan && doc.plan.cast) || []).map(p => castImageUrl(doc, p.name)).find(Boolean);
-  const inner = pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">`
-    : figure ? `<img src="${esc(figure)}" alt="" loading="lazy">` : `<span class="frame-title">${esc(doc ? doc.title : '')}</span>`;
+  // No picture yet: a quiet placeholder with the film symbol; the title stands once, under the card.
+  const inner = cover ? `<img src="/api/factory/${esc(rid)}/cover/preview/${esc(cover)}" alt="" loading="lazy">`
+    : pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">`
+    : figure ? `<img src="${esc(figure)}" alt="" loading="lazy">` : `<span class="frame-empty">${FILM}</span>`;
   return `<div class="frame">${inner}${extra}</div>`;
 }
 function thumbnail(doc) {
@@ -484,7 +497,7 @@ function projectsView() {
   // 0.19 (B1): the trash is its own page; a quiet button with its count instead of a run-on line of links.
   const count = (S.trash || []).length;
   const head = `<div class="page-head"><h1 class="title">Projekte</h1><div class="head-actions"><a class="button quiet trash-link" href="#trash">${TRASH}<span>Papierkorb${count ? ` <span class="count">${count}</span>` : ''}</span></a><a class="button" href="#new">Neuer Film</a></div></div>`;
-  if (!S.runs.length) return head + `<div class="empty"><h2 class="headline">Noch kein Projekt.</h2><p class="muted">Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.</p><a class="button" href="#new">Ersten Film starten</a></div>`;
+  if (!S.runs.length) return head + emptyState(FILM, 'Noch kein Projekt.', 'Beschreib eine Idee, das Studio macht daraus einen Hochkantfilm für TikTok und Shorts.', '<a class="button" href="#new">Ersten Film starten</a>');
   const order = { you: 0, stop: 1, run: 2, '': 3, done: 4 };
   const runs = [...S.runs].sort((a, b) => order[status(a)[0]] - order[status(b)[0]] || String(b.updated).localeCompare(String(a.updated)));
   return head + `<div class="grid">${runs.map(r => {
@@ -492,23 +505,32 @@ function projectsView() {
     const doc = S.docs[r.id] && S.docs[r.id].doc;
     const badge = r.episodes > 1 ? `<span class="frame-badge">${r.finished}/${r.episodes} Folgen</span>` : '';
     // The trash button sits on the card, not in the link: one tap deletes without opening the project.
-    return `<article class="tile"><a class="tile-link" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span><span class="status ${cls}">${esc(label)}</span>${clockTag(r.clock, r.state === 'done')}</a>
+    return `<article class="tile"><a class="tile-link" href="#p=${esc(r.id)}">${frameFor(r.id, doc, badge)}<span class="tile-title">${esc(r.title)}</span>
+      <span class="tile-meta"><span class="status ${cls}">${esc(label)}</span>${clockTag(r.clock, r.state === 'done')}</span>${tileSteps(r, doc, cls)}</a>
       <button class="tile-trash" data-action="trash-ask" data-id="${esc(r.id)}" aria-label="${esc(r.title)} in den Papierkorb legen" title="In den Papierkorb">${TRASH}</button></article>`;
   }).join('')}</div>`;
+}
+/* How far a film is: five slim segments (Drehbuch … Fertig) in the colour of its state; none once it is done. */
+function tileSteps(r, doc, cls) {
+  if (r.state === 'done') return '';
+  const now = stageOf(doc && doc.state === r.state ? doc : r);
+  return `<span class="tile-steps ${cls}"><span class="sr">Schritt ${now + 1} von ${STEPS.length}: ${esc(STEPS[now])}</span>${STEPS.map((s, i) => `<i class="${i <= now ? 'on' : ''}"></i>`).join('')}</span>`;
 }
 /* ---------- trash (0.19, B1) ---------- */
 function deletedText(iso) { const t = when(iso); return t ? `am ${t}` : ''; }
 function trashView() {
   if (!S.trash) return '<p class="muted">Papierkorb wird geladen …</p>';
   const items = S.trash, films = items.reduce((n, t) => n + (t.films || 0), 0);
+  // One head like 'Projekte' and 'Deine Figuren': title and its short text on the left, the page's action on the right.
   const head = `<div class="project-head"><a class="back" href="#projects">Alle Projekte</a></div>
-    <div class="page-head"><h1 class="title">Papierkorb</h1>${items.length ? '<button class="button quiet danger-text" data-action="trash-empty">${TRASH}<span>Papierkorb leeren</span></button>' : ''}</div>
-    <p class="muted trash-lede">Projekte im Papierkorb sind ausgeblendet und pausiert. Bilder, Stimmen und Animationen bleiben, bis du sie endgültig löschst.${films ? ' Fertige Videos bleiben dabei im Ordner 03_Fertige_Videos, außer du wählst es anders.' : ''}</p>`;
-  if (!items.length) return head + '<div class="empty"><h2 class="headline">Der Papierkorb ist leer.</h2><p class="muted">Gelöschte Projekte landen zuerst hier. Von hier holst du sie zurück.</p><a class="button quiet" href="#projects">Zu den Projekten</a></div>';
+    <div class="page-head"><div class="page-intro"><h1 class="title">Papierkorb</h1><p class="muted trash-lede">Projekte im Papierkorb sind ausgeblendet und pausiert. Bilder, Stimmen und Animationen bleiben, bis du sie endgültig löschst.${films ? ' Fertige Videos bleiben dabei im Ordner 03_Fertige_Videos, außer du wählst es anders.' : ''}</p></div>
+      ${items.length ? `<button class="button quiet danger-text" data-action="trash-empty">${TRASH}<span>Papierkorb leeren</span></button>` : ''}</div>`;
+  if (!items.length) return head + emptyState(TRASH.replace('class="icon"', 'class="glyph"'), 'Der Papierkorb ist leer.', 'Gelöschte Projekte landen zuerst hier. Von hier holst du sie zurück.', '<a class="button quiet" href="#projects">Zu den Projekten</a>');
+  // Two quiet buttons of one size per card: bringing back is tinted, deleting for good red; no filled button in a list.
   return head + `<div class="grid">${items.map(t => `<article class="tile trashed">
-      <div class="frame">${t.picture ? `<img src="${esc(t.picture)}" alt="" loading="lazy">` : `<span class="frame-title">${esc(t.title)}</span>`}${t.films ? `<span class="frame-badge">${t.films} ${t.films === 1 ? 'fertiger Film' : 'fertige Filme'}</span>` : ''}</div>
+      <div class="frame">${t.picture ? `<img src="${esc(t.picture)}" alt="" loading="lazy">` : `<span class="frame-empty">${FILM}</span>`}${t.films ? `<span class="frame-badge">${t.films} ${t.films === 1 ? 'fertiger Film' : 'fertige Filme'}</span>` : ''}</div>
       <span class="tile-title">${esc(t.title)}</span><span class="small muted">Gelöscht ${esc(deletedText(t.deleted_at))}</span>
-      <div class="tile-actions"><button class="button small" data-action="trash-restore" data-id="${esc(t.id)}">Wiederherstellen</button><button class="button small quiet danger" data-action="trash-purge" data-id="${esc(t.id)}">Endgültig löschen</button></div></article>`).join('')}</div>`;
+      <div class="tile-actions"><button class="button small tinted" data-action="trash-restore" data-id="${esc(t.id)}">Wiederherstellen</button><button class="button small quiet danger-text" data-action="trash-purge" data-id="${esc(t.id)}">Endgültig löschen</button></div></article>`).join('')}</div>`;
 }
 /* Waiting at a stop the autopilot left for Cay (resuming would skip it). */
 function stoppedForCay(doc) { return !!(doc && doc.autopilot_stopped && doc.autopilot_stopped.state === doc.state); }
@@ -588,7 +610,7 @@ function nextView(d) {
   const phase = d.paused ? `${d.phase ? `Zuletzt: ${esc(d.phase.replace(/[.\s]+$/, ''))}. ` : ''}Fortsetzen macht dort weiter.` : esc(d.phase || '');
   if (d.deleted) return `<section class="next wait"><h2 class="headline">Im Papierkorb.</h2><p>Dateien bleiben erhalten. Wiederhergestellt bleibt das Projekt pausiert, bis du „Fortsetzen“ wählst.</p><div class="actions"><button class="button" data-action="restore">Wiederherstellen</button><button class="button quiet danger" data-action="purge-project">Endgültig löschen</button></div></section>`;
   if (d.state === 'blocked') return blockedView(d);
-  if (d.state === 'done') return `<section class="next"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie ist fertig.' : 'Dein Film ist fertig.'}</h2>
+  if (d.state === 'done') return `<section class="next finished"><h2 class="headline">${d.idea.episodes > 1 ? 'Deine Serie ist fertig.' : 'Dein Film ist fertig.'}</h2>
       <p>Unten ansehen, herunterladen und mit der fertigen Beschreibung hochladen.</p>
       <div class="actions"><button class="button quiet" data-action="reopen-output">Lautstärke und Ton ändern</button><button class="button quiet" data-action="new-edition">Neue Fassung planen</button></div></section>`;
   if (d.state === 'cast_review') {
@@ -614,10 +636,10 @@ function nextView(d) {
       <p>Mundbewegung, Stimme und Figur. Danach rechnet das Studio den Rest ohne Unterbrechung.</p>
       <div class="sample"><video class="frame" controls playsinline preload="metadata" src="/api/factory/${esc(d.id)}/sample#t=0.1"></video></div>
       <div class="actions"><button class="button" data-action="approve-sample">Passt, weiterrechnen</button><button class="button quiet" data-action="reject-sample">Zurück zum Ton</button></div></section>`;
-  if (d.state === 'rendering' || d.state === 'finishing') return `<section class="next"><h2 class="headline">${d.paused ? 'Pausiert.' : d.idea.episodes > 1 ? 'Deine Serie entsteht.' : 'Dein Film entsteht.'}</h2>
+  if (d.state === 'rendering' || d.state === 'finishing') return `<section class="next ${d.paused ? 'paused' : 'working'}"><h2 class="headline">${d.paused ? 'Pausiert.' : d.idea.episodes > 1 ? 'Deine Serie entsteht.' : 'Dein Film entsteht.'}</h2>
       <p class="muted">${phase}</p><div id="progress-slot" class="progress"></div>
       <div class="actions">${pause}<button class="link" data-action="abort-step">Aktuellen Abschnitt abbrechen</button></div></section>`;
-  return `<section class="next"><h2 class="headline">${d.paused ? 'Pausiert.' : 'Das Studio arbeitet.'}</h2><p class="muted">${phase}</p>
+  return `<section class="next ${d.paused ? 'paused' : 'working'}"><h2 class="headline">${d.paused ? 'Pausiert.' : 'Das Studio arbeitet.'}</h2><p class="muted">${phase}</p>
       <div class="actions">${pause}${autopilotSwitch(d)}</div></section>`;
 }
 function blockedView(d) {
@@ -800,13 +822,16 @@ function scenesSection(d, choose) {
     <div class="scene-list"><div class="scenes ${choose ? '' : 'compact'}">${ep.scenes.map((sc, si) => {
       const variants = sc.active_variants || [];
       const pickable = d.state === 'image_review';
-      const pictures = choose && variants.length ? `<div class="variants">${variants.map(v => `<button class="variant" data-action="choose" data-episode="${ei}" data-scene="${si}" data-step="${esc(v.id)}" aria-pressed="${sc.selected === v.id}" aria-label="Bild wählen" ${pickable ? '' : 'disabled'}><div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(v.id)}" alt="" loading="lazy"></div></button>`).join('')}</div>`
+      // 0.19: the autopilot drew one image here; the second one only when asked for, in the slot where it will appear.
+      const single = pickable && variants.length === 1 && sc.stills && sc.stills.count === 1;
+      const drawing = d.state === 'pictures' && variants.length === 1 && sc.stills && sc.stills.count === 2;   // asked for, on its way
+      const second = single ? `<button class="variant-add" data-action="second-still" data-episode="${ei}" data-scene="${si}" title="Ein zweites Bild für diese Szene zeichnen. Das erste bleibt.">${PLUS}<span>Zweites Bild</span></button>`
+        : drawing ? '<div class="frame"><div class="frame-empty">Zweites Bild entsteht</div></div>' : '';
+      const pictures = choose && variants.length ? `<div class="variants">${variants.map(v => `<button class="variant" data-action="choose" data-episode="${ei}" data-scene="${si}" data-step="${esc(v.id)}" aria-pressed="${sc.selected === v.id}" aria-label="Bild wählen" ${pickable ? '' : 'disabled'}><div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(v.id)}" alt="" loading="lazy"></div></button>`).join('')}${second}</div>`
         : sc.selected ? `<div class="frame"><img src="/api/factory/${esc(d.id)}/picture/${esc(sc.selected)}" alt="" loading="lazy"></div>`
         : `<div class="frame"><div class="frame-empty">${choose ? 'Bilder entstehen' : ''}</div></div>`;
       const lines = linesOf(sc).map(l => `<p class="line"><b>${esc(l.speaker)}:</b> ${esc(l.text)}</p>`).join('') || '<p class="muted small">Ohne Dialog</p>';
-      // 0.19: the autopilot drew one image here; the second one only when asked for.
-      const single = pickable && variants.length === 1 && sc.stills && sc.stills.count === 1;
-      const tools = editable ? `<div class="actions">${single ? `<button class="button quiet small" data-action="second-still" data-episode="${ei}" data-scene="${si}">Zweites Bild</button>` : ''}${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
+      const tools = editable ? `<div class="actions">${d.state === 'image_review' ? `<button class="button quiet small" data-action="revise" data-episode="${ei}" data-scene="${si}">Neue Bilder</button>` : ''}<button class="button quiet small" data-action="edit-lines" data-episode="${ei}" data-scene="${si}">Text ändern</button></div>` : '';
       return `<article class="scene">${pictures}<div class="scene-text"><h3>${si + 1}. ${esc(sc.title)}</h3>${sceneRole(sc)}<p>${esc(sc.action)}</p>${lines}${tools}</div></article>`;
     }).join('')}</div>
     ${choose && d.state === 'image_review' ? dock(d) : ''}</div>
@@ -919,8 +944,9 @@ function paintProgress() {
     ? 'Animation fertig, der Film wird zusammengesetzt' : p.eta_note || 'Restzeit folgt nach den ersten fertigen Abschnitten';
   slot.innerHTML = `<div class="facts">
       <div class="fact"><strong>${p.done} von ${p.total}</strong><span>Abschnitte animiert</span></div>
-      <div class="fact"><strong>${esc(eta)}</strong><span>${p.eta ? (p.eta.source === 'history' ? 'Restzeit Animation, geschätzt aus früheren Filmen' : 'Restzeit Animation') : esc(why)}</span></div>
-      <div class="fact"><strong>${g.utilization == null ? '–' : esc(g.utilization) + ' %'}</strong><span>Grafikkarte ausgelastet</span></div>
+      ${p.eta ? `<div class="fact"><strong>${esc(eta)}</strong><span>${p.eta.source === 'history' ? 'Restzeit Animation, geschätzt aus früheren Filmen' : 'Restzeit Animation'}</span></div>`
+        : `<div class="fact note"><span>${esc(why)}</span></div>`}
+      ${g.utilization == null ? '' : `<div class="fact"><strong>${esc(g.utilization)} %</strong><span>Grafikkarte ausgelastet</span></div>`}
     </div>
     <progress class="meter" max="${Math.max(1, p.total)}" value="${p.done}" aria-label="Gesamtfortschritt"></progress>
     ${a ? `<div class="now-step"><p class="small muted">${esc(detail.label || 'Animation')}${a.scene != null ? `, Folge ${a.episode + 1}, Szene ${a.scene + 1}` : ''}${node ? `: Schritt ${node.value} von ${node.max}` : ''}</p>
@@ -976,9 +1002,8 @@ function libraryCards() {
 function libraryView() {
   const head = `<div class="page-head"><div class="page-intro"><h1 class="title">Deine Figuren</h1><p class="muted">Bild und Stimme einmal festlegen und in jedem Film wiederverwenden.</p></div><button class="button" data-action="lib-new">Neue Figur</button></div>`;
   if (!S.library) return head + '<p class="muted">Figuren werden geladen …</p>';
-  if (!S.library.length) return head + `<div class="empty"><h2 class="headline">Noch keine Figuren.</h2>
-      <p class="muted">Nimm eine Figur aus einem Projekt auf: bei der Figurenprüfung unter „In deine Figuren aufnehmen“. Oder lege hier eine mit Bild und Stimme an.</p>
-      <button class="button" data-action="lib-new">Figur anlegen</button></div>`;
+  if (!S.library.length) return head + emptyState(PERSON, 'Noch keine Figuren.', 'Nimm eine Figur aus einem Projekt auf: bei der Figurenprüfung unter „In deine Figuren aufnehmen“. Oder lege hier eine mit Bild und Stimme an.',
+    '<button class="button quiet" data-action="lib-new">Figur anlegen</button>');
   return head + libraryFilters('lib-cards') + `<div class="cards" id="lib-cards">${libraryCards()}</div>`;
 }
 function looksRadio(value) {
@@ -1032,7 +1057,7 @@ function pickerSheet() {
   const intro = p.mode !== 'compose' ? `Bild und Stimme kommen aus deiner Bibliothek. Im Drehbuch heißt die Figur weiter ${esc(p.name)}.` : 'Gewählte Figuren spielen mit ihrem Bild und ihrer Stimme in deinem Film mit.';
   if (!list.length) {
     openSheet(`<div class="sheet-head"><h2 class="headline">${title}</h2><button class="button quiet small" data-action="close">Schließen</button></div>
-      <div class="empty compact"><h3 class="headline">Noch keine Figuren.</h3><p class="muted">Nimm Figuren aus einem Projekt auf oder lege sie im Bereich „Figuren“ an.</p><a class="button quiet" href="#library" data-action="close">Zu deinen Figuren</a></div>`);
+      ${emptyState(PERSON, 'Noch keine Figuren.', 'Nimm Figuren aus einem Projekt auf oder lege sie im Bereich „Figuren“ an.', '<a class="button quiet" href="#library" data-action="close">Zu deinen Figuren</a>', true)}`);
     return;
   }
   openSheet(`<div class="sheet-head"><h2 class="headline">${title}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
@@ -1116,7 +1141,7 @@ function figureSheet(name) {
     ${pend ? `<div class="notice"><span>Vorgemerkt: ${esc(pend.text)}. Wird übernommen, ${esc(laterText(d))}.</span><button class="button quiet small" data-action="cast-cancel" data-name="${esc(name)}">Vormerkung aufheben</button></div>` : ''}
     <div class="figure-sheet"><div class="figure-side"><div class="figure-pic">${castPicture(d, name)}</div>
         <dl class="role-src"><dt>Bild</dt><dd>${esc(imageSource(d, p))}</dd><dt>Stimme</dt><dd>${url ? `<button class="play" data-action="play" data-src="${esc(url)}" aria-label="Stimme von ${esc(name)} anhören">${PLAY}</button>` : ''}<span>${esc(voiceSource(d, p))}</span></dd></dl>
-        <p class="small muted">In ${scenes} ${scenes === 1 ? 'Szene' : 'Szenen'} zu sehen.</p></div>
+        ${voiceNotes(d, name).map(n => `<p class="small warn-line">${esc(n)}</p>`).join('')}<p class="small muted">In ${scenes} ${scenes === 1 ? 'Szene' : 'Szenen'} zu sehen.</p></div>
       <div class="menu">${library}${image}${looks}${voice}${keep}</div></div>`);
 }
 /* One figure in one episode: its variant, what it wears, and a new design with an optional wish. */
