@@ -332,6 +332,62 @@ def test_cays_own_camera_line_wins_once_per_section():
     episode.pop('own_script'); assert sd.plan(episode)[talk]['type'] == sd.plan(sample_episode('cay_pingpong'))[talk]['type']
 
 
+def own_episode(text):
+    import own_script
+    r = own_script.read(text); names = [f['name'] for f in r['figures']]
+    title, beats, lines, _ = sp.parse(r['episodes'][0]['text'], names, own=True)
+    cast = [{'name': n, 'appearance': 'x'} for n in names]
+    episode = sp.assemble(title, {}, {'title': 'x'}, sp.ensure_action(sp.shots(title, beats, lines, names), r['duration']), {}, cast, {})
+    episode['own_script'] = True
+    return episode, cast
+
+
+WISH_SCRIPT = '''# Szene 1: Krosse Krabbe, Küche
+MR. KRABS: Wer hat mein Geld genommen? Sofort raus damit!
+SPONGEBOB (ängstlich): Ich war es nicht, Mr. Krabs, ehrlich nicht!
+MR. KRABS: Dann zeig mir deine Taschen, aber sofort!
+SPONGEBOB: Da ist nur ein Kaugummi drin, sieh doch selbst!
+# Szene 2: Muschelhaus, Wohnzimmer
+Kamera: Großaufnahme von SpongeBob.
+SPONGEBOB: Hilfe! Er ist hinter mir her, Patrick!
+PATRICK: Wer denn? Ich seh niemanden.
+SPONGEBOB: Mr. Krabs! Er glaubt, ich hab sein Geld!
+'''
+
+
+def test_a_camera_wish_goes_to_the_shot_it_names_never_to_the_inserted_wide_shot():
+    """Review r019: the section at a new place opens with an inserted establishing shot carrying the section text, and
+    that wide shot got 'Großaufnahme von SpongeBob' (a close-up of SpongeBob and Patrick over a crane move into the
+    room) while SpongeBob's talking shot got a rotation type."""
+    import cast_design
+    episode, cast = own_episode(WISH_SCRIPT); scenes = episode['scenes']; plan = sd.plan(episode)
+    wide = next(i for i, s in enumerate(scenes) if s['kind'] == 'establish')
+    assert scenes[wide]['action'] == scenes[wide + 1]['action'] == 'Großaufnahme von SpongeBob.'
+    assert plan[wide]['type'] in sd.ROLES['establish'] and plan[wide]['type'] != 'cu'
+    assert scenes[wide + 1]['cast'] == ['SpongeBob'] and plan[wide + 1]['type'] == 'cu'          # his talking shot
+    assert [i for i, k in enumerate(sd.asked(scenes)) if k] == [wide + 1]                        # once, not on every later shot
+    assert all(shot['type'] in sd.ROLES[shot['role']] for shot in plan)
+    prompt = cast_design.shot_prompt(scenes[wide], cast, scenes[wide]['cast'], 'clay', cast, sd.pick(plan, wide, 0), plan[wide]['role'])
+    assert not prompt.startswith('Close-up')
+    # Several rows of one section go, in the order written, to the next shots that can show them: the wide wish to the
+    # silent action, the close-up of Patrick to his next shot after it (here his reaction to the voice from off-screen).
+    episode, _ = own_episode(WISH_SCRIPT.split('# Szene 2')[0] + '''# Szene 2: Muschelhaus, Wohnzimmer
+Kamera: Totale auf das Wohnzimmer.
+PATRICK: Wer denn? Ich seh niemanden hier drin.
+AKTION: Patrick liegt auf dem Sofa und isst Chips.
+SPONGEBOB: Mr. Krabs! Er glaubt, ich hab sein Geld genommen!
+Kamera: Großaufnahme von Patrick.
+MR. KRABS (off): Ich weiß, dass du da drin bist, Junge!
+PATRICK: Oh nein, jetzt kommt er auch noch zu mir.
+''')
+    scenes = episode['scenes']; plan = sd.plan(episode)
+    wished = [(scenes[i]['kind'], scenes[i]['cast'], k) for i, k in enumerate(sd.asked(scenes)) if k]
+    assert wished == [('action', ['Patrick'], 'wide'), ('reaction', ['Patrick'], 'cu')]
+    assert plan[next(i for i, s in enumerate(scenes) if s['kind'] == 'establish')]['type'] != 'cu'
+    # An AKTION with its own camera words keeps them for its silent shot.
+    assert sd.asked([{'kind': 'action', 'cast': ['Patrick'], 'action': 'Detailaufnahme: Patrick greift nach den Chips.', 'location': 'x'}]) == ['ecu']
+
+
 def test_new_rounds_vary_the_moment_not_with_the_old_camera_text(monkeypatch):
     d = picture_project(**PIN); scene = d['episodes'][0]['scenes'][1]
     run_pictures(monkeypatch, d)

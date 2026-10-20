@@ -88,6 +88,51 @@ def allowed(kind, scene):
     return kind != 'ots' or len(scene.get('cast') or []) >= 2
 
 
+def wishes(text):
+    """Cay's camera wishes in one text, sentence by sentence in the order written: [(type, sentence)]."""
+    return [(k, part) for part in re.split(r'(?<=[.!?;])\s+', str(text or '')) for k in [wish({'action': part})] if k]
+
+
+TAKERS = ('talk', 'react', 'action')     # shots that take a camera wish of their section; an inserted wide shot never does
+
+
+def fits(kind, scene):
+    r = role(scene)
+    return r in TAKERS and kind in ROLES[r] and allowed(kind, scene)
+
+
+def asked(scenes):
+    """Cay's camera wish per shot of his own script, else None. A silent action shot takes a wish from its own
+    AKTION text. The 'Kamera:' rows of a scene section are merged into its text (the action of its talking and
+    establishing shots); each of them, in the order written, goes to the next shot of that section that can show it:
+    a talking, reaction or action shot whose pool holds the type, the one with the figure the row names first.
+    Never the establishing shot the cut inserts at a new place (review r019: 'Großaufnahme von SpongeBob' became a
+    close-up of SpongeBob and Patrick over a crane move into the location), never a type outside the shot's pool,
+    never twice for one row (a reaction's generated action in between started the section again)."""
+    out = [None] * len(scenes); sections = []; current = None
+    for i, s in enumerate(scenes):
+        kind = s.get('kind') or 'line'
+        if kind == 'action': out[i] = next((k for k, _ in wishes(s.get('action')) if fits(k, s)), None)
+        if kind in ('line', 'establish'):
+            if not current or s.get('action') != current['text'] or s.get('location') != current['place']:
+                current = {'text': s.get('action'), 'place': s.get('location'), 'shots': []}; sections.append(current)
+            current['shots'].append(i)
+        elif current and s.get('location') == current['place']:
+            # A reaction belongs to the section of the line before it; an action shot only between two shots of one section.
+            follow = next((x for x in scenes[i + 1:] if (x.get('kind') or 'line') in ('line', 'establish')), None)
+            if kind == 'reaction' or (follow and follow.get('action') == current['text'] and follow.get('location') == current['place']):
+                current['shots'].append(i)
+    from screenplay import _mentions
+    for section in sections:
+        start = 0
+        for kind, sentence in wishes(section['text']):
+            free = [i for i in section['shots'][start:] if out[i] is None and fits(kind, scenes[i])]
+            named = [i for i in free if any(_mentions(sentence, [n], [o for o in scenes[i]['cast'] if o != n]) for n in scenes[i].get('cast') or [])]
+            if not free: continue
+            chosen = (named or free)[0]; out[chosen] = kind; start = section['shots'].index(chosen) + 1
+    return out
+
+
 def rotate(items, n):
     items = list(items)
     return items[n % len(items):] + items[:n % len(items)] if items else []
@@ -99,10 +144,8 @@ def plan(episode):
     never share a type in any choice of variants: type != previous type (and, where possible, the
     one before), alt differs from its own type, both neighbour types and the previous alt.
     Only Cay's own camera wish may repeat a type, when he asks for it twice in a row."""
-    scenes = episode.get('scenes') or []; own = bool(episode.get('own_script'))
-    # Cay's camera line counts once, for the first shot of its scene section (same action text).
-    asked = [wish(s) if own and (not i or s.get('action') != scenes[i - 1].get('action')) else None for i, s in enumerate(scenes)]
-    asked = [a if a and allowed(a, s) else None for a, s in zip(asked, scenes)]
+    scenes = episode.get('scenes') or []
+    wished = asked(scenes) if episode.get('own_script') else [None] * len(scenes)
     out = []; counters = {}; place = object()
     for i, scene in enumerate(scenes):
         r = role(scene); pool = [k for k in ROLES[r] if allowed(k, scene)]
@@ -113,8 +156,8 @@ def plan(episode):
             m = counters.get(r + ':close', 0); counters[r + ':close'] = m + 1; first = rotate(CLOSE[r], m)
         order = [k for k in dict.fromkeys(first + rotate(pool, n)) if k in pool]
         # Hard: never the previous type. Soft: not the one before either, nor the type Cay asked for next.
-        hard = [x['type'] for x in out[-1:]]; soft = [x['type'] for x in out[-2:-1]] + [asked[i + 1] if i + 1 < len(scenes) else None]
-        kind = (asked[i] or next((k for k in first if moved and k not in hard and k not in soft[1:]), None)
+        hard = [x['type'] for x in out[-1:]]; soft = [x['type'] for x in out[-2:-1]] + [wished[i + 1] if i + 1 < len(scenes) else None]
+        kind = (wished[i] or next((k for k in first if moved and k not in hard and k not in soft[1:]), None)
                 or next((k for k in order if k not in hard + soft), None) or next(k for k in order if k not in hard))
         out.append({'type': kind, 'role': r, 'pool': order})
         place = scene.get('location')
