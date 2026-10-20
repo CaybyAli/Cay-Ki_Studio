@@ -29,7 +29,7 @@
   --frame-bg: #e8e8ed;      /* behind a picture or film while it loads: the placeholder tone, never a black slab on the light canvas */
   --placeholder: #e8e8ed;   /* a frame without a picture yet */
   --phone-screen: #1d1d1f;  /* the dark screen of the phone preview on 'Neu' */
-  --placeholder-ink: #86868b;
+  --placeholder-ink: #636366;   /* 4.9:1 on the placeholder */
   --toast-bg: rgba(29, 29, 31, .94);
   --toast-ink: #f5f5f7;
   --toast-action: #2997ff;
@@ -47,7 +47,7 @@
     --canvas: #000000; --surface: #1c1c1e; --ink: #f5f5f7; --muted: #98989d; --hairline: #38383a;
     --fill: #2c2c2e; --accent: #0a84ff; --accent-soft: #0a2b4d; --done: #30d158; --wait: #ff9f0a; --stop: #ff453a;
     --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --frame-bg: #2c2c2e; --accent-text: #409cff; --track: #48484a;
-    --phone-screen: #2c2c2e; --placeholder: #2c2c2e; --placeholder-ink: #8e8e93; --toast-bg: rgba(245, 245, 247, .96); --toast-ink: #1d1d1f; --toast-action: #0066cc;
+    --phone-screen: #2c2c2e; --placeholder: #2c2c2e; --placeholder-ink: #98989d; --toast-bg: rgba(245, 245, 247, .96); --toast-ink: #1d1d1f; --toast-action: #0066cc;
     --shadow-lift: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -16px rgba(0,0,0,.8); color-scheme: dark;
   }
 }
@@ -55,7 +55,7 @@
   --canvas: #000000; --surface: #1c1c1e; --ink: #f5f5f7; --muted: #98989d; --hairline: #38383a;
   --fill: #2c2c2e; --accent: #0a84ff; --accent-soft: #0a2b4d; --done: #30d158; --wait: #ff9f0a; --stop: #ff453a;
   --bar: rgba(0, 0, 0, .72); --seg-on: #636366; --frame-edge: #3a3a3c; --frame-bg: #2c2c2e; --accent-text: #409cff; --track: #48484a;
-  --phone-screen: #2c2c2e; --placeholder: #2c2c2e; --placeholder-ink: #8e8e93; --toast-bg: rgba(245, 245, 247, .96); --toast-ink: #1d1d1f; --toast-action: #0066cc;
+  --phone-screen: #2c2c2e; --placeholder: #2c2c2e; --placeholder-ink: #98989d; --toast-bg: rgba(245, 245, 247, .96); --toast-ink: #1d1d1f; --toast-action: #0066cc;
   --shadow-lift: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -16px rgba(0,0,0,.8); color-scheme: dark;
 }
 
@@ -87,10 +87,10 @@ a:focus-visible, .link:focus-visible { border-radius: 4px; }
 .brand { white-space: nowrap; font-weight: 600; font-size: 19px; letter-spacing: -.02em; color: var(--ink); justify-self: start; }
 .brand:hover { text-decoration: none; }
 .tabs { display: flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--fill); }
-.tabs button { border: 0; background: transparent; padding: 5px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--muted);
-  transition: color var(--quick) var(--ease), background-color var(--quick) var(--ease); }
-.tabs button:hover { color: var(--ink); }
-.tabs button[aria-current="page"] { background: var(--seg-on); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.tabs button { border: 0; background: transparent; padding: 5px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--ink);
+  transition: background-color var(--quick) var(--ease), box-shadow var(--quick) var(--ease); }
+.tabs button:hover:not([aria-current="page"]) { background: color-mix(in srgb, var(--seg-on) 45%, transparent); }
+.tabs button[aria-current="page"] { background: var(--seg-on); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .bar-tools { justify-self: end; display: flex; gap: 6px; align-items: center; }
 .icon-button { width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--ink);
   transition: background-color var(--quick) var(--ease); }
