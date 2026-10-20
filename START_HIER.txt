@@ -1,10 +1,10 @@
-CAY STUDIO 0.19.0 - NUR DIESE SCHRITTE
+CAY STUDIO 0.19.1 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
 2. Laeuft ein Film: fertig werden lassen oder Pausieren.
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
    Kein PC-Neustart noetig.
-4. Im Browser Strg+F5. Unten muss 0.19.0 stehen.
+4. Im Browser Strg+F5. Unten muss 0.19.1 stehen.
 5. Dein angehaltenes Projekt "Gangster SpongeBob - Die Krone der
    Ananasstrasse" (Exportpruefung): oeffnen und "Fortsetzen".
    Die Abschnitte mit Bildluecke werden neu geschnitten, ohne neue

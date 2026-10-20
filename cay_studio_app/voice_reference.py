@@ -27,7 +27,8 @@ import wave
 from array import array
 from pathlib import Path
 
-import numpy as np
+try: import numpy as np
+except ImportError: np = None      # the dashboard venv has no numpy (requirements.lock): clean() then runs in the voice env
 
 import factory_audio as fa
 
@@ -128,6 +129,7 @@ def clean(src, python=None):
         info = json.loads(meta.read_text())
         if info['source_sha256'] == source and info['recipe'] == RECIPE and hashlib.sha256(dest.read_bytes()).hexdigest() == info['sha256']: return info
     except (OSError, ValueError, KeyError, TypeError): pass
+    if np is None: return clean_elsewhere(src, python)
     x = np.asarray(fa.read_f32(src), dtype=np.float32); before = measure(x); steps = []
     if before['snr_db'] < BACKGROUND_DB:
         work = dest.with_name(dest.stem + '.demucs'); vocals = separate(src, python, work)
@@ -155,6 +157,16 @@ def clean(src, python=None):
     return info
 
 
+def clean_elsewhere(src, python):
+    """Cay 0.19.0: the dashboard venv has no numpy, so the import broke the studio start. The cleaning then runs in the
+    voice environment (it has numpy), with this same file; the recipe comes back as JSON."""
+    if not python or not Path(python).is_file(): raise RuntimeError('Stimmprobe: Stimmenstudio fehlt, das Original wird geklont.')
+    r = subprocess.run([str(python), str(Path(__file__).resolve()), str(src), str(python)], capture_output=True, text=True,
+                       cwd=str(Path(__file__).resolve().parent), timeout=900)
+    if r.returncode: raise RuntimeError('Stimmprobe: ' + (r.stderr or r.stdout)[-400:])
+    return json.loads(r.stdout.strip().splitlines()[-1])
+
+
 def notes(name, info):
     """Short German notes for the figure card and the diagnosis."""
     if not info: return [f'Stimmprobe von {name} ließ sich nicht reinigen. Das Studio klont das Original.']
@@ -177,3 +189,8 @@ def summary(name, info, transcript):
     return {**base, 'cleaned': True, 'steps': info['steps'], 'gain_db': info['gain_db'], 'original_sha256': info['source_sha256'],
             'lufs_before': info['before']['lufs'], 'lufs_after': info['after']['lufs'], 'snr_before': info['before']['snr_db'],
             'snr_after': info['after']['snr_db'], 'seconds': info['after']['seconds'], 'warnings': info['warnings']}
+
+
+if __name__ == '__main__':
+    import sys
+    print(json.dumps(clean(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None), ensure_ascii=False))

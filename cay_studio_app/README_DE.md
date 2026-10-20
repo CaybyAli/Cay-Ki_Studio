@@ -1,3 +1,10 @@
+# Cay Studio 0.19.1 – Startfehler von 0.19.0 behoben (20.10.2026)
+
+- **Cays Meldung:** „UPDATE ANGEHALTEN: Neue Dashboard-Version startet nicht.“ Die neue Stimmproben-Reinigung lud beim Start numpy, das es im Dashboard auf Cays PC nicht gibt. Der Installer kehrte richtig zu 0.18.2 zurück. Jetzt läuft die Reinigung im Stimmenstudio; ein Test startet das Dashboard ohne numpy/torch.
+- Inhalt sonst wie 0.19.0 (unten).
+
+---
+
 # Cay Studio 0.19.0 – Export, Ton, Bild, Tempo, Drehbuch, Stimmen, Oberfläche (20.10.2026)
 
 - **Export-Stopp nach 12 h behoben** („Bildlänge oder Bildgröße stimmt nicht“): FFmpeg rundete die Verschiebung der Abschnitte ab, ab FFmpeg 7.1 blieben dadurch Bildlücken. Abschnitte werden jetzt um ganze Bilder verschoben, auch schon zwischengespeicherte mit Lücke werden neu geschnitten. Diagnose zeigt die FFmpeg-Version.
