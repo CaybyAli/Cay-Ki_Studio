@@ -451,12 +451,15 @@ async function upload(kind, file) {
 }
 
 /* ---------- projects ---------- */
-/* Tile picture: a scene picture, else the first figure design (figure check), else the title as a title card. */
+/* Tile picture: the chosen title card (the film's own cover, 0.19 design pass), else a scene picture, else the first
+   figure design (figure check), else a quiet placeholder. */
 function frameFor(rid, doc, extra = '') {
+  const cover = doc && coverWanted(doc) && coverChosen(doc) && doc.cover.selected;
   const pic = doc && thumbnail(doc);
   const figure = !pic && doc && ((doc.plan && doc.plan.cast) || []).map(p => castImageUrl(doc, p.name)).find(Boolean);
   // No picture yet: a quiet placeholder with the film symbol; the title stands once, under the card.
-  const inner = pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">`
+  const inner = cover ? `<img src="/api/factory/${esc(rid)}/cover/preview/${esc(cover)}" alt="" loading="lazy">`
+    : pic ? `<img src="/api/factory/${esc(rid)}/picture/${esc(pic)}" alt="" loading="lazy">`
     : figure ? `<img src="${esc(figure)}" alt="" loading="lazy">` : `<span class="frame-empty">${FILM}</span>`;
   return `<div class="frame">${inner}${extra}</div>`;
 }
