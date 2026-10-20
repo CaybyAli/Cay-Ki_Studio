@@ -158,8 +158,9 @@ ENDE
     assert beats[0]['place'] == 'Bäckerei' and 'Kühltheke leuchtet' in beats[0]['what'] and 'Nahaufnahme' in beats[0]['what']
     assert [(l['kind'], l['speaker'], l['text'], l['emotion']) for l in lines] == [
         ('line', 'Max', 'Pssst! Hier drüben ist der Tresor. Mach bloß keinen Lärm.', 'flüsternd'),
-        # 0.19 (read() reads with own_script.POLICY): a line without a delivery gets one from its text (tts_text.delivery).
-        ('line', 'Lena', 'Ich mach doch gar nichts!', 'genervt'),
+        # 0.19 (read() reads with own_script.POLICY): a line without a delivery gets one from its marks (tts_text.delivery);
+        # a plain '!' says nothing about the feeling, so it stays 'ruhig'.
+        ('line', 'Lena', 'Ich mach doch gar nichts!', 'ruhig'),
         ('action', '', 'Lena stolpert über einen Mehlsack. Eine weiße Wolke steigt auf.', ''),
         ('line', 'Max', 'Lena! Das ganze Mehl!', 'panisch'),
         ('action', '', 'Plötzlich: Das Licht geht an.', ''),

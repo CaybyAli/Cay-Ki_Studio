@@ -348,10 +348,14 @@ def test_the_diagnosis_shows_mode_cleaning_takes_and_deliveries_per_figure(tmp_p
 
 
 # --- (2) own-script lines without a delivery: one from the text, punctuation reaches the voice model ---------------
-DERIVED = {'Ich hab nichts gemacht!': 'genervt', 'Wir haben es geschafft!': 'begeistert', 'Hilfe! Da ist ein Hai!': 'panisch', 'Raus aus meiner Küche!': 'wütend',
-           'Was?! Das glaub ich nicht.': 'überrascht', 'Echt!? Du auch?': 'überrascht', 'NEIN! NIEMALS! HÖRST DU?': 'schreiend',
-           'Nein!! Das nicht.': 'schreiend', 'Wer war es dann?': 'verwirrt', 'Ich weiß nicht…': 'ängstlich',
-           'Ich... ich hab doch... nur kurz geschaut.': 'ängstlich', 'Na gut, dann eben nicht.': 'ruhig', 'Das FBI kommt gleich.': 'ruhig'}
+DERIVED = {'Was?! Das glaub ich nicht.': 'überrascht', 'Echt!? Du auch?': 'überrascht', 'NEIN! NIEMALS! HÖRST DU?': 'schreiend',
+           'Nein!! Das nicht.': 'schreiend', 'Was machst du da?! Das war doch UNSER Geld!': 'schreiend', 'Wo bist du?! Komm sofort her!': 'schreiend',
+           'Ich weiß nicht…': 'ängstlich', 'Ich... ich hab doch... nur kurz geschaut.': 'ängstlich', 'Na gut, dann eben nicht.': 'ruhig',
+           'Das FBI kommt gleich.': 'ruhig',
+           # A plain '!' or '?' says nothing about the feeling: a threat, a plea, mockery or fear end the same way (review r019).
+           'Ich hab nichts gemacht!': 'ruhig', 'Wir haben es geschafft!': 'ruhig', 'Hilfe! Da ist ein Hai!': 'ruhig', 'Raus aus meiner Küche!': 'ruhig',
+           'Wer war es dann?': 'ruhig', 'Das ist MEIN Schutzgeld, Bub! Und es fehlt noch die Hälfte!': 'ruhig',
+           'Herr Krabs, ich hab nur noch diese paar Münzen, bitte!': 'ruhig', 'Euer Geld? Nee, Kleiner. Ich hab etwas viel Besseres vor.': 'ruhig'}
 
 
 def test_a_delivery_from_the_text_for_lines_written_without_one():
@@ -360,7 +364,28 @@ def test_a_delivery_from_the_text_for_lines_written_without_one():
     for text, mood in DERIVED.items():
         assert tts_text.delivery(text) == mood, text
         assert mood in screenplay.EMOTIONS
-    assert performance_key(tts_text.delivery('Super, komm mit!')) == 'excited' and performance_key(tts_text.delivery('Wer?')) == 'confused'
+    assert tts_text.delivery('Super, komm mit!') == tts_text.delivery('Wer?') == 'ruhig'
+
+
+def test_derived_deliveries_agree_with_the_ones_writers_gave():
+    """Measured against the deliveries written for the same lines: Cay's 'Weißes Gold' (52 lines) and the cut samples (43).
+    The rule before the review gave 3 calm questions of Weißes Gold 'verwirrt' and 36 of the 95 lines a mood the writer did
+    not write ('Das ist MEIN Schutzgeld, Bub!' drohend -> begeistert, 'Euer Geld? Nee, Kleiner.' spöttisch -> verwirrt)."""
+    import cut_samples
+    import own_script
+    import screenplay
+    import tts_text
+    r = own_script.read((ROOT / 'tests' / 'fixtures' / 'Weisses_Gold_Drehbuch.md').read_text(encoding='utf-8'))
+    names = [f['name'] for f in r['figures']]
+    gold = [(l['emotion'], l['text']) for ep in r['episodes'] for l in screenplay.parse(ep['text'], names, own=True)[2] if l['kind'] == 'line']
+    samples = [(l['emotion'], l['text']) for text, cast in cut_samples.TEXTS.values() for l in screenplay.parse(text, cast)[2] if l['kind'] == 'line']
+    def given(pairs): return [(w, tts_text.delivery(t)) for w, t in pairs if tts_text.delivery(t) != 'ruhig']
+    def wrong(pairs): return [(w, d) for w, d in given(pairs) if performance_key(d) != performance_key(w)]
+    assert len(gold) == 52 and len(samples) == 43
+    assert not [w for w, _ in given(gold) if w == 'ruhig']                         # a calm line of Cay's never gets a mood
+    assert sum(performance_key(tts_text.delivery(t)) == performance_key(w) for w, t in gold) >= 35     # before: 32 of 52
+    assert len(wrong(gold)) <= 1 and len(wrong(gold + samples)) * 20 <= len(gold + samples)          # before: 6, 36 of 95
+    assert len(given(samples)) - len(wrong(samples)) >= len(wrong(samples))      # a mood it gives is right at least as often as not
 
 
 OWN = '''# Kuchen
@@ -383,8 +408,8 @@ def test_own_script_lines_without_a_delivery_get_one_and_a_written_one_wins():
         lines = [l for l in screenplay.parse(r['episodes'][0]['text'], ['Oma', 'Tim'], own=bool(policy))[2] if l['kind'] == 'line']
         return r, [(l['text'], l['emotion']) for l in lines]
     r, new = moods(own_script.POLICY)
-    assert [m for _, m in new] == ['verwirrt', 'genervt', 'ruhig', 'ruhig', 'überrascht', 'ängstlich', 'ruhig']
-    assert r['report']['delivery'] == {'written': 2, 'derived': 4, 'calm': 1}
+    assert [m for _, m in new] == ['ruhig', 'ruhig', 'ruhig', 'ruhig', 'überrascht', 'ängstlich', 'ruhig']
+    assert r['report']['delivery'] == {'written': 2, 'derived': 2, 'calm': 3}
     assert any('Sprechhaltung „quer gestreift“ kennt das Studio nicht' in p['text'] for p in r['problems'])
     old_r, old = moods(0)                                                        # projects from before 0.19: as before
     assert [m for _, m in old] == ['ruhig'] * 7 and 'report' not in old_r
@@ -403,11 +428,12 @@ def test_punctuation_reaches_the_voice_model(tmp_path):
     assert said[5] == 'Ich... ich hab doch nur probiert...'
     # And through the planned project: quality_voices hands the same text and the derived delivery to the speech job.
     scenes = [{'kind': 'line', 'cast': ['Oma'], 'seconds': 4, 'dialogues': [{'speaker': l['speaker'], 'text': l['text'], 'emotion': l['emotion']}]}
-              for l in lines[:2]]
+              for l in lines[4:6]]
     from factory_quality import Quality
     d = project({'sound_policy': 19}); d['episodes'][0]['scenes'] = scenes
     d['idea']['participants'] = [{'name': 'Oma', 'voice': 'a'}, {'name': 'Tim', 'voice': 'b'}]; d['plan']['cast'] = [{'name': 'Oma'}, {'name': 'Tim'}]
     studio = Speaking(tmp_path / 'p'); asyncio.run(Quality.quality_voices(studio, d))
     job = studio.jobs[-1]
-    assert [(l['text'], l['emotion']) for l in job['lines']] == [('Wer hat meinen Kuchen gegessen?', 'verwirrt'), ("Ich war's nicht!", 'genervt')]
-    assert [tts_text.spoken(l, job) for l in job['lines']] == ['Wer hat meinen Kuchen gegessen?', "Ich war's nicht!"]
+    assert [(l['text'], l['emotion']) for l in job['lines']] == [('Was?! Das ist doch nicht dein Ernst… Wirklich…', 'überrascht'),
+                                                                 ('Ich... ich hab doch nur probiert...', 'ängstlich')]
+    assert [tts_text.spoken(l, job) for l in job['lines']] == ['Was?! Das ist doch nicht dein Ernst… Wirklich…', 'Ich... ich hab doch nur probiert...']

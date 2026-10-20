@@ -109,23 +109,21 @@ def shouted(text):
 
 
 # 0.19 voices (r019 B5e): a line of Cay's own script without a delivery in brackets was always spoken 'ruhig': one
-# take, no level accent, the calm reference. own_script (policy 19) now asks delivery() instead. Only punctuation,
-# capitals and a few unmistakable words decide; the words themselves never change and a written delivery wins.
-HELP = re.compile(r'\b(?:hilfe|rette[tn]?|lauf|lauft|renn|weg hier|schnell weg)\b')
-ANGER = re.compile(r'\b(?:raus|hau ab|verschwinde[tn]?|verdammt|hör auf|lass das|halt die klappe|gib (?:das|es|mir) (?:sofort |jetzt )?her|idiot|mistkerl)\b')
-DENIAL = re.compile(r'\b(?:nein|nicht|nichts|kein|keine|keinen|keiner|nie|niemals)\b')
+# take, no level accent, the calm reference. own_script (policy 19) now asks delivery() instead. Only marks that say one
+# thing decide; the words themselves never change and a written delivery wins. A plain '!' or '?' says nothing: threats,
+# pleas, mockery and fear end in the same marks (review r019: of 35 lines that got 'begeistert', 'verwirrt' and the like
+# from them, 3 matched the delivery the writer gave the same line). Such a line stays 'ruhig', as in 0.18.
+INTERROBANG = re.compile(r'\?\s*!|!\s*\?')
 HESITANT = re.compile(r'(?:…|\.\.\.)\s*$|(?:…|\.\.\.).*(?:…|\.\.\.)')
 
 
 def delivery(text):
-    """One of screenplay.EMOTIONS for a line written without one: '?!' surprised, mostly capitals or '!!' shouting,
-    '!' emphatic (panicked with a cry for help, angry with an order to go, annoyed with a 'nein'/'nicht', else excited),
-    '?' questioning (verwirrt), trailing or repeated '…' hesitant (ängstlich), anything else 'ruhig'."""
-    text = unicodedata.normalize('NFC', str(text or '')).strip(); low = text.lower()
-    if re.search(r'\?\s*!|!\s*\?', text): return 'überrascht'
-    if shouted(text) >= .6 or '!!' in text.replace(' ', ''): return 'schreiend'
-    if '!' in text: return 'panisch' if HELP.search(low) else 'wütend' if ANGER.search(low) else 'genervt' if DENIAL.search(low) else 'begeistert'
-    if '?' in text: return 'verwirrt'
+    """One of screenplay.EMOTIONS for a line written without one: mostly capitals or '!!' shouting; '?!' surprised
+    ('Was?!'), shouting when a word in capitals or another '!' comes with it ('Was machst du da?! Das war UNSER Geld!');
+    a trailing or repeated '…' hesitant (ängstlich); anything else, a plain '!' or '?' too, 'ruhig'."""
+    text = unicodedata.normalize('NFC', str(text or '')).strip(); loud = shouted(text)
+    if loud >= .6 or '!!' in text.replace(' ', ''): return 'schreiend'
+    if INTERROBANG.search(text): return 'schreiend' if loud or text.count('!') > 1 else 'überrascht'
     if HESITANT.search(text): return 'ängstlich'
     return 'ruhig'
 

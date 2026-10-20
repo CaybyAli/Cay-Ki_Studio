@@ -576,7 +576,8 @@ class _Reader:
         if not known: self.problem(number, f'Sprechhaltung „{wish}“ kennt das Studio nicht, gesprochen wird „ruhig“.')
         pieces = _pieces(spoken, MAX_SPOKEN)
         if len(pieces) > 1: self.problem(number, f'Sehr langer Satz, in {len(pieces)} Teile geteilt. Die Wörter bleiben gleich.')
-        # 0.19 voices (r019 B5e): no delivery written: one from the line's punctuation (tts_text.delivery), not always 'ruhig'.
+        # 0.19 voices (r019 B5e): no delivery written: one from marks that say one thing (tts_text.delivery: '?!', '!!', capitals, '…'),
+        # else 'ruhig' as before.
         derive = self.v19 and not wish.strip(); moods = [tts_text.delivery(p) if derive else emotion for p in pieces]
         if self.v19: self.moods['written' if not derive else 'calm' if set(moods) == {'ruhig'} else 'derived'] += 1
         scene['items'] += [{'kind': 'line', 'name': name, 'emotion': m, 'text': p, 'line': number, **({'off': True} if off else {})} for p, m in zip(pieces, moods)]

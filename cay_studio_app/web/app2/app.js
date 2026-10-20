@@ -189,8 +189,10 @@ function readingView(r, eps) {
   const line = `So gelesen: ${r.spoken} ${r.spoken === 1 ? 'Zeile' : 'Zeilen'} gesprochen, ${r.action} als stumme Handlung, ${r.picture} als Bild zu Satz oder Szene`
     + (kept ? `, ${kept} nicht verfilmt (Hinweise, Ton, Gliederung)` : '') + '.'
     + (paced.length > 1 ? ` Sprache: ${paced.map(e => `Folge ${e.number} etwa ${share(e)}`).join(', ')}.` : paced.length ? ` Sprache: etwa ${share(paced[0])} der Zeit.` : '')
-    // 0.19 voices: lines without a delivery in brackets sound like their punctuation.
-    + (r.delivery && r.delivery.derived ? ` ${r.delivery.derived} ${r.delivery.derived === 1 ? 'Satz' : 'Sätze'} ohne Sprechhaltung klingen nach ihrem Satzzeichen (! lebhaft, ? fragend, … zögernd). Eine Angabe in Klammern hat Vorrang.` : '');
+    // 0.19 voices: a line without a delivery in brackets gets one only from marks that say one thing (tts_text.delivery).
+    + (r.delivery && r.delivery.derived ? ` ${r.delivery.derived} ${r.delivery.derived === 1 ? 'Satz' : 'Sätze'} ohne Sprechhaltung bekommen eine aus den Satzzeichen: `
+      + '?! überrascht (mit Großbuchstaben oder einem zweiten ! schreiend), !! oder fast nur Großbuchstaben schreiend, … am Ende zögernd. '
+      + 'Ein einfaches ! oder ? bleibt ruhig. Eine Angabe in Klammern hat Vorrang.' : '');
   const unread = (r.unread || []).map(x => ({ text: `Zeile ${x.line}: „${x.text}“ versteht das Studio nicht, sie wird nicht verfilmt.` }));
   return `<p class="small muted">${esc(line)}</p>` + (unread.length ? `<ul class="problems">${unread.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '');
 }

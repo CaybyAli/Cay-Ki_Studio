@@ -21,6 +21,7 @@ SCRIPT = '''# Kuchen
 OMA: Wer hat meinen Kuchen gegessen?
 TIM: Ich war's nicht!
 OMA (ruhig): Komm sofort her, Tim, und zwar jetzt gleich.
+OMA: Was?! Das war mein bester Kuchen.
 TIM: Ich... ich hab doch nur probiert...
 OMA: Dann gibt es heute eben keinen Nachtisch mehr für dich, mein Lieber.
 '''
@@ -59,8 +60,10 @@ try:
         page.click('[data-set="story"][data-value="script"]'); page.wait_for_selector('#script')
         page.fill('#script', SCRIPT); page.wait_for_selector('#script-check .script-check', timeout=8000); page.wait_for_timeout(700)
         check = ' '.join(page.locator('#script-check').inner_text().split())
-        r.check('Drehbuchprüfung: Sätze ohne Sprechhaltung klingen nach ihrem Satzzeichen',
-                '3 Sätze ohne Sprechhaltung klingen nach ihrem Satzzeichen (! lebhaft, ? fragend, … zögernd). Eine Angabe in Klammern hat Vorrang.' in check)
+        # '?!' and a trailing '…' give a delivery; the plain '?' and '!' lines stay calm.
+        r.check('Drehbuchprüfung: Sätze ohne Sprechhaltung bekommen eine aus den Satzzeichen, ein einfaches ! oder ? bleibt ruhig',
+                '2 Sätze ohne Sprechhaltung bekommen eine aus den Satzzeichen: ?! überrascht (mit Großbuchstaben oder einem zweiten ! schreiend), '
+                '!! oder fast nur Großbuchstaben schreiend, … am Ende zögernd. Ein einfaches ! oder ? bleibt ruhig. Eine Angabe in Klammern hat Vorrang.' in check)
         page.screenshot(path=str(shots / '03_drehbuch_sprechhaltung_1280_hell.png'), full_page=True)
         r.check('keine Skriptfehler im Browser', not errors)
         if errors: print(errors[:5])
