@@ -104,6 +104,12 @@ Grundlage: dein Video (Einzelbilder und Tonpausen gemessen), Diagnose 0.16.1, f�
 2. **Nicht auf deinem PC geprüft:** ob WSL `tailscale.exe` starten darf, ob Tailscale den Studio-Port in WSL erreicht und wie es übers Handynetz läuft. Geprüft nur mit einem nachgebauten Tailscale.
 3. Nicht über GitHub oder fremde Server: Projekte bleiben auf deinem PC.
 
+## 3f. Neu in 0.19.0
+
+1. **Tempo realistisch:** Rund 85–90 % der Zeit ist die Lippen-Animation. 0.19 spart dort rechnerisch etwa 20 % der Bilder und alle Leerlauf-Pausen. Eine 6×120-s-Serie dauert damit eher 8 als 11,5 Stunden [Hochrechnung].
+2. **Deutlich schneller nur mit Entscheidung:** Sprechszenen in 480×832 statt 576×1024 wären rechnerisch etwa 40 % schneller, aber weniger scharf. Erst nach einem Sichtvergleich am Handy.
+3. **Speicher:** WSL nutzt 48 von 64 GB, die Auslagerung ist voll. Laut Messung bremst das die Fenster nicht, kann aber die Stabilität kosten.
+
 ## 4b. Nächste Zeithebel nach deinem Test (alle kostenlos)
 
 | Hebel | Erwartung [Hochrechnung] | Risiko |

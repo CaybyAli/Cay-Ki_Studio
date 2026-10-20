@@ -1,15 +1,28 @@
-# Cay Studio 0.18.2 – so geht es weiter
+# Cay Studio 0.19.0 – so geht es weiter
 
 ## Update installieren
 
 1. ZIP laden, Rechtsklick → **Alle extrahieren** → in einen **neuen** Ordner.
 2. Läuft eine Produktion: **Pausieren** oder fertig werden lassen. Hängt ein Abschnitt: **erst den PC neu starten**.
-3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.18.2 INSTALLIERT** warten. Kein PC-Neustart nötig.
-4. Im Browser **Strg + F5**. Unten muss **0.18.2** stehen.
+3. **Cay_Studio_Update.cmd** doppelklicken, auf **CAY STUDIO 0.19.0 INSTALLIERT** warten. Kein PC-Neustart nötig.
+4. Im Browser **Strg + F5**. Unten muss **0.19.0** stehen.
 
 Der Installer sichert die Datenbank. Startet die neue Version nicht, kehrt er selbst zur vorherigen zurück. Projekte, Bilder, Stimmen und fertige Filme bleiben erhalten.
 
 Starte danach kein älteres Update mehr. Ab 0.18 verweigert das Update-Programm das selbst, die alte 0.17-Datei kann das noch nicht. Projekte aus 0.18 laufen nur mit 0.18 (ist es doch passiert, starte einfach das 0.18-Update noch einmal, es geht nichts verloren).
+
+## Neu in 0.19.0
+
+Alles Neue gilt nur für **neue Projekte**. Alte Projekte bleiben genau so, wie sie sind. Für eine alte Idee: Projekt öffnen → **Neue Fassung planen**.
+
+- **Kein Export-Stopp mehr nach Stunden:** Die Meldung „Bildlänge oder Bildgröße stimmt nicht“ kam von winzigen Bildlücken beim Schneiden. Ein angehaltenes Projekt mit dieser Meldung: öffnen, **Fortsetzen**.
+- **Ton:** kein Rauschen mehr am Anfang stummer Einstellungen, jede Stimme gleich laut (auch eine leise Stimmprobe), sanftes Entrauschen, Musik deutlich unter der Sprache, ein ruhiger, durchgehender Hintergrund pro Ort.
+- **Stimmen:** hochgeladene Stimmproben werden vor dem Klonen gereinigt (das Original bleibt), jede Zeile in 2–3 Aufnahmen, das Studio nimmt die lebendigste. Wörter in Großbuchstaben wie „DIR“ werden normal gesprochen, Abkürzungen wie USA bleiben.
+- **Bild:** wechselnde Kamerawinkel (Großaufnahme, Untersicht, über die Schulter …), Kamerafahrt bei jeder Sprechszene, Action ohne Zeitlupe.
+- **Tempo:** Die Lippen-Animation rechnet nur noch so viele Bilder, wie die Szene braucht. Keine Leerlauf-Pausen zwischen den Aufträgen. Im Autopilot entsteht nur noch ein Szenenbild, ein zweites gibt es auf Knopfdruck.
+- **Mein Drehbuch:** Das Studio versteht die üblichen Schreibweisen von ChatGPT, Claude und Gemini, zeigt vor dem Start, was es gelesen hat, und warnt mit Zahlen, wenn eine Folge wenig gesprochen wird. Beschreibungen von Ort und Kleidung laufen unter dem Dialog mit statt als eigene stumme Einstellung. Deine Wörter ändert das Studio nicht.
+- **Papierkorb:** eigene Seite mit Bild, Datum, Wiederherstellen und Endgültig löschen. Auf jeder Projektkarte ein Mülleimer (am Handy immer sichtbar), mit Rückgängig.
+- **Eigenes Figurenbild** wird jetzt auch nach dem Start übernommen.
 
 ## Das neue Studio
 

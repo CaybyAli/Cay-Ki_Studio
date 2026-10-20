@@ -1,6 +1,6 @@
 # Cay Studio – Arbeitsstand
 
-Stand: 17.10.2026 (0.18.2) · Branch `claude/new-session-s0p05c`
+Stand: 20.10.2026 (0.19.0) · Branch `claude/new-session-s0p05c`
 
 ## Ziel
 Zuerst: keine unbemerkt fehlenden Stimmen. Danach Stimmqualität, Renderzeit, Lippensynchronität, Figurentausch, Story.
@@ -154,8 +154,21 @@ Ursache [Wahrscheinlich, Diagnose enthält weder Stems noch Skript]: leise (gefl
 Fix: `factory_audio.clear_lines` senkt Musik, Umgebung und Effekte nur unter übertönten Zeilen ab (Ziel 10 dB Abstand, bis 2 Runden), Bericht `cleared_db`/Status „abgesenkt“. Ohne übertönte Zeile bytegleich. Test `tests/test_cay_reports_0181.py` rot auf altem Code (gleiche Meldung), grün neu.
 Prüfungen: pytest 389 bestanden.
 
+## 0.19.0 (20.10.2026) – Cay: Export-Stopp nach 12 h, Papierkorb, 11,5 h Laufzeit, starre Frontalen, Upload-Fehler, Rauschen, leiser Patrick, verrauschte Proben, billige Geräusche, monotone Stimmen, „DIR“ buchstabiert, fehlende Dialoge, Design
+Vorgehen: Diagnose mit Belegen (Diagnose-JSON, beide Videos vermessen, Cays Drehbuch, Code), dann Umbau pro Bereich in eigenen Worktrees, zwei Gegenprüfungen, Korrekturen.
+- Export [Sicher, nachgestellt mit FFmpeg 8.0]: setpts-Abrundung → Bildlücken (FFmpeg ≥ 7.1 VFR) → ab 3 Lücken fehlt das letzte Bild. Fix factory_video.shift, Timeline-Prüfung auch für gecachte Abschnitte. 9/9 fertige Folgen sagten die Lücken exakt voraus.
+- Pins für neue Projekte: sound_policy, shot_policy, render_policy 19 (voice_policy 19 folgt). Alte Projekte byte-gleich (Kompatibilitätstests unverändert grün).
+- Ton (mix19): Whoosh weg (8 pro Folge belegt), Pegel pro Zeile, Entrauschen, lineare Lautheit an der Sprache verankert, Musik ≥ 8 LU unter Sprache, Bett pro Ort.
+- Bild (shot_design): Einstellungs-Rotation, Winkel zuerst im Bildtext, Kamerafahrt auf jeder Sprechszene, native 25-fps-Wan-Clips, Reaktionen über einem Clip weiter 16 fps.
+- Tempo: InfiniteTalk-Fenster passend (−20 % Fensterbilder rechnerisch), Socket-Fertigmeldung, ein Szenenbild im Autopilot, Diagnose-Texte korrigiert. T5-Neuladen bleibt (bräuchte neuen ComfyUI-Knoten).
+- Drehbuch: tts_text (Großbuchstaben), Leser für KI-Schreibweisen + Lesebericht, Sprachanteil-Warnung, Beschreibungen unter Dialog; Cays „Weißes Gold“: 52/52 Zeilen gelesen, Stille kommt aus dem Drehbuch (≈ 43 Wörter je 58-s-Folge). KI-Dialog writing policy 15.
+- Stimmen: voice_reference (Reinigung), 2–3 Takes, Gefühls-Referenzen aus Aufnahmen, Sprechhaltung nur aus eindeutigen Satzzeichen. arnndn nicht eingebaut (Modelllizenz unklar).
+- Oberfläche: Papierkorb-Seite, Karten-Mülleimer mit Rückgängig, eigenes Figurenbild nach Start (B4), steady_files gegen EIO beim Abspielen, Design-Durchgang.
+Prüfungen: pytest 652 bestanden; Browser-Prüfungen siehe Release-Commit.
+Nicht geprüft: alles auf Cays GPU/Ohren (Klang, Entrauschen, Lippensync mit kürzeren Fenstern, Bewegung, echte Zeitersparnis).
+
 ## Nächster konkreter Schritt
-Cay: 0.18.2 installieren (kein Neustart), im Projekt „Die Krone der Ananasstraße“ „Fortsetzen“ (spricht Patricks Zeile neu ein, Mischung senkt den Hintergrund ab). Wenn der Film fertig ist: Video + Diagnose schicken.
+Cay: 0.19.0 installieren, Projekt „Krone der Ananasstraße“ fortsetzen, dann ein neuer 60-s-Test; Video + Diagnose schicken.
 
 ## Reihenfolge danach
 Siehe `CAY_STUDIO_PLAN.md`, Abschnitt 6.

@@ -1,31 +1,28 @@
-CAY STUDIO 0.18.2 - NUR DIESE SCHRITTE
+CAY STUDIO 0.19.0 - NUR DIESE SCHRITTE
 
 1. Alle Dateien aus diesem ZIP in einen NEUEN Ordner entpacken.
 2. Laeuft ein Film: fertig werden lassen oder Pausieren.
 3. Cay_Studio_Update.cmd doppelklicken. Auf INSTALLIERT warten.
    Kein PC-Neustart noetig.
-4. Im Browser Strg+F5. Unten muss 0.18.2 stehen.
-5. Freiwillig: Zahnrad oben rechts > Benachrichtigungen >
-   Telegram einrichten. Die Schritte stehen im Fenster.
-   NEU in 0.18.1: Zahnrad > Unterwegs-Zugriff. Dann geht das
-   Studio auch am Handy, z.B. in der Bahn (Tailscale, kostenlos).
-   Die Schritte stehen im Fenster und in
-   Cay_Studio_Start_und_Update.md unter "Unterwegs arbeiten".
-6. Erst ein kurzer Test: "Neu", eine SpongeBob-Idee, 60 s,
-   Qualitaet "Standard", Autopilot AN, Titelbild "Am Anfang".
-   Achte auf: Titelbild, Gespraeche in Bloecken, Untertitel,
-   Musik-Lautstaerke.
-7. Dein angehaltenes Projekt "Gangster SpongeBob - Die Krone der
-   Ananasstrasse" (Patrick zu leise): oeffnen und "Fortsetzen".
-   Die Tonmischung senkt Musik und Geraeusche unter der Zeile jetzt
-   selbst ab.
-   Fuer neue Serien: "Aussehen der Figuren" > "Pro Folge anpassen",
-   wenn sich Kleidung von Folge zu Folge aendern soll.
-   Eigenes Skript: "Mein Drehbuch" waehlen, .md/.txt oder einfuegen.
-8. Wenn ein Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
+4. Im Browser Strg+F5. Unten muss 0.19.0 stehen.
+5. Dein angehaltenes Projekt "Gangster SpongeBob - Die Krone der
+   Ananasstrasse" (Exportpruefung): oeffnen und "Fortsetzen".
+   Die Abschnitte mit Bildluecke werden neu geschnitten, ohne neue
+   Grafikkarten-Arbeit.
+6. WICHTIG: Der neue Ton, die neuen Bilder, das schnellere Rechnen
+   und die besseren Stimmen gelten nur fuer NEUE Projekte. Alte
+   Projekte bleiben genau wie sie sind. Fuer eine alte Idee:
+   Projekt oeffnen > "Neue Fassung planen".
+7. Erst ein kurzer Test: "Neu", eine SpongeBob-Idee, 60 s,
+   Qualitaet "Standard", Autopilot AN.
+   Achte auf: Kamerawinkel, Bewegung, Lautstaerke der Stimmen,
+   kein Rauschen, Musik unter der Sprache.
+8. Eigenes Drehbuch: "Mein Drehbuch". Das Studio zeigt jetzt vor
+   dem Start, was es gelesen hat und wie viel gesprochen wird.
+   Wenig Woerter = viel Stille. Das liegt dann am Drehbuch.
+9. Wenn ein Film fertig ist: Cay_Studio_Diagnose.cmd doppelklicken
    und Cay_Studio_Diagnose.txt plus das Video schicken.
-   Das Video direkt aus D:\Cay_Studio\03_Fertige_Videos nehmen,
-   nicht ueber eine Webseite umwandeln (Wasserzeichen).
+   Das Video direkt aus D:\Cay_Studio\03_Fertige_Videos nehmen.
 
 Haengt ein Abschnitt: erst PC neu starten, dann Update.
 Nichts loeschen.

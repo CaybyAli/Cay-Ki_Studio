@@ -1,3 +1,17 @@
+# Cay Studio 0.19.0 – Export, Ton, Bild, Tempo, Drehbuch, Stimmen, Oberfläche (20.10.2026)
+
+- **Export-Stopp nach 12 h behoben** („Bildlänge oder Bildgröße stimmt nicht“): FFmpeg rundete die Verschiebung der Abschnitte ab, ab FFmpeg 7.1 blieben dadurch Bildlücken. Abschnitte werden jetzt um ganze Bilder verschoben, auch schon zwischengespeicherte mit Lücke werden neu geschnitten. Diagnose zeigt die FFmpeg-Version.
+- **Nur neue Projekte** (Pins sound_policy, shot_policy, render_policy 19): alte Projekte bleiben byte-gleich.
+- **Ton:** kein automatisches Rausch-„Whoosh“, Lautheit pro Zeile, Entrauschen pro Zeile, lineare Lautheitsstufen ohne Pumpen, Lautstärke richtet sich nach den Stimmen, Musik mindestens 8 LU unter der Sprache, ein Hintergrund pro Ort.
+- **Stimmen:** Stimmproben gereinigt (Hochpass, Entrauschen, Stille weg, −20 LUFS), 2–3 Takes pro Zeile, Gefühls-Referenzen auch aus eigenen Aufnahmen, Sprechhaltung aus eindeutigen Satzzeichen, Großbuchstaben normal gesprochen.
+- **Bild:** Einstellungsgrößen und Winkel wechseln, Kamerafahrt auf jeder Sprechszene, stumme Wan-Clips in echter Geschwindigkeit, Bewegungstexte ohne Bremswörter.
+- **Tempo:** InfiniteTalk-Fenster passend zur Szene (rechnerisch −20 % Rechenbilder), Fertigmeldung per Socket statt 2-s-Abfrage, ein Szenenbild im Autopilot.
+- **Drehbuch:** robuster Leser mit Lesebericht, Sprachanteil-Warnung, Off-Stimmen ohne Figur; KI-Dialoge mit Haken, Konflikt und passender Länge.
+- **Oberfläche:** Papierkorb-Seite, Mülleimer auf Projektkarten mit Rückgängig, eigenes Figurenbild nach dem Start, robustes Abspielen bei Laufwerksfehlern, Design-Feinschliff.
+- **Nicht auf Cays PC geprüft:** Klang, Bewegung, Lippensync und echte Zeitersparnis zeigt erst ein neuer Film.
+
+---
+
 # Cay Studio 0.18.2 – Ton: leise Zeilen halten den Film nicht mehr an (17.10.2026)
 
 - **Cays Meldung:** „Folge 1, Szene 29, Figur Patrick … Musik/Geräusche übertönen die Stimme (2.1 dB Abstand).“ Eine neue Aufnahme derselben leisen Zeile änderte nichts, weil Musik und Geräusche gleich laut blieben. Jetzt senkt die Tonmischung Musik, Umgebung und Geräusche genau unter dieser Zeile ab, bis die Stimme klar darüber liegt. Der Tonbericht nennt, wo und um wie viel.
