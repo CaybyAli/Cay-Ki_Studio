@@ -117,8 +117,18 @@ def test_weisses_gold_time_windows_are_a_length_hint_and_the_warning_has_numbers
     first = cut_of(r, r['episodes'][0])[0][0]
     assert first == {'place': 'Vor Sandys Werkstatt, früher Abend', 'what': 'Warmes Licht fällt durch ein halb geöffnetes Garagentor'}
     notes = [p['text'] for p in r['problems']]
-    assert 'Folge 1: 50 gesprochene Wörter für ca. 58 s – etwa 65 % ohne Sprache. Für etwa zwei Drittel Sprache wären es rund 100 Wörter.' in notes
-    assert any(n.startswith('Folge 6: 21 gesprochene Wörter für ca. 58 s – etwa 85 % ohne Sprache.') for n in notes)
+    # One length per episode (review r019: 'etwa 41 s' in the check, '… für ca. 58 s – etwa 65 % ohne Sprache' in the note, a cut
+    # of about 35 s): the check's length is the pinned cut, the note measures speech against it and names the stated 58 s as a wish.
+    first = r['episodes'][0]
+    assert first['seconds'] == round(first['pacing']['seconds']) == 35 and first['pacing']['speech_share'] == .55
+    assert 'Folge 1: Für die angegebenen 58 s fehlen rund 50 gesprochene Wörter. So wird die Folge etwa 35 s lang.' in notes
+    assert 'Folge 6: Für die angegebenen 58 s fehlen rund 80 gesprochene Wörter. So wird die Folge etwa 22 s lang, etwa 65 % davon ohne Sprache.' in notes
+    for ep in r['episodes']:
+        assert ep['seconds'] == round(max(ep['pacing']['seconds'], r['duration']))
+        assert all(f'etwa {ep["seconds"]} s lang' in n for n in notes if n.startswith(f'Folge {ep["number"]}: Für die angegebenen'))
+    assert r['seconds'] == sum(ep['seconds'] for ep in r['episodes'])
+    old = own_script.read(GOLD, 0)                                                # a project from before 0.19 reads as 0.18
+    assert [e['seconds'] for e in old['episodes']] == [e['seconds'] for e in REFERENCE_018['Weisses_Gold_Drehbuch.md']['episodes']]
     assert not any(p['blocking'] for p in r['problems'])
     # The planned minimum never stretches the shorter 0.19 silent shots back up (shot_design.ACTION_FRAMES).
     assert r['duration'] <= min(e['pacing']['seconds'] for e in r['episodes']) and r['duration'] < REFERENCE_018['Weisses_Gold_Drehbuch.md']['duration']

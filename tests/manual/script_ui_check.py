@@ -62,7 +62,7 @@ try:
 
         page.fill('#script', SCRIPT); page.wait_for_selector('#script-check .script-check', timeout=8000); page.wait_for_timeout(700)
         check = ' '.join(page.locator('#script-check').inner_text().split())
-        r.check(f'Prüfung: Länge je Folge ({check[:90]}…)', 'Länge nach Drehbuch' in check and 'Folge 1 etwa 35 s · Folge 2 etwa 19 s' in check)
+        r.check(f'Prüfung: Länge je Folge ({check[:90]}…)', 'Länge nach Drehbuch' in check and 'Folge 1 etwa 32 s · Folge 2 etwa 18 s' in check)
         r.check('Prüfung: Figuren, Szenen, Sätze, Wörter, Folgen', all(x in check for x in ('3 Figuren', '3 Szenen', '12 Sätze', '100 Wörter', '2 Folgen',
                                                                                          'Es spielen Oma Hilde, Frau Müller, Tim.')))
         r.check('Prüfung ohne Probleme: „Passt.“', 'Passt. Der Film kann so entstehen.' in check and not page.locator('#script-check .problems').count())
@@ -72,7 +72,7 @@ try:
                 and f'Zeile {line + 1}: „Erzähler“ ist im Film eine sichtbare Figur' in hints and 'Die Hinweise sind Vorschläge' in page.locator('#script-check').inner_text())
         page.screenshot(path=str(shots / '02a_drehbuch_hinweise_1280_hell.png'))
         page.fill('#script', SCRIPT); page.wait_for_timeout(1200)
-        r.check('Länge und Folgen aus dem Drehbuch in den Einstellungen', page.locator('#script-length').inner_text() == 'Länge nach Drehbuch: Folge 1 etwa 35 s, Folge 2 etwa 19 s'
+        r.check('Länge und Folgen aus dem Drehbuch in den Einstellungen', page.locator('#script-length').inner_text() == 'Länge nach Drehbuch: Folge 1 etwa 32 s, Folge 2 etwa 18 s'
                 and page.locator('#script-episodes').inner_text() == '2 Folgen aus deinem Drehbuch' and page.locator('#create').inner_text() == 'Serie mit 2 Folgen verfilmen')
         page.click('.script-preview summary'); page.wait_for_timeout(200)
         r.check('„So liest das Studio dein Drehbuch“ zeigt das Format', 'Frau Müller [überrascht]: Hilde, ist alles in Ordnung?' in page.locator('.script-preview pre').inner_text())

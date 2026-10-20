@@ -96,8 +96,10 @@ def test_realistic_script_is_read_word_for_word():
     beats = parsed(r['episodes'][0]['text'])[1]
     assert beats == [{'place': 'Küche', 'what': 'Oma steht vor einem leeren Kuchenteller, Krümel auf dem Boden'},
                      {'place': 'Hausflur', 'what': 'Frau Müller lauscht an der offenen Tür'}]
-    # Length from the script itself: about 35 s and 19 s; planned with a little less as the minimum.
-    assert [e['seconds'] for e in r['episodes']] == [35, 19] and r['duration'] == 17
+    # Length from the script itself: about 35 s and 19 s (0.18), planned with a little less as the minimum. 0.19 shows the
+    # length the pinned project cuts, with its shorter silent shots (32 s and 18 s); the minimum is planned as before.
+    assert [e['seconds'] for e in r['episodes']] == [32, 18] and r['duration'] == 17
+    assert [e['seconds'] for e in own_script.read(SCRIPT, 0)['episodes']] == [35, 19] and own_script.read(SCRIPT, 0)['duration'] == 17
     assert r['words'] == 100 and r['lines'] == 12 and r['scenes'] == 3
 
 
@@ -217,7 +219,7 @@ def test_prepare_takes_episodes_length_cast_and_title_from_the_script():
     script = own_script.prepare(idea)
     assert idea['episodes'] == 2 and idea['duration'] == 17 and idea['characters'] == 'provided'
     assert idea['title'] == 'Der Kuchenklau von Hausnummer 7' and idea['participants'][0]['name'] == 'Frau Müller'
-    assert 'preview' not in script and [e['seconds'] for e in script['episodes']] == [35, 19]
+    assert 'preview' not in script and [e['seconds'] for e in script['episodes']] == [32, 18]
     with pytest.raises(ValueError, match='„Opa“ kommt im Drehbuch nicht vor'):
         own_script.prepare({**idea, 'participants': [{'name': 'Opa'}]})
     with pytest.raises(ValueError, match='mindestens 15 s'):

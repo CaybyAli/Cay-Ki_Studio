@@ -867,8 +867,7 @@ def pacing(cut, stated=None):
     first = starts[0][0] if starts else total; gaps = [first]; end = starts[0][1] if starts else total
     for a, b in starts[1:]: gaps.append(a - end); end = b
     gaps.append(total - end)
-    basis = max(total, stated or 0)
-    return {'seconds': round(total, 1), 'speech_seconds': round(speech, 1), 'speech_share': round(min(1., speech / basis), 2) if basis else 0,
+    return {'seconds': round(total, 1), 'speech_seconds': round(speech, 1), 'speech_share': round(min(1., speech / total), 2) if total else 0,
             'first_word': round(first, 1), 'longest_silence': round(max(gaps), 1), 'silent_shots': sum(1 for s in cut if not s['lines']),
             'stated_seconds': stated}
 
@@ -967,7 +966,7 @@ def read(text, policy=POLICY):
         elif not f['declared'] and len(spellings.get(name_key(f['name']), ())) == 1 and not _caps(spellings[name_key(f['name'])][0]['name']):
             # 'Genre: Komödie', 'Das Problem: …': a label that speaks once may be no figure at all.
             r.problem(f['line'], f'„{f["name"]}“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.')
-    episodes = []; series = len(r.episodes) > 1 or r.folgen
+    episodes = []; series = len(r.episodes) > 1 or r.folgen; bases = []; paced = []
     for ep in r.episodes:
         label = f'Folge {ep["number"]}' if series else 'Dein Film'
         title = ep['title'] or ('' if series else r.title)
@@ -1001,25 +1000,28 @@ def read(text, policy=POLICY):
         if problems or wrong or len(got) != len(expected) or lost:
             r.problem(wrong[5] if wrong else ep['line'], 'Diese Zeile liest das Studio anders, als sie geschrieben ist. Bitte umformulieren.', True)
         spoken = [l for l in lines if l['kind'] == 'line']
-        cut = screenplay.shots(title2, beat_list, lines, names); seconds = round(_seconds(cut))
+        cut = screenplay.shots(title2, beat_list, lines, names); seconds = round(_seconds(cut)); bases.append(seconds)
+        # 0.19: every length Cay reads is the one the pinned project cuts (shorter silent shots, _timeline); the minimum
+        # length is still planned from the 0.18 estimate as before (review r019: three different lengths for one episode).
+        length = round(sum(x[1] for x in _timeline(cut))) if v19 else seconds
         if not spoken: r.problem(ep['line'], f'{label}: kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“', True)
         wordless = next((l['text'] for l in spoken if not re.search(r'[^\W_]', l['text'])), None)
         if wordless: r.problem(ep['line'], f'{label}: „{wordless[:40]}“ hat kein einziges Wort zum Sprechen. Bitte als Satz schreiben oder streichen.', True)
         elif seconds < MIN_SECONDS:
-            r.problem(ep['line'], f'{label} dauert nach dem Drehbuch nur etwa {seconds} s. Ein Film braucht mindestens {MIN_SECONDS} s: '
+            r.problem(ep['line'], f'{label} dauert nach dem Drehbuch nur etwa {length} s. Ein Film braucht mindestens {MIN_SECONDS} s: '
                                   'schreib ein paar Sätze oder eine AKTION-Zeile dazu.', True)
-        elif seconds > MAX_SECONDS:
-            r.problem(ep['line'], f'{label} dauert nach dem Drehbuch etwa {seconds} s, höchstens {MAX_SECONDS} s gehen. Kürze das Drehbuch '
+        elif length > MAX_SECONDS:
+            r.problem(ep['line'], f'{label} dauert nach dem Drehbuch etwa {length} s, höchstens {MAX_SECONDS} s gehen. Kürze das Drehbuch '
                                   + ('oder teile die Folge auf.' if series else 'oder teile es mit „## Folge 1“, „## Folge 2“ in mehrere Folgen.'), True)
-        elif seconds > LONG_SECONDS:
-            r.problem(ep['line'], f'{label} dauert etwa {seconds} s. Das geht, rechnet aber entsprechend länger als ein 90-s-Film.')
+        elif length > LONG_SECONDS:
+            r.problem(ep['line'], f'{label} dauert etwa {length} s. Das geht, rechnet aber entsprechend länger als ein 90-s-Film.')
         if len(cut) > screenplay.OWN_MAX_SHOTS:
             r.problem(ep['line'], f'{label} ergibt {len(cut)} Einstellungen, höchstens {screenplay.OWN_MAX_SHOTS}. Weniger AKTION-Zeilen '
                                   'oder mehr Sätze derselben Figur hintereinander.', True)
         if spoken and not any(b['place'] and b['place'] != 'Ort' for b in beat_list):
             r.problem(ep['line'], ('Kein Ort angegeben' if not series else f'{label}: kein Ort angegeben') + '. Schreib zum Beispiel '
                                   '„### Szene 1 – Küche – Oma steht am Tisch“, dann weiß das Studio, wo es spielt.')
-        if spoken and not problems and seconds <= MAX_SECONDS and len(cut) <= screenplay.OWN_MAX_SHOTS and len(names) <= MAX_CAST:
+        if spoken and not problems and length <= MAX_SECONDS and len(cut) <= screenplay.OWN_MAX_SHOTS and len(names) <= MAX_CAST:
             for note in advice(title2, beat_list, lines, names): r.problem(None, (f'{label}: ' if series else 'Hinweis: ') + note)
         words = sum(screenplay.words(l['text']) for l in spoken)
         about = [' '.join(x.split()) for x in r.preface + logline + [b['what'] for b in beat_list] if x.strip()]
@@ -1035,18 +1037,22 @@ def read(text, policy=POLICY):
                 if shot and shot['kind'] != 'reaction':
                     r.problem(ep['line'], f'{label}: „{_short(line["text"], 40)}“ kommt nicht aus dem Off: in dieser Szene ist sonst niemand zu sehen, '
                                           f'darum spricht {line["speaker"]} im Bild.')
-            r.problems += _pace_notes(label, words, pace, ep['line'])
+            paced.append((label, words, pace, ep['line'], episodes[-1]))
     if not r.episodes: r.problem(None, 'Im Drehbuch steht kein gesprochener Satz. Schreib Sätze so: „OMA (wütend): Wer hat meinen Kuchen gegessen?“', True)
     said = {}
     for key, items in spellings.items(): said[id(r.figures[key])] = said.get(id(r.figures[key]), 0) + len(items)
     for f in figures: f['lines'] = said.get(id(f), 0)
-    problems = sorted(r.problems, key=lambda p: (not p['blocking'], p['line'] or 0))
-    shortest = min((e['seconds'] for e in episodes), default=60)
+    shortest = min(bases, default=60)
     # Planned with a little less than the estimate: the minimum length must not make the voices wait.
     duration = max(MIN_SECONDS, min(LONG_SECONDS, math.floor(shortest * .9)))
     if v19 and episodes and all('pacing' in e for e in episodes):
         # ... nor stretch the shorter silent shots of a pinned project (shot_design) back to 0.18 length.
         duration = max(MIN_SECONDS, min(duration, math.floor(min(e['pacing']['seconds'] for e in episodes))))
+    for label, words, pace, line, e in paced:
+        # The episode as cut: its timeline, at least the planned minimum; its share of speech is measured against that.
+        e['seconds'] = round(max(pace['seconds'], duration)); pace['speech_share'] = round(min(1., pace['speech_seconds'] / e['seconds']), 2)
+        r.problems += _pace_notes(label, words, pace, line, e['seconds'])
+    problems = sorted(r.problems, key=lambda p: (not p['blocking'], p['line'] or 0))
     result = {'title': r.title, 'figures': [{k: f[k] for k in ('name', 'description', 'lines', 'declared')} for f in figures], 'episodes': episodes,
               'problems': problems, 'ok': not any(p['blocking'] for p in problems), 'series': series,
               'words': sum(e['words'] for e in episodes), 'lines': sum(e['lines'] for e in episodes), 'scenes': sum(e['scenes'] for e in episodes),
@@ -1060,14 +1066,19 @@ PACE_SHARE = .55        # below: little speech (r019: Cay's two series had 48–
 PACE_START = 3.0        # first word later than this: more than one silent shot before anyone speaks
 
 
-def _pace_notes(label, words, pace, line):
-    """0.19: plain advice before anything is rendered; the script is filmed as it is."""
-    notes = []; basis = max(pace['seconds'], pace['stated_seconds'] or 0)
-    if pace['speech_share'] < PACE_SHARE:
-        silent = int(round((1 - pace['speech_share']) * 20)) * 5
-        need = int(round(.65 * basis * screenplay.SPEECH_RATE / 5)) * 5
-        notes.append(f'{label}: {words} gesprochene Wörter für ca. {round(basis)} s – etwa {silent} % ohne Sprache. '
-                     f'Für etwa zwei Drittel Sprache wären es rund {need} Wörter.')
+def _pace_notes(label, words, pace, line, length):
+    """0.19: plain advice before anything is rendered; the script is filmed as it is. length: the episode as cut (the
+    'Länge nach Drehbuch' of the check); the script's own length (stated) is a wish the film does not stretch to."""
+    notes = []; stated = pace['stated_seconds']; quiet = pace['speech_share'] < PACE_SHARE
+    silent = int(round((1 - pace['speech_share']) * 20)) * 5
+    need = lambda seconds: int(round(.65 * seconds * screenplay.SPEECH_RATE / 5)) * 5
+    missing = int(round((need(stated or 0) - words) / 5)) * 5
+    if stated and stated - length >= 5 and missing >= 5:
+        notes.append(f'{label}: Für die angegebenen {stated} s fehlen rund {missing} gesprochene Wörter. So wird die Folge etwa {length} s lang'
+                     + (f', etwa {silent} % davon ohne Sprache.' if quiet else '.'))
+    elif quiet:
+        notes.append(f'{label}: {words} gesprochene Wörter für ca. {length} s – etwa {silent} % ohne Sprache. '
+                     f'Für etwa zwei Drittel Sprache wären es rund {need(length)} Wörter.')
     if pace['first_word'] > PACE_START:
         notes.append(f'{label}: Das erste Wort fällt erst nach etwa {round(pace["first_word"])} s. Auf TikTok entscheiden die ersten Sekunden, '
                      'ob jemand weiterschaut: lass früher jemanden sprechen.')
