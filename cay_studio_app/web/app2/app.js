@@ -500,7 +500,7 @@ function trashView() {
   if (!S.trash) return '<p class="muted">Papierkorb wird geladen …</p>';
   const items = S.trash, films = items.reduce((n, t) => n + (t.films || 0), 0);
   const head = `<div class="project-head"><a class="back" href="#projects">Alle Projekte</a></div>
-    <div class="page-head"><h1 class="title">Papierkorb</h1>${items.length ? '<button class="button quiet danger-text" data-action="trash-empty">${TRASH}<span>Papierkorb leeren</span></button>' : ''}</div>
+    <div class="page-head"><h1 class="title">Papierkorb</h1>${items.length ? `<button class="button quiet danger-text" data-action="trash-empty">${TRASH}<span>Papierkorb leeren</span></button>` : ''}</div>
     <p class="muted trash-lede">Projekte im Papierkorb sind ausgeblendet und pausiert. Bilder, Stimmen und Animationen bleiben, bis du sie endgültig löschst.${films ? ' Fertige Videos bleiben dabei im Ordner 03_Fertige_Videos, außer du wählst es anders.' : ''}</p>`;
   if (!items.length) return head + '<div class="empty"><h2 class="headline">Der Papierkorb ist leer.</h2><p class="muted">Gelöschte Projekte landen zuerst hier. Von hier holst du sie zurück.</p><a class="button quiet" href="#projects">Zu den Projekten</a></div>';
   return head + `<div class="grid">${items.map(t => `<article class="tile trashed">
