@@ -265,8 +265,9 @@ class RenderProgress:
                 # A 0.18 reaction carries a voice from off-screen but renders as silent motion.
                 talking=options['lip_sync']=='audio' and not off_screen(scene) and any(l['episode']==ei and l['scene']==si for l in d.get('lines',[]))
                 # 0.19 (shot_policy 19): silent clips at the delivery rate, as factory.movies renders them.
-                native=shot_design.active(d) and not talking
-                durations=scene_segments(scene.get('render_seconds',scene.get('seconds',0)),options['fps'],talking,native=native)
+                seconds=scene.get('render_seconds',scene.get('seconds',0))
+                native=shot_design.active(d) and not talking and shot_design.native(scene,seconds,options['fps'])
+                durations=scene_segments(seconds,options['fps'],talking,native=native)
                 for seg,duration in enumerate(durations):
                     count+=1;row=by_slot.get(f'{ei}:{si}:{seg}')
                     if row and row['status']=='done':

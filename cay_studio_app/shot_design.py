@@ -12,7 +12,10 @@ without any camera move, every silent shot 3.20 s of 16 fps Wan frames interpola
 2) A CPU camera (export zoompan, after InfiniteTalk, so lip-sync safe) on every talking shot.
 3) Silent Wan clips play their frames 1:1 at the delivery rate instead of minterpolate 16->25;
    silent action shots last whole Wan clips (4k+1 frames, 1.64 to 2.76 s at 25 fps) with on average
-   the 53 frames every 0.18 silent shot rendered, so a silent shot costs the same GPU time.
+   the 53 frames every 0.18 silent shot rendered, so a silent action shot without extra time costs
+   the same GPU time. Extra time for a minimum length costs 25 instead of 16 Wan frames per second
+   (sample cuts with a 60 s minimum: about +30 to +50 % Wan frames for the silent shots); a reaction
+   longer than one native clip keeps the 0.18 cadence (native()).
 4) Motion text without damping words, with one concrete fast camera move per silent shot, and a
    lip-sync text that asks for big gestures while the voice speaks.
 
@@ -302,8 +305,9 @@ def export_fields(d, scene):
 NATIVE_FRAMES = 81    # longest Wan clip (as before); played 1:1 it lasts 3.24 s at 25 fps
 # Frames of the silent action shots, in turn: 4k+1 each (whole Wan clips, nothing stretched,
 # frozen or thrown away), 1.64 to 2.76 s at 25 fps. The mean is 53 frames, the clip of every 0.18
-# silent action shot (3.2 s at 16 fps), so a silent shot costs the same GPU time; it is shorter
-# and its motion plays at full speed. A wide shot keeps the 41 frames of the 0.18 one (2.4 s).
+# silent action shot (3.2 s at 16 fps), so a silent shot without extra time costs the same GPU time;
+# it is shorter and its motion plays at full speed. A wide shot keeps the 41 frames of the 0.18 one
+# (2.4 s). Extra time for the minimum length is played 1:1 as well: 25 Wan frames per film second.
 ACTION_FRAMES = (53, 41, 61, 45, 69, 49, 57, 49)
 ESTABLISH_FRAMES = 41
 
@@ -344,10 +348,23 @@ def silent_base(scenes, talking_flags, base, fps):
     return out
 
 
-def snap_silent(times, talking_flags, fps):
+def native(scene, seconds, fps):
+    """True when a silent shot plays its Wan frames 1:1 at the delivery rate. A reaction lasts as long as
+    its voice from off-screen (3.8 to 4.7 s in every sample cut): one longer than one native clip keeps the
+    0.18 cadence, one 16 fps clip of up to 5 s, instead of two native clips with a seam in the middle of
+    the reaction and 25 instead of 16 Wan frames per second (review r019). It is a listening shot: little
+    motion for the 16 -> 25 conversion to get wrong."""
+    from factory_timing import off_screen
+    return not (off_screen(scene) and round(float(seconds) * fps) > NATIVE_FRAMES)
+
+
+def snap_silent(times, talking_flags, fps, scenes=None):
     """Silent shots (Wan) last whole clips after the minimum length was distributed: only ever adds
-    at most three frames per shot, so the minimum stays met and no rendered frame is thrown away."""
-    return [t if talk else whole_clips(round(t * fps)) / fps for t, talk in zip(times, talking_flags)]
+    at most three frames per shot, so the minimum stays met and no rendered frame is thrown away.
+    A reaction in the 0.18 cadence (native() False) keeps its length, as in 0.18."""
+    scenes = scenes or [{}] * len(times)
+    return [t if talk or not native(scene, t, fps) else whole_clips(round(t * fps)) / fps
+            for t, talk, scene in zip(times, talking_flags, scenes)]
 
 
 # --- 4) Motion text ------------------------------------------------------------------------------

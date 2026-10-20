@@ -195,13 +195,14 @@ def audio_layout(episodes, lines, minimum_seconds=None, fps=FPS, version=17, sho
         if cut:
             # Silent shots share the extra time by their own length: an action more than a wide shot.
             weights=[w if talk else seconds for w,talk,seconds in zip(weights,talking,base)]
-            # 0.19: a reaction takes extra time only up to one Wan clip played 1:1 (81 frames).
+            # 0.19: extra time never makes a reaction longer than one Wan clip played 1:1 (81 frames); one whose
+            # voice is longer keeps that length and the 0.18 cadence (shot_design.native).
             cap=shot_design.NATIVE_FRAMES/fps if native else REACTION_CAP
             planned=fill_target_cut(base,talking,[cap if off_screen(s) else None for s in scenes],target,weights)
         else:planned=fill_target(base,[bool(g) for g in groups],target,weights)
         # Whole frames; rounding only ever adds, the minimum stays met.
         times=distribute_frames(planned,target,weights,fps)
-        if native:times=shot_design.snap_silent(times,talking,fps)
+        if native:times=shot_design.snap_silent(times,talking,fps,scenes)
         cursor=0.;speech=0.;intervals=[]
         for scene,group,seconds,natural,plan in zip(scenes,groups,times,base,plans):
             spare=max(0,seconds-natural)

@@ -907,7 +907,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                 lines=[l for l in d['lines'] if l['episode']==ei and l['scene']==si]
                 # Lip-sync only where the voice belongs to the figure in the frame (not in a 0.18 reaction).
                 talk=bool(lines) and options['lip_sync']=='audio' and not off_screen(scene)
-                durations=scene_segments(seconds,fps,talk,native=pinned);count=len(durations)
+                # 0.19: a reaction longer than one native clip renders as one 16 fps clip (shot_design.native).
+                played=pinned and shot_design.native(scene,seconds,fps)
+                durations=scene_segments(seconds,fps,talk,native=played);count=len(durations)
                 for seg,duration in enumerate(durations):
                     if self.paused(d['id']):return
                     # Cache includes model/profile, timing and direction. Old degraded
@@ -940,7 +942,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         graph=audio_graph(info,image,self.stage(audio),prompt,seed,duration,options['quality'],attention=turbo.attention(self.g['RUNTIME'],info),
                                           legacy_text=legacy,**({'suffix':shot_design.TALK_SUFFIX} if pinned else {}),**fitted)
                     else:
-                        graph=motion_graph(image,prompt,seed,'',models,duration,options['quality'],**({'native':fps} if pinned else {}))
+                        graph=motion_graph(image,prompt,seed,'',models,duration,options['quality'],**({'native':fps} if played else {}))
                     key=f'video09:{ei}:{si}:{seg}:'+digest(graph)[:24]
                     clip=await self.render(d,key,graph,True)
                     d.setdefault('render_segments',{})[f'{ei}:{si}:{seg}']=clip['id'];self.save(d)
@@ -960,7 +962,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if seg<count-1:
                         next_image=self.folder(d)/'04_Animation'/('Anschluss_'+clip['sha256'][:20]+'.png')
                         if not next_image.exists():
-                            await asyncio.to_thread(ff,['-i',clip['output'],'-vf',f'select=eq(n\\,{max(0,round(duration*(25 if talk else fps if pinned else 16))-1)})','-frames:v','1',next_image])
+                            await asyncio.to_thread(ff,['-i',clip['output'],'-vf',f'select=eq(n\\,{max(0,round(duration*(25 if talk else fps if played else 16))-1)})','-frames:v','1',next_image])
                         image=self.stage(next_image)
                 spec[si]['clips']=clips
             if self.paused(d['id']):return

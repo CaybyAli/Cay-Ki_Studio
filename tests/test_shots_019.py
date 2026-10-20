@@ -94,7 +94,8 @@ def movie_project(**pins):
             'timing': [{'seconds': 17.08}], 'timing_policy': 3, 'timing_fps': 25, 'audio_revision': 1, 'previews': [], **pins}
 
 
-def run_movies(monkeypatch, tmp_path, d):
+def run_movies(monkeypatch, tmp_path, d, real_motion=False):
+    """Factory.movies with ComfyUI, FFmpeg and the files replaced. real_motion: the real Wan graph (in fake.renders)."""
     factory = pytest.importorskip('factory')
     import render_studio
     import wan_text_encoder
@@ -106,8 +107,8 @@ def run_movies(monkeypatch, tmp_path, d):
     monkeypatch.setattr(render_studio, 'audio_graph', audio_graph)
     monkeypatch.setattr(render_studio, 'dialogue_window', lambda lines, start, duration, path: str(path))
     monkeypatch.setattr(wan_text_encoder, 'validate_selected', lambda comfy, clip: None)
-    monkeypatch.setattr(factory, 'video_models', lambda info, comfy: {'fast_loras': True, 'clip': 'clip'})
-    monkeypatch.setattr(factory, 'motion_graph', motion_graph)
+    monkeypatch.setattr(factory, 'video_models', lambda info, comfy: MODELS if real_motion else {'fast_loras': True, 'clip': 'clip'})
+    if not real_motion: monkeypatch.setattr(factory, 'motion_graph', motion_graph)
     monkeypatch.setattr(factory, 'file_hash', lambda p: 'h')
     monkeypatch.setattr(factory, 'ff', lambda args: calls['ff'].append([str(a) for a in args]))
     monkeypatch.setattr(factory.turbo, 'attention', lambda runtime, info: 'sdpa')
@@ -251,7 +252,7 @@ def test_without_the_pin_no_019_path_is_taken(monkeypatch, tmp_path):
     import shot_design
     def boom(*a, **k): raise AssertionError('0.19 path taken without shot_policy 19')
     for name in ('plan', 'pick', 'lead', 'pose', 'fresh', 'unframed', 'camera', 'punch_at', 'native_frames', 'clip_frames', 'whole_clips',
-                 'silent_base', 'snap_silent', 'undamp', 'direction', 'motion_prompt'):
+                 'silent_base', 'snap_silent', 'native', 'asked', 'undamp', 'direction', 'motion_prompt'):
         monkeypatch.setattr(shot_design, name, boom)
     run_pictures(monkeypatch, picture_project())
     run_movies(monkeypatch, tmp_path, movie_project())
@@ -477,15 +478,61 @@ def test_silent_wan_clips_render_and_play_native_frames():
 
 
 def test_native_clip_exports_frame_exact_without_interpolation(monkeypatch, tmp_path):
-    tmp_path.mkdir(exist_ok=True)
-    clip = tone_clip(tmp_path / 'n.mp4', 53 / 25)                                 # 53 Wan frames at 25 fps
-    scenes = [{'seconds': 53 / 25, 'clips': [clip], 'kind': 'action', 'lines': []}]
-    result, filters = run_export(monkeypatch, tmp_path / 'out', scenes, **PIN)
-    assert 'minterpolate' not in filters[0] and filters[0].startswith('setpts=PTS-STARTPTS,fps=25,')
-    assert frames(tmp_path / 'out' / result['parts'][0]) == 53
-    old = tone_clip(tmp_path / 'o.mp4', 3.4, rate=16)
-    _, filters = run_export(monkeypatch, tmp_path / 'old', [{'seconds': 3.2, 'clips': [dict(old, seconds=3.2)], 'kind': 'action', 'lines': []}])
-    assert 'minterpolate' in filters[0]                                            # 0.18: unchanged
+    """Through Factory.movies with the real Wan graph, then the export of the part it posts: the silent action shot
+    (2.12 s) of a pinned project renders 53 Wan frames at 25 fps and the export shows each of them once.
+    0.18 rendered 37 frames at 16 fps for it. The long reaction (6.0 s) keeps the 0.18 cadence (16 fps clips)."""
+    fake, _ = run_movies(monkeypatch, tmp_path / 'run', movie_project(**PIN), real_motion=True)
+    graphs = {tuple(map(int, key.split(':')[2:4])): graph for key, graph in fake.renders if 'talk' not in graph}
+    action = graphs[(2, 0)]
+    assert action['8']['class_type'] == 'WanImageToVideo' and action['8']['inputs']['length'] == 53 == round(2.12 * 25)
+    assert action['14']['inputs']['fps'] == 25
+    assert [graphs[(1, k)]['14']['inputs']['fps'] for k in (0, 1)] == [16, 16] and (1, 2) not in graphs
+    src = tmp_path / 'src'; src.mkdir()
+    for part, rate, frames_out in (((2, 0), 25, 53), ((1, 0), 16, 75)):
+        name, spec = next((n, sp_) for n, sp_ in fake.posts if n == f'prepare:{part[0]}:{part[1]}')
+        assert spec['shot_policy'] == 19 and spec['_only_part'] == list(part)
+        for scene in spec['scenes']:
+            scene['lines'] = [{**l, 'text_de': 'Hallo du.', **speech(src / f'l{scene["lines"].index(l)}.wav', l['offset'], l['duration'], 'Hallo du.')}
+                              for l in scene['lines']]
+        clip = spec['scenes'][part[0]]['clips'][part[1]]
+        made = graphs[part]['8']['inputs']['length']
+        spec['scenes'][part[0]]['clips'][part[1]] = dict(tone_clip(src / f'c{part[0]}.mp4', made / rate, rate=rate), seconds=clip['seconds'])
+        spec['folder'] = str(tmp_path / f'out{part[0]}')
+        filters = []; real = fv.ff
+        monkeypatch.setattr(fv, 'ff', lambda args, cwd=None: (filters.append(str(args[args.index('-vf') + 1])) if '-vf' in args else None, real(args, cwd))[1])
+        result = fv.prepare(spec); monkeypatch.setattr(fv, 'ff', real)
+        assert 'minterpolate' not in filters[0] and filters[0].startswith('setpts=PTS-STARTPTS,fps=25,')
+        assert frames(tmp_path / f'out{part[0]}' / result['parts'][0]) == frames_out == round(clip['seconds'] * 25)
+
+
+def test_a_reaction_longer_than_one_native_clip_keeps_the_old_cadence_without_a_seam():
+    """Review r019: a reaction lasts as long as its voice from off-screen (3.8 to 4.7 s in the samples), longer than one
+    native clip (81 frames, 3.24 s). It rendered as two chained native clips, a seam in the middle of the reaction and
+    25 instead of 16 Wan frames per second. Now it is one 16 fps clip as in 0.18. Without a minimum length the silent
+    shots never cost more Wan frames than in 0.18; extra seconds for a minimum are played 1:1 (at most 25/16)."""
+    def wan(scene, pinned):
+        s = scene['render_seconds']; played = pinned and sd.native(scene, s, 25)
+        return [fv.motion_graph('i', 'p', 1, '', MODELS, c, 'fast', **({'native': 25} if played else {}))['8']['inputs']['length']
+                for c in qp.scene_segments(s, 25, False, native=played)]
+    silent = lambda e: [s for s in e['scenes'] if s['kind'] in ('action', 'establish', 'reaction')]
+    long_reactions = 0
+    for name in cs.TEXTS:
+        for minimum in (0, 60):
+            old, _ = lengths(sample_episode(name), minimum); new, report = lengths(sample_episode(name), minimum, shots=True)
+            assert report['minimum_met']
+            before = [wan(s, False) for s in silent(old)]; after = [wan(s, True) for s in silent(new)]
+            for a, b, scene in zip(before, after, silent(new)):
+                if scene['kind'] != 'reaction': continue
+                assert len(b) == len(a) == 1, (name, minimum, scene['render_seconds'])        # no seam inside a reaction
+                if round(scene['render_seconds'] * 25) > sd.NATIVE_FRAMES:
+                    long_reactions += 1; assert not sd.native(scene, scene['render_seconds'], 25)
+                else: assert sd.native(scene, scene['render_seconds'], 25)
+            if minimum: assert sum(map(sum, after)) <= sum(map(sum, before)) * 25 / 16, (name, minimum)
+            else: assert sum(map(sum, after)) <= sum(map(sum, before)) + 16, name
+    assert long_reactions >= 6
+    # Rounded up to whole clips only while native: a 4.0 s reaction keeps its length, a 3.2 s one becomes 81 frames.
+    shots = [{'kind': 'reaction'}, {'kind': 'reaction'}, {'kind': 'action'}]
+    assert sd.snap_silent([4.0, 3.2, 3.2], [False] * 3, 25, shots) == [4.0, 3.24, 3.24]
 
 
 def test_silent_shot_lengths_vary_and_match_rendered_frames():
@@ -517,7 +564,7 @@ def test_minimum_length_still_met_with_whole_clips():
         new, report = lengths(sample_episode(name), 75, shots=True)
         assert report['minimum_met'] and report['seconds'] >= 75
         for scene in new['scenes']:
-            if scene['kind'] in ('action', 'establish', 'reaction'):
+            if scene['kind'] in ('action', 'establish', 'reaction') and sd.native(scene, scene['render_seconds'], 25):   # a long reaction: 16 fps
                 assert all(round(c * 25) % 4 == 1 for c in qp.scene_segments(scene['render_seconds'], 25, False, native=True)), (name, scene['render_seconds'])
     assert [sd.whole_clips(n) for n in (40, 41, 81, 82, 83, 161, 162, 163)] == [41, 41, 81, 82, 86, 162, 162, 163]
     assert sd.clip_frames(150) == [77, 73] and sd.clip_frames(163) == [57, 53, 53]
@@ -531,14 +578,14 @@ def test_motion_text_has_no_damping_words_and_concrete_camera(monkeypatch, tmp_p
         assert not damping.search(prompt), prompt
         assert not prompt.startswith('Medium shot') and 'Medium shot with a' not in prompt
     silent = [p for p, _, kw in calls['motion']]
-    assert all(kw == {'native': 25} for _, _, kw in calls['motion'])
+    # The reaction (6.0 s) keeps the 0.18 cadence: two 16 fps clips as in 0.18; the action and wide shot one native clip each.
+    assert [kw for _, _, kw in calls['motion']] == [{}, {}, {'native': 25}, {'native': 25}]
     assert 'grabs SpongeBob' in silent[2] and 'Camera:' in silent[2] and 'Full real-time speed' in silent[2]
-    # The reaction (6.0 s) is two whole native clips; the action and wide shot one each.
-    assert [round(dur * 25) for _, dur, _ in calls['motion']] == [77, 73, 53, 49]
+    assert [round(dur * 25) for _, dur, _ in calls['motion']] == [75, 75, 53, 49]
     assert calls['talk'][0][0] == 'check' and all(kw['suffix'] == sd.TALK_SUFFIX for _, _, kw in calls['talk'][1:])   # [0]: the node probe
     assert 'big expressive' in sd.TALK_SUFFIX and 'calm' not in sd.TALK_SUFFIX and 'mouth stays closed' in sd.TALK_SUFFIX
-    # The next clip of the reaction starts from its last native frame.
-    assert any('select=eq(n\\,76)' in ' '.join(args) for args in calls['ff'])
+    # The next clip of the reaction starts from the last frame of the first one (16 fps: frame 47).
+    assert any('select=eq(n\\,47)' in ' '.join(args) for args in calls['ff'])
     # Specs carry the pin and the chosen shot type; the 0.18 project above does not.
     assert all(spec['shot_policy'] == 19 for _, spec in fake.posts)
     assert fake.posts[-1][1]['scenes'][0]['shot'] == 'cu' and 'shot' not in fake.posts[-1][1]['scenes'][1]
