@@ -40,7 +40,7 @@ def active(d):
 
 # --- 1) Cut ---------------------------------------------------------------------------------------
 
-SPLIT_WORDS = 6        # a line this long with two sentences or more is cut at a sentence end
+SPLIT_WORDS = 5        # a line this long with two sentences or more is cut at a sentence end
 PIECE_WORDS = 2        # no piece shorter, except a one-word question or call before a longer rest ('Sia? Was machst du hier?')
 PIECES = 3
 MERGE_SECONDS = 2.4    # consecutive short lines of one speaker share one shot up to this
@@ -233,22 +233,26 @@ def _inserts(result, room):
     feeling the hands or the eyes. Never next to a silent shot, never inside a split line, at most one
     per INSERT_GAP voiced shots, never more than the shot limit leaves room for."""
     voice = lambda s: s['kind'] in ('line', 'reaction')
-    out = []; gap = INSERT_GAP; used = set(); felt = set(); added = 0
+    out = []; gap = INSERT_GAP; used = set(); felt = set(); added = 0; heard = []
     for i, shot in enumerate(result):
         out.append(shot)
-        gap += voice(shot)
+        if not voice(shot): heard = []; continue
+        gap += 1; heard += [l['text'] for l in shot['lines']]
         after = result[i + 1] if i + 1 < len(result) else None
-        if not (voice(shot) and after and voice(after) and after['beat'] == shot['beat'] and added < room and gap >= INSERT_GAP): continue
-        if shot.get('piece') and after.get('piece') and after['piece'][0] == shot['piece'][0]: continue      # inside one line
+        if after and shot.get('piece') and after.get('piece') and after['piece'][0] == shot['piece'][0]: continue      # inside one line
+        text = ' '.join(heard); heard = []
+        if not (after and voice(after) and after['beat'] == shot['beat'] and added < room): continue
         line = shot['lines'][-1]; owner = line['speaker']; feeling = mood(line['emotion'])
-        prop = prop_of(line['text'])
-        if prop and (shot['beat'], prop) not in used: kind = 'prop'; used.add((shot['beat'], prop))
-        elif feeling in HANDS | EYES and shot['beat'] not in felt: kind = 'hands' if feeling in HANDS else 'eyes'; prop = None; felt.add(shot['beat'])
+        prop = prop_of(text)
+        # The prop a line names is worth a detail soon (every second voiced shot); a feeling only now and then.
+        if prop and (shot['beat'], prop) not in used and gap >= 2: kind = 'prop'; used.add((shot['beat'], prop))
+        elif feeling in HANDS | EYES and shot['beat'] not in felt and gap >= INSERT_GAP:
+            kind = 'hands' if feeling in HANDS else 'eyes'; prop = None; felt.add(shot['beat'])
         else: continue
         who = owner if kind != 'eyes' or shot['kind'] == 'line' else shot['visible'][0]
         what = {'prop': f'Detail: {prop} bei {who}', 'hands': f'Detail: die Hände von {who}', 'eyes': f'Detail: die Augen von {who}'}[kind]
         out.append({'kind': 'action', 'beat': shot['beat'], 'place': shot['place'], 'what': what, 'visible': [who], 'lines': [],
-                    'insert': kind, **({'prop': prop} if prop else {}), 'mood': line['emotion'], 'heard': line['text']})
+                    'insert': kind, **({'prop': prop} if prop else {}), 'mood': line['emotion']})
         gap = 0; added += 1
     return out
 
