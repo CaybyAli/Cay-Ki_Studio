@@ -1169,7 +1169,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         def create(body:Idea):
             existing=self.rows('SELECT id FROM factory_runs WHERE request_key=?',(body.request_key,));idea=cover.idea_document(body)
             # Own script: episodes, length, cast and title come from it; refused with the first blocking problem.
-            try:script=own_script.prepare(idea,rhythm=True)
+            # 0.20: the new app asks for the rhythm cut (shot_rhythm); never stored in the idea, the pin below holds it.
+            rhythm=idea.pop('rhythm',0)==shot_rhythm.POLICY
+            try:script=own_script.prepare(idea,**({'rhythm':True} if rhythm else {}))
             except ValueError as error:raise HTTPException(400,str(error))
             # After the script set the number of episodes: 'looks' stays only for a series that chose it.
             idea=episode_looks.stored(idea)
@@ -1194,8 +1196,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             # Pinned once per project: 0.18 editing (title card). Projects without it keep their exact old export.
             d['edit_policy']=cover.POLICY
             # Pinned once per project (0.19): sound mix, shot look and motion, render windows. Older projects keep their exact behaviour.
-            # 0.20: shot_policy 20 adds the rhythm cut, listeners, over-the-shoulder shots, inserts and physical acting (shot_rhythm).
-            d.update(sound_policy=19,shot_policy=shot_rhythm.POLICY,render_policy=19)
+            # 0.20: shot_policy 20 (asked for by the new app) adds the rhythm cut, listeners, over-the-shoulder shots, inserts and
+            # physical acting (shot_rhythm). A request without it (older clients) plans exactly as 0.19.
+            d.update(sound_policy=19,shot_policy=shot_rhythm.POLICY if rhythm else 19,render_policy=19)
             if script:d.update(script=script,title=idea['title'] or 'Mein Drehbuch',phase='Drehbuch gespeichert · Planung wartet')
             with self.g['conn']() as db:
                 db.execute('INSERT OR IGNORE INTO factory_runs VALUES(?,?,?,?,?,?)',(rid,body.request_key,d['state'],packed(d),now,now))

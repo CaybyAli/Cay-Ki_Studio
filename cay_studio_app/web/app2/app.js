@@ -424,7 +424,7 @@ async function createFromScript() {
   // Only figures of the script, and only where Cay gave a picture, a voice or a profile; the rest comes from the script.
   const own = d.participants.filter(p => names.has(nameKey(p.name)) && (p.image || p.voice || p.library_id));
   const body = { ...d, idea: d.script, title: d.title.trim(), story: 'script', episodes: c.episodes.length, duration: c.duration, characters: 'provided',
-    participants: own.map(p => participantBody(p, names.get(nameKey(p.name)))) };
+    participants: own.map(p => participantBody(p, names.get(nameKey(p.name)))), rhythm: 20 };   // 0.20 cut: listeners, details, over the shoulder
   delete body.script;
   const run = await post('/api/factory', body);
   S.draft = { ...defaults(), story: 'script' }; S.check = null; S.checkFor = ''; S.castSig = ''; saveDraft();
@@ -448,6 +448,7 @@ async function createFilm() {
     participants: d.characters === 'none' ? [] : d.participants.filter(p => p.name.trim()).map(p => participantBody(p, p.name.trim())) };
   delete body.story; delete body.script;   // the AI writes: exactly the request of before 0.18 …
   body.writing = 19;                       // … with the 0.19 dialogue rules (hook, conflict, no filler, length that fits)
+  body.rhythm = 20;                        // … and the 0.20 cut (listeners, details, over the shoulder, physical acting)
   if (d.characters === 'provided' && !body.participants.length) { toast('Für „Nur meine Figuren“ mindestens eine Figur mit Namen eintragen.'); return; }
   if (body.participants.length > MAX_CAST) { toast(`Bis zu ${MAX_CAST} Figuren pro Film. Du hast ${body.participants.length}.`); return; }
   const run = await post('/api/factory', body);

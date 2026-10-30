@@ -93,6 +93,9 @@ class Idea(Strict):
     # Dialogue rules 0.19 (screenplay.WRITING_POLICY): only the new app sends 19; stored only then
     # (factory.create), so every other idea document and plan stays exactly as before.
     writing:Literal[0,19]=0
+    # Rhythm cut 0.20 (shot_rhythm, shot_policy 20): only the new app sends 20. Never stored in the idea; the
+    # project's pin holds it (factory.create), so every request without it plans exactly as 0.19.
+    rhythm:Literal[0,20]=0
     # 'Mein Drehbuch' 0.19.2: names Cay marked as "keine Figur" in the script check (e.g. a label like
     # "Folgende:"); their lines are read as picture, never spoken. Stored only when used.
     not_figures:list[str]=Field(default_factory=list,max_length=MAX_CAST)

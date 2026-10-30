@@ -306,4 +306,6 @@ class Quality:
             if len(idea['idea'])>100000:idea['idea']=old['idea']['idea']
             # A new edition is a new film: an original from before 0.18 (no field) gets the title card too.
             idea.setdefault('cover','start')
+            # ... and the 0.20 rhythm cut (shot_rhythm): the button exists only in the new app.
+            idea['rhythm']=20
             create=next(r.endpoint for r in app.routes if getattr(r,'path','')=='/api/factory' and 'POST' in (getattr(r,'methods',None) or set()));return create(Idea.model_validate(idea))
