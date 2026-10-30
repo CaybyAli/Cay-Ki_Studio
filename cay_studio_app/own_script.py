@@ -447,11 +447,24 @@ def _setting(text):
     return ' '.join(parts[:lead]), ' '.join(parts[lead:])
 
 
+SPEAKER_WORDS = re.compile(r"\b(ich|mich|mir|du|dich|dir|wir|uns|euch|mein\w*|dein\w*|unser\w*|euer\w*|eure\w*)\b", re.I)
+CAMERA_WORDS = re.compile(r"\b(nahaufnahme|großaufnahme|totale|halbtotale|kamera|schnitt|zoom|einstellung|perspektive|detailaufnahme|schwenk|blende)\b", re.I)
+
+
+def _direction(text, figures):
+    """0.19.2: a label outside the figure list whose text reads like a stage direction: third person, naming a figure
+    of the list or the camera ("Folgende: Valentina lächelt überlegen."). A line with ich/du/wir is speech."""
+    if SPEAKER_WORDS.search(text): return False
+    if CAMERA_WORDS.search(text): return True
+    words = {w.casefold() for w in re.findall(r"[\w-]+", text)}
+    return any(part.casefold() in words for f in figures.values() for part in re.findall(r"[\w-]+", f['name']) if len(part) >= 3)
+
+
 class _Reader:
     """One pass over the rows; scenes and items keep their line numbers for the problems.
     policy 19 (POLICY) reads with the 0.19 rules (module text), policy 0 exactly as 0.18."""
     def __init__(self, rows, policy=POLICY):
-        self.rows = rows; self.title = ''; self.figures = {}; self.episodes = []; self.problems = []; self.preface = []
+        self.not_figures = set(); self.rows = rows; self.title = ''; self.figures = {}; self.episodes = []; self.problems = []; self.preface = []
         self.section = None; self.cue = None; self.folgen = any(HEADING.match(r) for r in rows); self.counts = {}; self.stamped = False; self.notes = None
         self.v19 = policy >= POLICY; self.kw = KEYWORDS_19 if self.v19 else KEYWORDS
         self.last = None; self.table = None; self.spoken = set(); self.used = {}; self.text = '\n'.join(rows)
@@ -563,6 +576,16 @@ class _Reader:
         if not spoken:
             if directions: self.action(number, f'{_display(name)} {directions[0]}'); return
             self.problem(number, f'„{name}:“ ohne Text, übersprungen.'); self.mark(number, 'skipped'); return
+        if self.v19 and not off and name_key(name) in self.not_figures:
+            self.problem(number, f'„{_display(name)}“ ist laut dir keine Figur. Die Zeile wird als Bild gelesen, nicht gesprochen.')
+            self.action(number, text, staged=True); return
+        if self.v19 and not off and self.figures and name_key(name) not in self.figures \
+                and not screenplay._resolve(name, [f['name'] for f in self.figures.values()]) and _direction(spoken, self.figures):
+            # Cay 0.19.1: "FOLGENDE: Extreme Nahaufnahme von Valentinas Grinsen …" became a figure in a suit reading the
+            # direction aloud. With a figure list, a label outside it never speaks: its text is read as picture.
+            self.problem(number, f'„{_display(name)}:“ steht nicht in deiner Figurenliste. Die Zeile wird als Bild gelesen, nicht gesprochen. '
+                                 f'Soll {_display(name)} sprechen, oben „FIGUR: {_display(name)} – …“ ergänzen.')
+            self.action(number, text, staged=True); return
         self.spoken.add(name_key(name)); self.mark(number, 'spoken')
         if self.v19:
             # Every part of the parentheses counts: '(off, wütend)'. (V.O.), (Telefon) mean off-screen, (CONT'D), (zu Sandy) nothing.
@@ -921,13 +944,14 @@ def advice(title, beats, lines, cast):
     return notes
 
 
-def read(text, policy=POLICY):
+def read(text, policy=POLICY, not_figures=()):
     """Read Cay's script. Returns title, figures, episodes (each with its normalized screenplay text
     in the internal format), problems (with line numbers; blocking ones stop the film), the length
     per episode and the minimum length the film is planned with. policy 19 (default, projects from
     0.19 on) adds per episode 'pacing' and a reading 'report'; policy 0 reads exactly as 0.18."""
     text = str(text or '').lstrip('﻿').replace('\r\n', '\n').replace('\r', '\n')
-    r = _Reader(text.split('\n'), policy).read(); v19 = r.v19
+    reader = _Reader(text.split('\n'), policy); reader.not_figures = {name_key(n) for n in not_figures or () if str(n).strip()}
+    r = reader.read(); v19 = r.v19
     for error in manifest(text)['errors']: r.problem(None, error, True)
     # Figures: FIGUR lines first, then every speaker in order of appearance. A short form of a FIGUR
     # name ('KRABS' for 'Mr. Krabs') is that figure; an unknown speaker is never guessed.
@@ -1107,7 +1131,7 @@ def prepare(idea, policy=POLICY):
     policy: the reading rules (POLICY for a new project, 0 for a project from before 0.19)."""
     if idea.get('story') != 'script':
         idea.pop('story', None); return None
-    script = read(idea['idea'], policy)
+    script = read(idea['idea'], policy, idea.get('not_figures') or ())
     blocking = [p['text'] for p in script['problems'] if p['blocking']]
     if blocking: raise ValueError(blocking[0] + (f' Dazu {len(blocking) - 1} weitere Probleme im Drehbuch.' if len(blocking) > 1 else ''))
     names = {name_key(f['name']): f['name'] for f in script['figures']}

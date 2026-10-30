@@ -17,6 +17,11 @@ SCRIPT = (Path(__file__).resolve().parents[1] / 'test_own_script.py').read_text(
 SHORT = 'LENA: Hallo!\nMARKUS: Hallo zurück, Lena!'
 SCRIPT_RID = '5' * 32
 
+
+def cast(page):
+    """0.19.2: the figures of the script check are chips (each with a 'keine Figur' button)."""
+    return [x.split('✕')[0].strip() for x in page.locator('#script-check .figure-chips .chip').all_inner_texts()]
+
 try:
     # A script project waiting at the sound stop: no 'Dialoge ergänzen' there.
     studio.project(SCRIPT_RID, 'voice_review', {'title': 'Der Kuchenklau', 'script': {'episodes': [{'number': 1, 'seconds': 35}]},
@@ -64,8 +69,18 @@ try:
         check = ' '.join(page.locator('#script-check').inner_text().split())
         r.check(f'Prüfung: Länge je Folge ({check[:90]}…)', 'Länge nach Drehbuch' in check and 'Folge 1 etwa 32 s · Folge 2 etwa 18 s' in check)
         r.check('Prüfung: Figuren, Szenen, Sätze, Wörter, Folgen', all(x in check for x in ('3 Figuren', '3 Szenen', '12 Sätze', '100 Wörter', '2 Folgen',
-                                                                                         'Es spielen Oma Hilde, Frau Müller, Tim.')))
+                                                                                         )) and cast(page) == ['Oma Hilde', 'Frau Müller', 'Tim'])
         r.check('Prüfung ohne Probleme: „Passt.“', 'Passt. Der Film kann so entstehen.' in check and not page.locator('#script-check .problems').count())
+        # 0.19.2 (Cay, 'Villa der süßen Lügen'): a label taken for a figure can be marked as none, and taken back.
+        page.fill('#script', SCRIPT + '\nFOLGENDE: Ich schaue zur Tür.\nFOLGENDE: Wir lachen.\n'); page.wait_for_timeout(1200)
+        before = cast(page)
+        page.click('#script-check [data-action="not-figure"][data-name="Folgende"]'); page.wait_for_timeout(1200)
+        gone = cast(page); text = page.locator('#script-check').inner_text()
+        r.check('„Keine Figur“: Folgende verschwindet aus den Figuren, Zeilen als Bild', 'Folgende' in before and 'Folgende' not in gone
+                and 'ist laut dir keine Figur' in text and 'zurücknehmen' in text)
+        page.click('#script-check [data-action="is-figure"][data-name="Folgende"]'); page.wait_for_timeout(1200)
+        r.check('„Zurücknehmen“: Folgende wieder in der Liste', 'Folgende' in cast(page))
+        page.fill('#script', SCRIPT); page.wait_for_timeout(1200)
         page.fill('#script', SCRIPT + 'MUSIK: leise Geigen\nERZÄHLER (gelangweilt): Und so begann die Jagd.\n'); page.wait_for_timeout(1200)
         line = SCRIPT.count('\n') + 1; hints = page.locator('#script-check .problems').inner_text()
         r.check(f'Prüfung: Hinweise mit Zeilennummer (Zeile {line}, {line + 1})', f'Zeile {line}: Musik-Angaben setzt das Studio selbst' in hints
@@ -93,11 +108,11 @@ try:
 
         page.set_input_files('input[data-upload="script"]', str(ansi)); page.wait_for_timeout(1200)
         r.check('Datei (ANSI, Umlaute) übernommen und geprüft', page.input_value('#script').startswith('# Die Wüste') and 'JÖRG (wütend)' in page.input_value('#script')
-                and 'Es spielen Jörg, Bärbel.' in page.locator('#script-check').inner_text() and 'PDF' not in page.locator('#script-check').inner_text())
+                and cast(page) == ['Jörg', 'Bärbel'] and 'PDF' not in page.locator('#script-check').inner_text())
 
         page.set_input_files('input[data-upload="script"]', str(utf16)); page.wait_for_timeout(1200)
         r.check('Datei (UTF-16 „Unicode“ aus dem Windows-Editor) übernommen und geprüft', page.input_value('#script').startswith('# Die Oase')
-                and 'JÖRG (fröhlich): Wasser, Bärbel!' in page.input_value('#script') and 'Es spielen Jörg, Bärbel.' in page.locator('#script-check').inner_text()
+                and 'JÖRG (fröhlich): Wasser, Bärbel!' in page.input_value('#script') and cast(page) == ['Jörg', 'Bärbel']
                 and 'kein Text' not in page.locator('#script-check').inner_text())
         page.screenshot(path=str(shots / '03b_utf16_datei_1280_hell.png'))
 

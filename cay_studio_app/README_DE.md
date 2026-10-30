@@ -1,3 +1,11 @@
+# Cay Studio 0.19.2 – Regieanweisungen sprechen nicht mehr (30.10.2026)
+
+- **Cays Meldung:** „Folgende: Valentina lächelt überlegen. Lara steckt ihr Handy weg.“ wurde als sprechende Figur „Folgende“ eingesprochen (ein Mann im Anzug las die Anweisung vor). Jetzt: Hat das Drehbuch eine Figurenliste (FIGUR:), wird eine Zeile mit einem Namen außerhalb der Liste, die wie eine Anweisung klingt (nennt eine Figur oder die Kamera, kein „ich/du/wir“), als Bild gelesen, mit Hinweis in der Prüfung.
+- **„Keine Figur“:** In der Drehbuchprüfung steht jede erkannte Figur als Kästchen mit ✕. Ein Tipp darauf macht sie zu „keine Figur“, ihre Zeilen werden als Bild gelesen; „zurücknehmen“ macht es rückgängig.
+- Gilt für neu angelegte Projekte; alte Projekte lesen ihr Drehbuch wie bisher.
+
+---
+
 # Cay Studio 0.19.1 – Startfehler von 0.19.0 behoben (20.10.2026)
 
 - **Cays Meldung:** „UPDATE ANGEHALTEN: Neue Dashboard-Version startet nicht.“ Die neue Stimmproben-Reinigung lud beim Start numpy, das es im Dashboard auf Cays PC nicht gibt. Der Installer kehrte richtig zu 0.18.2 zurück. Jetzt läuft die Reinigung im Stimmenstudio; ein Test startet das Dashboard ohne numpy/torch.

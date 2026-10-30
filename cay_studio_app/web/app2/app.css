@@ -790,3 +790,10 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); backdrop-filter: blur(4px)
 .level output { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
 .level.off { opacity: .55; }
 @media (max-width: 560px) { .level { grid-template-columns: 82px minmax(0, 1fr) 48px; gap: 10px; } }
+
+/* 0.19.2: figures of the script check, each can be marked as "keine Figur". */
+.figure-chips .chips { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 4px 0 0; padding: 0; }
+.figure-chips .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px 4px 10px; border-radius: 999px; background: var(--fill); font-size: 13px; }
+.figure-chips .chip-x { border: 0; background: transparent; color: inherit; opacity: .55; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 11px; line-height: 1; }
+.figure-chips .chip-x:hover, .figure-chips .chip-x:focus-visible { opacity: 1; background: var(--hairline); }
+@media (hover: none) { .figure-chips .chip-x { opacity: .8; width: 28px; height: 28px; } }

@@ -1172,6 +1172,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             # After the script set the number of episodes: 'looks' stays only for a series that chose it.
             idea=episode_looks.stored(idea)
             if idea.get('writing')!=screenplay.WRITING_FIELD:idea.pop('writing',None)
+            if not idea.get('not_figures') or idea.get('story')!='script':idea.pop('not_figures',None)
             if existing:
                 previous=self.get(existing[0]['id'])
                 if previous['idea']!=idea:raise HTTPException(409,'Diese Anfrage gehört zu einer anderen Idee. Bitte das bereits angelegte Projekt öffnen.')
@@ -1210,7 +1211,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             """Live check of 'Mein Drehbuch': figures, scenes, lines, length and every problem with its line."""
             body=await request.json();text=body.get('text','') if isinstance(body,dict) else None
             if not isinstance(text,str) or len(text)>100000:raise HTTPException(400,'Bis zu 100.000 Zeichen pro Drehbuch.')
-            return await asyncio.to_thread(own_script.read,text)   # a long script must not hold up the other requests
+            skip=body.get('not_figures') or []
+            if not isinstance(skip,list) or len(skip)>30 or not all(isinstance(x,str) and len(x)<=60 for x in skip):raise HTTPException(400,'Ungültige Liste „keine Figur“.')
+            return await asyncio.to_thread(*((own_script.read,text,own_script.POLICY,skip) if skip else (own_script.read,text)))   # a long script must not hold up the other requests
         @app.get('/api/factory/{rid}/source')
         def original_source(rid:str):
             d=self.get(rid);path=self.folder(d)/'01_Planung'/'Originalgeschichte.txt'

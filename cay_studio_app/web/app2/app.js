@@ -27,7 +27,7 @@ function defaults() {
   // story/script: 'Mein Drehbuch' (0.18). Only story 'script' goes to the server, the script text as idea.
   return { request_key: hex(), idea: '', title: '', episodes: 1, duration: 60, look: 'auto', characters: 'invent', participants: [],
     examples: [], music: null, fps: 25, quality: 'fast', smooth: true, speech_engine: 'auto', lip_sync: 'audio', autopilot: true, cast_check: true, cover: 'start',
-    story: 'ai', script: '', looks: 'same' };
+    story: 'ai', script: '', looks: 'same', not_figures: [] };
 }
 function loadDraft() {
   try { const saved = JSON.parse(localStorage.getItem('cay-draft') || 'null'); if (saved && saved.request_key) return { ...defaults(), ...saved }; } catch (e) { /* private mode */ }
@@ -183,7 +183,8 @@ function checkView(c) {
   const blocking = c.problems.filter(p => p.blocking), hints = c.problems.filter(p => !p.blocking);
   return `${notice}<div class="script-check${c.ok ? '' : ' bad'}">
       <p class="script-length"><span>Länge nach Drehbuch</span><strong>${esc(length)}</strong></p>
-      <p class="small muted">${esc(facts.join(' · '))}${c.figures.length ? `. Es spielen ${esc(c.figures.map(f => f.name).join(', '))}.` : ''}</p>
+      <p class="small muted">${esc(facts.join(' · '))}.</p>
+      ${figureChips(c.figures)}
       ${readingView(c.report, eps)}
       ${list(blocking, ' block')}${list(hints, '')}
       ${c.ok ? `<p class="small ok-line">${hints.length ? 'Der Film kann so entstehen. Die Hinweise sind Vorschläge, das Studio ändert nichts daran.' : 'Passt. Der Film kann so entstehen.'}</p>` : ''}
@@ -205,6 +206,15 @@ function readingView(r, eps) {
   return `<div class="reading"><p class="label">So gelesen</p><ul class="reading-stats">${stats.map(([n, t]) => `<li><b>${esc(n)}</b> ${esc(t)}</li>`).join('')}</ul>
       ${notes.length ? `<p class="small muted">${esc(notes.join(' '))}</p>` : ''}</div>` + (unread.length ? `<ul class="problems">${unread.map(p => `<li>${esc(p.text)}</li>`).join('')}</ul>` : '');
 }
+/* 0.19.2: a name the reader took for a figure ("Folgende:") can be marked as none; its lines become picture. */
+function figureChips(figures) {
+  const gone = S.draft.not_figures || [];
+  if (!figures.length && !gone.length) return '';
+  return `<div class="figure-chips"><p class="label">Es spielen</p><ul class="chips">${figures.map(f => `<li class="chip">${esc(f.name)}`
+      + `<button class="chip-x" data-action="not-figure" data-name="${esc(f.name)}" aria-label="${esc(f.name)} ist keine Figur" title="Ist keine Figur">✕</button></li>`).join('')}</ul>`
+    + (gone.length ? `<p class="small muted">Keine Figur (als Bild gelesen): ${gone.map(n => `${esc(n)} <button class="link small" data-action="is-figure" data-name="${esc(n)}">zurücknehmen</button>`).join(', ')}</p>` : '')
+    + '</div>';
+}
 function paintCheck() { const box = $('#script-check'); if (box) box.innerHTML = checkView(S.check); }
 async function checkScript(now) {
   clearTimeout(checkScript.timer);
@@ -212,7 +222,7 @@ async function checkScript(now) {
   const text = S.draft.script, seq = checkScript.seq = (checkScript.seq || 0) + 1;
   if (!text.trim()) { S.check = null; S.checkFor = text; paintCheck(); syncScriptCast(); updateCompose(); return; }
   let result;
-  try { result = await post('/api/factory/script/check', { text }); } catch (e) { result = { error: e.message }; }
+  try { result = await post('/api/factory/script/check', { text, not_figures: S.draft.not_figures || [] }); } catch (e) { result = { error: e.message }; }
   if (seq !== checkScript.seq || S.page !== 'new') return;
   S.check = result; S.checkFor = text; paintCheck(); syncScriptCast(); updateCompose();
 }
@@ -1558,6 +1568,8 @@ const actions = {
   async 'abort-fast'() { if (confirm(keepsQuality(S.run) ? 'Abschnitt neu starten? Fertige Bilder, Stimmen und Abschnitte bleiben erhalten.'
     : `Mit „Standard“ neu starten? Die Qualität wechselt von „${QUALITY[S.run.idea.quality] || S.run.idea.quality}“ zu „Standard“. Schon animierte Abschnitte noch nicht fertiger Folgen werden dafür neu gerechnet. Bilder, Stimmen und fertige Folgen bleiben.`)) { await post(`/api/factory/${S.rid}/abort-step`, { fast: true }); toast('Der Abschnitt wird neu gerechnet.'); } },
   async choose(b) { await post(`/api/factory/${S.rid}/choose`, { episode: +b.dataset.episode, scene: +b.dataset.scene, step_id: b.dataset.step }); },
+  'not-figure'(b) { const n = b.dataset.name; S.draft.not_figures = [...new Set([...(S.draft.not_figures || []), n])]; saveDraft(); checkScript(true); },
+  'is-figure'(b) { const n = b.dataset.name; S.draft.not_figures = (S.draft.not_figures || []).filter(x => x !== n); saveDraft(); checkScript(true); },
   async 'second-still'(b) { await post(`/api/factory/${S.rid}/second-still`, { episode: +b.dataset.episode, scene: +b.dataset.scene }); toast('Ein zweites Bild entsteht. Das erste bleibt.'); },
   async revise(b) {
     openSheet(`<div class="sheet-head"><h2 class="headline">Neue Bilder für Szene ${+b.dataset.scene + 1}</h2><button class="button quiet small" data-action="close">Abbrechen</button></div>
