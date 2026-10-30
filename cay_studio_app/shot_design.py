@@ -20,6 +20,9 @@ without any camera move, every silent shot 3.20 s of 16 fps Wan frames interpola
    lip-sync text that asks for gestures while the voice speaks (no head turns, a calm body in every
    pause, as render_studio.SUFFIX; the gestures are a GPU A/B item).
 
+0.20 (shot_policy 20, shot_rhythm.py) adds over-the-shoulder and insert types, the still's second reference,
+the cut-in on long talking shots and the physical acting of reactions and inserts; every 0.19 path stays on for 20.
+
 The Wan sampler, its LoRAs and steps stay as they are. Projects without the pin never take any of
 these paths (same prompts, graphs, specs, cache keys and bytes; tests/test_shots_019.py).
 How the angles, moves and Wan clips look can only be judged on Cay's GPU and screen.
