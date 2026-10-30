@@ -1,3 +1,13 @@
+# Cay Studio 0.20.0 – mehr Spannung im Schnitt (30.10.2026)
+
+- **Cays Wunsch:** „zu monoton: 1 Person spricht – Schnitt – nächste Person spricht“, „Figuren stehen zu viel still“. Neue Projekte (Pin shot_policy 20, shot_rhythm.py) schneiden Dialoge anders: lange Sätze werden am Satzende geteilt, jedes Stück zeigt den Sprecher, einen Blick über die Schulter des Zuhörers (nur das Sprechergesicht lesbar) oder die Reaktion des Zuhörers mit der Stimme aus dem Off. Dazwischen kurze Details (0,8–1,3 s): genannte Gegenstände wie Foto, Geld, Handy, sonst Hände oder Augen.
+- Dieselbe Figur höchstens zweimal hintereinander im Bild, nie zweimal dieselbe Einstellungsgröße hintereinander.
+- Reaktionen und Details mit körperlicher Handlung nach Gefühl (drohend: tritt heran, packt den Kragen; ängstlich: weicht zurück; triumphierend: lehnt sich zurück), Handkamera, Heranfahren.
+- Gemessen an Cays Drehbüchern (Rechnung, keine GPU): Villa Ø Dialogeinstellung 3,9 → 2,6 s, Anteil Zuhörer/Details im Dialog 2 % → 45 %, Lippen-Animation pro Filmsekunde −39 %. Die Filme werden etwas länger (+8 bis +17 %) und haben mehr Einstellungen.
+- Nicht eingebaut: zwei sprechende Gesichter gleichzeitig (bräuchte ein weiteres Modell, das Cay nicht hat).
+
+---
+
 # Cay Studio 0.19.2 – Regieanweisungen sprechen nicht mehr (30.10.2026)
 
 - **Cays Meldung:** „Folgende: Valentina lächelt überlegen. Lara steckt ihr Handy weg.“ wurde als sprechende Figur „Folgende“ eingesprochen (ein Mann im Anzug las die Anweisung vor). Jetzt: Hat das Drehbuch eine Figurenliste (FIGUR:), wird eine Zeile mit einem Namen außerhalb der Liste, die wie eine Anweisung klingt (nennt eine Figur oder die Kamera, kein „ich/du/wir“), als Bild gelesen, mit Hinweis in der Prüfung.
