@@ -49,7 +49,8 @@ ROLES = {'talk': ('mcu', 'low', 'cu', 'ms', 'dutch', 'high', 'ots'),
          'react': ('cu', 'ecu', 'mcu', 'high', 'low', 'dutch'),
          'action': ('wide', 'low', 'profile', 'high', 'dutch', 'ecu', 'ms', 'ots'),
          'establish': ('wide', 'high', 'low', 'dutch', 'profile'),
-         'empty': ('wide', 'high', 'low', 'dutch', 'ecu')}
+         'empty': ('wide', 'high', 'low', 'dutch', 'ecu'),
+         'insert': ('ecu', 'high', 'dutch', 'low')}        # 0.20 inserts (shot_rhythm): exist only in projects pinned with shot_policy 20
 CLOSE = {'talk': ('cu', 'mcu', 'low', 'dutch'), 'react': ('cu', 'ecu', 'mcu')}    # a strong feeling is read in the face
 PLACE = {'talk': ('ms', 'high', 'low'), 'react': ('mcu', 'high')}                   # a new place: show more of it
 SIZE = {'ecu': 0, 'cu': 0, 'mcu': 1, 'ms': 1, 'low': 1, 'high': 1, 'dutch': 1, 'ots': 1, 'wide': 2, 'profile': 2}
@@ -69,6 +70,7 @@ WISHES = (('ecu', r'extreme?\s*(?:nah|close)|detailaufnahme|makro'),
 
 
 def role(scene):
+    if scene.get('insert'): return 'insert'
     if not scene.get('cast'): return 'empty'
     kind = scene.get('kind') or 'line'
     if kind == 'reaction': return 'react'
@@ -89,7 +91,8 @@ def wish(scene):
 
 
 def allowed(kind, scene):
-    return kind != 'ots' or len(scene.get('cast') or []) >= 2
+    # 0.20: a second figure only seen from behind ('shoulder', shot_rhythm) is the second figure of the frame.
+    return kind != 'ots' or len(scene.get('cast') or []) >= 2 or bool(scene.get('shoulder'))
 
 
 def wishes(text):
@@ -151,8 +154,11 @@ def plan(episode):
     scenes = episode.get('scenes') or []
     wished = asked(scenes) if episode.get('own_script') else [None] * len(scenes)
     out = []; counters = {}; place = object()
+    # 0.20 (shot_rhythm): a shot planned over a shoulder is an over-the-shoulder shot, an insert an extreme close-up;
+    # Cay's own camera wish still wins. Shots of older projects carry neither field.
+    wished = [w or ('ots' if s.get('shoulder') else 'ecu' if s.get('insert') else None) for w, s in zip(wished, scenes)]
     for i, scene in enumerate(scenes):
-        r = role(scene); pool = [k for k in ROLES[r] if allowed(k, scene)]
+        r = role(scene); pool = [k for k in ROLES[r] + (('ots',) if scene.get('shoulder') and 'ots' not in ROLES[r] else ()) if allowed(k, scene)]
         n = counters.get(r, 0); counters[r] = n + 1
         moved = scene.get('location') != place; first = []
         if moved: first = [k for k in PLACE.get(r, ('wide',)) if k in pool]
@@ -169,7 +175,8 @@ def plan(episode):
         avoid = {shot['type'], out[i - 1]['type'] if i else None, out[i - 1]['alt'] if i else None,
                  out[i + 1]['type'] if i + 1 < len(out) else None}
         free = [k for k in shot['pool'] if k not in avoid]
-        shot['alt'] = next((k for k in free if SIZE[k] != SIZE[shot['type']]), None) or free[0]
+        # (free is never empty for the pools before 0.20; a short insert pool may run out: then any other type)
+        shot['alt'] = next((k for k in free if SIZE[k] != SIZE[shot['type']]), None) or (free or [k for k in shot['pool'] if k != shot['type']] or shot['pool'])[0]
     return out
 
 
@@ -182,9 +189,22 @@ def pick(shots, i, variant, round_=0):
     return choices[(2 * round_ + variant) % len(choices)]
 
 
-def lead(kind, names, speaker='', r='talk'):
-    """The camera sentence that opens the still prompt: shot size and angle first."""
+def lead(kind, names, speaker='', r='talk', shoulder=None):
+    """The camera sentence that opens the still prompt: shot size and angle first.
+    0.20: r 'insert' (shot_rhythm) frames a detail; shoulder: the figure only seen from behind in an
+    over-the-shoulder shot (names holds it as well, for its reference image)."""
     who = ' and '.join(names)
+    if r == 'insert':
+        one = names[0] if names else 'the character'
+        return {'ecu': f"Extreme close-up insert: {one}'s detail fills the whole frame, shallow depth of field",
+                'high': f"Top-down extreme close-up insert looking straight down at {one}'s detail on a surface",
+                'dutch': f"Tilted extreme close-up insert, the camera canted about 15 degrees: {one}'s detail fills the frame",
+                'low': f"Low-angle extreme close-up insert from just below {one}'s detail, looking up past it"}.get(
+            kind, f"Extreme close-up insert of {one}'s detail")
+    if shoulder and kind == 'ots':
+        one = next((n for n in names if n != shoulder), names[0])
+        return (f"Over-the-shoulder shot: in the near foreground the out-of-focus back of {shoulder}'s head and one shoulder, seen from behind, "
+                f"{shoulder}'s face hidden; beyond it {one} faces the camera in sharp focus, chest up, the only face in the picture")
     if not names:
         return {'ecu': 'Extreme close-up of one telling prop of the location, filling the frame',
                 'high': 'High-angle wide shot looking down over the whole location',
@@ -217,7 +237,7 @@ def pose(r, names, kind=''):
     Phrased positively: at cfg 1 a 'not standing' can draw the standing pose. A close-up gets a
     head-and-hands pose, so the text does not pull the camera back to the whole body."""
     who = ' and '.join(names)
-    if not names: return ''
+    if not names or r == 'insert': return ''
     if kind in TIGHT and r in ('talk', 'react'):
         return (f'{who} in the middle of the line: the head tilted, eyebrows raised, a hand gesture entering the frame. ' if r == 'talk' else
                 f'{who} reacts: the head snapped toward the voice, the eyes wide or narrowed, the eyebrows high. ')
@@ -290,6 +310,14 @@ def camera(scenes, index, t0, fps):
     return zoom, (x, y)
 
 
+def still_names(scene, kind):
+    """Figures whose reference images go into a still: the cast, and under 0.20 (shot_rhythm) the figure seen
+    from behind in an over-the-shoulder still, so the shoulder is that figure and never a stranger."""
+    names = list(scene.get('cast') or [])
+    shoulder = scene.get('shoulder')
+    return names + [shoulder] if kind == 'ots' and shoulder and shoulder not in names else names
+
+
 def chosen(scene):
     """Shot type of the image Cay chose (recorded with each variant under the pin), else None."""
     return next((v.get('shot') for v in scene.get('variants') or [] if v.get('id') == scene.get('selected')), None)
@@ -311,6 +339,8 @@ NATIVE_FRAMES = 81    # longest Wan clip (as before); played 1:1 it lasts 3.24 s
 # (2.4 s). Extra time for the minimum length is played 1:1 as well: 25 Wan frames per film second.
 ACTION_FRAMES = (53, 41, 61, 45, 69, 49, 57, 49)
 ESTABLISH_FRAMES = 41
+# 0.20 inserts (shot_rhythm): whole Wan clips of 0.84 to 1.32 s at 25 fps, in turn; they never take extra time.
+INSERT_FRAMES = (25, 29, 21, 33, 25, 29)
 
 
 def native_frames(seconds, fps):
@@ -341,10 +371,11 @@ def silent_base(scenes, talking_flags, base, fps):
     """Layout 18 bases with the 0.19 silent lengths: action shots in turn from ACTION_FRAMES, a wide
     establishing shot ESTABLISH_FRAMES. Talking shots and reactions (their voice decides) stay."""
     from factory_timing import off_screen
-    out = list(base); k = 0
+    out = list(base); k = 0; j = 0
     for i, (scene, talk) in enumerate(zip(scenes, talking_flags)):
         if talk or off_screen(scene): continue
-        if scene.get('kind') == 'establish': out[i] = ESTABLISH_FRAMES / fps
+        if scene.get('insert'): out[i] = INSERT_FRAMES[j % len(INSERT_FRAMES)] / fps; j += 1
+        elif scene.get('kind') == 'establish': out[i] = ESTABLISH_FRAMES / fps
         else: out[i] = ACTION_FRAMES[k % len(ACTION_FRAMES)] / fps; k += 1
     return out
 

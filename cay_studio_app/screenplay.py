@@ -194,6 +194,15 @@ VISUAL_INSTRUCTION = ('Du bist Kameramann und Bildregisseur. Für jede Einstellu
 # Policy 14: every shot has a role in the cut; speaking shots vary the framing.
 SHOT_ROLES = {'line': 'speaking', 'reaction': 'reaction: listens silently, voice from off-screen, mouth closed',
               'action': 'action', 'establish': 'establish: wide view of the new place'}
+# 0.20 (shot_rhythm): roles of the insert shots, and a figure only seen from behind ('behind').
+RHYTHM_ROLES = {'prop': 'insert: extreme close-up of the prop with a hand, about one second, no face',
+                'hands': 'insert: extreme close-up of the hands in a tense gesture, about one second, no face',
+                'eyes': 'insert: extreme close-up of the eyes only, about one second, mouth out of frame'}
+RHYTHM_INSTRUCTION = (' insert = stumme Detailaufnahme von etwa einer Sekunde (Requisit mit Hand, Hände oder Augen), kein Mund im Bild; '
+                      'still und motion zeigen genau dieses Detail und eine schnelle, angespannte Bewegung. '
+                      'Steht behind bei einer Einstellung, ist diese Figur nur von hinten als unscharfe Schulter im Vordergrund zu sehen; '
+                      'im still und motion wird sie nicht beschrieben. Reaktionen zeigen eine deutliche körperliche Reaktion '
+                      '(näher treten, zurückweichen, auf den Tisch schlagen, die Arme ausbreiten) mit geschlossenem Mund.')
 VISUAL_INSTRUCTION_CUT = ('Du bist Kameramann und Bildregisseur. Für jede Einstellung genau ein Eintrag mit derselben Nummer. '
     'role sagt, was die Einstellung im Schnitt tut: speaking = die Figur aus visible spricht ihre lines; '
     'reaction = die Figur aus visible hört schweigend zu, die Stimme (hears) kommt von außerhalb des Bildes, ihr Mund bleibt geschlossen, '
@@ -466,9 +475,14 @@ def spoken_seconds(entries):
     return sum(words(x['text']) for x in entries) / SPEECH_RATE + LINE_PAUSE * max(0, len(entries) - 1)
 
 
-def shots(title, beats, lines, cast, policy=POLICY):
+def shots(title, beats, lines, cast, policy=POLICY, rhythm=False, limit=MAX_SHOTS):
     """Deterministic cut. Policy 13: one shot per speaker turn, one per AKTION line.
-    Policy 14: speech blocks, reaction shots (L-cut) and establishing shots, see block_cut()."""
+    Policy 14: speech blocks, reaction shots (L-cut) and establishing shots, see block_cut().
+    rhythm (0.20, projects pinned with shot_policy 20 only): lines cut at sentence ends, listeners,
+    over-the-shoulder shots and inserts (shot_rhythm.cut); limit: the episode's shot limit."""
+    if rhythm and policy >= 14:
+        import shot_rhythm
+        return shot_rhythm.cut(beats, lines, cast, policy, limit)
     if policy >= 14: return block_cut(beats, lines, cast, policy)
     result = []
     for line in lines:
@@ -903,7 +917,8 @@ def ensure_action(cut, duration):
     """Missing time needs a silent shot to go to; otherwise it ends up as silence in
     lip-sync shots (mouths move without a voice). If the planner wrote no AKTION
     line, a short silent reaction of the figure who spoke last is added mid-film."""
-    if duration < 30 or not cut or any(s['kind'] == 'action' for s in cut): return cut
+    # 0.20 inserts (shot_rhythm) last about one second and take no extra time: they are no action shot here.
+    if duration < 30 or not cut or any(s['kind'] == 'action' and not s.get('insert') for s in cut): return cut
     middle = len(cut) // 2
     # Policy 14: never between a block and the reaction that carries its last line.
     while middle < len(cut) and cut[middle]['kind'] == 'reaction': middle += 1
@@ -950,6 +965,12 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLIC
             still = still[:580].rstrip(' .,') + (', mouth closed' if len(visible) == 1 else ', mouths closed')
         motion = sanitize(v.get('motion') or ('talks with expressive face and natural gestures' if speaker else shot['what']), visible, names, aliases)
         if len(motion) < 5: motion = 'talks with expressive face and natural gestures' if speaker else 'moves quickly with a clear physical action'
+        if shot.get('insert'):
+            # 0.20 insert (shot_rhythm): the detail leads; the planner's picture may add to it.
+            from shot_rhythm import still_text
+            still = (still_text({'cast': visible, **shot}) + ('. ' + still if v.get('still') else ''))[:580]
+            motion = sanitize(v.get('motion') or '', visible, names, aliases)
+            if len(motion) < 5 or OPEN_MOUTH.search(motion): motion = 'a fast, tense movement of the hands'
         scenes.append({
             'title': (shot['what'] if shot['kind'] == 'action' else f'{speaker}: {shot["lines"][0]["text"]}')[:100] or f'Einstellung {i + 1}',
             # At least 5 characters: the text editor validates action with min_length 5.
@@ -969,6 +990,7 @@ def assemble(title, spine, outline, cut, visuals, cast, continuity, policy=POLIC
             'still': still[:600],
             'kind': shot['kind'],
             **({'context': shot['context'][:1200]} if shot.get('context') else {}),
+            **{k: shot[k] for k in ('shoulder', 'insert', 'prop', 'mood') if shot.get(k)},
         })
     spine = spine or {}
     return {'title': (title or outline.get('title') or 'Folge')[:100],
@@ -1017,7 +1039,8 @@ def _cut_scene(i, shot, v, cut, cast, continuity):
                 'action': f'{listener} hört schweigend zu, die Stimme von {speaker} kommt aus dem Off.'[:800],
                 'camera': 'close-up', 'emotion': mood, 'because': f'Reaktion auf {speaker}'[:400],
                 'dialogues': [{'speaker': l['speaker'], 'text': l['text'], 'emotion': l['emotion'], 'pause_after': .15} for l in shot['lines']],
-                'motion': [motion], 'animation_prompt': motion[:1400], 'still': still[:600], 'voice_of': speaker}
+                'motion': [motion], 'animation_prompt': motion[:1400], 'still': still[:600], 'voice_of': speaker,
+                **({'shoulder': shot['shoulder']} if shot.get('shoulder') else {})}
     own_still = f'Wide establishing view of {place}' + (f', {" and ".join(visible)} small in the frame' if visible else ', no characters')
     still = sanitize(v.get('still') or '', visible, names, aliases)
     if len(still) < 10 or OPEN_MOUTH.search(still): still = sanitize(own_still, visible, names, aliases) or f'Wide view of {place}'
@@ -1071,6 +1094,9 @@ def shot_listing(entry, shot):
     who says it: the off-screen speaker must not end up in the picture text."""
     entry = dict(entry, role=SHOT_ROLES.get(shot['kind'], shot['kind']))
     if shot['kind'] == 'reaction': entry.update(lines=[], hears=shot['lines'][0]['text'] if shot['lines'] else '')
+    # 0.20 (shot_rhythm): an insert and a second figure seen from behind.
+    if shot.get('insert'): entry.update(role=RHYTHM_ROLES[shot['insert']], **({'prop': shot['prop']} if shot.get('prop') else {}))
+    if shot.get('shoulder'): entry.update(behind=shot['shoulder'])
     return entry
 
 
@@ -1138,13 +1164,16 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
             final = draft; store['doctor_error'] = str(error)[:500]
         store['final'] = final; factory.save(d)
     title, beats, lines, problems = parse(store['final'], cast, **({'own': True} if own is not None else {}))
+    # 0.20 (shot_policy 20): the rhythm cut (shot_rhythm); older projects keep exactly their cut.
+    import shot_rhythm
+    rhythm = {'rhythm': True, 'limit': OWN_MAX_SHOTS if own is not None else MAX_SHOTS} if shot_rhythm.active(d) else {}
     if own is not None:
         from own_script import advice
         remaining = problems + advice(title, beats, lines, cast)
-        cut = shots(title, beats, lines, cast, policy)
+        cut = shots(title, beats, lines, cast, policy, **rhythm)
     else:
         remaining = check(title, beats, lines, problems, cast, idea['duration'], policy)
-        cut = ensure_action(shots(title, beats, lines, cast, policy), idea['duration'])
+        cut = ensure_action(shots(title, beats, lines, cast, policy, **rhythm), idea['duration'])
     if own is not None and (not cut or len(cut) > OWN_MAX_SHOTS):
         raise RuntimeError(f'Folge {index + 1} deines Drehbuchs ' + ('hat keine verwertbare Zeile.' if not cut else
                            f'ergibt {len(cut)} Einstellungen, höchstens {OWN_MAX_SHOTS}. Bitte in mehrere Folgen teilen.'))
@@ -1161,7 +1190,7 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
         # Cay's own script: the planner reads all of it, so pictures and motion show what it says.
         reading = ({'drehbuch': store['final']}, ' Das vollständige Drehbuch steht in drehbuch: Bilder und Bewegungen zeigen genau, was dort passiert.') if own is not None else ({}, '')
         try:
-            answer = await factory.llm(ShotVisuals, visual_instruction(policy) + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.' + reading[1],
+            answer = await factory.llm(ShotVisuals, visual_instruction(policy) + (RHYTHM_INSTRUCTION if rhythm else '') + f' Genau {len(cut)} Einträge, Nummer 1 bis {len(cut)}.' + reading[1],
                                        {'style': d['plan'].get('style', ''), 'cast': d['plan']['cast'], 'shots': listing, **reading[0]})
             # Partial answers are usable: assemble() falls back per missing shot.
             numbers = [v['shot'] for v in answer['shots']]
@@ -1181,6 +1210,7 @@ async def write_episode(factory, d, index, outline, source, continuity, spine, o
              'actions': sum(l['kind'] == 'action' for l in lines), 'shots': len(cut), 'budget': b}
     if policy >= 14: stats.update(reactions=sum(s['kind'] == 'reaction' for s in cut), establishing=sum(s['kind'] == 'establish' for s in cut),
                                   lip_sync=sum(s['kind'] == 'line' for s in cut))
+    if rhythm: stats.update(shot_rhythm.stats(cut))
     episode['screenplay_stats'] = stats
     if own is not None: episode['own_script'] = True
     if remaining: episode['warnings'] = [('Hinweis zu deinem Drehbuch: ' if own is not None else 'Drehbuch prüfen: ') + '; '.join(remaining)[:900]]
