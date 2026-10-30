@@ -158,16 +158,21 @@ def shot_prompt(scene, cast, names, style, plan_cast, kind, r):
     import shot_design
     from screenplay import figure_aliases
     hidden = [p['name'] for p in cast if p['name'] not in names]; aliases = figure_aliases(cast)
-    speaker = next((l.get('speaker') for l in scene.get('dialogues') or [] if l.get('speaker') in names), '')
-    prompt = (shot_design.lead(kind, names, speaker, r) + '. Vertical 9:16 film frame, one coherent image, no text or panels. '
-              + scene_text(scene, plan_cast, unframed=True) + ' ' + shot_design.pose(r, names, kind)
+    # 0.20 (shot_rhythm): the figure seen from behind in an over-the-shoulder still (names holds it for its reference).
+    front = scene.get('shoulder') if kind == 'ots' and scene.get('shoulder') in names and scene.get('shoulder') not in scene.get('cast', []) else None
+    shown = [n for n in names if n != front]
+    speaker = shown[0] if front else next((l.get('speaker') for l in scene.get('dialogues') or [] if l.get('speaker') in names), '')
+    prompt = (shot_design.lead(kind, names, speaker, r, **({'shoulder': front} if front else {})) + '. Vertical 9:16 film frame, one coherent image, no text or panels. '
+              + scene_text(scene, plan_cast, unframed=True) + ' ' + shot_design.pose(r, shown, kind)
               + strip_names(style, hidden, names, aliases).strip().rstrip('.') + '. ')
     for i, name in enumerate(names, 1):
         person = next(p for p in cast if p['name'] == name)
         prompt += (f'Reference image {i} shows {name}: take only the identity from it (head and face shape, colours, materials, body shape, size and outfit); '
                    'its pose, framing, camera angle and background come from this scene instead. '
                    f'{strip_names(person["appearance"], hidden, names, aliases).rstrip(".")}. ')
-    if len(names) == 1: prompt += f'{names[0]} is the only character in the whole picture; the background shows only the location and its props. '
+    if front: prompt += (f'Only {" and ".join(names)} are in the picture, nobody else: {front} only from behind (back of the head, hair, shoulder, '
+                         f'outfit as in the reference), {shown[0]} facing the camera. ')
+    elif len(names) == 1: prompt += f'{names[0]} is the only character in the whole picture; the background shows only the location and its props. '
     elif not names: prompt += 'Only the location and its props, no characters. '
     else: prompt += f'Only {" and ".join(names)} are in the picture, nobody else. '
     return prompt + ('Never swap, blend or redesign identities. No pedestal, display base, stand or turntable under any figure. '

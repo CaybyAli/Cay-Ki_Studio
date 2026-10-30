@@ -299,6 +299,8 @@ def camera(scenes, index, t0, fps):
     k = sum(talking(s) for s in scenes[:index]); lines = scene['lines']; T = float(scene['seconds'])
     a = TIGHT.get(scene.get('shot'), 1.); top = 1 + (LIMIT - 1) * a
     t = f'(on/{fps}+{t0:.6f})'; p = f'{t}/{T:.6f}'; x, y = '(iw-iw/zoom)/2', f'(ih-ih/zoom)*{Y:.2f}'; move = MOVES[k % len(MOVES)]
+    # 0.20 (shot_rhythm): a long talking shot of one sentence cuts in closer at a caption change, as a cut would.
+    if scene.get('cut_in') and T >= CUT_IN_SECONDS and len(lines) == 1 and punch_at(lines[0]) is not None: move = 'punch'
     at = punch_at(lines[0]) if move == 'punch' and len(lines) == 1 else None
     if move == 'pull': zoom = f'({1 + .12 * a:.3f}-{.10 * a:.3f}*{p})'
     elif move == 'drift':
@@ -323,10 +325,16 @@ def chosen(scene):
     return next((v.get('shot') for v in scene.get('variants') or [] if v.get('id') == scene.get('selected')), None)
 
 
+CUT_IN_SECONDS = 3.2     # 0.20: a talking shot this long gets a cut-in (camera(), 'cut_in')
+
+
 def export_fields(d, scene):
-    """Per-scene export spec fields under the pin: the chosen shot type (the camera keeps faces in the frame)."""
+    """Per-scene export spec fields under the pin: the chosen shot type (the camera keeps faces in the frame).
+    0.20 (shot_policy 20): 'cut_in' on talking shots (camera())."""
     shot = chosen(scene) if active(d) else None
-    return {'shot': shot} if shot else {}
+    import shot_rhythm
+    cut_in = {'cut_in': True} if shot_rhythm.active(d) and (scene.get('kind') or 'line') == 'line' else {}
+    return {**({'shot': shot} if shot else {}), **cut_in}
 
 
 # --- 3) Native cadence and silent shot lengths ---------------------------------------------------
@@ -431,16 +439,27 @@ TALK_SUFFIX = (' Only the single visible character speaks, exactly when the supp
                'is silent. Stable identity, the same face in every frame.')
 
 
-def direction(scene, lines, index):
-    """0.19 behaviour text for one shot (studio_quality_policy.motion_direction stays for older projects)."""
+def direction(scene, lines, index, rhythm=False):
+    """0.19 behaviour text for one shot (studio_quality_policy.motion_direction stays for older projects).
+    rhythm (0.20, shot_policy 20 only): inserts, a figure seen from behind when the chosen still is an
+    over-the-shoulder shot, and reactions acted out with the whole body (shot_rhythm)."""
     names = list(scene.get('cast') or [])
+    front = scene.get('shoulder') if rhythm and chosen(scene) == 'ots' else None
     frame = (f'Exactly one character in the whole frame: {names[0]}. No other characters or figures anywhere, also not in the background. '
              if len(names) == 1 else f'Only {" and ".join(names)} in the frame, nobody else. ' if names else 'No characters in the frame. ')
+    if rhythm and scene.get('insert'): frame = 'Only the detail in the frame, no face and no mouth. '
+    elif front and len(names) == 1:
+        frame = (f'{names[0]} is the only face in the frame. In the near foreground only the out-of-focus back of {front}\'s head and shoulder, '
+                 f'{front}\'s face never visible. Nobody else. ')
     base = ('One continuous full-frame shot. No cut, no montage, no split screen, no border. '
             'No written language, letters, subtitles, captions, menus or watermark in any frame. ' + frame +
             'The same faces, proportions, materials, costume, head shape, props and lighting as in the starting image. '
             'Full real-time speed with snappy cartoon timing. ')
     move = CAMERA_MOVES[index % len(CAMERA_MOVES)]; kind = scene.get('kind')
+    if rhythm and (kind == 'reaction' or scene.get('insert')):
+        import shot_rhythm
+        if scene.get('insert'): return base + shot_rhythm.insert_text(scene)
+        return base + shot_rhythm.react_text(dict(scene, shoulder=front), names[0] if names else 'The character')
     if kind == 'reaction':
         who = names[0] if names else 'The character'
         return base + (f'{who} hears a voice from outside the frame with the lips closed the whole time: a sharp, clearly visible reaction, '
@@ -458,7 +477,9 @@ def direction(scene, lines, index):
                    f'things in the scene react to the movement. Every mouth stays closed the whole time, faces show the feeling with the eyes and eyebrows. Camera: {move}.')
 
 
-def motion_prompt(style, movement, scene, lines, index):
-    """Wan / InfiniteTalk text under 0.19: look and movement without damping words, then the direction."""
+def motion_prompt(style, movement, scene, lines, index, rhythm=False):
+    """Wan / InfiniteTalk text under 0.19: look and movement without damping words, then the direction.
+    rhythm: 0.20 (shot_policy 20), see direction(); without it the text is the 0.19 text."""
     movement = undamp(OPENING.sub('', str(movement or '').strip())) or 'moves with a clear, fast physical action'
-    return undamp(style).rstrip('.') + '. ' + movement[:1].upper() + movement[1:].rstrip('.') + '. ' + direction(scene, lines, index)
+    return (undamp(style).rstrip('.') + '. ' + movement[:1].upper() + movement[1:].rstrip('.') + '. '
+            + direction(scene, lines, index, **({'rhythm': True} if rhythm else {})))

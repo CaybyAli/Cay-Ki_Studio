@@ -26,7 +26,7 @@ from factory_editor import Editor, image_rounds, active_variants, regenerate
 from studio_quality_policy import settings,segments,scene_segments,motion_direction,motion_direction_v16,RENDER_POLICY
 from story_source import manifest,validate_count,prepare_notes,episode_source,SeriesHeader
 import own_script
-import shot_design
+import shot_design,shot_rhythm
 
 ACTIVE={'planning','pictures','voicing','rendering','correcting'}
 
@@ -430,7 +430,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         if self.paused(d['id']):return
         # 'Mein Drehbuch' (0.18): Cay's own script, read once at creation (own_script). Cast, episodes and
         # every spoken line come from it; no outline, story goal, script writing or doctor. Other ideas never have it.
-        if idea.get('story')=='script' and not d.get('script'):d['script']=own_script.prepare(dict(idea,participants=list(idea['participants'])),own_script.POLICY if shot_design.active(d) else 0)
+        if idea.get('story')=='script' and not d.get('script'):d['script']=own_script.prepare(dict(idea,participants=list(idea['participants'])),own_script.POLICY if shot_design.active(d) else 0,**({'rhythm':True} if shot_rhythm.active(d) else {}))
         script=d.get('script') if idea.get('story')=='script' else None
         if not d.get('plan'):
             required=own_script.participants(script,idea['participants']) if script else list(idea['participants'])
@@ -837,8 +837,9 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                     if any(x.get('key')==key for x in scene['variants']):continue
                     d['phase']=f'Folge {ei+1} · Szene {si+1}/{len(ep["scenes"])} · Bild'+(f' {variant+1}/2' if stills==2 else '');self.save(d)
                     # Looks per episode: this episode's variants and look texts (else the base designs, as before).
-                    names=scene['cast'];references=[self.stage(path) for path in cast_design.scene_references({**refs,**episode_looks.refs_for(d,ei)},names)]
                     kind=shot_design.pick(shots,si,variant,image_rounds(scene)[variant]) if shots else None
+                    # 0.20: an over-the-shoulder still also gets the reference of the figure seen from behind (shot_rhythm).
+                    names=shot_design.still_names(scene,kind) if kind else scene['cast'];references=[self.stage(path) for path in cast_design.scene_references({**refs,**episode_looks.refs_for(d,ei)},names)]
                     if kind:prompt=cast_design.shot_prompt(scene,episode_looks.cast_for(d,ei),names,d['plan']['style'],d['plan']['cast'],kind,shots[si]['role'])
                     else:prompt=cast_design.scene_prompt(scene,episode_looks.cast_for(d,ei),names,d['plan']['style'])+cast_design.scene_text(scene,d['plan']['cast'])
                     note=cast_design.strip_names(scene.get('image_note',''),[p['name'] for p in d['plan']['cast'] if p['name'] not in names],names,screenplay.figure_aliases(d['plan']['cast'])) if scene.get('image_note') else ''
@@ -926,7 +927,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
                         names=[p['name'] for p in d['plan']['cast']];hidden=[n for n in names if n not in scene['cast']]
                         aliases=screenplay.figure_aliases(d['plan']['cast'])
                         movement=screenplay.sanitize(scene.get('animation_prompt') or action,scene['cast'],names,aliases)
-                        prompt=shot_design.motion_prompt(cast_design.strip_names(d['plan']['style'],hidden,scene['cast'],aliases),movement,scene,talking,si+seg)+' '+identities
+                        prompt=shot_design.motion_prompt(cast_design.strip_names(d['plan']['style'],hidden,scene['cast'],aliases),movement,scene,talking,si+seg,
+                                                         **({'rhythm':True} if shot_rhythm.active(d) else {}))+' '+identities
                     else:
                         names=[p['name'] for p in d['plan']['cast']];hidden=[n for n in names if n not in scene['cast']]
                         aliases=screenplay.figure_aliases(d['plan']['cast'])
@@ -1167,7 +1169,7 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
         def create(body:Idea):
             existing=self.rows('SELECT id FROM factory_runs WHERE request_key=?',(body.request_key,));idea=cover.idea_document(body)
             # Own script: episodes, length, cast and title come from it; refused with the first blocking problem.
-            try:script=own_script.prepare(idea)
+            try:script=own_script.prepare(idea,rhythm=True)
             except ValueError as error:raise HTTPException(400,str(error))
             # After the script set the number of episodes: 'looks' stays only for a series that chose it.
             idea=episode_looks.stored(idea)
@@ -1192,7 +1194,8 @@ CREATE TABLE IF NOT EXISTS factory_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NUL
             # Pinned once per project: 0.18 editing (title card). Projects without it keep their exact old export.
             d['edit_policy']=cover.POLICY
             # Pinned once per project (0.19): sound mix, shot look and motion, render windows. Older projects keep their exact behaviour.
-            d.update(sound_policy=19,shot_policy=19,render_policy=19)
+            # 0.20: shot_policy 20 adds the rhythm cut, listeners, over-the-shoulder shots, inserts and physical acting (shot_rhythm).
+            d.update(sound_policy=19,shot_policy=shot_rhythm.POLICY,render_policy=19)
             if script:d.update(script=script,title=idea['title'] or 'Mein Drehbuch',phase='Drehbuch gespeichert · Planung wartet')
             with self.g['conn']() as db:
                 db.execute('INSERT OR IGNORE INTO factory_runs VALUES(?,?,?,?,?,?)',(rid,body.request_key,d['state'],packed(d),now,now))

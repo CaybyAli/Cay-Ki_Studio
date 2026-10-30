@@ -272,8 +272,9 @@ OPENINGS = {'ecu': 'Extreme close-up', 'cu': 'Close-up', 'mcu': 'Medium close-up
 
 def test_new_projects_pin_the_shot_policy():
     source = (ROOT / 'cay_studio_app' / 'factory.py').read_text()
-    assert 'd.update(sound_policy=19,shot_policy=19,render_policy=19)' in source
-    assert sd.active({'shot_policy': 19}) and not sd.active({}) and not sd.active({'shot_policy': 18})
+    # 0.20 pins new projects with shot_policy 20 (shot_rhythm), which keeps every 0.19 path (sd.active) on.
+    assert 'd.update(sound_policy=19,shot_policy=shot_rhythm.POLICY,render_policy=19)' in source
+    assert sd.active({'shot_policy': 19}) and sd.active({'shot_policy': 20}) and not sd.active({}) and not sd.active({'shot_policy': 18})
     assert sd.spec({'shot_policy': 19}) == {'shot_policy': 19} and sd.spec({'edit_policy': 18}) == {}
 
 

@@ -40,15 +40,15 @@ def active(d):
 
 # --- 1) Cut ---------------------------------------------------------------------------------------
 
-SPLIT_WORDS = 7        # a line this long with two sentences or more is cut at a sentence end
-PIECE_WORDS = 3        # no piece shorter (a one-word shot is a flash, not a beat)
+SPLIT_WORDS = 6        # a line this long with two sentences or more is cut at a sentence end
+PIECE_WORDS = 2        # no piece shorter, except a one-word question or call before a longer rest ('Sia? Was machst du hier?')
 PIECES = 3
 MERGE_SECONDS = 2.4    # consecutive short lines of one speaker share one shot up to this
-REACT_WORDS = 10       # a whole line heard over a listener: about 4 s with the reaction's tail
-PIECE_REACT_WORDS = 14 # the rest of a split line over the listener (it continues what was just seen)
+REACT_WORDS = 8        # a whole line heard over a listener: about 4 s with the reaction's tail
+PIECE_REACT_WORDS = 12 # the rest of a split line over the listener (it continues what was just seen)
 REACT_SHARE = .4       # listener shots among the voiced shots of the film (the reference films: about half)
 RUN = 2                # the same speaker at most this many shots in a row while someone else is there
-INSERT_GAP = 3         # at least this many voiced shots between two inserts
+INSERT_GAP = 4         # at least this many voiced shots between two inserts; a feeling at most once per section
 ABBREVIATION = re.compile(r'(?i)(?:(?<!\w)(?:mr|mrs|ms|dr|prof|st|nr|hr|fr|ca|bzw|usw|vgl|z\.\s?b)|\d)\.$')
 
 
@@ -70,8 +70,9 @@ def split_line(text):
     pieces, current = [], []
     for i, part in enumerate(parts):
         current.append(part)
-        rest = sum(words(x) for x in parts[i + 1:])
-        if words(' '.join(current)) >= PIECE_WORDS and rest >= PIECE_WORDS and len(pieces) < PIECES - 1:
+        rest = sum(words(x) for x in parts[i + 1:]); size = words(' '.join(current))
+        short = size == 1 and current[-1].endswith(('?', '!')) and rest >= 4
+        if (size >= PIECE_WORDS or short) and rest >= PIECE_WORDS and len(pieces) < PIECES - 1:
             pieces.append(' '.join(current)); current = []
     if current: pieces.append(' '.join(current))
     return pieces
@@ -103,8 +104,8 @@ def prop_of(text):
     return None
 
 
-HANDS = {'threat', 'angry', 'shout', 'firm', 'triumph', 'panic', 'pleading'}     # a feeling the hands show best
-EYES = {'afraid', 'surprised', 'whisper', 'sad', 'mocking', 'confused'}           # ... the eyes
+HANDS = {'threat', 'angry', 'shout', 'triumph', 'panic'}     # a feeling the hands show best
+EYES = {'afraid', 'surprised', 'whisper'}                    # ... the eyes
 
 
 def mood(emotion):
@@ -232,7 +233,7 @@ def _inserts(result, room):
     feeling the hands or the eyes. Never next to a silent shot, never inside a split line, at most one
     per INSERT_GAP voiced shots, never more than the shot limit leaves room for."""
     voice = lambda s: s['kind'] in ('line', 'reaction')
-    out = []; gap = INSERT_GAP; used = set(); added = 0
+    out = []; gap = INSERT_GAP; used = set(); felt = set(); added = 0
     for i, shot in enumerate(result):
         out.append(shot)
         gap += voice(shot)
@@ -242,8 +243,7 @@ def _inserts(result, room):
         line = shot['lines'][-1]; owner = line['speaker']; feeling = mood(line['emotion'])
         prop = prop_of(line['text'])
         if prop and (shot['beat'], prop) not in used: kind = 'prop'; used.add((shot['beat'], prop))
-        elif feeling in HANDS: kind = 'hands'; prop = None
-        elif feeling in EYES: kind = 'eyes'; prop = None
+        elif feeling in HANDS | EYES and shot['beat'] not in felt: kind = 'hands' if feeling in HANDS else 'eyes'; prop = None; felt.add(shot['beat'])
         else: continue
         who = owner if kind != 'eyes' or shot['kind'] == 'line' else shot['visible'][0]
         what = {'prop': f'Detail: {prop} bei {who}', 'hands': f'Detail: die Hände von {who}', 'eyes': f'Detail: die Augen von {who}'}[kind]

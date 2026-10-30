@@ -802,6 +802,7 @@ function checkLine(d, ep, ei) {
   // Automatic checks in one line: script size, speech share, lip-sync windows.
   const parts = [], st = ep.screenplay_stats, t = (d.timing || [])[ei];
   if (st) parts.push(`${st.words} Wörter`, `${st.shots} Einstellungen`, `${st.actions} stumme Aktionen`);
+  if (st && st.inserts != null) parts.push(`${st.reactions} Reaktionen`, `${st.inserts} Details`);
   if (t) parts.push(`Sprachanteil ${Math.round((t.speech_share || 0) * 100)} %`, `längste Pause ${String(t.longest_speech_gap ?? '–').replace('.', ',')} s`);
   if (t && t.talk_windows != null) parts.push(`${t.talk_windows} Rechenblöcke`);
   const warn = (ep.warnings || []).filter(w => !w.startsWith('Wenig Dialog')).slice(0, 2);
@@ -820,8 +821,13 @@ function sceneSpeakers(sc) {
   if (sc.kind === 'reaction') return sc.voice_of ? [sc.voice_of] : [];
   return sc.kind === 'establish' ? [] : (sc.cast || []);
 }
+/* 0.20 (shot_policy 20): a short detail between two lines, and a second figure seen from behind. */
+const DETAIL = { prop: p => `${p} in Großaufnahme`, hands: () => 'die Hände in Großaufnahme', eyes: () => 'die Augen in Großaufnahme' };
 function sceneRole(sc) {
-  if (sc.kind === 'reaction') return `<p class="scene-role"><span class="chip accent">Reaktion</span> Stimme von ${esc(sc.voice_of || 'einer Figur')} aus dem Off</p>`;
+  const behind = sc.shoulder ? ` · ${esc(sc.shoulder)} von hinten im Vordergrund` : '';
+  if (sc.insert) return `<p class="scene-role"><span class="chip">Detail</span> ${esc((DETAIL[sc.insert] || DETAIL.hands)(sc.prop || ''))}, etwa eine Sekunde</p>`;
+  if (sc.kind === 'reaction') return `<p class="scene-role"><span class="chip accent">Reaktion</span> Stimme von ${esc(sc.voice_of || 'einer Figur')} aus dem Off${behind}</p>`;
+  if (sc.shoulder) return `<p class="scene-role"><span class="chip">Über die Schulter</span> ${esc(sc.shoulder)} von hinten im Vordergrund</p>`;
   return sc.kind === 'establish' ? '<p class="scene-role"><span class="chip">Totale</span> zeigt den neuen Ort</p>' : '';
 }
 function scenesSection(d, choose) {

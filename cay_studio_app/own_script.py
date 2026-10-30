@@ -872,12 +872,13 @@ def _seconds(cut):
 def _timeline(cut):
     """0.19: (start, length, speech) of every shot as a project pinned with shot_policy 19 cuts it: silent
     shots last whole Wan clips (shot_design.silent_base), speech 2.6 words per second."""
-    out = []; t = 0.; k = 0
+    out = []; t = 0.; k = 0; j = 0
     for shot in cut:
         speech = screenplay.spoken_seconds(shot['lines']) if shot['lines'] else 0
         if shot['kind'] == 'line': length = HEAD + speech + TAIL
         elif shot['kind'] == 'reaction': length = max(REACTION_MIN, HEAD + speech + REACTION_TAIL)
         elif shot['kind'] == 'establish': length = shot_design.ESTABLISH_FRAMES / FPS
+        elif shot.get('insert'): length = shot_design.INSERT_FRAMES[j % len(shot_design.INSERT_FRAMES)] / FPS; j += 1       # 0.20 (shot_rhythm)
         else: length = shot_design.ACTION_FRAMES[k % len(shot_design.ACTION_FRAMES)] / FPS; k += 1
         out.append((t, length, speech)); t += length
     return out
@@ -944,11 +945,13 @@ def advice(title, beats, lines, cast):
     return notes
 
 
-def read(text, policy=POLICY, not_figures=()):
+def read(text, policy=POLICY, not_figures=(), rhythm=False):
     """Read Cay's script. Returns title, figures, episodes (each with its normalized screenplay text
     in the internal format), problems (with line numbers; blocking ones stop the film), the length
     per episode and the minimum length the film is planned with. policy 19 (default, projects from
-    0.19 on) adds per episode 'pacing' and a reading 'report'; policy 0 reads exactly as 0.18."""
+    0.19 on) adds per episode 'pacing' and a reading 'report'; policy 0 reads exactly as 0.18.
+    rhythm (0.20, a project pinned with shot_policy 20): shots, lengths and pacing of the rhythm cut
+    (shot_rhythm); the planned minimum length stays the one of the 0.19 cut, which is never longer."""
     text = str(text or '').lstrip('﻿').replace('\r\n', '\n').replace('\r', '\n')
     reader = _Reader(text.split('\n'), policy); reader.not_figures = {name_key(n) for n in not_figures or () if str(n).strip()}
     r = reader.read(); v19 = r.v19
@@ -990,7 +993,7 @@ def read(text, policy=POLICY, not_figures=()):
         elif not f['declared'] and len(spellings.get(name_key(f['name']), ())) == 1 and not _caps(spellings[name_key(f['name'])][0]['name']):
             # 'Genre: Komödie', 'Das Problem: …': a label that speaks once may be no figure at all.
             r.problem(f['line'], f'„{f["name"]}“ spricht nur einmal. Ist das wirklich eine Figur? Wenn nicht, lösch die Zeile oder schreib „AKTION:“ davor.')
-    episodes = []; series = len(r.episodes) > 1 or r.folgen; bases = []; paced = []
+    episodes = []; series = len(r.episodes) > 1 or r.folgen; bases = []; paced = []; plain = []
     for ep in r.episodes:
         label = f'Folge {ep["number"]}' if series else 'Dein Film'
         title = ep['title'] or ('' if series else r.title)
@@ -1025,6 +1028,8 @@ def read(text, policy=POLICY, not_figures=()):
             r.problem(wrong[5] if wrong else ep['line'], 'Diese Zeile liest das Studio anders, als sie geschrieben ist. Bitte umformulieren.', True)
         spoken = [l for l in lines if l['kind'] == 'line']
         cut = screenplay.shots(title2, beat_list, lines, names); seconds = round(_seconds(cut)); bases.append(seconds)
+        plain.append(sum(x[1] for x in _timeline(cut)))
+        if rhythm and v19: cut = screenplay.shots(title2, beat_list, lines, names, rhythm=True, limit=screenplay.OWN_MAX_SHOTS)
         # 0.19: every length Cay reads is the one the pinned project cuts (shorter silent shots, _timeline); the minimum
         # length is still planned from the 0.18 estimate as before (review r019: three different lengths for one episode).
         length = round(sum(x[1] for x in _timeline(cut))) if v19 else seconds
@@ -1071,7 +1076,7 @@ def read(text, policy=POLICY, not_figures=()):
     duration = max(MIN_SECONDS, min(LONG_SECONDS, math.floor(shortest * .9)))
     if v19 and episodes and all('pacing' in e for e in episodes):
         # ... nor stretch the shorter silent shots of a pinned project (shot_design) back to 0.18 length.
-        duration = max(MIN_SECONDS, min(duration, math.floor(min(e['pacing']['seconds'] for e in episodes))))
+        duration = max(MIN_SECONDS, min(duration, math.floor(min(round(x, 1) for x in plain) if rhythm else min(e['pacing']['seconds'] for e in episodes))))
     for label, words, pace, line, e in paced:
         # The episode as cut: its timeline, at least the planned minimum; its share of speech is measured against that.
         e['seconds'] = round(max(pace['seconds'], duration)); pace['speech_share'] = round(min(1., pace['speech_seconds'] / e['seconds']), 2)
@@ -1125,13 +1130,14 @@ def _report(r):
     return {'rows': len(rows), **counts, 'skipped_rows': skipped[:40], 'unread': unread[:40], 'unread_count': len(unread), 'delivery': dict(r.moods)}
 
 
-def prepare(idea, policy=POLICY):
+def prepare(idea, policy=POLICY, rhythm=False):
     """Create: an idea with story 'script' takes episodes, length, cast and title from the script.
     Any other idea keeps its exact previous document (no 'story' key). Raises ValueError (German).
-    policy: the reading rules (POLICY for a new project, 0 for a project from before 0.19)."""
+    policy: the reading rules (POLICY for a new project, 0 for a project from before 0.19).
+    rhythm: a project pinned with shot_policy 20 (read())."""
     if idea.get('story') != 'script':
         idea.pop('story', None); return None
-    script = read(idea['idea'], policy, idea.get('not_figures') or ())
+    script = read(idea['idea'], policy, idea.get('not_figures') or (), **({'rhythm': True} if rhythm else {}))
     blocking = [p['text'] for p in script['problems'] if p['blocking']]
     if blocking: raise ValueError(blocking[0] + (f' Dazu {len(blocking) - 1} weitere Probleme im Drehbuch.' if len(blocking) > 1 else ''))
     names = {name_key(f['name']): f['name'] for f in script['figures']}
