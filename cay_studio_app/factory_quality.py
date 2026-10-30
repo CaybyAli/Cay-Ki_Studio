@@ -276,6 +276,7 @@ class Quality:
             if any(l.speaker not in allowed for l in body.dialogues):
                 if off_screen(s):raise HTTPException(400,f'In dieser Reaktion hört {", ".join(s["cast"])} nur zu. Sprechen kann hier nur {s.get("voice_of") or "die Stimme aus dem Off"}.')
                 if s.get('kind')=='establish':raise HTTPException(400,'Diese Totale zeigt nur den neuen Ort. Hier spricht niemand.')
+                if s.get('insert'):raise HTTPException(400,'Dieses Detail zeigt nur Hände, ein Requisit oder Augen, etwa eine Sekunde lang. Hier spricht niemand.')
                 raise HTTPException(400,'Sprecher muss zur Besetzung der Szene gehören.')
             if body.action!=s['action']:
                 if d['state']=='voice_review':raise HTTPException(409,'Bildhandlung in der Bildauswahl ändern.')

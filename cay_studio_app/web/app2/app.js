@@ -803,7 +803,7 @@ function checkLine(d, ep, ei) {
   // Automatic checks in one line: script size, speech share, lip-sync windows.
   const parts = [], st = ep.screenplay_stats, t = (d.timing || [])[ei];
   if (st) parts.push(`${st.words} Wörter`, `${st.shots} Einstellungen`, `${st.actions} stumme Aktionen`);
-  if (st && st.inserts != null) parts.push(`${st.reactions} Reaktionen`, `${st.inserts} Details`);
+  if (st && st.inserts != null) parts.push(`${st.reactions} ${st.reactions === 1 ? 'Reaktion' : 'Reaktionen'}`, `${st.inserts} ${st.inserts === 1 ? 'Detail' : 'Details'}`);
   if (t) parts.push(`Sprachanteil ${Math.round((t.speech_share || 0) * 100)} %`, `längste Pause ${String(t.longest_speech_gap ?? '–').replace('.', ',')} s`);
   if (t && t.talk_windows != null) parts.push(`${t.talk_windows} Rechenblöcke`);
   const warn = (ep.warnings || []).filter(w => !w.startsWith('Wenig Dialog')).slice(0, 2);
@@ -820,7 +820,7 @@ function spineCard(ep) {
    silent (same rule as factory_timing.allowed_speakers). Older scenes have no kind. */
 function sceneSpeakers(sc) {
   if (sc.kind === 'reaction') return sc.voice_of ? [sc.voice_of] : [];
-  return sc.kind === 'establish' ? [] : (sc.cast || []);
+  return sc.kind === 'establish' || sc.insert ? [] : (sc.cast || []);   // 0.20: a detail (insert) stays silent too
 }
 /* 0.20 (shot_policy 20): a short detail between two lines, and a second figure seen from behind. */
 const DETAIL = { prop: p => `${p} in Großaufnahme`, hands: () => 'die Hände in Großaufnahme', eyes: () => 'die Augen in Großaufnahme' };
@@ -1439,7 +1439,7 @@ function linesSheet(ei, si) {
     <form id="lines-form" class="sheet-form" data-episode="${ei}" data-scene="${si}">${lines.length ? `<div class="line-rows">${lines.map(row).join('')}</div>` : ''}
     ${sc.kind === 'reaction' ? `<p class="muted">${esc(sc.cast.join(' und '))} hört hier nur zu. Die Stimme kommt von ${esc(speakers[0] || 'einer Figur')} aus dem Off.</p>` : ''}
     ${speakers.length ? lines.length < MAX_LINES ? '<div class="actions"><button type="button" class="button quiet small" data-action="add-line">Satz hinzufügen</button></div>' : `<p class="small muted">Höchstens ${MAX_LINES} Sätze pro Szene.</p>`
-      : `<p class="muted">${sc.kind === 'establish' ? 'Diese Totale zeigt den neuen Ort. Hier spricht niemand.' : 'In dieser Szene ist niemand im Bild.'}</p>`}
+      : `<p class="muted">${sc.kind === 'establish' ? 'Diese Totale zeigt den neuen Ort. Hier spricht niemand.' : sc.insert ? 'Dieses Detail dauert etwa eine Sekunde. Hier spricht niemand.' : 'In dieser Szene ist niemand im Bild.'}</p>`}
     ${editable ? `<div class="sheet-foot"><span class="small muted">Danach entsteht der Ton neu. Bilder bleiben.</span><button class="button" type="submit">Speichern</button></div>` : ''}</form>`);
 }
 function readLines(form, keepEmpty) {

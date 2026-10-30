@@ -34,7 +34,7 @@ def apply_additions(episode, additions, names, lip_sync='audio'):
         if index in seen or not 0<=index<len(result['scenes']):raise ValueError('Szenenzuordnung der Dialogergänzung ist nicht eindeutig.')
         seen.add(index);scene=result['scenes'][index]
         # 0.18: a reaction carries exactly its voice from off-screen, a wide establishing shot stays silent.
-        if scene.get('kind') in ('reaction','establish'):continue
+        if scene.get('kind') in ('reaction','establish') or scene.get('insert'):continue   # 0.20: a one-second detail stays silent too
         lines=copy.deepcopy(scene_lines(scene))
         for line in item['lines']:
             if any(old['speaker']==line['speaker'] and old['text']==line['text'] for old in lines):continue

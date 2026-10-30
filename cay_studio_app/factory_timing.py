@@ -13,7 +13,8 @@ def allowed_speakers(scene):
     """Who may speak in this shot. A reaction (0.18) only with the voice from off-screen, a wide
     establishing shot (0.18) not at all; every other shot with the figures in the frame."""
     if off_screen(scene): return [scene['voice_of']] if scene.get('voice_of') else []
-    if scene.get('kind') == 'establish': return []
+    # 0.20: an insert (shot_rhythm) shows hands, a prop or eyes for about a second: nobody speaks in it.
+    if scene.get('kind') == 'establish' or scene.get('insert'): return []
     return list(scene.get('cast', []))
 
 def scene_lines(scene):
