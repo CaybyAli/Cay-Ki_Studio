@@ -325,3 +325,27 @@ def test_numbers_for_the_report(capsys):
                               'inserts': len(m['inserts']), 'lip_sync_seconds': round(m['lip_sync'], 1), 'lip_per_second': round(m['lip_per_second'], 3),
                               'talk_frames_per_second': round(m['talk_per_second'], 2), 'frames_per_second': round(m['frames_per_second'], 2)},
                              ensure_ascii=False))
+
+
+def test_render_a_pinned_project_with_listeners_shoulders_and_a_detail(monkeypatch, tmp_path):
+    """Factory.movies with ComfyUI replaced: the detail renders as one native Wan clip of about a second with its own
+    text, the listener over Mr. Krabs' shoulder acts with the body, SpongeBob over his shoulder keeps the lip-sync-safe text."""
+    import test_shots_019 as t19
+    d = t19.movie_project(shot_policy=20)
+    v = lambda shot: [{'id': 's' * 32, 'key': 'image:0:0:0:0', 'shot': shot}]
+    scenes = d['episodes'][0]['scenes']
+    scenes[0].update(shoulder='Mr. Krabs', variants=v('ots'))
+    scenes[1].update(shoulder='Mr. Krabs', emotion='ängstlich', variants=v('ots'), render_seconds=2.4)
+    scenes[2].update(cast=['Mr. Krabs'], insert='prop', prop='Geld', mood='drohend', render_seconds=29 / 25, variants=v('ecu'))
+    d19 = copy.deepcopy(d); d19['shot_policy'] = 19
+    fake, calls = t19.run_movies(monkeypatch, tmp_path, d)
+    talk = calls['talk'][1]; react, detail = calls['motion'][0], calls['motion'][1]
+    assert 'SpongeBob is the only face in the frame' in talk[0] and "Mr. Krabs's face never visible" in talk[0] and talk[2]['suffix'] == sd.TALK_SUFFIX
+    assert 'backs away' in react[0] or 'shrinks back' in react[0]
+    assert 'Mr. Krabs is only seen from behind' in react[0] and react[2] == {'native': 25} and round(react[1] * 25) == 60
+    assert 'Extreme close-up insert of the money' in detail[0] and 'slams' in detail[0] and detail[2] == {'native': 25} and round(detail[1] * 25) == 29
+    assert all(spec['shot_policy'] == 20 for _, spec in fake.posts) and fake.posts[-1][1]['scenes'][0].get('cut_in') is True
+    # The same project pinned with 19 renders with the 0.19 texts: no body acting, no figure from behind, no cut-in.
+    (tmp_path / 'p19').mkdir(); fake19, calls19 = t19.run_movies(monkeypatch, tmp_path / 'p19', d19)
+    assert 'only seen from behind' not in calls19['motion'][0][0] and 'only face' not in calls19['talk'][1][0]
+    assert 'Extreme close-up insert' not in calls19['motion'][1][0] and 'cut_in' not in fake19.posts[-1][1]['scenes'][0]
